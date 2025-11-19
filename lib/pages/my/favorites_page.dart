@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
@@ -29,7 +28,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
   late final CollectController collectController;
   late final TabController tabController;
   // ✅ showDelete and syncing moved to Riverpod StateProvider
-  late final Box setting;
+  late final MockBox setting;
 
   @override
   void initState() {

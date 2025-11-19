@@ -1,9 +1,8 @@
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:drift/drift.dart';
+import 'package:kazumi/db/database.dart' hide History, SearchHistory;
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
 import 'package:kazumi/modules/history/history_module.dart';
 import 'package:kazumi/modules/collect/collect_module.dart';
 import 'package:kazumi/modules/collect/collect_change_module.dart';
@@ -15,130 +14,322 @@ import 'package:kazumi/utils/api_credentials.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:logger/logger.dart';
 
+// Mock Box class to mimic Hive Box behavior backed by Drift
+class MockBox<T> {
+  final Map<dynamic, T> _data = {};
+  final String _name;
+  final AppDatabase _db;
+
+  MockBox(this._name, this._db);
+
+  Iterable<T> get values => _data.values;
+  Iterable<dynamic> get keys => _data.keys;
+  int get length => _data.length;
+  bool get isEmpty => _data.isEmpty;
+  bool get isNotEmpty => _data.isNotEmpty;
+
+  bool containsKey(dynamic key) => _data.containsKey(key);
+
+  T? get(dynamic key, {T? defaultValue}) {
+    return _data[key] ?? defaultValue;
+  }
+
+  Future<void> put(dynamic key, T value) async {
+    _data[key] = value;
+    await _persist(key, value);
+  }
+
+  Future<void> delete(dynamic key) async {
+    final value = _data[key];
+    _data.remove(key);
+    await _deleteFromDb(key, value);
+  }
+
+  Future<void> clear() async {
+    _data.clear();
+    await _clearDb();
+  }
+
+  Future<void> putAll(Map<dynamic, T> entries) async {
+    _data.addAll(entries);
+    await _db.batch((batch) {
+      for (var entry in entries.entries) {
+        _batchInsert(batch, entry.key, entry.value);
+      }
+    });
+  }
+
+  Future<int> add(T value) async {
+    int id = DateTime.now().millisecondsSinceEpoch;
+    if (value is CollectedBangumiChange) {
+      id = value.id;
+    }
+    await put(id, value);
+    return id;
+  }
+
+  Future<void> flush() async {
+    // No-op for Drift as we persist immediately
+  }
+
+  Map<dynamic, T> toMap() => Map.from(_data);
+
+  void _batchInsert(Batch batch, dynamic key, T value) {
+    final jsonStr = jsonEncode(value);
+
+    if (_name == 'setting') {
+      batch.insert(
+          _db.settings,
+          SettingsCompanion.insert(key: key.toString(), value: jsonStr),
+          mode: InsertMode.insertOrReplace);
+    } else if (_name == 'histories') {
+      final h = value as History;
+      batch.insert(
+          _db.histories,
+          HistoriesCompanion.insert(
+              id: Value(h.bangumiItem.id),
+              json: jsonStr,
+              lastWatchTime: h.lastWatchTime),
+          mode: InsertMode.insertOrReplace);
+    } else if (_name == 'collectibles') {
+      final c = value as CollectedBangumi;
+      batch.insert(
+          _db.collectibles,
+          CollectiblesCompanion.insert(
+              id: Value(c.bangumiItem.id),
+              json: jsonStr,
+              type: c.type,
+              updateTime: Value(c.time)),
+          mode: InsertMode.insertOrReplace);
+    } else if (_name == 'collectchanges') {
+      final c = value as CollectedBangumiChange;
+      batch.insert(
+          _db.collectChanges,
+          CollectChangesCompanion.insert(
+              id: Value(c.id),
+              json: jsonStr,
+              bangumiId: c.bangumiID,
+              timestamp:
+                  DateTime.fromMillisecondsSinceEpoch(c.timestamp * 1000)),
+          mode: InsertMode.insertOrReplace);
+    } else if (_name == 'searchHistory') {
+      final s = value as SearchHistory;
+      batch.insert(
+          _db.searchHistories,
+          SearchHistoriesCompanion.insert(
+              keyword: s.keyword,
+              timestamp: DateTime.fromMillisecondsSinceEpoch(s.timestamp)),
+          mode: InsertMode.insertOrReplace);
+    } else {
+      // Generic cache
+      batch.insert(
+          _db.keyValueCache,
+          KeyValueCacheCompanion.insert(
+              boxName: _name, key: key.toString(), value: jsonStr),
+          mode: InsertMode.insertOrReplace);
+    }
+  }
+
+  Future<void> _persist(dynamic key, T value) async {
+    await _db.batch((batch) {
+      _batchInsert(batch, key, value);
+    });
+  }
+
+  Future<void> _deleteFromDb(dynamic key, T? value) async {
+    if (_name == 'setting') {
+      await (_db.delete(_db.settings)..where((t) => t.key.equals(key.toString()))).go();
+    } else if (_name == 'histories') {
+      if (value != null) {
+        final h = value as History;
+        await (_db.delete(_db.histories)..where((t) => t.id.equals(h.bangumiItem.id))).go();
+      }
+    } else if (_name == 'collectibles') {
+       // Key is ID
+       await (_db.delete(_db.collectibles)..where((t) => t.id.equals(int.parse(key.toString())))).go();
+    } else if (_name == 'collectchanges') {
+       await (_db.delete(_db.collectChanges)..where((t) => t.id.equals(int.parse(key.toString())))).go();
+    } else if (_name == 'searchHistory') {
+       if (value != null) {
+         final s = value as SearchHistory;
+         await (_db.delete(_db.searchHistories)..where((t) => t.keyword.equals(s.keyword) & t.timestamp.equals(DateTime.fromMillisecondsSinceEpoch(s.timestamp)))).go();
+       }
+    } else {
+       await (_db.delete(_db.keyValueCache)..where((t) => t.boxName.equals(_name) & t.key.equals(key.toString()))).go();
+    }
+  }
+
+  Future<void> _clearDb() async {
+     if (_name == 'setting') {
+      await _db.delete(_db.settings).go();
+    } else if (_name == 'histories') {
+      await _db.delete(_db.histories).go();
+    } else if (_name == 'collectibles') {
+      await _db.delete(_db.collectibles).go();
+    } else if (_name == 'collectchanges') {
+      await _db.delete(_db.collectChanges).go();
+    } else if (_name == 'searchHistory') {
+      await _db.delete(_db.searchHistories).go();
+    } else {
+      await (_db.delete(_db.keyValueCache)..where((t) => t.boxName.equals(_name))).go();
+    }
+  }
+}
+
 class GStorage {
-  /// Don't use favorites box, it's replaced by collectibles.
-  static late Box<BangumiItem> favorites;
-  static late Box<CollectedBangumi> collectibles;
-  static late Box<History> histories;
-  static late Box<CollectedBangumiChange> collectChanges;
-  static late Box<String> shieldList;
-  static late final Box<dynamic> setting;
-  static late Box<SearchHistory> searchHistory;
-  static late Box<MetadataRecord> metadataCache;
-  static late Box<ParseFailureRecord> parseFailures;
-  static late Box<dynamic> downloadTasks;
-  static late Box<dynamic> torrentEntries;
-  static late Box<dynamic> playbackProfiles;
+  static late AppDatabase db;
+
+  static late MockBox<BangumiItem> favorites;
+  static late MockBox<CollectedBangumi> collectibles;
+  static late MockBox<History> histories;
+  static late MockBox<CollectedBangumiChange> collectChanges;
+  static late MockBox<String> shieldList;
+  static late MockBox<dynamic> setting;
+  static late MockBox<SearchHistory> searchHistory;
+  static late MockBox<MetadataRecord> metadataCache;
+  static late MockBox<ParseFailureRecord> parseFailures;
+  static late MockBox<dynamic> downloadTasks;
+  static late MockBox<dynamic> torrentEntries;
+  static late MockBox<dynamic> playbackProfiles;
 
   static Future init() async {
-    Hive.registerAdapter(BangumiItemAdapter());
-    Hive.registerAdapter(BangumiTagAdapter());
-    Hive.registerAdapter(CollectedBangumiAdapter());
-    Hive.registerAdapter(ProgressAdapter());
-    Hive.registerAdapter(HistoryAdapter());
-    Hive.registerAdapter(CollectedBangumiChangeAdapter());
-    Hive.registerAdapter(SearchHistoryAdapter());
-    Hive.registerAdapter(EpisodeMetadataAdapter());
-    Hive.registerAdapter(MetadataSourceSnapshotAdapter());
-    Hive.registerAdapter(MetadataRecordAdapter());
-    Hive.registerAdapter(ParseFailureRecordAdapter());
-    Hive.registerAdapter(DownloadTaskAdapter());
-    favorites = await Hive.openBox('favorites');
-    collectibles = await Hive.openBox('collectibles');
-    histories = await Hive.openBox('histories');
-    setting = await Hive.openBox('setting');
-    collectChanges = await Hive.openBox('collectchanges');
-    shieldList = await Hive.openBox('shieldList');
-    searchHistory = await Hive.openBox('searchHistory');
-    metadataCache = await Hive.openBox<MetadataRecord>('metadataCache');
-    parseFailures = await Hive.openBox<ParseFailureRecord>('parseFailures');
-    downloadTasks = await Hive.openBox('downloadTasks');
-    torrentEntries = await Hive.openBox('torrentEntries');
-    playbackProfiles = await Hive.openBox('playbackProfiles');
+    db = AppDatabase();
+
+    // Initialize MockBoxes
+    favorites = MockBox('favorites', db);
+    collectibles = MockBox('collectibles', db);
+    histories = MockBox('histories', db);
+    setting = MockBox('setting', db);
+    collectChanges = MockBox('collectchanges', db);
+    shieldList = MockBox('shieldList', db);
+    searchHistory = MockBox('searchHistory', db);
+    metadataCache = MockBox('metadataCache', db);
+    parseFailures = MockBox('parseFailures', db);
+    downloadTasks = MockBox('downloadTasks', db);
+    torrentEntries = MockBox('torrentEntries', db);
+    playbackProfiles = MockBox('playbackProfiles', db);
+
+    // Load data from DB to memory
+    await _loadSettings();
+    await _loadHistories();
+    await _loadCollectibles();
+    await _loadCollectChanges();
+    await _loadSearchHistory();
+
+    // Load generic boxes
+    await _loadGeneric('shieldList', shieldList, (json) => json as String);
+    await _loadGeneric('metadataCache', metadataCache, (json) => MetadataRecord.fromJson(json));
+    await _loadGeneric('parseFailures', parseFailures, (json) => ParseFailureRecord.fromJson(json));
+    await _loadGeneric('downloadTasks', downloadTasks, (json) => DownloadTask.fromJson(json));
+    // torrentEntries and playbackProfiles might be dynamic maps or specific objects.
+    // Assuming dynamic for now as per original code.
+    await _loadGeneric('torrentEntries', torrentEntries, (json) => json);
+    await _loadGeneric('playbackProfiles', playbackProfiles, (json) => json);
 
     await _ensureRetentionDefaults();
   }
 
-  static Future<void> backupBox(String boxName, String backupFilePath) async {
-    final appDocumentDir = await getApplicationSupportDirectory();
-    final hiveBoxFile = File('${appDocumentDir.path}/hive/$boxName.hive');
-    if (await hiveBoxFile.exists()) {
-      await hiveBoxFile.copy(backupFilePath);
-      KazumiLogger().log(Level.info, 'Backup success: $backupFilePath');
-    } else {
-      KazumiLogger().log(Level.warning, 'Hive box not exists');
+  static Future<void> _loadSettings() async {
+    final rows = await db.select(db.settings).get();
+    for (var row in rows) {
+      try {
+        setting._data[row.key] = jsonDecode(row.value);
+      } catch (e) {
+        setting._data[row.key] = row.value;
+      }
     }
+  }
+
+  static Future<void> _loadHistories() async {
+    final rows = await db.select(db.histories).get();
+    for (var row in rows) {
+      try {
+        final h = History.fromJson(jsonDecode(row.json));
+        histories._data[h.key] = h;
+      } catch (e) {
+        KazumiLogger().log(Level.error, 'Failed to load history: $e');
+      }
+    }
+  }
+
+  static Future<void> _loadCollectibles() async {
+    final rows = await db.select(db.collectibles).get();
+    for (var row in rows) {
+      try {
+        final c = CollectedBangumi.fromJson(jsonDecode(row.json));
+        collectibles._data[c.bangumiItem.id] = c;
+      } catch (e) {
+        KazumiLogger().log(Level.error, 'Failed to load collectible: $e');
+      }
+    }
+  }
+
+  static Future<void> _loadCollectChanges() async {
+    final rows = await db.select(db.collectChanges).get();
+    for (var row in rows) {
+      try {
+        final c = CollectedBangumiChange.fromJson(jsonDecode(row.json));
+        collectChanges._data[c.id] = c;
+      } catch (e) {
+        KazumiLogger().log(Level.error, 'Failed to load collect change: $e');
+      }
+    }
+  }
+
+  static Future<void> _loadSearchHistory() async {
+    final rows = await db.select(db.searchHistories).get();
+    for (var row in rows) {
+      try {
+        final s = SearchHistory(row.keyword, row.timestamp.millisecondsSinceEpoch);
+        searchHistory._data[s.key] = s;
+      } catch (e) {
+        KazumiLogger().log(Level.error, 'Failed to load search history: $e');
+      }
+    }
+  }
+
+  static Future<void> _loadGeneric<T>(String boxName, MockBox<T> box, T Function(dynamic) fromJson) async {
+    final rows = await (db.select(db.keyValueCache)..where((t) => t.boxName.equals(boxName))).get();
+    for (var row in rows) {
+      try {
+        dynamic decoded = jsonDecode(row.value);
+        box._data[row.key] = fromJson(decoded);
+      } catch (e) {
+        if (T == String) {
+           box._data[row.key] = row.value as T;
+        }
+      }
+    }
+  }
+
+
+  static Future<void> backupBox(String boxName, String backupFilePath) async {
+    // TODO: Implement backup for SQLite
+    KazumiLogger().log(Level.warning, 'Backup not implemented for SQLite yet');
   }
 
   static Future<void> patchHistory(String backupFilePath) async {
-    final backupFile = File(backupFilePath);
-    final backupContent = await backupFile.readAsBytes();
-    final tempBox = await Hive.openBox('tempHistoryBox', bytes: backupContent);
-    final tempBoxItems = tempBox.toMap().entries;
-
-    for (var tempBoxItem in tempBoxItems) {
-      if (histories.get(tempBoxItem.key) != null) {
-        if (histories
-            .get(tempBoxItem.key)!
-            .lastWatchTime
-            .isBefore(tempBoxItem.value.lastWatchTime)) {
-          await histories.delete(tempBoxItem.key);
-          await histories.put(tempBoxItem.key, tempBoxItem.value);
-        }
-      } else {
-        await histories.put(tempBoxItem.key, tempBoxItem.value);
-      }
-    }
-    await tempBox.close();
+    // TODO: Implement restore for SQLite
+    KazumiLogger().log(Level.warning, 'Restore not implemented for SQLite yet');
   }
 
   static Future<void> restoreCollectibles(String backupFilePath) async {
-    final backupFile = File(backupFilePath);
-    final backupContent = await backupFile.readAsBytes();
-    final tempBox =
-        await Hive.openBox('tempCollectiblesBox', bytes: backupContent);
-    final tempBoxItems = tempBox.toMap().entries;
-    debugPrint('webDav源列表长度 ${tempBoxItems.length}');
-
-    await collectibles.clear();
-    for (var tempBoxItem in tempBoxItems) {
-      await collectibles.put(tempBoxItem.key, tempBoxItem.value);
-    }
-    await tempBox.close();
+    // TODO: Implement restore for SQLite
+    KazumiLogger().log(Level.warning, 'Restore not implemented for SQLite yet');
   }
 
   static Future<List<CollectedBangumi>> getCollectiblesFromFile(
       String backupFilePath) async {
-    final backupFile = File(backupFilePath);
-    final backupContent = await backupFile.readAsBytes();
-    final tempBox =
-        await Hive.openBox('tempCollectiblesBox', bytes: backupContent);
-    final tempBoxItems = tempBox.toMap().entries;
-    debugPrint('webDav源列表长度 ${tempBoxItems.length}');
-
-    final List<CollectedBangumi> collectibles = [];
-    for (var tempBoxItem in tempBoxItems) {
-      collectibles.add(tempBoxItem.value);
-    }
-    await tempBox.close();
-    return collectibles;
+    // TODO: Implement restore for SQLite
+    KazumiLogger().log(Level.warning, 'Restore not implemented for SQLite yet');
+    return [];
   }
 
   static Future<List<CollectedBangumiChange>> getCollectChangesFromFile(
       String backupFilePath) async {
-    final backupFile = File(backupFilePath);
-    final backupContent = await backupFile.readAsBytes();
-    final tempBox =
-        await Hive.openBox('tempCollectChangesBox', bytes: backupContent);
-    final tempBoxItems = tempBox.toMap().entries;
-    debugPrint('webDav源变更列表长度 ${tempBoxItems.length}');
-
-    final List<CollectedBangumiChange> collectChanges = [];
-    for (var tempBoxItem in tempBoxItems) {
-      collectChanges.add(tempBoxItem.value);
-    }
-    await tempBox.close();
-    return collectChanges;
+    // TODO: Implement restore for SQLite
+    KazumiLogger().log(Level.warning, 'Restore not implemented for SQLite yet');
+    return [];
   }
 
   static Future<void> patchCollectibles(
@@ -157,19 +348,14 @@ class GStorage {
 
     // Process local changes
     for (var change in newLocalChanges) {
-      // For delete action, we don't need to look up the local collectible.
-      // We can directly remove the item from the remote list.
       if (change.action == 3) {
-        // Action 3: delete
         remoteCollectibles
             .removeWhere((b) => b.bangumiItem.id == change.bangumiID);
       } else {
-        // For add/update, we still need to look up the local collectible.
         final changedBangumiID = change.bangumiID.toString();
         for (var localCollect in localCollectibles) {
           if (localCollect.bangumiItem.id.toString() == changedBangumiID) {
             if (change.action == 1) {
-              // Action 1: add
               final exists = remoteCollectibles
                   .any((b) => b.bangumiItem.id == localCollect.bangumiItem.id);
               if (!exists) {
@@ -179,17 +365,14 @@ class GStorage {
                     (b) => b.bangumiItem.id == localCollect.bangumiItem.id);
                 localCollect.type = change.type;
                 if (index != -1) {
-                  // Update the entry with local data.
                   remoteCollectibles[index] = localCollect;
                 }
               }
             } else if (change.action == 2) {
-              // Action 2: update
               final index = remoteCollectibles.indexWhere(
                   (b) => b.bangumiItem.id == localCollect.bangumiItem.id);
               localCollect.type = change.type;
               if (index != -1) {
-                // Update the entry with local data.
                 remoteCollectibles[index] = localCollect;
               }
             }

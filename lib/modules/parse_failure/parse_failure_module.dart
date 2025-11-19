@@ -1,32 +1,21 @@
-import 'package:hive/hive.dart';
-
-part 'parse_failure_module.g.dart';
-
 /// 视频解析失败记录
-@HiveType(typeId: 10)
 class ParseFailureRecord {
   /// 番剧 ID (来自 BangumiItem)
-  @HiveField(0)
   int bangumiId;
 
   /// 插件名称
-  @HiveField(1)
   String pluginName;
 
   /// 解析地址 (src)
-  @HiveField(2)
   String src;
 
   /// 失败次数
-  @HiveField(3)
   int failureCount;
 
   /// 最后失败时间
-  @HiveField(4)
   DateTime lastFailureTime;
 
   /// 失败原因 (超时/错误)
-  @HiveField(5, defaultValue: 'timeout')
   String reason;
 
   ParseFailureRecord({
@@ -76,4 +65,7 @@ class ParseFailureRecord {
       'reason': reason,
     };
   }
+
+  factory ParseFailureRecord.fromJson(Map<String, dynamic> json) => ParseFailureRecord.fromMap(json);
+  Map<String, dynamic> toJson() => toMap();
 }

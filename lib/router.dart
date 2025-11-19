@@ -10,7 +10,6 @@ import 'package:kazumi/pages/init_page.dart';
 import 'package:kazumi/pages/menu/menu.dart';
 import 'package:kazumi/pages/setting/setting_page.dart';
 import 'package:kazumi/pages/popular/popular_page.dart';
-import 'package:kazumi/pages/search/search_page.dart';
 import 'package:kazumi/pages/settings/decoder_settings.dart';
 import 'package:kazumi/pages/settings/displaymode_settings.dart';
 import 'package:kazumi/pages/settings/player_settings.dart';
@@ -93,7 +92,9 @@ final GoRouter router = GoRouter(
       routes: [
         GoRoute(
           path: Routes.popular,
-          builder: (context, state) => const PopularPage(),
+          builder: (context, state) => PopularPage(
+            initialSearchTag: Routes.getSearchTag(state.uri.queryParameters),
+          ),
         ),
         GoRoute(
           path: Routes.timeline,
@@ -234,12 +235,6 @@ final GoRouter router = GoRouter(
           builder: (context, state) => const DownloadSettingsPage(),
         ),
       ],
-    ),
-    GoRoute(
-      path: Routes.search,
-      builder: (context, state) => SearchPage(
-        inputTag: Routes.getSearchTag(state.uri.queryParameters),
-      ),
     ),
   ],
 );

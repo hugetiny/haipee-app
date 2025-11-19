@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:webdav_client/webdav_client.dart' as webdav;
-import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:logger/logger.dart';
@@ -26,7 +25,7 @@ class WebDav {
   Future<void> init() async {
     var directory = await getApplicationSupportDirectory();
     webDavLocalTempDirectory = Directory('${directory.path}/webdavTemp');
-    Box setting = GStorage.setting;
+    final setting = GStorage.setting;
     webDavURL = setting.get(SettingBoxKey.webDavURL, defaultValue: '');
     webDavUsername =
         setting.get(SettingBoxKey.webDavUsername, defaultValue: '');

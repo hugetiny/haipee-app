@@ -86,7 +86,6 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
         onTap: () => showSeasonBottomSheet(context),
       ),
       needTopOffset: false,
-      toolbarHeight: 104,
       bottom: TabBar(
         controller: tabController,
         tabs: buildWeekTabs(t),
@@ -518,21 +517,25 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
       gridViewList.add(
         CustomScrollView(
           slivers: [
-            SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                mainAxisSpacing: StyleString.cardSpace - 2,
-                crossAxisSpacing: StyleString.cardSpace,
-                crossAxisCount: crossCount,
-                mainAxisExtent: cardHeight + 12,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (BuildContext context, int index) {
-                  if (bangumiList.isEmpty) return null;
-                  final item = bangumiList[index];
-                  return BangumiTimelineCard(
-                      bangumiItem: item, cardHeight: cardHeight);
-                },
-                childCount: bangumiList.isNotEmpty ? bangumiList.length : 10,
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                  StyleString.cardSpace, 8, StyleString.cardSpace, 0),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  mainAxisSpacing: StyleString.cardSpace - 2,
+                  crossAxisSpacing: StyleString.cardSpace,
+                  crossAxisCount: crossCount,
+                  mainAxisExtent: cardHeight + 12,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    if (bangumiList.isEmpty) return null;
+                    final item = bangumiList[index];
+                    return BangumiTimelineCard(
+                        bangumiItem: item, cardHeight: cardHeight);
+                  },
+                  childCount: bangumiList.isNotEmpty ? bangumiList.length : 10,
+                ),
               ),
             ),
           ],

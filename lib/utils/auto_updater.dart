@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/request/api.dart';
@@ -66,7 +65,7 @@ class AutoUpdater {
 
   final Dio _dio = Dio();
 
-  Box get setting => GStorage.setting;
+  MockBox get setting => GStorage.setting;
 
   AppTranslations get _translations => t;
 

@@ -1,49 +1,30 @@
-import 'package:hive/hive.dart';
-
-part 'download_task.g.dart';
-
-@HiveType(typeId: 20)
-class DownloadTask extends HiveObject {
-  @HiveField(0)
+class DownloadTask {
   String gid;
 
-  @HiveField(1)
   String url;
 
-  @HiveField(2)
   String title;
 
-  @HiveField(3)
   String? fileName;
 
-  @HiveField(4)
   int totalLength;
 
-  @HiveField(5)
   int completedLength;
 
-  @HiveField(6)
   int downloadSpeed;
 
-  @HiveField(7)
   String status; // active, waiting, paused, error, complete, removed
 
-  @HiveField(8)
   DateTime createdAt;
 
-  @HiveField(9)
   DateTime updatedAt;
 
-  @HiveField(10)
   String? errorMessage;
 
-  @HiveField(11)
   int? errorCode;
 
-  @HiveField(12)
   String? bangumiId;
 
-  @HiveField(13)
   int? episodeNumber;
 
   DownloadTask({
@@ -165,5 +146,43 @@ class DownloadTask extends HiveObject {
       bangumiId: bangumiId ?? this.bangumiId,
       episodeNumber: episodeNumber ?? this.episodeNumber,
     );
+  }
+
+  factory DownloadTask.fromJson(Map<String, dynamic> json) {
+    return DownloadTask(
+      gid: json['gid'] as String,
+      url: json['url'] as String,
+      title: json['title'] as String,
+      fileName: json['fileName'] as String?,
+      totalLength: json['totalLength'] as int? ?? 0,
+      completedLength: json['completedLength'] as int? ?? 0,
+      downloadSpeed: json['downloadSpeed'] as int? ?? 0,
+      status: json['status'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      errorMessage: json['errorMessage'] as String?,
+      errorCode: json['errorCode'] as int?,
+      bangumiId: json['bangumiId'] as String?,
+      episodeNumber: json['episodeNumber'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'gid': gid,
+      'url': url,
+      'title': title,
+      'fileName': fileName,
+      'totalLength': totalLength,
+      'completedLength': completedLength,
+      'downloadSpeed': downloadSpeed,
+      'status': status,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'errorMessage': errorMessage,
+      'errorCode': errorCode,
+      'bangumiId': bangumiId,
+      'episodeNumber': episodeNumber,
+    };
   }
 }

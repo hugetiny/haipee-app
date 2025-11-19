@@ -1,14 +1,6 @@
-import 'package:hive/hive.dart';
-
-part 'bangumi_tag.g.dart';
-
-@HiveType(typeId: 4)
 class BangumiTag {
-  @HiveField(0)
   final String name;
-  @HiveField(1)
   final int count;
-  @HiveField(2)
   final int totalCount;
 
   BangumiTag({

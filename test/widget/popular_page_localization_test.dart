@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:drift/native.dart';
+import 'package:kazumi/db/database.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/pages/popular/popular_controller.dart';
@@ -27,20 +26,16 @@ class _FakePopularController extends PopularController {
 }
 
 void main() {
-  late Directory tempDir;
-
   setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('kazumi_test_setting_');
-    Hive.init(tempDir.path);
-    final box = await Hive.openBox('setting');
-    await box.put(SettingBoxKey.showWindowButton, false);
-    GStorage.setting = box;
+    final db = AppDatabase(NativeDatabase.memory());
+    GStorage.db = db;
+    GStorage.setting = MockBox('setting', db);
+    await GStorage.setting.put(SettingBoxKey.showWindowButton, false);
   });
 
   tearDownAll(() async {
-    await GStorage.setting.close();
-    await Hive.close();
-    await tempDir.delete(recursive: true);
+    await GStorage.setting.clear();
+    await GStorage.db.close();
   });
 
   setUp(() {

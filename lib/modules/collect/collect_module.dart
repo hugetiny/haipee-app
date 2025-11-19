@@ -1,14 +1,8 @@
-import 'package:hive/hive.dart';
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 
-part 'collect_module.g.dart';
-
-@HiveType(typeId: 3)
 class CollectedBangumi {
-  @HiveField(0)
   BangumiItem bangumiItem;
 
-  @HiveField(1)
   DateTime time;
 
   // 1. 在看
@@ -16,7 +10,6 @@ class CollectedBangumi {
   // 3. 搁置
   // 4. 看过
   // 5. 抛弃
-  @HiveField(2)
   int type;
 
   String get key => bangumiItem.id.toString();
@@ -24,6 +17,22 @@ class CollectedBangumi {
   CollectedBangumi(this.bangumiItem, this.time, this.type);
 
   static String getKey(BangumiItem bangumiItem) => bangumiItem.id.toString();
+
+  Map<String, dynamic> toJson() {
+    return {
+      'bangumiItem': bangumiItem.toJson(),
+      'time': time.millisecondsSinceEpoch,
+      'type': type,
+    };
+  }
+
+  factory CollectedBangumi.fromJson(Map<String, dynamic> json) {
+    return CollectedBangumi(
+      BangumiItem.fromJson(json['bangumiItem']),
+      DateTime.fromMillisecondsSinceEpoch(json['time']),
+      json['type'],
+    );
+  }
 
   @override
   String toString() {

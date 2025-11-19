@@ -1,10 +1,5 @@
 import 'dart:convert';
 
-import 'package:hive/hive.dart';
-
-part 'metadata_record.g.dart';
-
-@HiveType(typeId: 7)
 class EpisodeMetadata {
   const EpisodeMetadata({
     required this.number,
@@ -15,22 +10,16 @@ class EpisodeMetadata {
     this.stillImageUrl,
   });
 
-  @HiveField(0)
   final int number;
 
-  @HiveField(1)
   final String? title;
 
-  @HiveField(2)
   final String? synopsis;
 
-  @HiveField(3)
   final DateTime? airDate;
 
-  @HiveField(4)
   final int? runtimeMinutes;
 
-  @HiveField(5)
   final String? stillImageUrl;
 
   EpisodeMetadata copyWith({
@@ -50,9 +39,30 @@ class EpisodeMetadata {
       stillImageUrl: stillImageUrl ?? this.stillImageUrl,
     );
   }
+
+  factory EpisodeMetadata.fromJson(Map<String, dynamic> json) {
+    return EpisodeMetadata(
+      number: json['number'] as int,
+      title: json['title'] as String?,
+      synopsis: json['synopsis'] as String?,
+      airDate: json['airDate'] != null ? DateTime.parse(json['airDate'] as String) : null,
+      runtimeMinutes: json['runtimeMinutes'] as int?,
+      stillImageUrl: json['stillImageUrl'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'number': number,
+      'title': title,
+      'synopsis': synopsis,
+      'airDate': airDate?.toIso8601String(),
+      'runtimeMinutes': runtimeMinutes,
+      'stillImageUrl': stillImageUrl,
+    };
+  }
 }
 
-@HiveType(typeId: 8)
 class MetadataSourceSnapshot {
   const MetadataSourceSnapshot({
     required this.sourceId,
@@ -61,16 +71,12 @@ class MetadataSourceSnapshot {
     this.rawPayloadJson,
   });
 
-  @HiveField(0)
   final String sourceId;
 
-  @HiveField(1)
   final DateTime lastSyncedAt;
 
-  @HiveField(2)
   final String localeTag;
 
-  @HiveField(3)
   final String? rawPayloadJson;
 
   Map<String, dynamic>? get rawPayload {
@@ -97,10 +103,27 @@ class MetadataSourceSnapshot {
       rawPayloadJson: rawPayloadJson ?? this.rawPayloadJson,
     );
   }
+
+  factory MetadataSourceSnapshot.fromJson(Map<String, dynamic> json) {
+    return MetadataSourceSnapshot(
+      sourceId: json['sourceId'] as String,
+      lastSyncedAt: DateTime.parse(json['lastSyncedAt'] as String),
+      localeTag: json['localeTag'] as String,
+      rawPayloadJson: json['rawPayloadJson'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'sourceId': sourceId,
+      'lastSyncedAt': lastSyncedAt.toIso8601String(),
+      'localeTag': localeTag,
+      'rawPayloadJson': rawPayloadJson,
+    };
+  }
 }
 
-@HiveType(typeId: 9)
-class MetadataRecord extends HiveObject {
+class MetadataRecord {
   MetadataRecord({
     required this.slug,
     required this.primaryTitle,
@@ -116,40 +139,28 @@ class MetadataRecord extends HiveObject {
     this.sourceSnapshots = const <MetadataSourceSnapshot>[],
   });
 
-  @HiveField(0)
   final String slug;
 
-  @HiveField(1)
   final String primaryTitle;
 
-  @HiveField(2)
   final Map<String, String> alternateTitles;
 
-  @HiveField(3)
   final Map<String, String> synopsis;
 
-  @HiveField(4)
   final String? posterUrl;
 
-  @HiveField(5)
   final String? backdropUrl;
 
-  @HiveField(6)
   final List<EpisodeMetadata> episodes;
 
-  @HiveField(7)
   final String? activeSource;
 
-  @HiveField(8)
   final String localeTag;
 
-  @HiveField(9)
   final DateTime updatedAt;
 
-  @HiveField(10)
   final Map<String, String> identifiers;
 
-  @HiveField(11)
   final List<MetadataSourceSnapshot> sourceSnapshots;
 
   String displayTitleForLocale(String locale) {
@@ -195,5 +206,45 @@ class MetadataRecord extends HiveObject {
       identifiers: identifiers ?? this.identifiers,
       sourceSnapshots: sourceSnapshots ?? this.sourceSnapshots,
     );
+  }
+
+  factory MetadataRecord.fromJson(Map<String, dynamic> json) {
+    return MetadataRecord(
+      slug: json['slug'] as String,
+      primaryTitle: json['primaryTitle'] as String,
+      localeTag: json['localeTag'] as String,
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      alternateTitles: Map<String, String>.from(json['alternateTitles'] ?? {}),
+      synopsis: Map<String, String>.from(json['synopsis'] ?? {}),
+      posterUrl: json['posterUrl'] as String?,
+      backdropUrl: json['backdropUrl'] as String?,
+      episodes: (json['episodes'] as List<dynamic>?)
+              ?.map((e) => EpisodeMetadata.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      activeSource: json['activeSource'] as String?,
+      identifiers: Map<String, String>.from(json['identifiers'] ?? {}),
+      sourceSnapshots: (json['sourceSnapshots'] as List<dynamic>?)
+              ?.map((e) => MetadataSourceSnapshot.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'slug': slug,
+      'primaryTitle': primaryTitle,
+      'localeTag': localeTag,
+      'updatedAt': updatedAt.toIso8601String(),
+      'alternateTitles': alternateTitles,
+      'synopsis': synopsis,
+      'posterUrl': posterUrl,
+      'backdropUrl': backdropUrl,
+      'episodes': episodes.map((e) => e.toJson()).toList(),
+      'activeSource': activeSource,
+      'identifiers': identifiers,
+      'sourceSnapshots': sourceSnapshots.map((e) => e.toJson()).toList(),
+    };
   }
 }

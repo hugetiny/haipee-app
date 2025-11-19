@@ -1,22 +1,21 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:hive/hive.dart';
 import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
 import 'package:kazumi/request/metadata_client.dart';
 import 'package:kazumi/utils/storage.dart';
 
 class MetadataCacheRepository {
   MetadataCacheRepository({
-    Box<dynamic>? metadataBox,
-    Box<dynamic>? settingBox,
+    MockBox<MetadataRecord>? metadataBox,
+    MockBox<dynamic>? settingBox,
     DateTime Function()? clock,
   })  : _metadataBox = metadataBox ?? GStorage.metadataCache,
         _settings = settingBox ?? GStorage.setting,
         _clock = clock ?? DateTime.now;
 
-  final Box<dynamic> _metadataBox;
-  final Box<dynamic> _settings;
+  final MockBox<MetadataRecord> _metadataBox;
+  final MockBox<dynamic> _settings;
   final DateTime Function() _clock;
 
   Duration get _retention => Duration(
@@ -28,7 +27,7 @@ class MetadataCacheRepository {
       );
 
   MetadataRecord? getRecord(String slug) {
-    final MetadataRecord? record = _metadataBox.get(slug) as MetadataRecord?;
+    final MetadataRecord? record = _metadataBox.get(slug);
     if (record == null) {
       return null;
     }
@@ -45,7 +44,7 @@ class MetadataCacheRepository {
     required MetadataFetchResult result,
     Map<String, String>? identifiers,
   }) async {
-    final MetadataRecord? existing = _metadataBox.get(slug) as MetadataRecord?;
+    final MetadataRecord? existing = _metadataBox.get(slug);
     final MetadataRecord updated = _merge(existing, slug, result, identifiers);
     await _metadataBox.put(slug, updated);
     return updated;
@@ -54,13 +53,13 @@ class MetadataCacheRepository {
   Future<void> purgeExpired() async {
     final List<dynamic> keysToRemove = <dynamic>[];
     for (final dynamic key in _metadataBox.keys) {
-      final MetadataRecord? record = _metadataBox.get(key) as MetadataRecord?;
+      final MetadataRecord? record = _metadataBox.get(key);
       if (record != null && _isExpired(record)) {
         keysToRemove.add(key);
       }
     }
-    if (keysToRemove.isNotEmpty) {
-      await _metadataBox.deleteAll(keysToRemove);
+    for (final key in keysToRemove) {
+      await _metadataBox.delete(key);
     }
   }
 

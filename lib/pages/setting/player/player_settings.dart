@@ -3,14 +3,13 @@ import 'package:card_settings_ui/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/pages/setting/providers.dart';
 import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:kazumi/utils/storage.dart';
 
 class PlayerSettingsPage extends ConsumerStatefulWidget {
   const PlayerSettingsPage({super.key});
@@ -20,7 +19,7 @@ class PlayerSettingsPage extends ConsumerStatefulWidget {
 }
 
 class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
-  final Box setting = GStorage.setting;
+  final setting = GStorage.setting;
   final MenuController menuController = MenuController();
 
   @override

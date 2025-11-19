@@ -4,7 +4,6 @@ import 'package:kazumi/modules/collect/collect_module.dart';
 import 'package:kazumi/modules/collect/collect_change_module.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/webdav.dart';
-import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +30,7 @@ class CollectController extends Notifier<CollectState> {
     );
   }
 
-  Box get setting => GStorage.setting;
+  get setting => GStorage.setting;
   List<BangumiItem> get favorites => GStorage.favorites.values.toList();
 
   List<CollectedBangumi> _filteredCollectibles() {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/bean/widget/error_widget.dart';
@@ -18,7 +17,7 @@ class PluginShopPage extends ConsumerStatefulWidget {
 }
 
 class _PluginShopPageState extends ConsumerState<PluginShopPage> {
-  final Box setting = GStorage.setting;
+  final setting = GStorage.setting;
   late ValueNotifier<bool> enableGitProxyNotifier;
   late final PluginsController pluginsController;
 

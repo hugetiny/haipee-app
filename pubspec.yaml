@@ -52,8 +52,11 @@ dependencies:
   web_socket_channel: ^2.4.0
 
   path_provider: ^2.1.1
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  drift: ^2.16.0
+  sqlite3_flutter_libs: ^0.5.20
+  supabase_flutter: ^2.5.0
+  path: ^1.9.0
+  shared_preferences: ^2.2.2
   cached_network_image: ^3.4.1
   card_settings_ui: ^2.0.1
 
@@ -83,7 +86,6 @@ dependencies:
   saver_gallery: ^4.0.0
   html: any
   material_color_utilities: any
-  path: any
   screen_brightness_platform_interface: any
   synchronized: any
   crypto: ^3.0.3
@@ -163,7 +165,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: ^2.4.6
   freezed: ^2.3.2
-  hive_generator: ^2.0.0
+  drift_dev: ^2.16.0
   flutter_launcher_icons: ^0.14.3
   flutter_native_splash: ^2.4.3
   msix: ^3.16.8

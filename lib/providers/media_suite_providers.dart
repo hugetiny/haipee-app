@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/modules/metadata_sync/metadata_cache_repository.dart';
 import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
 import 'package:kazumi/modules/metadata_sync/metadata_sync_controller.dart';
@@ -17,15 +16,15 @@ final metadataCacheRepositoryProvider =
   return MetadataCacheRepository();
 });
 
-final metadataCacheBoxProvider = Provider<Box<MetadataRecord>>((ref) {
+final metadataCacheBoxProvider = Provider<MockBox<MetadataRecord>>((ref) {
   return GStorage.metadataCache;
 });
 
-final downloadQueueBoxProvider = Provider<Box<dynamic>>((ref) {
+final downloadQueueBoxProvider = Provider<MockBox<dynamic>>((ref) {
   return GStorage.downloadTasks;
 });
 
-final playbackProfileBoxProvider = Provider<Box<dynamic>>((ref) {
+final playbackProfileBoxProvider = Provider<MockBox<dynamic>>((ref) {
   return GStorage.playbackProfiles;
 });
 

@@ -3,7 +3,6 @@ import 'package:kazumi/request/bangumi.dart';
 import 'package:kazumi/utils/search_parser.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/modules/search/search_history_module.dart';
-import 'package:hive/hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SearchPageState {
@@ -35,8 +34,8 @@ class SearchPageState {
 }
 
 class SearchPageController extends AutoDisposeNotifier<SearchPageState> {
-  final Box setting = GStorage.setting;
-  final Box searchHistoryBox = GStorage.searchHistory;
+  final setting = GStorage.setting;
+  final MockBox<SearchHistory> searchHistoryBox = GStorage.searchHistory;
 
   @override
   SearchPageState build() {

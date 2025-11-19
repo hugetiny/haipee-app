@@ -9,7 +9,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/request/api.dart';
 import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/utils/logger.dart';
@@ -337,7 +336,7 @@ class Utils {
 
   /// 判断设备是否为宽屏
   static bool isWideScreen() {
-    Box setting = GStorage.setting;
+    final setting = GStorage.setting;
     bool isWideScreen =
         setting.get(SettingBoxKey.isWideScreen, defaultValue: false);
     return isWideScreen;

@@ -1,47 +1,28 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/modules/metadata_sync/metadata_cache_repository.dart';
 import 'package:kazumi/modules/metadata_sync/metadata_sync_controller.dart';
 import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
 import 'package:kazumi/request/metadata_client.dart';
 import 'package:kazumi/utils/storage.dart';
+import 'package:kazumi/db/database.dart';
+import 'package:drift/native.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late Directory tempDir;
-  late Box<dynamic> metadataBox;
-  late Box<dynamic> settingsBox;
+  late AppDatabase db;
+  late MockBox<MetadataRecord> metadataBox;
+  late MockBox<dynamic> settingsBox;
   late MetadataCacheRepository repository;
   late DateTime now;
 
-  setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('metadata_sync_test');
-    Hive.init(tempDir.path);
-    if (!Hive.isAdapterRegistered(7)) {
-      Hive.registerAdapter(EpisodeMetadataAdapter());
-    }
-    if (!Hive.isAdapterRegistered(8)) {
-      Hive.registerAdapter(MetadataSourceSnapshotAdapter());
-    }
-    if (!Hive.isAdapterRegistered(9)) {
-      Hive.registerAdapter(MetadataRecordAdapter());
-    }
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    if (tempDir.existsSync()) {
-      await tempDir.delete(recursive: true);
-    }
-  });
-
   setUp(() async {
-    metadataBox = await Hive.openBox<dynamic>('metadataCacheSyncTest');
-    settingsBox = await Hive.openBox<dynamic>('settingsSyncTest');
+    db = AppDatabase(NativeDatabase.memory());
+    metadataBox = MockBox('metadataCacheSyncTest', db);
+    settingsBox = MockBox('settingsSyncTest', db);
+
     await settingsBox.put(SettingBoxKey.metadataRetentionHours, 24);
     await settingsBox.put(SettingBoxKey.metadataBangumiEnabled, true);
     await settingsBox.put(SettingBoxKey.metadataTmdbEnabled, true);
@@ -54,12 +35,7 @@ void main() {
   });
 
   tearDown(() async {
-    await metadataBox.clear();
-    await metadataBox.close();
-    await settingsBox.clear();
-    await settingsBox.close();
-    await Hive.deleteBoxFromDisk('metadataCacheSyncTest');
-    await Hive.deleteBoxFromDisk('settingsSyncTest');
+    await db.close();
   });
 
   group('Metadata sync integration', () {
@@ -152,7 +128,7 @@ void main() {
 }
 
 class _FakeMetadataClient extends MetadataClient {
-  _FakeMetadataClient(this._responses, Box<dynamic> settingBox, this.locale)
+  _FakeMetadataClient(this._responses, MockBox<dynamic> settingBox, this.locale)
       : super(settingBox: settingBox);
 
   final Map<_MetadataKey, MetadataFetchResult> _responses;

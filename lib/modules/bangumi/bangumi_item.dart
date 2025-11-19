@@ -1,40 +1,21 @@
-import 'package:hive/hive.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
 
-part 'bangumi_item.g.dart';
-
-@HiveType(typeId: 0)
 class BangumiItem {
-  @HiveField(0)
   int id;
-  @HiveField(1)
   int type;
-  @HiveField(2)
   String name;
-  @HiveField(3)
   String nameCn;
-  @HiveField(4)
   String summary;
-  @HiveField(5)
   String airDate;
-  @HiveField(6)
   int airWeekday;
-  @HiveField(7)
   int rank;
-  @HiveField(8)
   Map<String, String> images;
-  @HiveField(9, defaultValue: [])
   List<BangumiTag> tags;
-  @HiveField(10, defaultValue: [])
   List<String> alias;
-  @HiveField(11, defaultValue: 0.0)
   double ratingScore;
-  @HiveField(12, defaultValue: 0)
   int votes;
-  @HiveField(13, defaultValue: [])
   List<int> votesCount;
-  @HiveField(14, defaultValue: '')
   String info;
 
   BangumiItem({
@@ -129,5 +110,28 @@ class BangumiItem {
       votesCount: voteList,
       info: json['info'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'name': name,
+      'name_cn': nameCn,
+      'summary': summary,
+      'date': airDate,
+      'rating': {
+        'rank': rank,
+        'score': ratingScore,
+        'total': votes,
+        'count': {
+          for (var i = 0; i < votesCount.length; i++) '${i + 1}': votesCount[i]
+        }
+      },
+      'images': images,
+      'tags': tags.map((e) => e.toJson()).toList(),
+      'alias': alias,
+      'info': info,
+    };
   }
 }

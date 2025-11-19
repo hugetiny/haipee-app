@@ -26,7 +26,6 @@ import 'package:kazumi/pages/history/history_controller.dart';
 import 'package:kazumi/pages/history/providers.dart';
 import 'package:kazumi/pages/my/my_controller.dart';
 import 'package:kazumi/pages/my/providers.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/request/damaku.dart';
 import 'package:kazumi/modules/danmaku/danmaku_search_response.dart';
@@ -75,7 +74,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
         WindowListener,
         WidgetsBindingObserver,
         SingleTickerProviderStateMixin {
-  Box setting = GStorage.setting;
+  var setting = GStorage.setting;
   late final PlayerController playerController;
   late final VideoPageController videoPageController;
   late final HistoryController historyController;

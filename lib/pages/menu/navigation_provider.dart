@@ -65,8 +65,14 @@ class NavigationBarController extends Notifier<NavigationBarStateData> {
   /// 根据路由路径同步导航索引
   void syncWithRoute(String path) {
     final newIndex = _getIndexFromRoute(path);
-    if (newIndex != null && newIndex != state.selectedIndex) {
-      state = state.copyWith(selectedIndex: newIndex);
+    if (newIndex != null) {
+      if (newIndex != state.selectedIndex || state.isHidden) {
+        state = state.copyWith(selectedIndex: newIndex, isHidden: false);
+      }
+    } else {
+      if (!state.isHidden) {
+        state = state.copyWith(isHidden: true);
+      }
     }
   }
 

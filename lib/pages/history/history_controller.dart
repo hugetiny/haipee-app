@@ -1,7 +1,6 @@
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/modules/history/history_module.dart';
 import 'package:kazumi/utils/storage.dart';
-import 'package:hive/hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HistoryState {
@@ -18,8 +17,8 @@ class HistoryController extends Notifier<HistoryState> {
     return HistoryState(histories: _sortedHistories());
   }
 
-  Box get setting => GStorage.setting;
-  Box<History> get storedHistories => GStorage.histories;
+  get setting => GStorage.setting;
+  MockBox<History> get storedHistories => GStorage.histories;
 
   List<History> _sortedHistories() {
     return List<History>.from(storedHistories.values)

@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/extension.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:logger/logger.dart';
 
@@ -27,6 +26,13 @@ class NetworkImgLayer extends StatelessWidget {
   final int? quality;
   final double? origAspectRatio;
 
+  int _getStableCacheSize(BuildContext context, double size) {
+    final px = size * MediaQuery.of(context).devicePixelRatio;
+    // Use 150px buckets to minimize re-decoding during resize
+    const bucket = 150;
+    return ((px / bucket).ceil() * bucket).toInt();
+  }
+
   @override
   Widget build(BuildContext context) {
     final String imageUrl = src ?? '';
@@ -37,17 +43,17 @@ class NetworkImgLayer extends StatelessWidget {
 
     void setMemCacheSizes() {
       if (aspectRatio > 1) {
-        memCacheHeight = height.cacheSize(context);
+        memCacheHeight = _getStableCacheSize(context, height);
       } else if (aspectRatio < 1) {
-        memCacheWidth = width.cacheSize(context);
+        memCacheWidth = _getStableCacheSize(context, width);
       } else {
         if (origAspectRatio != null && origAspectRatio! > 1) {
-          memCacheWidth = width.cacheSize(context);
+          memCacheWidth = _getStableCacheSize(context, width);
         } else if (origAspectRatio != null && origAspectRatio! < 1) {
-          memCacheHeight = height.cacheSize(context);
+          memCacheHeight = _getStableCacheSize(context, height);
         } else {
-          memCacheWidth = width.cacheSize(context);
-          memCacheHeight = height.cacheSize(context);
+          memCacheWidth = _getStableCacheSize(context, width);
+          memCacheHeight = _getStableCacheSize(context, height);
         }
       }
     }
@@ -116,8 +122,8 @@ class NetworkImgLayer extends StatelessWidget {
                     : 'assets/images/loading.png',
                 width: width,
                 height: height,
-                cacheWidth: width.cacheSize(context),
-                cacheHeight: height.cacheSize(context),
+                cacheWidth: _getStableCacheSize(context, width),
+                cacheHeight: _getStableCacheSize(context, height),
               ),
             ),
     );

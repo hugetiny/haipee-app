@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
+import 'package:drift/native.dart';
+import 'package:kazumi/db/database.dart';
 import 'package:kazumi/modules/metadata_sync/metadata_cache_repository.dart';
 import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
 import 'package:kazumi/request/metadata_client.dart';
@@ -11,45 +11,28 @@ import 'package:kazumi/utils/storage.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late Directory tempDir;
-  late Box<dynamic> metadataBox;
-  late Box<dynamic> settingsBox;
+  late MockBox<MetadataRecord> metadataBox;
+  late MockBox<dynamic> settingsBox;
   late DateTime now;
 
   setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('metadata_cache_repo');
-    Hive.init(tempDir.path);
-    if (!Hive.isAdapterRegistered(7)) {
-      Hive.registerAdapter(EpisodeMetadataAdapter());
-    }
-    if (!Hive.isAdapterRegistered(8)) {
-      Hive.registerAdapter(MetadataSourceSnapshotAdapter());
-    }
-    if (!Hive.isAdapterRegistered(9)) {
-      Hive.registerAdapter(MetadataRecordAdapter());
-    }
+    final db = AppDatabase(NativeDatabase.memory());
+    GStorage.db = db;
   });
 
   tearDownAll(() async {
-    await Hive.close();
-    if (tempDir.existsSync()) {
-      await tempDir.delete(recursive: true);
-    }
+    await GStorage.db.close();
   });
 
   setUp(() async {
-    metadataBox = await Hive.openBox<dynamic>('metadataCacheRepoTest');
-    settingsBox = await Hive.openBox<dynamic>('settingsRepoTest');
+    metadataBox = MockBox('metadataCacheRepoTest', GStorage.db);
+    settingsBox = MockBox('settingsRepoTest', GStorage.db);
     now = DateTime(2025, 1, 1, 8, 0, 0);
   });
 
   tearDown(() async {
     await metadataBox.clear();
-    await metadataBox.close();
     await settingsBox.clear();
-    await settingsBox.close();
-    await Hive.deleteBoxFromDisk('metadataCacheRepoTest');
-    await Hive.deleteBoxFromDisk('settingsRepoTest');
   });
 
   MetadataCacheRepository buildRepository() {

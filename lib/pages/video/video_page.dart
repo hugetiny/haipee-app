@@ -14,7 +14,6 @@ import 'package:kazumi/pages/history/history_controller.dart';
 import 'package:logger/logger.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/pages/player/player_item.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/bean/appbar/drag_to_move_bar.dart' as dtb;
@@ -45,7 +44,7 @@ class VideoPage extends ConsumerStatefulWidget {
 
 class _VideoPageState extends ConsumerState<VideoPage>
     with TickerProviderStateMixin, WindowListener {
-  Box setting = GStorage.setting;
+  var setting = GStorage.setting;
   late final VideoPageController videoPageController;
   late final PlayerController playerController;
   late final HistoryController historyController;

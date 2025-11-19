@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/request/api.dart';
 import 'package:kazumi/request/request.dart';
 import 'package:kazumi/utils/api_credentials.dart';
@@ -37,12 +36,12 @@ class MetadataFetchResult {
 class MetadataClient {
   MetadataClient({
     Request? request,
-    Box<dynamic>? settingBox,
+    MockBox<dynamic>? settingBox,
   })  : _request = request ?? Request(),
         _setting = settingBox ?? GStorage.setting;
 
   final Request _request;
-  final Box<dynamic> _setting;
+  final MockBox<dynamic> _setting;
   final Map<MetadataSourceKind, DateTime> _lastFetch =
       <MetadataSourceKind, DateTime>{};
 

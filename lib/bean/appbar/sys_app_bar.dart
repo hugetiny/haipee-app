@@ -70,7 +70,7 @@ class SysAppBar extends StatelessWidget implements PreferredSizeWidget {
                 child: title!,
               )
             : null,
-        centerTitle: Platform.isIOS ? true : false,
+        // centerTitle: null, // Remove manual override to use default adaptive behavior
         actions: acs.map((e) {
           return EmbeddedNativeControlArea(
             requireOffset: needTopOffset,

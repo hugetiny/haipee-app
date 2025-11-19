@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:kazumi/request/api.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -9,7 +8,7 @@ import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 
 class ApiInterceptor extends Interceptor {
-  static Box setting = GStorage.setting;
+  static final setting = GStorage.setting;
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     // Github mirror

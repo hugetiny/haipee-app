@@ -1,7 +1,6 @@
 import 'package:card_settings_ui/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/utils/storage.dart';
@@ -76,7 +75,7 @@ class SuperResolutionSettings extends ConsumerWidget {
 
   SettingsTile<String> _buildOptionTile(
     WidgetRef ref,
-    Box setting,
+    MockBox setting,
     String value,
     String title,
     String description,

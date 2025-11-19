@@ -1,4 +1,3 @@
-import 'package:hive/hive.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/utils/auto_updater.dart';
 import 'package:kazumi/utils/logger.dart';
@@ -27,7 +26,7 @@ class MyController extends Notifier<MyState> {
     return MyState(shieldList: List.unmodifiable(values));
   }
 
-  final Box setting = GStorage.setting;
+  final setting = GStorage.setting;
 
   /// Initializes shield keywords from persistent storage.
   void loadShieldList() {

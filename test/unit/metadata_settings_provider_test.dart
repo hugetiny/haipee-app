@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:drift/native.dart';
+import 'package:kazumi/db/database.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/pages/setting/providers.dart';
 import 'package:kazumi/utils/storage.dart';
@@ -10,13 +9,12 @@ import 'package:kazumi/utils/storage.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late Directory tempDir;
-  late Box<dynamic> box;
+  late MockBox<dynamic> box;
 
   setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('metadata_settings_test');
-    Hive.init(tempDir.path);
-    box = await Hive.openBox<dynamic>('setting');
+    final db = AppDatabase(NativeDatabase.memory());
+    GStorage.db = db;
+    box = MockBox('setting', db);
     GStorage.setting = box;
     LocaleSettings.setLocale(AppLocale.zhCn);
   });
@@ -31,9 +29,7 @@ void main() {
   });
 
   tearDownAll(() async {
-    await box.close();
-    await Hive.deleteBoxFromDisk('setting');
-    await tempDir.delete(recursive: true);
+    await GStorage.db.close();
   });
 
   test('metadata settings default to enabled sources', () {

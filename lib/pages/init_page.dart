@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/pages/my/my_controller.dart';
@@ -33,7 +32,7 @@ class _InitPageState extends ConsumerState<InitPage> {
   late final CollectController collectController;
   late final ShadersController shadersController;
   late final MyController myController;
-  late final Box setting;
+  late final MockBox setting;
 
   @override
   void initState() {

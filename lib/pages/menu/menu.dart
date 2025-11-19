@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
@@ -162,15 +161,6 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
               child: NavigationRail(
                 backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                 groupAlignment: 1.0,
-                leading: FloatingActionButton(
-                  elevation: 0,
-                  heroTag: null,
-                  onPressed: () {
-                    context.push(Routes.search);
-                  },
-                  tooltip: t.navigation.actions.search,
-                  child: const Icon(Icons.search),
-                ),
                 labelType: NavigationRailLabelType.selected,
                 destinations: <NavigationRailDestination>[
                   NavigationRailDestination(
