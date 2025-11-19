@@ -3,22 +3,24 @@
 ## Overview
 - Flutter anime client that scrapes sources with XPath plugins and layers a custom media-kit player; entrypoint is `lib/main.dart`.
 - Feature modules live under `lib/pages/**`, each pairing a `providers.dart` with a Notifier controller/state (see `lib/providers/providers.dart`).
-- Generated artifacts (`*.g.dart`, `*.freezed.dart`) sit beside sources; refresh with `flutter pub run build_runner build --delete-conflicting-outputs` when models change.
+- Generated artifacts (`*.g.dart`, `*.freezed.dart`) sit beside sources; refresh with `flutter pub run build_runner build --delete-conflicting-outputs` when models or database schema change.
 
 ## Boot Flow
-- `main.dart` initializes `MediaKit`, Hive (`GStorage.init()`), window chrome, and a shared `Dio` client before mounting `ProviderScope`.
-- `lib/pages/init_page.dart` runs first: migrates Hive boxes, copies shaders, loads danmaku shields, prompts for plugin consent, and eventually routes to `/tab/popular`.
-- Initial theme, auto-update mirror, and WebDAV sync decisions are read from `GStorage.setting`; keep that box coherent when modifying onboarding flows.
+- `main.dart` initializes `MediaKit`, Drift Database (`GStorage.init()`), window chrome, and a shared `Dio` client before mounting `ProviderScope`.
+- `lib/pages/init_page.dart` runs first: initializes plugins, copies shaders, loads danmaku shields, and eventually routes to `/tab/popular`.
+- Initial theme, auto-update mirror, and sync decisions are read from `GStorage.setting` (backed by SQLite); keep that box coherent when modifying onboarding flows.
 
 ## Plugin System
 - Runtime plugins are stored as one `plugins.json` under the app support dir (`PluginsController`), seeded from `assets/plugins/*.json` if the user accepts the disclaimer.
 - `lib/plugins/plugins.dart` defines `Plugin` with XPath selectors (`searchList`, `chapterRoads`, etc.) and fetch logic via `xpath_selector_html_parser`.
 - Remote updates come from `PluginHTTP.getPluginList()`; `PluginsController.tryUpdate*` enforces `Api.apiLevel` compatibility and writes back to disk.
 
-## Storage & Sync
-- `lib/utils/storage.dart` centralizes Hive boxes (`collectibles`, `histories`, `collectChanges`, `shieldList`, etc.) and exposes patch/restore helpers for WebDAV.
-- WebDAV sync (`lib/utils/webdav.dart`) copies `.hive` files to `/kazumiSync` with optimistic merge rules; guard `isHistorySyncing` when scheduling background tasks.
-- Theme, display, and plugin preferences originate from the `setting` box; update via Riverpod notifiers (see `lib/pages/settings/providers.dart`) then persist.
+## Storage & Sync (Drift Architecture)
+- **Local Database**: Replaced Hive with **Drift (SQLite)** defined in `lib/db/database.dart`.
+- **Adapter Layer**: `lib/utils/storage.dart` implements `MockBox` to maintain backward compatibility with the Hive-like API (`get`, `put`, `values`), allowing seamless migration of existing controllers.
+- **Serialization**: Complex objects (`History`, `CollectedBangumi`, `MetadataRecord`) are serialized to JSON strings before being stored in SQLite text columns.
+- **Cloud Sync (Planned)**: Moving towards **Cloudflare D1/R2** for synchronization. WebDAV (`lib/utils/webdav.dart`) is currently maintained but slated for replacement/augmentation.
+- **Preferences**: Theme, display, and plugin preferences live in the `Settings` table via `GStorage.setting`.
 
 ## Networking
 - `Request` wraps a singleton `Dio` with `ApiInterceptor` that injects Bangumi, Dandan, and GitHub proxy headers using `GStorage.setting` flags.
@@ -37,6 +39,7 @@
 
 ## Tooling & Commands
 - Standard workflow: `flutter pub get`, `flutter pub run build_runner build --delete-conflicting-outputs`, then `flutter run -d windows` (or target device).
+- **Drift**: Run build_runner whenever `lib/db/database.dart` schema changes.
 - Custom media-kit and WebView forks are pinned via git dependencies in `pubspec.yaml`; ensure `git` access when resolving packages.
 - Windows builds rely on `window_manager` for close prevention/tray; avoid bypassing `windowManager.close()` in desktop exit logic.
 
@@ -44,4 +47,3 @@
 - `KazumiLogger` writes error-level logs to `${ApplicationSupport}/logs/kazumi_logs.log` using a synchronized file lock; call `simpleLog` for quick breadcrumbs.
 - User-visible notifications should go through `KazumiDialog.showToast` to respect the shell scaffold; avoid `ScaffoldMessenger` directly outside that helper.
 - Player/network issues often stem from plugins; log plugin names and URLs with `KazumiLogger().log(Level.info, ...)` as done in the controllers to aid troubleshooting.
-<parameter name="filePath">d:\Users\huget\StudioProjects\Kazumi\.github\copilot-instructions.md
