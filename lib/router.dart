@@ -87,30 +87,52 @@ final GoRouter router = GoRouter(
       path: '/',
       builder: (context, state) => const InitPage(),
     ),
-    ShellRoute(
-      builder: (context, state, child) => ScaffoldMenu(child: child),
-      routes: [
-        GoRoute(
-          path: Routes.popular,
-          builder: (context, state) => PopularPage(
-            initialSearchTag: Routes.getSearchTag(state.uri.queryParameters),
-          ),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        return ScaffoldMenu(navigationShell: navigationShell);
+      },
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: Routes.popular,
+              builder: (context, state) => PopularPage(
+                initialSearchTag: Routes.getSearchTag(state.uri.queryParameters),
+              ),
+            ),
+          ],
         ),
-        GoRoute(
-          path: Routes.timeline,
-          builder: (context, state) => const TimelinePage(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: Routes.timeline,
+              builder: (context, state) => const TimelinePage(),
+            ),
+          ],
         ),
-        GoRoute(
-          path: Routes.my,
-          builder: (context, state) => const MyPage(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: Routes.my,
+              builder: (context, state) => const MyPage(),
+            ),
+          ],
         ),
-        GoRoute(
-          path: Routes.download,
-          builder: (context, state) => const DownloadPage(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: Routes.download,
+              builder: (context, state) => const DownloadPage(),
+            ),
+          ],
         ),
-        GoRoute(
-          path: Routes.settings,
-          builder: (context, state) => const SettingPage(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: Routes.settings,
+              builder: (context, state) => const SettingPage(),
+            ),
+          ],
         ),
       ],
     ),

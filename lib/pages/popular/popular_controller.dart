@@ -13,6 +13,7 @@ class PopularState with _$PopularState {
     @Default('') String currentTag,
     @Default([]) List<BangumiItem> bangumiList, // 按标签获取的番组
     @Default([]) List<BangumiItem> trendList, // 热门趋势番组
+    @Default({}) Map<String, List<BangumiItem>> tagCache, // 标签数据缓存
     @Default(0.0) double scrollOffset,
     @Default(false) bool isLoadingMore,
     @Default(false) bool isTimeOut,
@@ -26,7 +27,12 @@ class PopularController extends Notifier<PopularState> {
   PopularState build() => const PopularState();
 
   void setCurrentTag(String tag) {
-    state = state.copyWith(currentTag: tag);
+    // 尝试从缓存恢复数据，避免 UI 闪烁
+    final cachedList = state.tagCache[tag] ?? [];
+    state = state.copyWith(
+      currentTag: tag,
+      bangumiList: cachedList,
+    );
   }
 
   void clearBangumiList() {
@@ -64,26 +70,39 @@ class PopularController extends Notifier<PopularState> {
 
   Future<void> queryBangumiByTag({String type = 'add'}) async {
     if (state.isLoadingMore) return;
-    List<BangumiItem> bangumiList = state.bangumiList;
+
+    // 使用局部变量处理列表逻辑，避免直接清空 state.bangumiList 导致 UI 闪烁
+    List<BangumiItem> currentList = state.bangumiList;
     if (type == 'init') {
-      bangumiList = [];
+      currentList = [];
     }
+
     state = state.copyWith(isLoadingMore: true);
     try {
-      int randomNumber = Random().nextInt(8000) + 1;
+      int rank = 0;
+      if (type == 'add') {
+        rank = Random().nextInt(8000) + 1;
+      }
       final result = await BangumiHTTP.getBangumiList(
-        rank: randomNumber,
+        rank: rank,
         tag: state.currentTag,
       );
-      bangumiList = [...bangumiList, ...result];
+
+      final newList = [...currentList, ...result];
+
+      // 更新缓存
+      final newCache = Map<String, List<BangumiItem>>.from(state.tagCache);
+      newCache[state.currentTag] = newList;
+
       state = state.copyWith(
-        bangumiList: bangumiList,
+        bangumiList: newList,
+        tagCache: newCache,
         isLoadingMore: false,
-        isTimeOut: bangumiList.isEmpty,
+        isTimeOut: newList.isEmpty,
       );
     } catch (_) {
       state =
-          state.copyWith(isLoadingMore: false, isTimeOut: bangumiList.isEmpty);
+          state.copyWith(isLoadingMore: false, isTimeOut: state.bangumiList.isEmpty);
     }
   }
 }

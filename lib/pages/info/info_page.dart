@@ -281,6 +281,7 @@ class _InfoPageState extends ConsumerState<InfoPage>
             ),
           ),
           floatingActionButton: FloatingActionButton.extended(
+            heroTag: 'info_play_fab',
             icon: const Icon(Icons.play_arrow_rounded),
             label: Text(infoTexts.actions.startWatching),
             onPressed: () {

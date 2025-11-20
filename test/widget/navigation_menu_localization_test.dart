@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/pages/menu/menu.dart';
 
@@ -18,11 +19,34 @@ void main() {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
 
+    final router = GoRouter(
+      initialLocation: '/home',
+      routes: [
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return ScaffoldMenu(navigationShell: navigationShell);
+          },
+          branches: [
+            StatefulShellBranch(
+                routes: [GoRoute(path: '/home', builder: (_, __) => const SizedBox())]),
+            StatefulShellBranch(
+                routes: [GoRoute(path: '/timeline', builder: (_, __) => const SizedBox())]),
+            StatefulShellBranch(
+                routes: [GoRoute(path: '/my', builder: (_, __) => const SizedBox())]),
+            StatefulShellBranch(
+                routes: [GoRoute(path: '/download', builder: (_, __) => const SizedBox())]),
+            StatefulShellBranch(
+                routes: [GoRoute(path: '/settings', builder: (_, __) => const SizedBox())]),
+          ],
+        ),
+      ],
+    );
+
     await tester.pumpWidget(
       ProviderScope(
         child: TranslationProvider(
-          child: const MaterialApp(
-            home: ScaffoldMenu(),
+          child: MaterialApp.router(
+            routerConfig: router,
           ),
         ),
       ),

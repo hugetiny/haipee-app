@@ -7,6 +7,11 @@ class SearchHistory {
 
   String get key => timestamp.toString();
 
+  Map<String, dynamic> toJson() => {
+        'keyword': keyword,
+        'timestamp': timestamp,
+      };
+
   @override
   String toString() {
     return 'Search keyword: $keyword, search time: ${DateTime.fromMillisecondsSinceEpoch(timestamp)}';

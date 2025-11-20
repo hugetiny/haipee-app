@@ -8,9 +8,9 @@ import 'package:kazumi/pages/layout/app_bar_config.dart';
 import 'navigation_provider.dart';
 
 class ScaffoldMenu extends ConsumerStatefulWidget {
-  const ScaffoldMenu({super.key, this.child});
+  const ScaffoldMenu({super.key, required this.navigationShell});
 
-  final Widget? child;
+  final StatefulNavigationShell navigationShell;
 
   @override
   ConsumerState<ScaffoldMenu> createState() => _ScaffoldMenu();
@@ -20,27 +20,12 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
   @override
   void initState() {
     super.initState();
-
-    // 使用 Riverpod 的 ref.listen 监听路由变化
-    // 在下一帧自动同步导航索引，无需 addPostFrameCallback
-    Future.microtask(() {
-      if (mounted) {
-        final location = GoRouterState.of(context).uri.path;
-        ref.read(currentRouteProvider.notifier).updateRoute(location);
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final navigationState = ref.watch(navigationProvider);
     final navigationController = ref.read(navigationProvider.notifier);
-
-    // ✅ 在 build 方法顶层使用 ref.listen
-    // 监听路由变化，自动同步导航索引
-    ref.listen<String>(currentRouteProvider, (previous, next) {
-      navigationController.syncWithRoute(next);
-    });
 
     // 监听方向状态变化，自动同步导航位置
     ref.listen<bool>(orientationProvider, (previous, next) {
@@ -80,7 +65,7 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
 
     return Scaffold(
       appBar: _buildUnifiedAppBar(appBarConfig),
-      body: widget.child ?? const SizedBox.shrink(),
+      body: widget.navigationShell,
       bottomNavigationBar: state.isHidden
           ? const SizedBox(height: 0)
           : NavigationBar(
@@ -111,7 +96,7 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
                   label: t.navigation.tabs.settings,
                 ),
               ],
-              selectedIndex: state.selectedIndex,
+              selectedIndex: widget.navigationShell.currentIndex,
               onDestinationSelected: (int index) {
                 _onNavigationSelected(index, controller);
               },
@@ -189,7 +174,7 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
                     label: Text(t.navigation.tabs.settings),
                   ),
                 ],
-                selectedIndex: state.selectedIndex,
+                selectedIndex: widget.navigationShell.currentIndex,
                 onDestinationSelected: (int index) {
                   _onNavigationSelected(index, controller);
                 },
@@ -202,7 +187,7 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
                 topLeft: Radius.circular(16.0),
                 bottomLeft: Radius.circular(16.0),
               ),
-              child: widget.child ?? const SizedBox.shrink(),
+              child: widget.navigationShell,
             ),
           ),
         ],
@@ -212,28 +197,9 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
 
   /// 统一的导航选择处理
   void _onNavigationSelected(int index, NavigationBarController controller) {
-    // 防止重复导航
-    if (ref.read(navigationProvider).selectedIndex == index) {
-      return;
-    }
-
-    // 先更新状态
-    controller.updateSelectedIndex(index);
-
-    // 再执行导航
-    final route = controller.getRouteFromIndex(index);
-    context.go(route);
-
-    // 更新当前路由（Riverpod 会自动响应）
-    ref.read(currentRouteProvider.notifier).updateRoute(route);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // 使用 Riverpod 同步路由状态
-    final location = GoRouterState.of(context).uri.path;
-    ref.read(currentRouteProvider.notifier).updateRoute(location);
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
   }
 }

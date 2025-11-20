@@ -23,6 +23,7 @@ import 'package:kazumi/pages/player/player_state.dart';
 import 'package:kazumi/pages/video/providers.dart';
 import 'package:kazumi/shaders/providers.dart';
 import 'package:kazumi/providers/translations_provider.dart';
+import 'package:kazumi/utils/plugin_stats_helper.dart';
 
 class PlayerController extends Notifier<PlayerState> {
   @override
@@ -163,8 +164,71 @@ class PlayerController extends Notifier<PlayerState> {
       state = state.copyWith(playerWidth: event ?? 0);
     });
     await playerHeightSubscription?.cancel();
-    playerHeightSubscription = mediaPlayer!.stream.height.listen((event) {
-      state = state.copyWith(playerHeight: event ?? 0);
+    playerHeightSubscription = mediaPlayer!.stream.height.listen((event) async {
+      final height = event ?? 0;
+      state = state.copyWith(playerHeight: height);
+      if (height > 0) {
+        // 延迟一秒以等待 MPV 元数据加载
+        await Future.delayed(const Duration(seconds: 1));
+
+        try {
+          final plugin = videoPageController.currentPlugin;
+
+          String? codec;
+          double? bitrate;
+
+          // 1. 尝试从当前 Track 获取
+          final videoTrack = mediaPlayer!.state.track.video;
+          codec = videoTrack.codec;
+          bitrate = videoTrack.bitrate?.toDouble();
+
+          // 2. 如果缺失，尝试直接从 MPV 属性获取
+          if (mediaPlayer!.platform is NativePlayer) {
+            final pp = mediaPlayer!.platform as NativePlayer;
+
+            if (codec == null || codec.isEmpty) {
+              try {
+                // video-format 通常包含编码名称 (e.g. h264, hevc, av1)
+                codec = await pp.getProperty('video-format');
+                if (codec.isEmpty) {
+                   codec = await pp.getProperty('video-codec');
+                }
+              } catch (_) {}
+            }
+
+            if (bitrate == null || bitrate <= 0) {
+              try {
+                // video-bitrate 单位为 bits/sec
+                var bitrateStr = await pp.getProperty('video-bitrate');
+                bitrate = double.tryParse(bitrateStr);
+
+                // 如果 video-bitrate 无效，尝试 file-bitrate
+                if (bitrate == null || bitrate <= 0) {
+                   bitrateStr = await pp.getProperty('file-bitrate');
+                   bitrate = double.tryParse(bitrateStr);
+                }
+              } catch (_) {}
+            }
+
+            KazumiLogger().log(Level.info, 'Video Stats Debug: Height=$height, Codec=$codec, Bitrate=$bitrate');
+          }
+
+          final updated = await PluginStatsHelper.updateQualityInfo(
+            plugin.name,
+            height: height,
+            codec: codec,
+            bitrate: bitrate,
+          );
+          if (updated) {
+             String info = '${height}P';
+             if (codec != null && codec.isNotEmpty) info += ' $codec';
+             if (bitrate != null && bitrate > 0) info += ' ${(bitrate / 1000000).toStringAsFixed(2)}Mbps';
+             KazumiDialog.showToast(message: '视频源信息已更新: $info');
+          }
+        } catch (e) {
+          KazumiLogger().log(Level.warning, '更新视频源质量信息失败: $e');
+        }
+      }
     });
     await playerVideoParamsSubscription?.cancel();
     playerVideoParamsSubscription =

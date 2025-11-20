@@ -290,14 +290,7 @@ class _PopularPageState extends ConsumerState<PopularPage>
             ),
           ],
         ),
-        floatingActionButton: !_isSearching
-            ? FloatingActionButton(
-                onPressed: () => scrollController.animateTo(0,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeOut),
-                child: const Icon(Icons.arrow_upward),
-              )
-            : null,
+        floatingActionButton: null,
       ),
     );
   }
@@ -441,6 +434,15 @@ class _PopularPageState extends ConsumerState<PopularPage>
     final t = context.t;
     final actions = <Widget>[
       IconButton(
+        tooltip: '回到顶部',
+        onPressed: () {
+          scrollController.animateTo(0,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutQuart);
+        },
+        icon: const Icon(Icons.vertical_align_top_rounded),
+      ),
+      IconButton(
         tooltip: t.navigation.actions.history,
         onPressed: () => context.push(Routes.history),
         icon: const Icon(Icons.history),
@@ -481,7 +483,11 @@ class _PopularPageState extends ConsumerState<PopularPage>
                         duration: const Duration(milliseconds: 250),
                         curve: Curves.easeOut);
                     popularController.setCurrentTag(tag);
-                    await popularController.queryBangumiByTag(type: 'init');
+                    // 移除 clearBangumiList，避免 UI 闪烁
+                    // 如果缓存中没有数据，才发起请求
+                    if (state.tagCache[tag] == null || state.tagCache[tag]!.isEmpty) {
+                      await popularController.queryBangumiByTag(type: 'init');
+                    }
                   }
                 }
               },

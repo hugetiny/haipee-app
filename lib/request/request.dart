@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:flutter/material.dart';
 // import 'package:hive/hive.dart';
 // import 'package:kazumi/utils/storage.dart';
@@ -11,12 +12,32 @@ import 'package:kazumi/utils/utils.dart';
 class Request {
   static final Request _instance = Request._internal();
   static late final Dio dio;
+  static late final CacheStore cacheStore;
+  static late final CacheOptions cacheOptions;
   // Box setting = GStorage.setting;
   // static Box localCache = GStorage.localCache;
   // late bool enableSystemProxy;
   factory Request() => _instance;
 
-  // 初始化 （一般只在应用启动时调用）
+
+  static Future<void> init() async {
+    cacheStore = MemCacheStore();
+
+    cacheOptions = CacheOptions(
+      store: cacheStore,
+      policy: CachePolicy.request, // 优先使用有效缓存（1小时内），过期或无缓存则请求网络
+      maxStale: const Duration(minutes: 5), // 缓存有效期改为 5 分钟
+      priority: CachePriority.normal,
+      cipher: null,
+      keyBuilder: CacheOptions.defaultCacheKeyBuilder,
+      allowPostMethod: true,
+    );
+
+    dio.interceptors.add(DioCacheInterceptor(options: cacheOptions));
+    await setCookie();
+  }
+
+  // 设置 Cookie (保留旧方法兼容)
   static Future<void> setCookie() async {
     setOptionsHeaders();
   }
@@ -86,6 +107,9 @@ class Request {
 
     // 拦截器
     dio.interceptors.add(ApiInterceptor());
+
+    // 缓存拦截器初始化移至 init() 方法中，避免同步构造函数问题
+    // dio.interceptors.add(DioCacheInterceptor(options: cacheOptions));
 
     // 日志拦截器 输出请求、响应内容
     dio.interceptors.add(LogInterceptor(

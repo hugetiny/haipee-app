@@ -76,7 +76,6 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
 
   void _updateAppBarConfig() {
     if (!mounted) return;
-    final t = context.t;
     final state = ref.read(timelineProvider);
 
     ref.read(appBarConfigProvider.notifier).state = AppBarConfig(
@@ -86,10 +85,6 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
         onTap: () => showSeasonBottomSheet(context),
       ),
       needTopOffset: false,
-      bottom: TabBar(
-        controller: tabController,
-        tabs: buildWeekTabs(t),
-      ),
     );
   }
 
@@ -474,9 +469,25 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
                 ),
               );
             }
-            return TabBarView(
-              controller: tabController,
-              children: contentGrid(state.bangumiCalendar),
+            return Column(
+              children: [
+                Container(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: TabBar(
+                    controller: tabController,
+                    tabs: buildWeekTabs(translations),
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    dividerColor: Colors.transparent,
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: tabController,
+                    children: contentGrid(state.bangumiCalendar),
+                  ),
+                ),
+              ],
             );
           }),
           Positioned(

@@ -47,3 +47,9 @@
 - `KazumiLogger` writes error-level logs to `${ApplicationSupport}/logs/kazumi_logs.log` using a synchronized file lock; call `simpleLog` for quick breadcrumbs.
 - User-visible notifications should go through `KazumiDialog.showToast` to respect the shell scaffold; avoid `ScaffoldMessenger` directly outside that helper.
 - Player/network issues often stem from plugins; log plugin names and URLs with `KazumiLogger().log(Level.info, ...)` as done in the controllers to aid troubleshooting.
+
+## Design Philosophy & Interaction Guidelines
+- **Challenge Unreasonable Requests**: If a user's prompt violates standard UI/UX practices (e.g., placing a "Back to Top" button inside a search input), do not blindly follow it. Instead, politely explain why it might be suboptimal and propose a more standard or user-friendly alternative (e.g., placing it in the AppBar or using a FloatingActionButton).
+- **Consistency**: Maintain visual and functional consistency across the app. Re-use existing widgets (`KazumiDialog`, `SysAppBar`) and patterns rather than inventing new ones for one-off features.
+- **Material Design**: Adhere to Material Design 3 guidelines where possible, especially for navigation, dialogs, and input fields.
+- **User Feedback**: Always provide feedback for actions (Toasts for success/failure, loading indicators for async operations). Use `KazumiDialog.showToast` for transient messages.

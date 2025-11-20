@@ -75,14 +75,14 @@ class MockBox<T> {
   Map<dynamic, T> toMap() => Map.from(_data);
 
   void _batchInsert(Batch batch, dynamic key, T value) {
-    final jsonStr = jsonEncode(value);
-
     if (_name == 'setting') {
+      final jsonStr = jsonEncode(value);
       batch.insert(
           _db.settings,
           SettingsCompanion.insert(key: key.toString(), value: jsonStr),
           mode: InsertMode.insertOrReplace);
     } else if (_name == 'histories') {
+      final jsonStr = jsonEncode(value);
       final h = value as History;
       batch.insert(
           _db.histories,
@@ -92,6 +92,7 @@ class MockBox<T> {
               lastWatchTime: h.lastWatchTime),
           mode: InsertMode.insertOrReplace);
     } else if (_name == 'collectibles') {
+      final jsonStr = jsonEncode(value);
       final c = value as CollectedBangumi;
       batch.insert(
           _db.collectibles,
@@ -102,6 +103,7 @@ class MockBox<T> {
               updateTime: Value(c.time)),
           mode: InsertMode.insertOrReplace);
     } else if (_name == 'collectchanges') {
+      final jsonStr = jsonEncode(value);
       final c = value as CollectedBangumiChange;
       batch.insert(
           _db.collectChanges,
@@ -122,6 +124,7 @@ class MockBox<T> {
           mode: InsertMode.insertOrReplace);
     } else {
       // Generic cache
+      final jsonStr = jsonEncode(value);
       batch.insert(
           _db.keyValueCache,
           KeyValueCacheCompanion.insert(
@@ -191,6 +194,7 @@ class GStorage {
   static late MockBox<dynamic> downloadTasks;
   static late MockBox<dynamic> torrentEntries;
   static late MockBox<dynamic> playbackProfiles;
+  static late MockBox<dynamic> pluginStats;
 
   static Future init() async {
     db = AppDatabase();
@@ -208,6 +212,7 @@ class GStorage {
     downloadTasks = MockBox('downloadTasks', db);
     torrentEntries = MockBox('torrentEntries', db);
     playbackProfiles = MockBox('playbackProfiles', db);
+    pluginStats = MockBox('pluginStats', db);
 
     // Load data from DB to memory
     await _loadSettings();
@@ -225,6 +230,7 @@ class GStorage {
     // Assuming dynamic for now as per original code.
     await _loadGeneric('torrentEntries', torrentEntries, (json) => json);
     await _loadGeneric('playbackProfiles', playbackProfiles, (json) => json);
+    await _loadGeneric('pluginStats', pluginStats, (json) => json);
 
     await _ensureRetentionDefaults();
   }

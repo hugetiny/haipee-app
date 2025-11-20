@@ -17,12 +17,14 @@ import 'package:kazumi/pages/webview/providers.dart';
 import 'package:logger/logger.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:kazumi/utils/parse_failure_helper.dart';
+import 'package:kazumi/utils/plugin_stats_helper.dart';
 
 import 'video_state.dart';
 
 class VideoPageController extends AutoDisposeNotifier<VideoPageState> {
   late final PluginsController pluginsController;
   late final WebviewItemController<dynamic> webviewController;
+  DateTime? _sniffingStartTime;
 
   @override
   VideoPageState build() {
@@ -166,12 +168,27 @@ class VideoPageController extends AutoDisposeNotifier<VideoPageState> {
         !urlItem.contains(plugin.baseUrl.replaceAll('https', 'http'))) {
       urlItem = plugin.baseUrl + urlItem;
     }
+
+    _sniffingStartTime = DateTime.now();
+
     await webviewController.loadUrl(
       urlItem,
       plugin.useNativePlayer,
       plugin.useLegacyParser,
       offset: offset,
     );
+  }
+
+  Future<void> completeSniffing() async {
+    if (_sniffingStartTime != null) {
+      final duration = DateTime.now().difference(_sniffingStartTime!).inMilliseconds;
+      _sniffingStartTime = null;
+      try {
+        await PluginStatsHelper.recordSniffingLatency(currentPlugin.name, duration);
+      } catch (e) {
+        KazumiLogger().log(Level.warning, '记录解析延迟失败: $e');
+      }
+    }
   }
 
   Future<void> queryBangumiEpisodeCommentsByID(int id, int episode) async {
@@ -209,6 +226,10 @@ class VideoPageController extends AutoDisposeNotifier<VideoPageState> {
     try {
       final roads =
           await matched.querychapterRoads(url, cancelToken: cancelToken);
+
+      // 移除旧的延迟记录逻辑，现在只记录视频解析(sniffing)延迟
+      // await PluginLatencyHelper.recordLatency(pluginName, stopwatch.elapsedMilliseconds);
+
       state = state.copyWith(
         roadList: List<Road>.from(roads),
         currentPlugin: matched,

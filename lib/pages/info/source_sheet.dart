@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,17 +17,16 @@ import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/plugins/plugins_providers.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/parse_failure_helper.dart';
+import 'package:kazumi/utils/plugin_stats_helper.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:logger/logger.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
-  enum SourceSortOption {
+enum SourceSortOption {
   original,
-  nameAsc,
-  nameDesc,
-  failureAsc,  // 失败次数升序 (可靠的在前)
-  failureDesc, // 失败次数降序 (不可靠的在前)
-  fastestResponse, // 响应速度最快
+  qualityDesc, // 画质优先 (分辨率高在前)
+  latencyAsc,  // 延迟优先 (延迟低在前)
 }
 
 /// Provider for source sort option
@@ -158,20 +158,13 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
   }
 
   String _sortOptionLabel(SourceSortOption option) {
-    final options = context.t.library.info.sourceSheet.sort.options;
     switch (option) {
       case SourceSortOption.original:
-        return options.original;
-      case SourceSortOption.nameAsc:
-        return options.nameAsc;
-      case SourceSortOption.nameDesc:
-        return options.nameDesc;
-      case SourceSortOption.failureAsc:
-        return options.failureAsc;
-      case SourceSortOption.failureDesc:
-        return options.failureDesc;
-      case SourceSortOption.fastestResponse:
-        return '响应速度最快';
+        return '默认 (响应速度)';
+      case SourceSortOption.qualityDesc:
+        return '画质优先';
+      case SourceSortOption.latencyAsc:
+        return '视频延迟优先';
     }
   }
 
@@ -180,46 +173,8 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     SourceSortOption sortOption,
     Map<String, int> responseTimes,
   ) {
-    final bangumiItem = widget.infoController.bangumiItem;
-
     switch (sortOption) {
       case SourceSortOption.original:
-        return entries;
-      case SourceSortOption.nameAsc:
-        return [...entries]..sort((a, b) => a.item.name.compareTo(b.item.name));
-      case SourceSortOption.nameDesc:
-        return [...entries]..sort((a, b) => b.item.name.compareTo(a.item.name));
-      case SourceSortOption.failureAsc:
-        // 失败次数升序 (可靠的在前)
-        return [...entries]..sort((a, b) {
-          final aCount = ParseFailureHelper.getFailureCount(
-            bangumiId: bangumiItem.id,
-            pluginName: a.plugin.name,
-            src: a.item.src,
-          );
-          final bCount = ParseFailureHelper.getFailureCount(
-            bangumiId: bangumiItem.id,
-            pluginName: b.plugin.name,
-            src: b.item.src,
-          );
-          return aCount.compareTo(bCount);
-        });
-      case SourceSortOption.failureDesc:
-        // 失败次数降序 (不可靠的在前)
-        return [...entries]..sort((a, b) {
-          final aCount = ParseFailureHelper.getFailureCount(
-            bangumiId: bangumiItem.id,
-            pluginName: a.plugin.name,
-            src: a.item.src,
-          );
-          final bCount = ParseFailureHelper.getFailureCount(
-            bangumiId: bangumiItem.id,
-            pluginName: b.plugin.name,
-            src: b.item.src,
-          );
-          return bCount.compareTo(aCount);
-        });
-      case SourceSortOption.fastestResponse:
         return [...entries]..sort((a, b) {
           final timeA = responseTimes[a.plugin.name] ?? 0;
           final timeB = responseTimes[b.plugin.name] ?? 0;
@@ -227,26 +182,23 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
           if (timeB == 0) return -1;
           return timeA.compareTo(timeB);
         });
+      case SourceSortOption.qualityDesc:
+        return [...entries]..sort((a, b) {
+          final qA = PluginStatsHelper.getMaxQuality(a.plugin.name);
+          final qB = PluginStatsHelper.getMaxQuality(b.plugin.name);
+          final hA = qA?['height'] as int? ?? 0;
+          final hB = qB?['height'] as int? ?? 0;
+          return hB.compareTo(hA);
+        });
+      case SourceSortOption.latencyAsc:
+        return [...entries]..sort((a, b) {
+          final timeA = PluginStatsHelper.getDisplaySniffingLatency(a.plugin.name);
+          final timeB = PluginStatsHelper.getDisplaySniffingLatency(b.plugin.name);
+          if (timeA == 0) return 1;
+          if (timeB == 0) return -1;
+          return timeA.compareTo(timeB);
+        });
     }
-  }
-
-  String _shortenEndpoint(String src) {
-    if (src.isEmpty) {
-      return src;
-    }
-    if (src.startsWith('http')) {
-      try {
-        final uri = Uri.parse(src);
-        final buffer = StringBuffer(uri.host);
-        if (uri.pathSegments.isNotEmpty) {
-          buffer.write('/${uri.pathSegments.first}');
-        }
-        return buffer.toString();
-      } catch (_) {
-        return src;
-      }
-    }
-    return src.length > 48 ? '${src.substring(0, 47)}…' : src;
   }
 
   Future<void> _handleSearchItemTap(
@@ -431,6 +383,11 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
       src: item.src,
     );
 
+    // 获取统计信息
+    final sniffingLatency = PluginStatsHelper.getDisplaySniffingLatency(plugin.name);
+    final maxQuality = PluginStatsHelper.getMaxQuality(plugin.name);
+    final fullUrl = _resolveUrl(plugin, item.src);
+
     return Card(
       elevation: 0,
       clipBehavior: Clip.antiAlias,
@@ -452,30 +409,33 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                       style: theme.textTheme.labelLarge,
                     ),
                   ),
-                  if (responseTime > 0) ...[
+                  if (sniffingLatency > 0) ...[
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.timer_outlined,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${responseTime}ms',
-                            style: theme.textTheme.labelSmall?.copyWith(
+                    Tooltip(
+                      message: '视频延迟 (最近3次)',
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.timer_outlined,
+                              size: 14,
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              '${sniffingLatency}ms',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -485,7 +445,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                       onTap: () => _showFailureDetails(context, plugin, item),
                       borderRadius: BorderRadius.circular(4),
                       child: Tooltip(
-                        message: '历史解析失败 $failureCount 次,点击查看详情',
+                        message: '历史列表获取失败 $failureCount 次,点击查看详情',
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
@@ -530,26 +490,35 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                 softWrap: false,
                 style: theme.textTheme.titleMedium,
               ),
-              const SizedBox(height: 12),
-              Text(
-                _shortenEndpoint(item.src),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
+              const SizedBox(height: 4),
+              SizedBox(
+                height: 20, // Fixed height for quality info line
+                child: Text(
+                  maxQuality == null ? '' : PluginStatsHelper.getQualityLabel(maxQuality),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FilledButton.icon(
-                    onPressed: () =>
-                        _handleSearchItemTap(context, plugin, item),
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text(sheetTexts.card.play),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 20, // Fixed height for URL line
+                child: InkWell(
+                  onTap: () => launchUrlString(fullUrl, mode: LaunchMode.externalApplication),
+                  child: Text(
+                    fullUrl,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                      decoration: TextDecoration.underline,
+                      decorationColor: theme.colorScheme.outline,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -781,6 +750,17 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     );
   }
 
+  String _resolveUrl(Plugin plugin, String url) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    final baseUrl = plugin.baseUrl;
+    if (url.startsWith('/')) {
+      return baseUrl.endsWith('/') ? baseUrl + url.substring(1) : baseUrl + url;
+    }
+    return baseUrl.endsWith('/') ? baseUrl + url : '$baseUrl/$url';
+  }
+
   @override
   Widget build(BuildContext context) {
     final pluginState = ref.watch(pluginsProvider);
@@ -933,6 +913,18 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
           sheetTexts.title.replaceFirst('{name}', bangumiName),
         ),
         actions: [
+          if (kDebugMode)
+            IconButton(
+              tooltip: 'Clear Plugin Stats (Debug)',
+              icon: const Icon(Icons.delete_forever_outlined),
+              onPressed: () async {
+                await PluginStatsHelper.clearAll();
+                if (context.mounted) {
+                  KazumiDialog.showToast(message: 'Plugin stats cleared');
+                  setState(() {}); // Refresh UI to reflect cleared stats
+                }
+              },
+            ),
           _buildSortButton(),
           const SizedBox(width: 8),
         ],

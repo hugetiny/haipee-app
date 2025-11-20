@@ -68,7 +68,7 @@ void main() async {
     });
   }
   Request();
-  await Request.setCookie();
+  await Request.init();
 
   // Initialize aria2 feature manager to detect availability
   await Aria2FeatureManager().initialize();

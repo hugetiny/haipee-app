@@ -280,12 +280,12 @@ class _AppWidgetState extends ConsumerState<AppWidget>
         appBarTheme: AppBarTheme(
           backgroundColor: dynamicScheme.surface,
           foregroundColor: dynamicScheme.onSurface,
-          elevation: 0.5,
-          scrolledUnderElevation: 0,
-          toolbarHeight: 40,
-          surfaceTintColor: Colors.transparent,
-          iconTheme: IconThemeData(size: 22, color: dynamicScheme.onSurface),
-          titleTextStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          // elevation: 0.5,
+          // scrolledUnderElevation: 0,
+          // toolbarHeight: 40,
+          // surfaceTintColor: Colors.transparent,
+          // iconTheme: IconThemeData(size: 22, color: dynamicScheme.onSurface),
+          // titleTextStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         iconButtonTheme: IconButtonThemeData(
           style: ButtonStyle(

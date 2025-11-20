@@ -7,6 +7,7 @@ import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/plugins/plugins_controller.dart';
 import 'package:kazumi/plugins/plugins_providers.dart';
 import 'package:kazumi/utils/logger.dart';
+import 'package:kazumi/utils/plugin_stats_helper.dart';
 import 'package:logger/logger.dart';
 
 enum PluginSearchStatus { pending, success, error }
@@ -261,7 +262,11 @@ class SourceSearchController
       if (response.data.isNotEmpty) {
         _pluginsController.validityTracker.markSearchValid(plugin.name);
       }
-      _markSuccess(plugin.name, response.data, stopwatch.elapsedMilliseconds);
+
+      // 获取显示用的延迟 (来自视频解析历史)
+      final displayLatency = PluginStatsHelper.getDisplaySniffingLatency(plugin.name);
+
+      _markSuccess(plugin.name, response.data, displayLatency);
     } catch (error) {
       if (_isDisposed) {
         return;

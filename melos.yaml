@@ -1,0 +1,11 @@
+name: kazumi_workspace
+
+packages:
+  - .
+  - packages/**
+
+command:
+  bootstrap:
+    # It's possible to use the pubspec_overrides.yaml mechanism to link packages
+    # instead of the default symlinking.
+    usePubspecOverrides: true

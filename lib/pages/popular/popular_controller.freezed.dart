@@ -21,6 +21,8 @@ mixin _$PopularState {
       throw _privateConstructorUsedError; // 按标签获取的番组
   List<BangumiItem> get trendList =>
       throw _privateConstructorUsedError; // 热门趋势番组
+  Map<String, List<BangumiItem>> get tagCache =>
+      throw _privateConstructorUsedError; // 标签数据缓存
   double get scrollOffset => throw _privateConstructorUsedError;
   bool get isLoadingMore => throw _privateConstructorUsedError;
   bool get isTimeOut => throw _privateConstructorUsedError;
@@ -40,6 +42,7 @@ abstract class $PopularStateCopyWith<$Res> {
       {String currentTag,
       List<BangumiItem> bangumiList,
       List<BangumiItem> trendList,
+      Map<String, List<BangumiItem>> tagCache,
       double scrollOffset,
       bool isLoadingMore,
       bool isTimeOut});
@@ -61,6 +64,7 @@ class _$PopularStateCopyWithImpl<$Res, $Val extends PopularState>
     Object? currentTag = null,
     Object? bangumiList = null,
     Object? trendList = null,
+    Object? tagCache = null,
     Object? scrollOffset = null,
     Object? isLoadingMore = null,
     Object? isTimeOut = null,
@@ -78,6 +82,10 @@ class _$PopularStateCopyWithImpl<$Res, $Val extends PopularState>
           ? _value.trendList
           : trendList // ignore: cast_nullable_to_non_nullable
               as List<BangumiItem>,
+      tagCache: null == tagCache
+          ? _value.tagCache
+          : tagCache // ignore: cast_nullable_to_non_nullable
+              as Map<String, List<BangumiItem>>,
       scrollOffset: null == scrollOffset
           ? _value.scrollOffset
           : scrollOffset // ignore: cast_nullable_to_non_nullable
@@ -106,6 +114,7 @@ abstract class _$$PopularStateImplCopyWith<$Res>
       {String currentTag,
       List<BangumiItem> bangumiList,
       List<BangumiItem> trendList,
+      Map<String, List<BangumiItem>> tagCache,
       double scrollOffset,
       bool isLoadingMore,
       bool isTimeOut});
@@ -125,6 +134,7 @@ class __$$PopularStateImplCopyWithImpl<$Res>
     Object? currentTag = null,
     Object? bangumiList = null,
     Object? trendList = null,
+    Object? tagCache = null,
     Object? scrollOffset = null,
     Object? isLoadingMore = null,
     Object? isTimeOut = null,
@@ -142,6 +152,10 @@ class __$$PopularStateImplCopyWithImpl<$Res>
           ? _value._trendList
           : trendList // ignore: cast_nullable_to_non_nullable
               as List<BangumiItem>,
+      tagCache: null == tagCache
+          ? _value._tagCache
+          : tagCache // ignore: cast_nullable_to_non_nullable
+              as Map<String, List<BangumiItem>>,
       scrollOffset: null == scrollOffset
           ? _value.scrollOffset
           : scrollOffset // ignore: cast_nullable_to_non_nullable
@@ -165,11 +179,13 @@ class _$PopularStateImpl implements _PopularState {
       {this.currentTag = '',
       final List<BangumiItem> bangumiList = const [],
       final List<BangumiItem> trendList = const [],
+      final Map<String, List<BangumiItem>> tagCache = const {},
       this.scrollOffset = 0.0,
       this.isLoadingMore = false,
       this.isTimeOut = false})
       : _bangumiList = bangumiList,
-        _trendList = trendList;
+        _trendList = trendList,
+        _tagCache = tagCache;
 
   @override
   @JsonKey()
@@ -195,6 +211,17 @@ class _$PopularStateImpl implements _PopularState {
   }
 
 // 热门趋势番组
+  final Map<String, List<BangumiItem>> _tagCache;
+// 热门趋势番组
+  @override
+  @JsonKey()
+  Map<String, List<BangumiItem>> get tagCache {
+    if (_tagCache is EqualUnmodifiableMapView) return _tagCache;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_tagCache);
+  }
+
+// 标签数据缓存
   @override
   @JsonKey()
   final double scrollOffset;
@@ -207,7 +234,7 @@ class _$PopularStateImpl implements _PopularState {
 
   @override
   String toString() {
-    return 'PopularState(currentTag: $currentTag, bangumiList: $bangumiList, trendList: $trendList, scrollOffset: $scrollOffset, isLoadingMore: $isLoadingMore, isTimeOut: $isTimeOut)';
+    return 'PopularState(currentTag: $currentTag, bangumiList: $bangumiList, trendList: $trendList, tagCache: $tagCache, scrollOffset: $scrollOffset, isLoadingMore: $isLoadingMore, isTimeOut: $isTimeOut)';
   }
 
   @override
@@ -221,6 +248,7 @@ class _$PopularStateImpl implements _PopularState {
                 .equals(other._bangumiList, _bangumiList) &&
             const DeepCollectionEquality()
                 .equals(other._trendList, _trendList) &&
+            const DeepCollectionEquality().equals(other._tagCache, _tagCache) &&
             (identical(other.scrollOffset, scrollOffset) ||
                 other.scrollOffset == scrollOffset) &&
             (identical(other.isLoadingMore, isLoadingMore) ||
@@ -235,6 +263,7 @@ class _$PopularStateImpl implements _PopularState {
       currentTag,
       const DeepCollectionEquality().hash(_bangumiList),
       const DeepCollectionEquality().hash(_trendList),
+      const DeepCollectionEquality().hash(_tagCache),
       scrollOffset,
       isLoadingMore,
       isTimeOut);
@@ -251,6 +280,7 @@ abstract class _PopularState implements PopularState {
       {final String currentTag,
       final List<BangumiItem> bangumiList,
       final List<BangumiItem> trendList,
+      final Map<String, List<BangumiItem>> tagCache,
       final double scrollOffset,
       final bool isLoadingMore,
       final bool isTimeOut}) = _$PopularStateImpl;
@@ -262,6 +292,8 @@ abstract class _PopularState implements PopularState {
   @override // 按标签获取的番组
   List<BangumiItem> get trendList;
   @override // 热门趋势番组
+  Map<String, List<BangumiItem>> get tagCache;
+  @override // 标签数据缓存
   double get scrollOffset;
   @override
   bool get isLoadingMore;

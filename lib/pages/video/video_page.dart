@@ -32,6 +32,7 @@ import 'package:kazumi/pages/webview/providers.dart';
 import 'package:kazumi/pages/video/video_state.dart';
 import 'package:kazumi/pages/setting/providers.dart';
 import 'package:kazumi/utils/parse_failure_helper.dart';
+import 'package:kazumi/utils/plugin_stats_helper.dart';
 import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 
@@ -137,6 +138,8 @@ class _VideoPageState extends ConsumerState<VideoPage>
     _videoURLSubscription =
         webviewItemController.onVideoURLParser.listen((event) {
       final (mediaUrl, offset) = event;
+      // 记录解析成功耗时
+      videoPageController.completeSniffing();
       playerController.init(mediaUrl, offset: offset);
     });
     _logSubscription = webviewItemController.onLog.listen((event) {
@@ -153,6 +156,8 @@ class _VideoPageState extends ConsumerState<VideoPage>
       // 检测解析失败并记录
       if (event.contains('解析视频资源超时')) {
         _handleParseFailure();
+        // 记录嗅探失败次数
+        _handleSniffingFailure();
       }
 
       // ✅ Update webviewLogLines via Riverpod provider
@@ -182,6 +187,18 @@ class _VideoPageState extends ConsumerState<VideoPage>
       }
     } catch (e) {
       KazumiLogger().log(Level.error, '记录解析失败时出错: $e');
+    }
+  }
+
+  void _handleSniffingFailure() {
+    try {
+      final videoState = ref.read(videoProvider);
+      final plugin = videoState.currentPlugin;
+      if (plugin != null) {
+        PluginStatsHelper.recordSniffingFailure(plugin.name);
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.error, '记录嗅探失败时出错: $e');
     }
   }
 

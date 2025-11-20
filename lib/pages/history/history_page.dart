@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
@@ -83,6 +84,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage>
           appBar: SysAppBar(
             title: Text(context.t.library.history.title),
             actions: [
+              if (kDebugMode)
+                IconButton(
+                  onPressed: showHistoryClearDialog,
+                  icon: const Icon(Icons.delete_forever_outlined),
+                  tooltip: 'Clear All (Debug)',
+                ),
               IconButton(
                   onPressed: () {
                     ref.read(historyShowDeleteProvider.notifier).state =
