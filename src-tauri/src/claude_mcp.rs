@@ -10,7 +10,7 @@ use crate::error::AppError;
 /// 需要在 Windows 上用 cmd /c 包装的命令
 /// 这些命令在 Windows 上实际是 .cmd 批处理文件，需要通过 cmd /c 来执行
 #[cfg(windows)]
-const WINDOWS_WRAP_COMMANDS: &[&str] = &["npx", "npm", "yarn", "pnpm", "node", "bun", "deno"];
+const WINDOWS_WRAP_COMMANDS: &[&str] = &["npx", "npm", "yarn", "node", "bun", "deno"];
 
 /// Windows 平台：将 `npx args...` 转换为 `cmd /c npx args...`
 /// 解决 Claude Code /doctor 报告的 "Windows requires 'cmd /c' wrapper to execute npx" 警告

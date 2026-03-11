@@ -458,7 +458,6 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
       baseUrl: "https://api.longcat.chat/v1",
       apiKey: "",
       api: "openai-completions",
-      authHeader: true,
       models: [
         {
           id: "LongCat-Flash-Chat",

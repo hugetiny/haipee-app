@@ -324,7 +324,7 @@ flatpak run com.ccswitch.desktop
 ### Environment Requirements
 
 - Node.js 18+
-- pnpm 8+
+- Bun 1.0+
 - Rust 1.85+
 - Tauri CLI 2.8+
 
@@ -332,31 +332,31 @@ flatpak run com.ccswitch.desktop
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Dev mode (hot reload)
-pnpm dev
+bun dev
 
 # Type check
-pnpm typecheck
+bun run typecheck
 
 # Format code
-pnpm format
+bun run format
 
 # Check code format
-pnpm format:check
+bun run format:check
 
 # Run frontend unit tests
-pnpm test:unit
+bun run test:unit
 
 # Run tests in watch mode (recommended for development)
-pnpm test:unit:watch
+bun run test:unit:watch
 
 # Build application
-pnpm build
+bun run build
 
 # Build debug version
-pnpm tauri build --debug
+bun tauri build --debug
 ```
 
 ### Rust Backend Development
@@ -392,13 +392,13 @@ cargo test --features test-hooks
 
 ```bash
 # Run all tests
-pnpm test:unit
+bun run test:unit
 
 # Watch mode (auto re-run)
-pnpm test:unit:watch
+bun run test:unit:watch
 
 # With coverage report
-pnpm test:unit --coverage
+bun run test:unit --coverage
 ```
 
 ### Tech Stack
@@ -458,9 +458,9 @@ Issues and suggestions are welcome!
 
 Before submitting PRs, please ensure:
 
-- Pass type check: `pnpm typecheck`
-- Pass format check: `pnpm format:check`
-- Pass unit tests: `pnpm test:unit`
+- Pass type check: `bun run typecheck`
+- Pass format check: `bun run format:check`
+- Pass unit tests: `bun run test:unit`
 
 For new features, please open an issue for discussion before submitting a PR. PRs for features that are not a good fit for the project may be closed.
 

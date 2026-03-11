@@ -327,7 +327,7 @@ flatpak run com.ccswitch.desktop
 ### 环境要求
 
 - Node.js 18+
-- pnpm 8+
+- Bun 1.0+
 - Rust 1.85+
 - Tauri CLI 2.8+
 
@@ -335,31 +335,31 @@ flatpak run com.ccswitch.desktop
 
 ```bash
 # 安装依赖
-pnpm install
+bun install
 
 # 开发模式（热重载）
-pnpm dev
+bun dev
 
 # 类型检查
-pnpm typecheck
+bun run typecheck
 
 # 代码格式化
-pnpm format
+bun run format
 
 # 检查代码格式
-pnpm format:check
+bun run format:check
 
 # 运行前端单元测试
-pnpm test:unit
+bun run test:unit
 
 # 监听模式运行测试（推荐开发时使用）
-pnpm test:unit:watch
+bun run test:unit:watch
 
 # 构建应用
-pnpm build
+bun run build
 
 # 构建调试版本
-pnpm tauri build --debug
+bun tauri build --debug
 ```
 
 ### Rust 后端开发
@@ -395,13 +395,13 @@ cargo test --features test-hooks
 
 ```bash
 # 运行所有测试
-pnpm test:unit
+bun run test:unit
 
 # 监听模式（自动重跑）
-pnpm test:unit:watch
+bun run test:unit:watch
 
 # 带覆盖率报告
-pnpm test:unit --coverage
+bun run test:unit --coverage
 ```
 
 ### 技术栈
@@ -461,9 +461,9 @@ pnpm test:unit --coverage
 
 提交 PR 前请确保：
 
-- 通过类型检查：`pnpm typecheck`
-- 通过格式检查：`pnpm format:check`
-- 通过单元测试：`pnpm test:unit`
+- 通过类型检查：`bun run typecheck`
+- 通过格式检查：`bun run format:check`
+- 通过单元测试：`bun run test:unit`
 
 新功能开发前，欢迎先开 Issue 讨论实现方案，不适合项目的功能性 PR 有可能会被关闭。
 

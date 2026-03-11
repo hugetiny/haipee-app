@@ -324,7 +324,7 @@ flatpak run com.ccswitch.desktop
 ### 開発環境
 
 - Node.js 18+
-- pnpm 8+
+- Bun 1.0+
 - Rust 1.85+
 - Tauri CLI 2.8+
 
@@ -332,31 +332,31 @@ flatpak run com.ccswitch.desktop
 
 ```bash
 # 依存関係をインストール
-pnpm install
+bun install
 
 # ホットリロード付き開発モード
-pnpm dev
+bun dev
 
 # 型チェック
-pnpm typecheck
+bun run typecheck
 
 # コード整形
-pnpm format
+bun run format
 
 # フォーマット検証
-pnpm format:check
+bun run format:check
 
 # フロントエンド単体テスト
-pnpm test:unit
+bun run test:unit
 
 # ウォッチモード（開発に推奨）
-pnpm test:unit:watch
+bun run test:unit:watch
 
 # アプリをビルド
-pnpm build
+bun run build
 
 # デバッグビルド
-pnpm tauri build --debug
+bun tauri build --debug
 ```
 
 ### Rust バックエンド開発
@@ -392,13 +392,13 @@ cargo test --features test-hooks
 
 ```bash
 # 全テストを実行
-pnpm test:unit
+bun run test:unit
 
 # ウォッチモード（自動再実行）
-pnpm test:unit:watch
+bun run test:unit:watch
 
 # カバレッジレポート付き
-pnpm test:unit --coverage
+bun run test:unit --coverage
 ```
 
 ### 技術スタック
@@ -458,9 +458,9 @@ Issue や提案を歓迎します！
 
 PR を送る前に以下をご確認ください：
 
-- 型チェック: `pnpm typecheck`
-- フォーマットチェック: `pnpm format:check`
-- 単体テスト: `pnpm test:unit`
+- 型チェック: `bun run typecheck`
+- フォーマットチェック: `bun run format:check`
+- 単体テスト: `bun run test:unit`
 
 新機能の場合は、PR を送る前に Issue でディスカッションしてください。プロジェクトに合わない機能の PR はクローズされる場合があります。
 
