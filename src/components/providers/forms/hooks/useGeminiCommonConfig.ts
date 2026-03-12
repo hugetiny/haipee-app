@@ -220,7 +220,7 @@ export function useGeminiCommonConfig({
       try {
         const env =
           isPlainObject(initialData.settingsConfig.env) &&
-          Object.keys(initialData.settingsConfig.env).length > 0
+            Object.keys(initialData.settingsConfig.env).length > 0
             ? (initialData.settingsConfig.env as Record<string, string>)
             : {};
         const parsed = parseSnippetEnv(commonConfigSnippet);

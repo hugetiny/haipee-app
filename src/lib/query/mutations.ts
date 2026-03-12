@@ -4,7 +4,12 @@ import { toast } from "sonner";
 import { providersApi, sessionsApi, settingsApi, type AppId } from "@/lib/api";
 import type { DeleteSessionOptions } from "@/lib/api/sessions";
 import type { SwitchResult } from "@/lib/api/providers";
-import type { Provider, SessionMeta, Settings } from "@/types";
+import type {
+  Provider,
+  SessionMeta,
+  Settings,
+  OpenClawInstance,
+} from "@/types";
 import { extractErrorMessage } from "@/utils/errorUtils";
 import { generateUUID } from "@/utils/uuid";
 import { openclawKeys } from "@/hooks/useOpenClaw";
@@ -68,7 +73,7 @@ export const useAddProviderMutation = (appId: AppId) => {
 
       if (appId === "openclaw") {
         await queryClient.invalidateQueries({
-          queryKey: openclawKeys.health,
+          queryKey: openclawKeys.all,
         });
       }
 
@@ -115,7 +120,7 @@ export const useUpdateProviderMutation = (appId: AppId) => {
       await queryClient.invalidateQueries({ queryKey: ["providers", appId] });
       if (appId === "openclaw") {
         await queryClient.invalidateQueries({
-          queryKey: openclawKeys.health,
+          queryKey: openclawKeys.all,
         });
       }
       toast.success(
@@ -167,7 +172,7 @@ export const useDeleteProviderMutation = (appId: AppId) => {
 
       if (appId === "openclaw") {
         await queryClient.invalidateQueries({
-          queryKey: openclawKeys.health,
+          queryKey: openclawKeys.all,
         });
       }
 
@@ -226,13 +231,7 @@ export const useSwitchProviderMutation = (appId: AppId) => {
       }
       if (appId === "openclaw") {
         await queryClient.invalidateQueries({
-          queryKey: openclawKeys.liveProviderIds,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: openclawKeys.defaultModel,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: openclawKeys.health,
+          queryKey: openclawKeys.all,
         });
       }
 
@@ -321,6 +320,39 @@ export const useSaveSettingsMutation = () => {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["settings"] });
+    },
+  });
+};
+
+export const useSendMessageMutation = () => {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: async (input: {
+      providerId: string;
+      sourcePath: string;
+      message: string;
+      instance?: OpenClawInstance;
+    }) => {
+      const { instance, ...options } = input;
+      await sessionsApi.sendMessage(options, instance);
+      return input;
+    },
+    onSuccess: async (input) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["sessionMessages", input.providerId, input.sourcePath],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    },
+    onError: (error: Error) => {
+      const detail = extractErrorMessage(error) || t("common.unknown");
+      toast.error(
+        t("sessionManager.sendFailed", {
+          defaultValue: "发送失败: {{error}}",
+          error: detail,
+        }),
+      );
     },
   });
 };

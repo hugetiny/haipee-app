@@ -7,17 +7,40 @@ import type {
   OpenClawToolsConfig,
   OpenClawHealthWarning,
   OpenClawWriteOutcome,
+  OpenClawInstance,
 } from "@/types";
 
 /**
  * OpenClaw configuration API
- *
- * Manages ~/.openclaw/openclaw.json sections:
- * - agents.defaults (model, catalog)
- * - env (environment variables)
- * - tools (permissions)
  */
 export const openclawApi = {
+  // Helper to handle remote vs local
+  async request<T>(
+    instance: OpenClawInstance | undefined,
+    command: string,
+    args?: any,
+    remotePath?: string,
+  ): Promise<T> {
+    if (instance?.type === "remote" && instance.baseUrl) {
+      if (!remotePath)
+        throw new Error(`Remote API not implemented for ${command}`);
+      const response = await fetch(`${instance.baseUrl}${remotePath}`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(instance.apiKey
+            ? { Authorization: `Bearer ${instance.apiKey}` }
+            : {}),
+        },
+        method: args ? "POST" : "GET",
+        body: args ? JSON.stringify(args) : undefined,
+      });
+      if (!response.ok)
+        throw new Error(`Remote API error: ${response.statusText}`);
+      return await response.json();
+    }
+    return await invoke(command, args);
+  },
+
   // ============================================================
   // Agents Configuration
   // ============================================================
@@ -25,8 +48,15 @@ export const openclawApi = {
   /**
    * Get default model configuration (agents.defaults.model)
    */
-  async getDefaultModel(): Promise<OpenClawDefaultModel | null> {
-    return await invoke("get_openclaw_default_model");
+  async getDefaultModel(
+    instance?: OpenClawInstance,
+  ): Promise<OpenClawDefaultModel | null> {
+    return await this.request(
+      instance,
+      "get_openclaw_default_model",
+      undefined,
+      "/api/v1/config/agents/model",
+    );
   },
 
   /**
@@ -34,18 +64,28 @@ export const openclawApi = {
    */
   async setDefaultModel(
     model: OpenClawDefaultModel,
+    instance?: OpenClawInstance,
   ): Promise<OpenClawWriteOutcome> {
-    return await invoke("set_openclaw_default_model", { model });
+    return await this.request(
+      instance,
+      "set_openclaw_default_model",
+      { model },
+      "/api/v1/config/agents/model",
+    );
   },
 
   /**
    * Get model catalog/allowlist (agents.defaults.models)
    */
-  async getModelCatalog(): Promise<Record<
-    string,
-    OpenClawModelCatalogEntry
-  > | null> {
-    return await invoke("get_openclaw_model_catalog");
+  async getModelCatalog(
+    instance?: OpenClawInstance,
+  ): Promise<Record<string, OpenClawModelCatalogEntry> | null> {
+    return await this.request(
+      instance,
+      "get_openclaw_model_catalog",
+      undefined,
+      "/api/v1/config/agents/models",
+    );
   },
 
   /**
@@ -53,15 +93,28 @@ export const openclawApi = {
    */
   async setModelCatalog(
     catalog: Record<string, OpenClawModelCatalogEntry>,
+    instance?: OpenClawInstance,
   ): Promise<OpenClawWriteOutcome> {
-    return await invoke("set_openclaw_model_catalog", { catalog });
+    return await this.request(
+      instance,
+      "set_openclaw_model_catalog",
+      { catalog },
+      "/api/v1/config/agents/models",
+    );
   },
 
   /**
    * Get full agents.defaults config (all fields)
    */
-  async getAgentsDefaults(): Promise<OpenClawAgentsDefaults | null> {
-    return await invoke("get_openclaw_agents_defaults");
+  async getAgentsDefaults(
+    instance?: OpenClawInstance,
+  ): Promise<OpenClawAgentsDefaults | null> {
+    return await this.request(
+      instance,
+      "get_openclaw_agents_defaults",
+      undefined,
+      "/api/v1/config/agents/defaults",
+    );
   },
 
   /**
@@ -69,8 +122,14 @@ export const openclawApi = {
    */
   async setAgentsDefaults(
     defaults: OpenClawAgentsDefaults,
+    instance?: OpenClawInstance,
   ): Promise<OpenClawWriteOutcome> {
-    return await invoke("set_openclaw_agents_defaults", { defaults });
+    return await this.request(
+      instance,
+      "set_openclaw_agents_defaults",
+      { defaults },
+      "/api/v1/config/agents/defaults",
+    );
   },
 
   // ============================================================
@@ -80,15 +139,28 @@ export const openclawApi = {
   /**
    * Get env config (env section of openclaw.json)
    */
-  async getEnv(): Promise<OpenClawEnvConfig> {
-    return await invoke("get_openclaw_env");
+  async getEnv(instance?: OpenClawInstance): Promise<OpenClawEnvConfig> {
+    return await this.request(
+      instance,
+      "get_openclaw_env",
+      undefined,
+      "/api/v1/config/env",
+    );
   },
 
   /**
    * Set env config (env section of openclaw.json)
    */
-  async setEnv(env: OpenClawEnvConfig): Promise<OpenClawWriteOutcome> {
-    return await invoke("set_openclaw_env", { env });
+  async setEnv(
+    env: OpenClawEnvConfig,
+    instance?: OpenClawInstance,
+  ): Promise<OpenClawWriteOutcome> {
+    return await this.request(
+      instance,
+      "set_openclaw_env",
+      { env },
+      "/api/v1/config/env",
+    );
   },
 
   // ============================================================
@@ -98,24 +170,150 @@ export const openclawApi = {
   /**
    * Get tools config (tools section of openclaw.json)
    */
-  async getTools(): Promise<OpenClawToolsConfig> {
-    return await invoke("get_openclaw_tools");
+  async getTools(instance?: OpenClawInstance): Promise<OpenClawToolsConfig> {
+    return await this.request(
+      instance,
+      "get_openclaw_tools",
+      undefined,
+      "/api/v1/config/tools",
+    );
   },
 
   /**
    * Set tools config (tools section of openclaw.json)
    */
-  async setTools(tools: OpenClawToolsConfig): Promise<OpenClawWriteOutcome> {
-    return await invoke("set_openclaw_tools", { tools });
+  async setTools(
+    tools: OpenClawToolsConfig,
+    instance?: OpenClawInstance,
+  ): Promise<OpenClawWriteOutcome> {
+    return await this.request(
+      instance,
+      "set_openclaw_tools",
+      { tools },
+      "/api/v1/config/tools",
+    );
   },
 
-  async scanHealth(): Promise<OpenClawHealthWarning[]> {
-    return await invoke("scan_openclaw_config_health");
+  async scanHealth(
+    instance?: OpenClawInstance,
+  ): Promise<OpenClawHealthWarning[]> {
+    return await this.request(
+      instance,
+      "scan_openclaw_config_health",
+      undefined,
+      "/api/v1/health",
+    );
   },
 
   async getLiveProvider(
     providerId: string,
+    instance?: OpenClawInstance,
   ): Promise<Record<string, unknown> | null> {
-    return await invoke("get_openclaw_live_provider", { providerId });
+    return await this.request(
+      instance,
+      "get_openclaw_live_provider",
+      { providerId },
+      `/api/v1/config/providers/${providerId}`,
+    );
+  },
+
+  // ============================================================
+  // Generic JSON Configuration
+  // ============================================================
+
+  async getJsonSection(
+    section: string,
+    instance?: OpenClawInstance,
+  ): Promise<any> {
+    return await this.request(
+      instance,
+      "get_openclaw_json_section",
+      { section },
+      `/api/v1/config/section/${section}`,
+    );
+  },
+
+  async setJsonSection(
+    section: string,
+    value: any,
+    instance?: OpenClawInstance,
+  ): Promise<OpenClawWriteOutcome> {
+    return await this.request(
+      instance,
+      "set_openclaw_json_section",
+      { section, value },
+      `/api/v1/config/section/${section}`,
+    );
+  },
+
+  // ============================================================
+  // Raw Configuration
+  // ============================================================
+
+  async readJsonRaw(instance?: OpenClawInstance): Promise<string> {
+    return await this.request(
+      instance,
+      "read_openclaw_json_raw",
+      undefined,
+      `/api/v1/config/raw`,
+    );
+  },
+
+  async writeJsonRaw(
+    content: string,
+    instance?: OpenClawInstance,
+  ): Promise<OpenClawWriteOutcome> {
+    return await this.request(
+      instance,
+      "write_openclaw_json_raw",
+      { content },
+      `/api/v1/config/raw`,
+    );
+  },
+
+  // ============================================================
+  // Connection Testing
+  // ============================================================
+
+  /**
+   * Ping an OpenClaw instance to check connectivity.
+   * For remote instances, hits /api/v1/health.
+   * For local instances, runs scan_openclaw_config_health.
+   * Returns { ok, latencyMs }.
+   */
+  async ping(
+    instance?: OpenClawInstance,
+  ): Promise<{ ok: boolean; latencyMs: number }> {
+    const start = performance.now();
+    try {
+      if (instance?.type === "remote" && instance.baseUrl) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        try {
+          const response = await fetch(`${instance.baseUrl}/api/v1/health`, {
+            signal: controller.signal,
+            headers: {
+              ...(instance.apiKey
+                ? { Authorization: `Bearer ${instance.apiKey}` }
+                : {}),
+            },
+          });
+          clearTimeout(timeout);
+          const latencyMs = Math.round(performance.now() - start);
+          return { ok: response.ok, latencyMs };
+        } catch {
+          clearTimeout(timeout);
+          return {
+            ok: false,
+            latencyMs: Math.round(performance.now() - start),
+          };
+        }
+      }
+      // Local instance: just run health scan
+      await this.scanHealth(instance);
+      return { ok: true, latencyMs: Math.round(performance.now() - start) };
+    } catch {
+      return { ok: false, latencyMs: Math.round(performance.now() - start) };
+    }
   },
 };

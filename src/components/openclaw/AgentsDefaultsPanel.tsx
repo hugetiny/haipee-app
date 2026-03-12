@@ -24,7 +24,7 @@ import { getOpenClawTimeoutInputValue } from "./utils";
 
 const UNSET_SENTINEL = "__unset__";
 
-const AgentsDefaultsPanel: React.FC = () => {
+export const AgentsDefaultsPanel: React.FC = () => {
   const { t } = useTranslation();
   const { data: agentsData, isLoading } = useOpenClawAgentsDefaults();
   const saveAgentsMutation = useSaveOpenClawAgentsDefaults();

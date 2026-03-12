@@ -64,7 +64,24 @@ const createDefaultProviders = (): ProvidersByApp => ({
     },
   },
   opencode: {},
-  openclaw: {},
+  openclaw: {
+    "openclaw-1": {
+      id: "openclaw-1",
+      name: "OpenClaw Default",
+      settingsConfig: {},
+      category: "official",
+      sortIndex: 0,
+      createdAt: Date.now(),
+    },
+    "openclaw-2": {
+      id: "openclaw-2",
+      name: "OpenClaw Custom",
+      settingsConfig: {},
+      category: "custom",
+      sortIndex: 1,
+      createdAt: Date.now() + 1,
+    },
+  },
 });
 
 const createDefaultCurrent = (): CurrentProviderState => ({
@@ -72,7 +89,7 @@ const createDefaultCurrent = (): CurrentProviderState => ({
   codex: "codex-1",
   gemini: "gemini-1",
   opencode: "",
-  openclaw: "",
+  openclaw: "openclaw-1",
 });
 
 let providers = createDefaultProviders();
@@ -234,7 +251,24 @@ export const resetProviderState = () => {
     },
     gemini: {},
     opencode: {},
-    openclaw: {},
+    openclaw: {
+      openclawServer: {
+        id: "openclawServer",
+        name: "OpenClaw Server",
+        enabled: true,
+        apps: {
+          claude: false,
+          codex: false,
+          gemini: false,
+          opencode: false,
+          openclaw: true,
+        },
+        server: {
+          type: "stdio",
+          command: "openclaw-server",
+        },
+      },
+    },
   };
 };
 

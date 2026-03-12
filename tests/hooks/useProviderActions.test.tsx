@@ -47,6 +47,11 @@ vi.mock("@/lib/query", () => ({
   useUpdateProviderMutation: () => useUpdateProviderMutationMock(),
   useDeleteProviderMutation: () => useDeleteProviderMutationMock(),
   useSwitchProviderMutation: () => useSwitchProviderMutationMock(),
+  useSettingsQuery: () => ({ data: { enableClaudePluginIntegration: false } }),
+  useProvidersQuery: () => ({ data: { providers: {}, currentProviderId: "" } }),
+  useUsageQuery: () => ({ data: null }),
+  useSessionsQuery: () => ({ data: [] }),
+  useSessionMessagesQuery: () => ({ data: [] }),
 }));
 
 const providersApiUpdateMock = vi.fn();

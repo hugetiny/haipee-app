@@ -58,6 +58,7 @@ vi.mock("@/components/providers/AddProviderDialog", () => ({
               settingsConfig: {},
               category: "custom",
               sortIndex: 99,
+              providerKey: appId === "openclaw" ? "new-openclaw-provider" : undefined,
             })
           }
         >
@@ -112,8 +113,7 @@ vi.mock("@/components/AppSwitcher", () => ({
   AppSwitcher: ({ activeApp, onSwitch }: any) => (
     <div data-testid="app-switcher">
       <span>{activeApp}</span>
-      <button onClick={() => onSwitch("claude")}>switch-claude</button>
-      <button onClick={() => onSwitch("codex")}>switch-codex</button>
+      <button onClick={() => onSwitch("openclaw")}>switch-openclaw</button>
     </div>
   ),
 }));
@@ -136,6 +136,9 @@ vi.mock("@/components/mcp/McpPanel", () => ({
 }));
 
 const renderApp = (AppComponent: ComponentType) => {
+  // Set initial app to openclaw for testing (the only valid app in VALID_APPS)
+  localStorage.setItem("cc-switch-last-app", "openclaw");
+  localStorage.setItem("cc-switch-last-view", "providers");
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
@@ -159,14 +162,7 @@ describe("App integration with MSW", () => {
 
     await waitFor(() =>
       expect(screen.getByTestId("provider-list").textContent).toContain(
-        "claude-1",
-      ),
-    );
-
-    fireEvent.click(screen.getByText("switch-codex"));
-    await waitFor(() =>
-      expect(screen.getByTestId("provider-list").textContent).toContain(
-        "codex-1",
+        "openclaw-1",
       ),
     );
 
@@ -180,7 +176,7 @@ describe("App integration with MSW", () => {
     fireEvent.click(screen.getByText("confirm-add"));
     await waitFor(() =>
       expect(screen.getByTestId("provider-list").textContent).toMatch(
-        /New codex Provider/,
+        /New openclaw Provider/,
       ),
     );
 
@@ -202,8 +198,8 @@ describe("App integration with MSW", () => {
     fireEvent.click(screen.getByText("open-website"));
 
     emitTauriEvent("provider-switched", {
-      appType: "codex",
-      providerId: "codex-2",
+      appType: "openclaw",
+      providerId: "openclaw-2",
     });
 
     expect(toastErrorMock).not.toHaveBeenCalled();
@@ -216,7 +212,7 @@ describe("App integration with MSW", () => {
 
     await waitFor(() =>
       expect(screen.getByTestId("provider-list").textContent).toContain(
-        "claude-1",
+        "openclaw-1",
       ),
     );
 

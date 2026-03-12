@@ -89,6 +89,11 @@ export function useSettingsForm(): UseSettingsFormResult {
       codexConfigDir: sanitizeDir(data.codexConfigDir),
       geminiConfigDir: sanitizeDir(data.geminiConfigDir),
       opencodeConfigDir: sanitizeDir(data.opencodeConfigDir),
+      openclawConfigDir: sanitizeDir(data.openclawConfigDir),
+      openclawInstances: data.openclawInstances ?? [
+        { id: "default", name: "Local", type: "local" },
+      ],
+      currentOpenClawInstanceId: data.currentOpenClawInstanceId ?? "default",
       language: normalizedLanguage,
     };
 
@@ -147,6 +152,12 @@ export function useSettingsForm(): UseSettingsFormResult {
         codexConfigDir: sanitizeDir(serverData.codexConfigDir),
         geminiConfigDir: sanitizeDir(serverData.geminiConfigDir),
         opencodeConfigDir: sanitizeDir(serverData.opencodeConfigDir),
+        openclawConfigDir: sanitizeDir(serverData.openclawConfigDir),
+        openclawInstances: serverData.openclawInstances ?? [
+          { id: "default", name: "Local", type: "local" },
+        ],
+        currentOpenClawInstanceId:
+          serverData.currentOpenClawInstanceId ?? "default",
         language: normalizedLanguage,
       };
 

@@ -261,6 +261,9 @@ export interface Settings {
   opencodeConfigDir?: string;
   // 覆盖 OpenClaw 配置目录（可选）
   openclawConfigDir?: string;
+  // OpenClaw 多实例配置 (v3.12.0+)
+  openclawInstances?: OpenClawInstance[];
+  currentOpenClawInstanceId?: string;
 
   // ===== 当前供应商 ID（设备级）=====
   // 当前 Claude 供应商 ID（优先于数据库 is_current）
@@ -545,4 +548,14 @@ export interface OpenClawToolsConfig {
   allow?: string[];
   deny?: string[];
   [key: string]: unknown; // preserve unknown fields
+}
+
+// OpenClaw 实例配置 (v3.12.0+)
+export interface OpenClawInstance {
+  id: string;
+  name: string;
+  type: "local" | "remote";
+  baseUrl?: string; // 远程实例的 API 地址
+  apiKey?: string; // 远程实例的 API 密钥
+  configDir?: string; // 本地实例的配置目录覆盖（可选）
 }

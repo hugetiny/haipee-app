@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FullScreenPanel } from "@/components/common/FullScreenPanel";
+import { ResponsiveDialog } from "@/components/common/ResponsiveDialog";
 import type { Provider } from "@/types";
 import {
   ProviderForm,
@@ -189,10 +189,10 @@ export function EditProviderDialog({
   }
 
   return (
-    <FullScreenPanel
-      isOpen={open}
+    <ResponsiveDialog
+      open={open}
       title={t("provider.editProvider")}
-      onClose={() => onOpenChange(false)}
+      onOpenChange={onOpenChange}
       footer={
         <Button
           type="submit"
@@ -213,6 +213,6 @@ export function EditProviderDialog({
         initialData={initialData}
         showButtons={false}
       />
-    </FullScreenPanel>
+    </ResponsiveDialog>
   );
 }

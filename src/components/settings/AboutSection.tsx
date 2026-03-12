@@ -334,10 +334,8 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <img src={appIcon} alt="CC Switch" className="h-5 w-5" />
-              <h4 className="text-lg font-semibold text-foreground">
-                CC Switch
-              </h4>
+              <img src={appIcon} alt="Haipee" className="h-5 w-5" />
+              <h4 className="text-lg font-semibold text-foreground">Haipee</h4>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="gap-1.5 bg-background/80">
@@ -472,7 +470,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
                       {/* Environment Badge */}
                       {tool?.env_type && ENV_BADGE_CONFIG[tool.env_type] && (
                         <span
-                          className={`text-[9px] px-1.5 py-0.5 rounded-full border ${ENV_BADGE_CONFIG[tool.env_type].className}`}
+                          className={`text-xs px-1.5 py-0.5 rounded-full border ${ENV_BADGE_CONFIG[tool.env_type].className}`}
                         >
                           {t(ENV_BADGE_CONFIG[tool.env_type].labelKey)}
                         </span>
@@ -532,8 +530,8 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
                       <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     ) : tool?.version ? (
                       tool.latest_version &&
-                      tool.version !== tool.latest_version ? (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20">
+                        tool.version !== tool.latest_version ? (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20">
                           {tool.latest_version}
                         </span>
                       ) : (
@@ -591,6 +589,46 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
           </div>
         </motion.div>
       )}
+      {/* cc-switch attribution */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.35 }}
+        className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3 text-center space-y-1"
+      >
+        <p className="text-xs text-muted-foreground">
+          本项目基于{" "}
+          <a
+            href="https://github.com/farion1231/cc-switch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              settingsApi.openExternal(
+                "https://github.com/farion1231/cc-switch",
+              );
+            }}
+          >
+            cc-switch
+          </a>{" "}
+          v3.12.0 二次开发 &middot; 感谢并请支持{" "}
+          <a
+            href="https://github.com/farion1231/cc-switch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              settingsApi.openExternal(
+                "https://github.com/farion1231/cc-switch",
+              );
+            }}
+          >
+            farion1231/cc-switch
+          </a>
+        </p>
+      </motion.div>
     </motion.section>
   );
 }

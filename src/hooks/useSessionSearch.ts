@@ -70,7 +70,7 @@ export function useSessionSearch({
 
       // 先按 provider 过滤
       let filtered = sessions;
-      if (providerFilter !== "all") {
+      if (providerFilter !== "all" && Array.isArray(sessions)) {
         filtered = sessions.filter((s) => s.providerId === providerFilter);
       }
 

@@ -1,10 +1,4 @@
-import { ChevronRight, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ProviderIcon } from "@/components/ProviderIcon";
 import type { SessionMeta } from "@/types";
@@ -12,7 +6,6 @@ import {
   formatRelativeTime,
   formatSessionTitle,
   getProviderIconName,
-  getProviderLabel,
   getSessionKey,
 } from "./utils";
 
@@ -37,41 +30,68 @@ export function SessionItem({
       type="button"
       onClick={() => onSelect(sessionKey)}
       className={cn(
-        "w-full text-left rounded-lg px-3 py-2.5 transition-all group",
+        "w-full text-left rounded-xl px-4 py-2.5 transition-all group flex items-start gap-3",
         isSelected
-          ? "bg-primary/10 border border-primary/30"
-          : "hover:bg-muted/60 border border-transparent",
+          ? "bg-primary/10 text-primary shadow-sm"
+          : "hover:bg-muted text-muted-foreground hover:text-foreground",
       )}
     >
-      <div className="flex items-center gap-2 mb-1">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="shrink-0">
-              <ProviderIcon
-                icon={getProviderIconName(session.providerId)}
-                name={session.providerId}
-                size={18}
-              />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            {getProviderLabel(session.providerId, t)}
-          </TooltipContent>
-        </Tooltip>
-        <span className="text-sm font-medium truncate flex-1">{title}</span>
-        <ChevronRight
-          className={cn(
-            "size-4 text-muted-foreground/50 shrink-0 transition-transform",
-            isSelected && "text-primary rotate-90",
-          )}
+      <div
+        className={cn(
+          "size-8 md:size-10 rounded-full flex items-center justify-center shrink-0 transition-colors",
+          isSelected ? "bg-primary/20" : "bg-muted group-hover:bg-background",
+        )}
+      >
+        <ProviderIcon
+          icon={getProviderIconName(session.providerId)}
+          name={session.providerId}
+          size={18}
         />
       </div>
 
-      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-        <Clock className="size-3" />
-        <span>
-          {lastActive ? formatRelativeTime(lastActive, t) : t("common.unknown")}
-        </span>
+      <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
+        <div className="flex items-center justify-between gap-2 overflow-hidden">
+          <span
+            className={cn(
+              "text-sm font-medium truncate",
+              isSelected ? "text-primary" : "text-foreground",
+            )}
+          >
+            {title}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-0.5 mt-0.5">
+          {session.summary ? (
+            <span
+              className="text-xs text-muted-foreground line-clamp-2 leading-snug"
+              title={session.summary}
+            >
+              {session.summary}
+            </span>
+          ) : session.projectDir ? (
+            <span
+              className="text-xs text-muted-foreground truncate opacity-80 font-mono"
+              aria-label="Project Directory"
+              title={session.projectDir}
+            >
+              {session.projectDir
+                .replace(/^\/Users\/[^/]+/, "~")
+                .replace(/^\/home\/[^/]+/, "~")}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground opacity-60 font-mono">
+              #{session.sessionId.slice(0, 8)}
+            </span>
+          )}
+          <div className="flex items-center gap-1.5 text-xs opacity-70 mt-1">
+            <span className="truncate">
+              {lastActive
+                ? formatRelativeTime(lastActive, t)
+                : t("common.unknown")}
+            </span>
+          </div>
+        </div>
       </div>
     </button>
   );

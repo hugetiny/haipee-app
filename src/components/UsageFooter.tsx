@@ -118,7 +118,7 @@ const UsageFooter: React.FC<UsageFooterProps> = ({
         {/* 第一行：更新时间和刷新按钮 */}
         <div className="flex items-center gap-2 justify-end">
           {/* 上次查询时间 */}
-          <span className="text-[10px] text-muted-foreground/70 flex items-center gap-1">
+          <span className="text-xs text-muted-foreground/70 flex items-center gap-1">
             <Clock size={10} />
             {lastQueriedAt
               ? formatRelativeTime(lastQueriedAt, now, t)
@@ -160,14 +160,13 @@ const UsageFooter: React.FC<UsageFooterProps> = ({
                 {t("usage.remaining")}
               </span>
               <span
-                className={`font-semibold tabular-nums ${
-                  isExpired
+                className={`font-semibold tabular-nums ${isExpired
                     ? "text-red-500 dark:text-red-400"
                     : firstUsage.remaining <
-                        (firstUsage.total || firstUsage.remaining) * 0.1
+                      (firstUsage.total || firstUsage.remaining) * 0.1
                       ? "text-orange-500 dark:text-orange-400"
                       : "text-green-600 dark:text-green-400"
-                }`}
+                  }`}
               >
                 {firstUsage.remaining.toFixed(2)}
               </span>
@@ -205,7 +204,7 @@ const UsageFooter: React.FC<UsageFooterProps> = ({
         <div className="flex items-center gap-2">
           {/* 自动查询时间提示 */}
           {lastQueriedAt && (
-            <span className="text-[10px] text-muted-foreground/70 flex items-center gap-1">
+            <span className="text-xs text-muted-foreground/70 flex items-center gap-1">
               <Clock size={10} />
               {formatRelativeTime(lastQueriedAt, now, t)}
             </span>
@@ -281,7 +280,7 @@ const UsagePlanItem: React.FC<{ data: UsageData }> = ({ data }) => {
           </span>
         )}
         {isExpired && (
-          <span className="text-red-500 dark:text-red-400 font-medium text-[10px] px-1.5 py-0.5 bg-red-50 dark:bg-red-900/20 rounded flex-shrink-0">
+          <span className="text-red-500 dark:text-red-400 font-medium text-xs px-1.5 py-0.5 bg-red-50 dark:bg-red-900/20 rounded flex-shrink-0">
             {invalidMessage || t("usage.invalid")}
           </span>
         )}
@@ -325,13 +324,12 @@ const UsagePlanItem: React.FC<{ data: UsageData }> = ({ data }) => {
               {t("usage.remaining")}
             </span>
             <span
-              className={`font-semibold tabular-nums ${
-                isExpired
+              className={`font-semibold tabular-nums ${isExpired
                   ? "text-red-500 dark:text-red-400"
                   : remaining < (total || remaining) * 0.1
                     ? "text-orange-500 dark:text-orange-400"
                     : "text-green-600 dark:text-green-400"
-              }`}
+                }`}
             >
               {remaining.toFixed(2)}
             </span>

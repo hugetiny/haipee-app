@@ -80,6 +80,16 @@ pub fn load_messages(provider_id: &str, source_path: &str) -> Result<Vec<Session
     }
 }
 
+pub fn send_message(provider_id: &str, source_path: &str, message: &str) -> Result<(), String> {
+    let path = Path::new(source_path);
+    match provider_id {
+        "openclaw" => openclaw::send_message(path, message),
+        _ => Err(format!(
+            "Interactive chat is not yet supported for provider: {provider_id}"
+        )),
+    }
+}
+
 pub fn delete_session(
     provider_id: &str,
     session_id: &str,

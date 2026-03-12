@@ -17,7 +17,7 @@ import {
   useSwitchProviderMutation,
 } from "@/lib/query";
 import { extractErrorMessage } from "@/utils/errorUtils";
-import { openclawKeys } from "@/hooks/useOpenClaw";
+import { openclawKeys, useActiveOpenClawInstance } from "@/hooks/useOpenClaw";
 
 /**
  * Hook for managing provider actions (add, update, delete, switch)
@@ -31,6 +31,7 @@ export function useProviderActions(activeApp: AppId) {
   const updateProviderMutation = useUpdateProviderMutation(activeApp);
   const deleteProviderMutation = useDeleteProviderMutation(activeApp);
   const switchProviderMutation = useSwitchProviderMutation(activeApp);
+  const { instanceId } = useActiveOpenClawInstance();
 
   // Claude 插件同步逻辑
   const syncClaudePlugin = useCallback(
@@ -81,7 +82,7 @@ export function useProviderActions(activeApp: AppId) {
             const mergedCatalog = { ...existingCatalog, ...modelCatalog };
             await openclawApi.setModelCatalog(mergedCatalog);
             await queryClient.invalidateQueries({
-              queryKey: openclawKeys.health,
+              queryKey: openclawKeys.health(instanceId),
             });
             modelsRegistered = true;
           }
@@ -92,7 +93,7 @@ export function useProviderActions(activeApp: AppId) {
             if (!existingDefault?.primary) {
               await openclawApi.setDefaultModel(model);
               await queryClient.invalidateQueries({
-                queryKey: openclawKeys.health,
+                queryKey: openclawKeys.health(instanceId),
               });
             }
           }
@@ -263,10 +264,10 @@ export function useProviderActions(activeApp: AppId) {
       try {
         await openclawApi.setDefaultModel(model);
         await queryClient.invalidateQueries({
-          queryKey: openclawKeys.defaultModel,
+          queryKey: openclawKeys.defaultModel(instanceId),
         });
         await queryClient.invalidateQueries({
-          queryKey: openclawKeys.health,
+          queryKey: openclawKeys.health(instanceId),
         });
         toast.success(
           t("notifications.openclawDefaultModelSet", {

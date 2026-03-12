@@ -76,7 +76,7 @@ export function SkillCard({ skill, onInstall, onUninstall }: SkillCardProps) {
               {skill.repoOwner && skill.repoName && (
                 <Badge
                   variant="outline"
-                  className="shrink-0 text-[10px] px-1.5 py-0 h-4 border-border-default"
+                  className="shrink-0 text-xs px-1.5 py-0 h-4 border-border-default"
                 >
                   {skill.repoOwner}/{skill.repoName}
                 </Badge>

@@ -93,11 +93,11 @@ import {
 type PresetEntry = {
   id: string;
   preset:
-    | ProviderPreset
-    | CodexProviderPreset
-    | GeminiProviderPreset
-    | OpenCodeProviderPreset
-    | OpenClawProviderPreset;
+  | ProviderPreset
+  | CodexProviderPreset
+  | GeminiProviderPreset
+  | OpenCodeProviderPreset
+  | OpenClawProviderPreset;
 };
 
 interface ProviderFormProps {
@@ -276,7 +276,7 @@ export function ProviderForm({
     settingsConfig: form.getValues("settingsConfig"),
     codexConfig: "",
     onSettingsConfigChange: handleSettingsConfigChange,
-    onCodexConfigChange: () => {},
+    onCodexConfigChange: () => { },
   });
 
   const {
@@ -490,7 +490,7 @@ export function ProviderForm({
         }
         config.env[key] = value;
         form.setValue("settingsConfig", JSON.stringify(config, null, 2));
-      } catch {}
+      } catch { }
     },
     [form],
   );
@@ -560,7 +560,7 @@ export function ProviderForm({
 
   const initialOmoSettings =
     appId === "opencode" &&
-    (initialData?.category === "omo" || initialData?.category === "omo-slim")
+      (initialData?.category === "omo" || initialData?.category === "omo-slim")
       ? (initialData.settingsConfig as Record<string, unknown> | undefined)
       : undefined;
 
@@ -884,8 +884,8 @@ export function ProviderForm({
           : undefined,
       apiKeyField:
         appId === "claude" &&
-        category !== "official" &&
-        localApiKeyField !== "ANTHROPIC_AUTH_TOKEN"
+          category !== "official" &&
+          localApiKeyField !== "ANTHROPIC_AUTH_TOKEN"
           ? localApiKeyField
           : undefined,
     };
@@ -1154,7 +1154,7 @@ export function ProviderForm({
       <form
         id="provider-form"
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-6 glass rounded-xl p-6 border border-white/10"
+        className="space-y-6 glass rounded-xl p-6 border border-border/50"
       >
         {!initialData && (
           <ProviderPresetSelector
@@ -1193,10 +1193,10 @@ export function ProviderForm({
                       opencodeForm.opencodeProviderKey,
                     ) &&
                       !isEditMode) ||
-                    (opencodeForm.opencodeProviderKey.trim() !== "" &&
-                      !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(
-                        opencodeForm.opencodeProviderKey,
-                      ))
+                      (opencodeForm.opencodeProviderKey.trim() !== "" &&
+                        !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(
+                          opencodeForm.opencodeProviderKey,
+                        ))
                       ? "border-destructive"
                       : ""
                   }
@@ -1252,10 +1252,10 @@ export function ProviderForm({
                       openclawForm.openclawProviderKey,
                     ) &&
                       !isEditMode) ||
-                    (openclawForm.openclawProviderKey.trim() !== "" &&
-                      !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(
-                        openclawForm.openclawProviderKey,
-                      ))
+                      (openclawForm.openclawProviderKey.trim() !== "" &&
+                        !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(
+                          openclawForm.openclawProviderKey,
+                        ))
                       ? "border-destructive"
                       : ""
                   }
@@ -1502,7 +1502,7 @@ export function ProviderForm({
             <Label>{t("provider.configJson")}</Label>
             <JsonEditor
               value={omoDraft.mergedOmoJsonPreview}
-              onChange={() => {}}
+              onChange={() => { }}
               rows={14}
               showValidation={false}
               language="json"

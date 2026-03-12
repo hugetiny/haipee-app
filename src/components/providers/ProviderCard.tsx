@@ -218,11 +218,11 @@ export function ProviderCard({
           ? "hover:border-emerald-500/50"
           : "hover:border-border-active",
         shouldUseGreen &&
-          "border-emerald-500/60 shadow-sm shadow-emerald-500/10",
+        "border-emerald-500/60 shadow-sm shadow-emerald-500/10",
         shouldUseBlue && "border-blue-500/60 shadow-sm shadow-blue-500/10",
         !isActiveProvider && "hover:shadow-sm",
         dragHandleProps?.isDragging &&
-          "cursor-grabbing border-primary shadow-lg scale-105 z-10",
+        "cursor-grabbing border-primary shadow-lg scale-105 z-10",
       )}
     >
       <div
@@ -266,13 +266,13 @@ export function ProviderCard({
               </h3>
 
               {isOmo && (
-                <span className="inline-flex items-center rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                <span className="inline-flex items-center rounded-md bg-violet-100 px-1.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
                   OMO
                 </span>
               )}
 
               {isOmoSlim && (
-                <span className="inline-flex items-center rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                <span className="inline-flex items-center rounded-md bg-indigo-100 px-1.5 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
                   Slim
                 </span>
               )}

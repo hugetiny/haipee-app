@@ -914,6 +914,75 @@ pub fn set_tools_config(tools: &OpenClawToolsConfig) -> Result<OpenClawWriteOutc
     write_root_section("tools", &value)
 }
 
+// ============================================================================
+// Generic JSON Configuration
+// ============================================================================
+
+/// Read an arbitrary section from the openclaw.json config
+pub fn get_json_section(section: &str) -> Result<Value, AppError> {
+    let config = read_openclaw_config()?;
+    if let Some(value) = config.get(section) {
+        Ok(value.clone())
+    } else {
+        Ok(Value::Null)
+    }
+}
+
+/// Write an arbitrary section to the openclaw.json config
+pub fn set_json_section(section: &str, value: &Value) -> Result<OpenClawWriteOutcome, AppError> {
+    write_root_section(section, value)
+}
+
+// ============================================================================
+// Raw JSON I/O
+// ============================================================================
+
+/// Read the raw openclaw.json file as a string
+pub fn read_json_raw() -> Result<String, AppError> {
+    let path = get_openclaw_config_path();
+    if !path.exists() {
+        return Ok(OPENCLAW_DEFAULT_SOURCE.to_string());
+    }
+    fs::read_to_string(&path)
+        .map_err(|e| AppError::io(&path, e))
+}
+
+/// Write raw string content directly to openclaw.json (after basic syntax validation)
+pub fn write_json_raw(content: &str) -> Result<OpenClawWriteOutcome, AppError> {
+    // Validate that it's at least parseable JSON5
+    let _parsed: Value = json_five::from_str(content)
+        .map_err(|e| AppError::Config(format!("Invalid config syntax: {e}")))?;
+
+    let path = get_openclaw_config_path();
+    
+    // Create backup before raw overwrite
+    let backup_path = if path.exists() {
+        let backup_file = format!(
+            "openclaw.backup_{}.json",
+            Local::now().format("%Y%m%d_%H%M%S")
+        );
+        let dst = path.with_file_name(&backup_file);
+        if fs::copy(&path, &dst).is_ok() {
+            Some(dst.to_string_lossy().to_string())
+        } else {
+            None
+        }
+    } else {
+        if let Some(parent) = path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        None
+    };
+
+    let _guard = openclaw_write_lock().lock().unwrap();
+    atomic_write(&path, content.as_bytes())?;
+
+    Ok(OpenClawWriteOutcome {
+        backup_path,
+        warnings: vec![],
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

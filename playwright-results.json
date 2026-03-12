@@ -1,0 +1,1305 @@
+{
+  "config": {
+    "configFile": "/Users/a12/projects/skillhub/haipee/playwright.api.config.ts",
+    "rootDir": "/Users/a12/projects/skillhub/haipee/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/a12/projects/skillhub/haipee/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/a12/projects/skillhub/haipee/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/providers/*.spec.ts",
+          "**/summary.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "providers/gemini.spec.ts",
+      "file": "providers/gemini.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Google Gemini Provider",
+          "file": "providers/gemini.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API token is configured",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.134Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ff6585e0d506cc8e04a4-217fd901a6a3ce68ebb4",
+              "file": "providers/gemini.spec.ts",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "can fetch available models",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/gemini.spec.ts",
+                        "line": 33,
+                        "column": 12
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "skipped",
+                      "duration": 245,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "⚠️ Gemini models fetch returned 401 - may be network restricted\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.135Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/gemini.spec.ts",
+                            "line": 33,
+                            "column": 12
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff6585e0d506cc8e04a4-28e1fc8a9ab988f669f7",
+              "file": "providers/gemini.spec.ts",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "can send generate content request",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/gemini.spec.ts",
+                        "line": 65,
+                        "column": 12
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "skipped",
+                      "duration": 307,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "⚠️ Gemini chat returned 404 - may be network restricted\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.145Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/gemini.spec.ts",
+                            "line": 65,
+                            "column": 12
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff6585e0d506cc8e04a4-2741cbdde1574bda182f",
+              "file": "providers/gemini.spec.ts",
+              "line": 41,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "providers/kilo.spec.ts",
+      "file": "providers/kilo.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Kilo Code Provider",
+          "file": "providers/kilo.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API token is configured",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 4,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.127Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "268526249210195928d6-9d9311eae34eb69682da",
+              "file": "providers/kilo.spec.ts",
+              "line": 14,
+              "column": 3
+            },
+            {
+              "title": "can validate token format",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 2,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.154Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "268526249210195928d6-3cb36b06cb0d0b3f1968",
+              "file": "providers/kilo.spec.ts",
+              "line": 20,
+              "column": 3
+            },
+            {
+              "title": "API endpoint is reachable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 499,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.168Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "268526249210195928d6-19f47213d2d56003114a",
+              "file": "providers/kilo.spec.ts",
+              "line": 27,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "providers/nvidia.spec.ts",
+      "file": "providers/nvidia.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "NVIDIA NIM Provider",
+          "file": "providers/nvidia.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API token is configured",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 316,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.188Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "09ed15aeef53b2eaca62-07d5ae1325d55f4eea95",
+              "file": "providers/nvidia.spec.ts",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "can fetch available models",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 718,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.402Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "09ed15aeef53b2eaca62-4b70d6685434f56037a2",
+              "file": "providers/nvidia.spec.ts",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "can send chat completion request",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 885,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ NVIDIA NIM response: I'm happy to assist with your test message. If you have any questions or need further assistance, fe...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.475Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "09ed15aeef53b2eaca62-c189c814c458f29426e1",
+              "file": "providers/nvidia.spec.ts",
+              "line": 36,
+              "column": 3
+            },
+            {
+              "title": "handles invalid model gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 700,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:17.682Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "09ed15aeef53b2eaca62-ed82d51539936c217984",
+              "file": "providers/nvidia.spec.ts",
+              "line": 63,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "providers/openai.spec.ts",
+      "file": "providers/openai.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OpenAI Provider",
+          "file": "providers/openai.spec.ts",
+          "line": 10,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API token is configured",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:18.445Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f8aa18b21c30576defdf-b44ef41bca04a0d0a6f9",
+              "file": "providers/openai.spec.ts",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "can fetch available models",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 181,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:30:27",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                          "column": 27,
+                          "line": 30
+                        },
+                        "snippet": "  28 |     });\n  29 |\n> 30 |     expect(response.ok()).toBeTruthy();\n     |                           ^\n  31 |     const data = await response.json();\n  32 |     expect(data.data).toBeDefined();\n  33 |     expect(data.data.length).toBeGreaterThan(0);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                            "column": 27,
+                            "line": 30
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  28 |     });\n  29 |\n> 30 |     expect(response.ok()).toBeTruthy();\n     |                           ^\n  31 |     const data = await response.json();\n  32 |     expect(data.data).toBeDefined();\n  33 |     expect(data.data.length).toBeGreaterThan(0);\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:30:27"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:18.453Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                        "column": 27,
+                        "line": 30
+                      }
+                    },
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 230,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:30:27",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                          "column": 27,
+                          "line": 30
+                        },
+                        "snippet": "  28 |     });\n  29 |\n> 30 |     expect(response.ok()).toBeTruthy();\n     |                           ^\n  31 |     const data = await response.json();\n  32 |     expect(data.data).toBeDefined();\n  33 |     expect(data.data.length).toBeGreaterThan(0);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                            "column": 27,
+                            "line": 30
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  28 |     });\n  29 |\n> 30 |     expect(response.ok()).toBeTruthy();\n     |                           ^\n  31 |     const data = await response.json();\n  32 |     expect(data.data).toBeDefined();\n  33 |     expect(data.data.length).toBeGreaterThan(0);\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:30:27"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-03-12T10:14:19.545Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/a12/projects/skillhub/haipee/test-results/providers-openai-OpenAI-Provider-can-fetch-available-models-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                        "column": 27,
+                        "line": 30
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f8aa18b21c30576defdf-be131b75a1181fc16ace",
+              "file": "providers/openai.spec.ts",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "can send chat completion request",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 162,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:58:27",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                          "column": 27,
+                          "line": 58
+                        },
+                        "snippet": "  56 |     });\n  57 |\n> 58 |     expect(response.ok()).toBeTruthy();\n     |                           ^\n  59 |     const data = await response.json();\n  60 |     expect(data.choices).toBeDefined();\n  61 |     expect(data.choices.length).toBeGreaterThan(0);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                            "column": 27,
+                            "line": 58
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  56 |     });\n  57 |\n> 58 |     expect(response.ok()).toBeTruthy();\n     |                           ^\n  59 |     const data = await response.json();\n  60 |     expect(data.choices).toBeDefined();\n  61 |     expect(data.choices.length).toBeGreaterThan(0);\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:58:27"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:18.827Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                        "column": 27,
+                        "line": 58
+                      }
+                    },
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 308,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:58:27",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                          "column": 27,
+                          "line": 58
+                        },
+                        "snippet": "  56 |     });\n  57 |\n> 58 |     expect(response.ok()).toBeTruthy();\n     |                           ^\n  59 |     const data = await response.json();\n  60 |     expect(data.choices).toBeDefined();\n  61 |     expect(data.choices.length).toBeGreaterThan(0);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                            "column": 27,
+                            "line": 58
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  56 |     });\n  57 |\n> 58 |     expect(response.ok()).toBeTruthy();\n     |                           ^\n  59 |     const data = await response.json();\n  60 |     expect(data.choices).toBeDefined();\n  61 |     expect(data.choices.length).toBeGreaterThan(0);\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:58:27"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-03-12T10:14:19.890Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/a12/projects/skillhub/haipee/test-results/providers-openai-OpenAI-Pr-94c20-end-chat-completion-request-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                        "column": 27,
+                        "line": 58
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f8aa18b21c30576defdf-4bde8e6d47728cfdfbb9",
+              "file": "providers/openai.spec.ts",
+              "line": 40,
+              "column": 3
+            },
+            {
+              "title": "handles authentication errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 155,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m401\u001b[39m\nReceived: \u001b[31m403\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m401\u001b[39m\nReceived: \u001b[31m403\u001b[39m\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:79:31",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                          "column": 31,
+                          "line": 79
+                        },
+                        "snippet": "  77 |     });\n  78 |\n> 79 |     expect(response.status()).toBe(401);\n     |                               ^\n  80 |   });\n  81 | });\n  82 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                            "column": 31,
+                            "line": 79
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m401\u001b[39m\nReceived: \u001b[31m403\u001b[39m\n\n  77 |     });\n  78 |\n> 79 |     expect(response.status()).toBe(401);\n     |                               ^\n  80 |   });\n  81 | });\n  82 |\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:79:31"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:18.881Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                        "column": 31,
+                        "line": 79
+                      }
+                    },
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 229,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m401\u001b[39m\nReceived: \u001b[31m403\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m401\u001b[39m\nReceived: \u001b[31m403\u001b[39m\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:79:31",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                          "column": 31,
+                          "line": 79
+                        },
+                        "snippet": "  77 |     });\n  78 |\n> 79 |     expect(response.status()).toBe(401);\n     |                               ^\n  80 |   });\n  81 | });\n  82 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                            "column": 31,
+                            "line": 79
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m401\u001b[39m\nReceived: \u001b[31m403\u001b[39m\n\n  77 |     });\n  78 |\n> 79 |     expect(response.status()).toBe(401);\n     |                               ^\n  80 |   });\n  81 | });\n  82 |\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts:79:31"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-03-12T10:14:19.937Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/a12/projects/skillhub/haipee/test-results/providers-openai-OpenAI-Pr-ce13e-ndles-authentication-errors-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/openai.spec.ts",
+                        "column": 31,
+                        "line": 79
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f8aa18b21c30576defdf-b437df9f485ffc627604",
+              "file": "providers/openai.spec.ts",
+              "line": 67,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "providers/opencode.spec.ts",
+      "file": "providers/opencode.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OpenCode Provider",
+          "file": "providers/opencode.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API token is configured",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:19.031Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "932a95033fcec851f174-968d336f0ac5a8295ec7",
+              "file": "providers/opencode.spec.ts",
+              "line": 14,
+              "column": 3
+            },
+            {
+              "title": "can fetch available models",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 305,
+                      "error": {
+                        "message": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON",
+                        "stack": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts:30:18",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                          "column": 18,
+                          "line": 30
+                        },
+                        "snippet": "  28 |\n  29 |     expect(response.ok()).toBeTruthy();\n> 30 |     const data = await response.json();\n     |                  ^\n  31 |     expect(data.data).toBeDefined();\n  32 |   });\n  33 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                            "column": 18,
+                            "line": 30
+                          },
+                          "message": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON\n\n  28 |\n  29 |     expect(response.ok()).toBeTruthy();\n> 30 |     const data = await response.json();\n     |                  ^\n  31 |     expect(data.data).toBeDefined();\n  32 |   });\n  33 |\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts:30:18"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:19.040Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                        "column": 18,
+                        "line": 30
+                      }
+                    },
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 211,
+                      "error": {
+                        "message": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON",
+                        "stack": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts:30:18",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                          "column": 18,
+                          "line": 30
+                        },
+                        "snippet": "  28 |\n  29 |     expect(response.ok()).toBeTruthy();\n> 30 |     const data = await response.json();\n     |                  ^\n  31 |     expect(data.data).toBeDefined();\n  32 |   });\n  33 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                            "column": 18,
+                            "line": 30
+                          },
+                          "message": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON\n\n  28 |\n  29 |     expect(response.ok()).toBeTruthy();\n> 30 |     const data = await response.json();\n     |                  ^\n  31 |     expect(data.data).toBeDefined();\n  32 |   });\n  33 |\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts:30:18"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-03-12T10:14:20.253Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/a12/projects/skillhub/haipee/test-results/providers-opencode-OpenCod-945bb--can-fetch-available-models-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                        "column": 18,
+                        "line": 30
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "932a95033fcec851f174-629f118d700f36884946",
+              "file": "providers/opencode.spec.ts",
+              "line": 20,
+              "column": 3
+            },
+            {
+              "title": "can send chat completion request",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 266,
+                      "error": {
+                        "message": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON",
+                        "stack": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts:52:18",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                          "column": 18,
+                          "line": 52
+                        },
+                        "snippet": "  50 |\n  51 |     expect(response.ok()).toBeTruthy();\n> 52 |     const data = await response.json();\n     |                  ^\n  53 |     expect(data.choices).toBeDefined();\n  54 |     expect(data.choices.length).toBeGreaterThan(0);\n  55 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                            "column": 18,
+                            "line": 52
+                          },
+                          "message": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON\n\n  50 |\n  51 |     expect(response.ok()).toBeTruthy();\n> 52 |     const data = await response.json();\n     |                  ^\n  53 |     expect(data.choices).toBeDefined();\n  54 |     expect(data.choices.length).toBeGreaterThan(0);\n  55 |\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts:52:18"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:20.665Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                        "column": 18,
+                        "line": 52
+                      }
+                    },
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 208,
+                      "error": {
+                        "message": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON",
+                        "stack": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts:52:18",
+                        "location": {
+                          "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                          "column": 18,
+                          "line": 52
+                        },
+                        "snippet": "  50 |\n  51 |     expect(response.ok()).toBeTruthy();\n> 52 |     const data = await response.json();\n     |                  ^\n  53 |     expect(data.choices).toBeDefined();\n  54 |     expect(data.choices.length).toBeGreaterThan(0);\n  55 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                            "column": 18,
+                            "line": 52
+                          },
+                          "message": "SyntaxError: Unexpected token 'N', \"Not Found\" is not valid JSON\n\n  50 |\n  51 |     expect(response.ok()).toBeTruthy();\n> 52 |     const data = await response.json();\n     |                  ^\n  53 |     expect(data.choices).toBeDefined();\n  54 |     expect(data.choices.length).toBeGreaterThan(0);\n  55 |\n    at /Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts:52:18"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-03-12T10:14:21.788Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/a12/projects/skillhub/haipee/test-results/providers-opencode-OpenCod-c791c-end-chat-completion-request-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/a12/projects/skillhub/haipee/tests/e2e/providers/opencode.spec.ts",
+                        "column": 18,
+                        "line": 52
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "932a95033fcec851f174-b85256cede5ff7dddb25",
+              "file": "providers/opencode.spec.ts",
+              "line": 34,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "summary.spec.ts",
+      "file": "summary.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "E2E Test Summary",
+          "file": "summary.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "generate provider configuration report",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 6,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n============================================================\n"
+                        },
+                        {
+                          "text": "📊 E2E API Provider Configuration Report\n"
+                        },
+                        {
+                          "text": "============================================================\n"
+                        },
+                        {
+                          "text": "\nTotal Providers: 9\n"
+                        },
+                        {
+                          "text": "✅ Configured: 9\n"
+                        },
+                        {
+                          "text": "❌ Missing: 0\n"
+                        },
+                        {
+                          "text": "\nProvider Details:\n"
+                        },
+                        {
+                          "text": "  ✅ NVIDIA NIM (NVIDIA_TOKEN)\n"
+                        },
+                        {
+                          "text": "  ✅ OpenAI (OPENAI_TOKEN)\n"
+                        },
+                        {
+                          "text": "  ✅ Google Gemini (GEMINI_TOKEN)\n"
+                        },
+                        {
+                          "text": "  ✅ OpenCode (OPENCODE_TOKEN)\n"
+                        },
+                        {
+                          "text": "  ✅ Kilo Code (KILO_TOKEN)\n"
+                        },
+                        {
+                          "text": "  ✅ XiaoMi MiNo (XIAOMIMINO_TOKEN)\n"
+                        },
+                        {
+                          "text": "  ✅ Huawei (HUAWEI_TOKEN)\n"
+                        },
+                        {
+                          "text": "  ✅ Cloudflare (CLOUDFLARE_API_TOKEN)\n"
+                        },
+                        {
+                          "text": "  ✅ Poe (POE_TOKEN)\n"
+                        },
+                        {
+                          "text": "\n============================================================\n"
+                        },
+                        {
+                          "text": "📄 Report saved to: /Users/a12/projects/skillhub/haipee/playwright-report/provider-report.json\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:21.111Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9f4f2d756779b5408462-a136678073a5f95eb717",
+              "file": "summary.spec.ts",
+              "line": 9,
+              "column": 3
+            },
+            {
+              "title": "list active providers",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n============================================================\n"
+                        },
+                        {
+                          "text": "🚀 Active Providers (Ready for Testing)\n"
+                        },
+                        {
+                          "text": "============================================================\n"
+                        },
+                        {
+                          "text": "  ✅ NVIDIA NIM (Model: meta/llama-3.1-8b-instruct)\n"
+                        },
+                        {
+                          "text": "  ✅ OpenAI (Model: gpt-4o-mini)\n"
+                        },
+                        {
+                          "text": "  ✅ Google Gemini (Model: gemini-pro)\n"
+                        },
+                        {
+                          "text": "  ✅ OpenCode (Model: opencode-default)\n"
+                        },
+                        {
+                          "text": "  ✅ Kilo Code (Model: kilo-default)\n"
+                        },
+                        {
+                          "text": "  ✅ XiaoMi MiNo (Model: mino-default)\n"
+                        },
+                        {
+                          "text": "  ✅ Huawei (Model: huawei-default)\n"
+                        },
+                        {
+                          "text": "  ✅ Cloudflare (Model: @cf/meta/llama-2-7b-chat-int8)\n"
+                        },
+                        {
+                          "text": "  ✅ Poe (Model: claude-3-sonnet)\n"
+                        },
+                        {
+                          "text": "============================================================\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-12T10:14:21.141Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9f4f2d756779b5408462-f20bc2e890d288e3dc9c",
+              "file": "summary.spec.ts",
+              "line": 78,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-12T10:14:16.070Z",
+    "duration": 5958.438999999999,
+    "expected": 12,
+    "skipped": 2,
+    "unexpected": 5,
+    "flaky": 0
+  }
+}

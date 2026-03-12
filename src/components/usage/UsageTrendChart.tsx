@@ -51,15 +51,15 @@ export function UsageTrendChart({
         rawDate: stat.date,
         label: isToday
           ? pointDate.toLocaleString(dateLocale, {
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : pointDate.toLocaleDateString(dateLocale, {
-              month: "2-digit",
-              day: "2-digit",
-            }),
+            month: "2-digit",
+            day: "2-digit",
+          }),
         hour: pointDate.getHours(),
         inputTokens: stat.totalInputTokens,
         outputTokens: stat.totalOutputTokens,

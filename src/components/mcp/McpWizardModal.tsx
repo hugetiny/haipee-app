@@ -192,8 +192,8 @@ const McpWizardModal: React.FC<McpWizardModalProps> = ({
       setWizardHeaders(
         headers
           ? Object.entries(headers)
-              .map(([k, v]) => `${k}: ${v ?? ""}`)
-              .join("\n")
+            .map(([k, v]) => `${k}: ${v ?? ""}`)
+            .join("\n")
           : "",
       );
       setWizardCommand("");
@@ -213,8 +213,8 @@ const McpWizardModal: React.FC<McpWizardModalProps> = ({
     setWizardEnv(
       env
         ? Object.entries(env)
-            .map(([k, v]) => `${k}=${v ?? ""}`)
-            .join("\n")
+          .map(([k, v]) => `${k}=${v ?? ""}`)
+          .join("\n")
         : "",
     );
     setWizardUrl("");
@@ -403,15 +403,15 @@ const McpWizardModal: React.FC<McpWizardModalProps> = ({
             wizardEnv ||
             wizardUrl ||
             wizardHeaders) && (
-            <div className="space-y-2 border-t border-border-default pt-4">
-              <h3 className="text-sm font-medium text-foreground">
-                {t("mcp.wizard.preview")}
-              </h3>
-              <pre className="overflow-x-auto rounded-lg bg-gray-100 dark:bg-gray-800 p-3 text-xs font-mono text-gray-700 dark:text-gray-300">
-                {preview}
-              </pre>
-            </div>
-          )}
+              <div className="space-y-2 border-t border-border-default pt-4">
+                <h3 className="text-sm font-medium text-foreground">
+                  {t("mcp.wizard.preview")}
+                </h3>
+                <pre className="overflow-x-auto rounded-lg bg-gray-100 dark:bg-gray-800 p-3 text-xs font-mono text-gray-700 dark:text-gray-300">
+                  {preview}
+                </pre>
+              </div>
+            )}
         </div>
 
         {/* Footer */}

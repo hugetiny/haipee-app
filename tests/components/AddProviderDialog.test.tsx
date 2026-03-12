@@ -24,6 +24,29 @@ vi.mock("@/components/ui/dialog", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/sheet", () => ({
+  Sheet: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SheetContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SheetHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SheetTitle: ({ children }: { children: React.ReactNode }) => (
+    <h1>{children}</h1>
+  ),
+  SheetDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
+  SheetFooter: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+vi.mock("@/hooks/useMediaQuery", () => ({
+  useMediaQuery: () => false,
+}));
+
 let mockFormValues: ProviderFormValues;
 
 vi.mock("@/components/providers/forms/ProviderForm", () => ({

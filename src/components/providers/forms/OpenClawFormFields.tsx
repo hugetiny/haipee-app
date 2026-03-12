@@ -262,19 +262,18 @@ export function OpenClawFormFields({
                 {/* Role badge */}
                 <div className="flex items-center">
                   <span
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                      index === 0
+                    className={`text-xs font-medium px-1.5 py-0.5 rounded ${index === 0
                         ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
                         : "bg-muted text-muted-foreground"
-                    }`}
+                      }`}
                   >
                     {index === 0
                       ? t("openclaw.primaryModel", {
-                          defaultValue: "默认模型",
-                        })
+                        defaultValue: "默认模型",
+                      })
                       : t("openclaw.fallbackModel", {
-                          defaultValue: "回退模型",
-                        })}
+                        defaultValue: "回退模型",
+                      })}
                   </span>
                 </div>
                 {/* Model ID and Name row */}
@@ -359,11 +358,11 @@ export function OpenClawFormFields({
                           <span className="text-xs text-muted-foreground">
                             {model.reasoning
                               ? t("openclaw.reasoningOn", {
-                                  defaultValue: "启用",
-                                })
+                                defaultValue: "启用",
+                              })
                               : t("openclaw.reasoningOff", {
-                                  defaultValue: "关闭",
-                                })}
+                                defaultValue: "关闭",
+                              })}
                           </span>
                         </div>
                       </div>

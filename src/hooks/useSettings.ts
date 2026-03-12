@@ -188,11 +188,11 @@ export function useSettings(): UseSettingsResult {
             toast.error(
               nextSkipClaudeOnboarding
                 ? t("notifications.skipClaudeOnboardingFailed", {
-                    defaultValue: "跳过 Claude Code 初次安装确认失败",
-                  })
+                  defaultValue: "跳过 Claude Code 初次安装确认失败",
+                })
                 : t("notifications.clearClaudeOnboardingSkipFailed", {
-                    defaultValue: "恢复 Claude Code 初次安装确认失败",
-                  }),
+                  defaultValue: "恢复 Claude Code 初次安装确认失败",
+                }),
             );
           }
         }
@@ -304,11 +304,11 @@ export function useSettings(): UseSettingsResult {
             toast.error(
               nextSkipClaudeOnboarding
                 ? t("notifications.skipClaudeOnboardingFailed", {
-                    defaultValue: "跳过 Claude Code 初次安装确认失败",
-                  })
+                  defaultValue: "跳过 Claude Code 初次安装确认失败",
+                })
                 : t("notifications.clearClaudeOnboardingSkipFailed", {
-                    defaultValue: "恢复 Claude Code 初次安装确认失败",
-                  }),
+                  defaultValue: "恢复 Claude Code 初次安装确认失败",
+                }),
             );
           }
         }
@@ -317,7 +317,7 @@ export function useSettings(): UseSettingsResult {
         if (
           payload.enableClaudePluginIntegration !== undefined &&
           payload.enableClaudePluginIntegration !==
-            data?.enableClaudePluginIntegration
+          data?.enableClaudePluginIntegration
         ) {
           try {
             if (payload.enableClaudePluginIntegration) {

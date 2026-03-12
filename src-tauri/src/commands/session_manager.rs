@@ -74,3 +74,20 @@ pub async fn delete_session(
     .await
     .map_err(|e| format!("Failed to delete session: {e}"))?
 }
+
+#[tauri::command]
+pub async fn send_session_message(
+    providerId: String,
+    sourcePath: String,
+    message: String,
+) -> Result<(), String> {
+    let provider_id = providerId.clone();
+    let source_path = sourcePath.clone();
+    let message = message.clone();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        session_manager::send_message(&provider_id, &source_path, &message)
+    })
+    .await
+    .map_err(|e| format!("Failed to send message: {e}"))?
+}

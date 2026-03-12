@@ -7,7 +7,7 @@
         "title": "CC Switch",
         "titleBarStyle": "Visible",
         "visible": false,
-        "minWidth": 900,
+        "minWidth": 400,
         "minHeight": 600
       }
     ]

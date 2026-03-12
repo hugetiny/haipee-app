@@ -633,19 +633,18 @@ export function DeepLinkImportDialog() {
                         </div>
                         <div className="col-span-2 text-sm">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${
-                              request.usageEnabled !== false
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${request.usageEnabled !== false
                                 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
                                 : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                            }`}
+                              }`}
                           >
                             {request.usageEnabled !== false
                               ? t("deeplink.usageScriptEnabled", {
-                                  defaultValue: "已启用",
-                                })
+                                defaultValue: "已启用",
+                              })
                               : t("deeplink.usageScriptDisabled", {
-                                  defaultValue: "未启用",
-                                })}
+                                defaultValue: "未启用",
+                              })}
                           </span>
                         </div>
                       </div>

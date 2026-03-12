@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FullScreenPanel } from "@/components/common/FullScreenPanel";
+import { ResponsiveDialog } from "@/components/common/ResponsiveDialog";
 import type { Provider, CustomEndpoint, UniversalProvider } from "@/types";
 import type { AppId } from "@/lib/api";
 import { universalProvidersApi } from "@/lib/api";
@@ -274,10 +274,10 @@ export function AddProviderDialog({
     );
 
   return (
-    <FullScreenPanel
-      isOpen={open}
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
       title={t("provider.addNewProvider")}
-      onClose={() => onOpenChange(false)}
       footer={footer}
     >
       {showUniversalTab ? (
@@ -294,7 +294,7 @@ export function AddProviderDialog({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="app-specific" className="mt-0">
+          <TabsContent value="app-specific" className="mt-0 pb-10 sm:pb-0">
             <ProviderForm
               appId={appId}
               submitLabel={t("common.add")}
@@ -327,6 +327,6 @@ export function AddProviderDialog({
           initialPreset={selectedUniversalPreset}
         />
       )}
-    </FullScreenPanel>
+    </ResponsiveDialog>
   );
 }

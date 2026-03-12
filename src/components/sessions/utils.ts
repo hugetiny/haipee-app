@@ -71,10 +71,45 @@ export const getRoleLabel = (role: string, t: (key: string) => string) => {
   return role;
 };
 
-export const formatSessionTitle = (session: SessionMeta) => {
+export const formatSessionTitle = (
+  session: SessionMeta,
+  t?: (key: string) => string,
+) => {
+  // 1. Prefer explicit title (unless it's just "workspace", which is a common CLI default)
+  if (session.title && session.title.toLowerCase() !== "workspace") {
+    return session.title;
+  }
+
+  // If title is missing or generic "workspace", try using the project directory name
+  const dirPath = session.sourcePath || session.projectDir;
+  if (dirPath) {
+    const dirName = getBaseName(dirPath);
+    if (dirName && dirName.toLowerCase() !== "workspace") {
+      return dirName;
+    }
+  }
+
+  // 2. Use Provider Name as the default title format
+  // If translation function is provided, use it, otherwise fallback to capitalized providerId
+  if (t) {
+    const defaultLabel =
+      session.providerId.charAt(0).toUpperCase() + session.providerId.slice(1);
+    // Special casing for known providers without translation or needing specific format
+    if (session.providerId === "openclaw") return "Local OpenClaw";
+    if (session.providerId === "claude") return "Claude Code";
+    if (session.providerId === "opencode") return "OpenCode";
+    if (session.providerId === "codex") return "Codex";
+    if (session.providerId === "gemini") return "Gemini CLI";
+
+    const key = `apps.${session.providerId}`;
+    const translated = t(key);
+    return translated === key ? defaultLabel : translated;
+  }
+
+  // Pure fallback
+  if (session.providerId === "openclaw") return "Local OpenClaw";
+  if (session.providerId === "claude") return "Claude Code";
   return (
-    session.title ||
-    getBaseName(session.projectDir) ||
-    session.sessionId.slice(0, 8)
+    session.providerId.charAt(0).toUpperCase() + session.providerId.slice(1)
   );
 };

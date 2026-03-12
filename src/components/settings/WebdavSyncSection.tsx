@@ -587,7 +587,7 @@ export function WebdavSyncSection({
           <div className="flex items-center gap-4">
             <label className="w-40 text-xs font-medium text-foreground shrink-0">
               {t("settings.webdavSync.remoteRoot")}
-              <span className="block text-[10px] font-normal text-muted-foreground">
+              <span className="block text-xs font-normal text-muted-foreground">
                 {t("settings.webdavSync.remoteRootDefault")}
               </span>
             </label>
@@ -604,7 +604,7 @@ export function WebdavSyncSection({
           <div className="flex items-center gap-4">
             <label className="w-40 text-xs font-medium text-foreground shrink-0">
               {t("settings.webdavSync.profile")}
-              <span className="block text-[10px] font-normal text-muted-foreground">
+              <span className="block text-xs font-normal text-muted-foreground">
                 {t("settings.webdavSync.profileDefault")}
               </span>
             </label>
@@ -620,7 +620,7 @@ export function WebdavSyncSection({
           <div className="flex items-start gap-4">
             <label className="w-40 text-xs font-medium text-foreground shrink-0">
               {t("settings.webdavSync.autoSync")}
-              <span className="block text-[10px] font-normal text-muted-foreground">
+              <span className="block text-xs font-normal text-muted-foreground">
                 {t("settings.webdavSync.autoSyncHint")}
               </span>
             </label>
@@ -647,7 +647,7 @@ export function WebdavSyncSection({
               {t("settings.webdavSync.autoSyncLastErrorTitle")}
             </p>
             <p className="mt-1 break-all whitespace-pre-wrap">{lastError}</p>
-            <p className="mt-1 text-[11px] text-red-700/90 dark:text-red-300/80">
+            <p className="mt-1 text-xs text-red-700/90 dark:text-red-300/80">
               {t("settings.webdavSync.autoSyncLastErrorHint")}
             </p>
           </div>

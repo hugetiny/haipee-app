@@ -1,4 +1,5 @@
 import React from "react";
+import "@/lib/browser-mock";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { UpdateProvider } from "./contexts/UpdateContext";
@@ -13,6 +14,7 @@ import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { message } from "@tauri-apps/plugin-dialog";
 import { exit } from "@tauri-apps/plugin-process";
+import { attachConsole } from "@tauri-apps/plugin-log";
 
 // 根据平台添加 body class，便于平台特定样式
 try {
@@ -71,6 +73,15 @@ try {
 }
 
 async function bootstrap() {
+  // 启动时附加控制台日志到 Tauri 插件
+  if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
+    try {
+      void attachConsole();
+    } catch (e) {
+      console.error("Failed to attach tauri-plugin-log console", e);
+    }
+  }
+
   // 启动早期主动查询后端初始化错误，避免事件竞态
   try {
     const initError = (await invoke(

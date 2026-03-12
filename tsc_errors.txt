@@ -1,0 +1,1517 @@
+src/components/providers/forms/BasicFormFields.tsx(23,15): error TS2305: Module '"react-hook-form"' has no exported member 'UseFormReturn'.
+src/components/providers/forms/BasicFormFields.tsx(129,22): error TS7031: Binding element 'field' implicitly has an 'any' type.
+src/components/providers/forms/BasicFormFields.tsx(143,22): error TS7031: Binding element 'field' implicitly has an 'any' type.
+src/components/providers/forms/BasicFormFields.tsx(161,20): error TS7031: Binding element 'field' implicitly has an 'any' type.
+src/components/providers/forms/ProviderForm.tsx(2,10): error TS2305: Module '"react-hook-form"' has no exported member 'useForm'.
+src/components/ui/form.tsx(5,3): error TS2305: Module '"react-hook-form"' has no exported member 'Controller'.
+src/components/ui/form.tsx(6,3): error TS2305: Module '"react-hook-form"' has no exported member 'FormProvider'.
+src/components/ui/form.tsx(7,3): error TS2305: Module '"react-hook-form"' has no exported member 'useFormContext'.
+src/components/ui/form.tsx(8,8): error TS2305: Module '"react-hook-form"' has no exported member 'ControllerProps'.
+src/components/ui/form.tsx(9,8): error TS2305: Module '"react-hook-form"' has no exported member 'FieldPath'.
+src/components/ui/form.tsx(10,8): error TS2305: Module '"react-hook-form"' has no exported member 'FieldValues'.
+tests/components/AddProviderDialog.test.tsx(104,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/AddProviderDialog.test.tsx(107,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/AddProviderDialog.test.tsx(110,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/AddProviderDialog.test.tsx(140,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/AddProviderDialog.test.tsx(143,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/AddProviderDialog.test.tsx(146,25): error TS2339: Property 'any' does not exist on type 'ExpectStatic'.
+tests/components/GlobalProxySettings.test.tsx(44,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/GlobalProxySettings.test.tsx(60,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/GlobalProxySettings.test.tsx(62,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/GlobalProxySettings.test.tsx(74,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/GlobalProxySettings.test.tsx(81,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(36,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(42,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(47,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(58,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(62,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(64,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(67,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(81,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(82,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(85,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(98,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(99,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(100,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(112,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ImportExportSection.test.tsx(113,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(174,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(184,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(189,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(231,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(233,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(250,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(251,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(252,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(267,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(268,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(270,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(285,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(290,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(312,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(316,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(318,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(319,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(320,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(321,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(322,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(345,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(349,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(370,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(371,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(376,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(384,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(386,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(387,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(388,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(389,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(394,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(395,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(411,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(417,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(423,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(428,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(430,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(431,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(438,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(439,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(455,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(456,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(458,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/McpFormModal.test.tsx(461,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/OmoFormFields.mergeCustomModelsIntoStore.test.ts(29,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/OmoFormFields.mergeCustomModelsIntoStore.test.ts(30,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/OmoFormFields.mergeCustomModelsIntoStore.test.ts(61,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/OmoFormFields.mergeCustomModelsIntoStore.test.ts(62,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/OmoFormFields.mergeCustomModelsIntoStore.test.ts(83,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/OmoFormFields.mergeCustomModelsIntoStore.test.ts(109,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(24,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(28,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(29,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(33,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(34,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(44,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(53,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(61,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(62,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(66,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(70,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(76,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(82,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(92,12): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(96,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(100,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(101,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(105,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(106,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(115,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(116,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(121,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(126,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(127,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(137,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(142,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(143,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(147,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(148,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(157,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(158,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(159,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(163,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(167,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(171,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(175,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/openclaw.utils.test.ts(176,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(163,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(193,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(228,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(229,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(230,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(233,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(236,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(241,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(254,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(255,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(256,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(257,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(258,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(261,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(295,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(296,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(299,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(300,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(303,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(304,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/ProviderList.test.tsx(305,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SessionManagerPage.test.tsx(117,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SessionManagerPage.test.tsx(125,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SessionManagerPage.test.tsx(126,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SessionManagerPage.test.tsx(131,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SessionManagerPage.test.tsx(136,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SessionManagerPage.test.tsx(137,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SessionManagerPage.test.tsx(138,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(291,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(293,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(316,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(328,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(329,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(332,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(337,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(343,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(350,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(355,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(359,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(367,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(368,14): error TS2339: Property 'objectContaining' does not exist on type 'ExpectStatic'.
+tests/components/SettingsDialog.test.tsx(370,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(375,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(389,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(390,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(391,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(392,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(393,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(405,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(412,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(414,16): error TS2339: Property 'objectContaining' does not exist on type 'ExpectStatic'.
+tests/components/SettingsDialog.test.tsx(425,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(432,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(433,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(436,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(437,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(438,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(448,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(451,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(454,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(460,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(463,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/SettingsDialog.test.tsx(466,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(152,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(155,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(167,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(181,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(191,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(192,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(201,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(203,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(204,14): error TS2339: Property 'objectContaining' does not exist on type 'ExpectStatic'.
+tests/components/WebdavSyncSection.test.tsx(213,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(214,16): error TS2339: Property 'objectContaining' does not exist on type 'ExpectStatic'.
+tests/components/WebdavSyncSection.test.tsx(220,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(235,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(242,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(243,16): error TS2339: Property 'objectContaining' does not exist on type 'ExpectStatic'.
+tests/components/WebdavSyncSection.test.tsx(262,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(265,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(278,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(279,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(280,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(291,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(301,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(303,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(315,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(328,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(332,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(343,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(353,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(355,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(367,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(380,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(384,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(396,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(398,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(417,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(421,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(422,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(437,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/components/WebdavSyncSection.test.tsx(447,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(10,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(15,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(16,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(17,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(18,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(22,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(23,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(24,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(25,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(26,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(33,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(34,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(38,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(43,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(51,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(56,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(57,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(58,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(63,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(64,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(68,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(69,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(70,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/claudeProviderPresets.test.ts(76,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(13,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(14,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(19,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(20,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(25,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(33,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(37,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(43,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(47,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(51,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(52,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(53,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(56,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(57,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(62,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/config/opencodeProviderPresets.test.ts(64,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/e2e/providers/nvidia.spec.ts(11,26): error TS6133: 'page' is declared but its value is never read.
+tests/e2e/providers/poe.spec.ts(32,33): error TS18048: 'provider.baseUrl' is possibly 'undefined'.
+tests/e2e/setup/global-setup.ts(4,7): error TS6133: 'execAsync' is declared but its value is never read.
+tests/hooks/useDirectorySettings.test.tsx(83,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(85,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(86,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(105,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(111,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(112,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(115,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(124,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(130,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(131,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(132,30): error TS2339: Property 'anything' does not exist on type 'ExpectStatic'.
+tests/hooks/useDirectorySettings.test.tsx(134,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(143,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(152,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(158,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(159,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(160,30): error TS2339: Property 'anything' does not exist on type 'ExpectStatic'.
+tests/hooks/useDirectorySettings.test.tsx(173,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(179,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(180,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(195,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(203,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(206,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(209,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(210,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(211,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(218,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(229,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(230,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(231,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDirectorySettings.test.tsx(232,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(82,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(105,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(106,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(114,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(117,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(118,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(136,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(137,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(138,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useDragSort.test.tsx(155,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(59,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(60,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(61,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(81,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(82,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(83,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(84,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(104,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(105,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(120,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(121,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.extra.test.tsx(122,14): error TS2339: Property 'stringContaining' does not exist on type 'ExpectStatic'.
+tests/hooks/useImportExport.extra.test.tsx(123,14): error TS2339: Property 'objectContaining' does not exist on type 'ExpectStatic'.
+tests/hooks/useImportExport.test.tsx(59,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(60,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(61,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(72,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(73,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(74,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(86,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(87,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(88,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(109,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(110,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(111,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(112,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(113,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(133,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(134,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(135,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(136,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(153,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(154,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(155,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(156,14): error TS2339: Property 'stringContaining' does not exist on type 'ExpectStatic'.
+tests/hooks/useImportExport.test.tsx(173,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(174,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(175,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(176,14): error TS2339: Property 'stringContaining' does not exist on type 'ExpectStatic'.
+tests/hooks/useImportExport.test.tsx(177,14): error TS2339: Property 'objectContaining' does not exist on type 'ExpectStatic'.
+tests/hooks/useImportExport.test.tsx(194,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(195,14): error TS2339: Property 'stringContaining' does not exist on type 'ExpectStatic'.
+tests/hooks/useImportExport.test.tsx(209,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(210,14): error TS2339: Property 'stringContaining' does not exist on type 'ExpectStatic'.
+tests/hooks/useImportExport.test.tsx(223,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(224,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(239,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(240,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(246,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useImportExport.test.tsx(247,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(32,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(37,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(42,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(43,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(48,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(55,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(56,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(61,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(69,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(72,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(81,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(90,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(99,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(107,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(118,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(125,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(130,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(137,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(144,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(151,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useMcpValidation.test.tsx(158,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(15,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(20,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(21,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(22,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(27,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(28,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(33,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(34,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(39,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(40,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(45,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(46,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(51,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(52,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(57,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(58,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(59,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(60,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(65,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(66,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(72,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useOpenClawKeys.test.ts(78,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(153,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(154,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(171,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(172,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(188,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(189,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(190,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(210,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(211,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(212,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(231,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(232,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(252,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(253,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(265,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(289,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(290,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(302,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(305,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(306,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(321,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(354,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(364,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(367,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(388,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(389,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(410,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(411,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(422,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(440,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(458,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(459,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(470,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(494,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(498,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(499,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProviderActions.test.tsx(513,3): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProxyStatus.test.tsx(106,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useProxyStatus.test.tsx(113,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(187,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(188,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(215,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(216,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(255,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(256,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(258,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(259,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(260,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(261,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(263,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(266,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(267,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(268,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(270,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(307,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(308,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(310,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(311,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(313,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(347,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(349,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(350,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(380,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(381,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(384,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(390,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(405,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(406,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(407,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(421,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(427,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettings.test.tsx(428,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(47,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(51,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(52,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(53,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(54,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(55,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(56,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(57,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(58,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(77,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(80,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(81,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(94,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(95,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(110,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(117,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(118,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(137,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(155,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(156,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(157,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(158,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(159,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(160,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(161,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(162,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(181,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsForm.test.tsx(191,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsMetadata.test.tsx(23,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsMetadata.test.tsx(24,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsMetadata.test.tsx(30,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsMetadata.test.tsx(31,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsMetadata.test.tsx(43,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsMetadata.test.tsx(44,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsMetadata.test.tsx(61,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/hooks/useSettingsMetadata.test.tsx(68,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(164,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(170,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(175,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(178,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(184,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(187,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(195,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(205,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(206,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(214,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/App.test.tsx(226,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(70,3): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(72,3): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(73,3): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(74,3): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(75,3): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(76,3): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(106,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(107,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(111,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(112,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(116,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(120,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(124,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(128,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(133,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(134,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(135,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(136,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(140,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(145,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(146,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(147,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(148,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(149,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(150,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(154,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(158,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(163,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(168,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(172,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(176,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(180,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(184,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(188,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(192,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(196,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(200,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(204,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(208,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(212,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(216,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(217,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(221,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(222,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(226,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(230,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(234,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(238,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(242,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(246,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(250,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(254,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(259,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(260,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(264,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(268,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(272,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(276,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(280,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(284,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(288,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(293,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(294,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(295,28): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(299,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(303,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(307,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(329,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(330,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(346,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(348,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(366,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(368,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(369,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(398,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(407,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(429,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(432,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(444,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(466,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(469,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(470,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(494,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(496,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(497,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(512,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(553,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(555,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(577,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(597,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(616,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(631,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(651,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(668,11): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/OpenClaw.realdata.test.ts(687,9): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(151,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(158,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(166,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(173,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(179,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(180,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(183,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(190,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(201,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(205,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(210,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(217,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(229,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(233,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(237,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(243,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(247,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(251,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(258,7): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(270,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(272,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(289,25): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(291,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/integration/SettingsDialog.test.tsx(292,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(10,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(14,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(15,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(19,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(26,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(27,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(35,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(36,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(42,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(43,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(49,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(50,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(55,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(56,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(57,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(61,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(67,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(73,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(86,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(87,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(93,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(94,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(100,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(101,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(105,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(106,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(113,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(114,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/formattersAndMeta.test.ts(121,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/omoConfig.test.ts(9,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/omoConfig.test.ts(13,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/omoConfig.test.ts(14,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/omoConfig.test.ts(18,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/omoConfig.test.ts(25,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/omoConfig.test.ts(28,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.codex.test.ts(20,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.codex.test.ts(21,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.codex.test.ts(22,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.codex.test.ts(35,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.codex.test.ts(36,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.codex.test.ts(37,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.codex.test.ts(49,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.codex.test.ts(52,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(29,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(30,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(34,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(35,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(40,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(41,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(46,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(51,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(63,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(65,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(66,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(74,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(75,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(80,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(81,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(86,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(92,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(93,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(101,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(102,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(113,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(119,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(123,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(127,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(133,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(143,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(148,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(153,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(158,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(163,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(170,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(175,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(179,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(188,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(192,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(196,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(200,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(204,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(208,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(213,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(224,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(230,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(236,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(242,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(248,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(254,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(258,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(272,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(280,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(285,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(292,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(293,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(298,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(307,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(313,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(319,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(320,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(324,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(332,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(333,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(339,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(340,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(346,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(352,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(361,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(365,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(369,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(370,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(374,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(382,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(388,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(394,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(400,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(409,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(415,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(421,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(430,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(431,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(432,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(439,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(440,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(445,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerConfigUtils.full.test.ts(446,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerMetaUtils.test.ts(12,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerMetaUtils.test.ts(13,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerMetaUtils.test.ts(21,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerMetaUtils.test.ts(44,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerMetaUtils.test.ts(66,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.
+tests/utils/providerMetaUtils.test.ts(78,5): error TS2349: This expression is not callable.
+  Type 'ExpectStatic' has no call signatures.

@@ -118,6 +118,35 @@ pub fn load_messages(path: &Path) -> Result<Vec<SessionMessage>, String> {
     Ok(messages)
 }
 
+pub fn send_message(path: &Path, message: &str) -> Result<(), String> {
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new()
+        .append(true)
+        .open(path)
+        .map_err(|e| format!("Failed to open session file for appending: {e}"))?;
+
+    let now = chrono::Local::now().to_rfc3339();
+    let entry = serde_json::json!({
+        "type": "message",
+        "timestamp": now,
+        "message": {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": message
+                }
+            ]
+        }
+    });
+
+    let line = format!("{}\n", entry.to_string());
+    file.write_all(line.as_bytes())
+        .map_err(|e| format!("Failed to write message to session file: {e}"))?;
+
+    Ok(())
+}
+
 pub fn delete_session(_root: &Path, path: &Path, session_id: &str) -> Result<bool, String> {
     let meta = parse_session(path).ok_or_else(|| {
         format!(

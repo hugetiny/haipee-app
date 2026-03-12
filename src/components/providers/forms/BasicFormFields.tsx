@@ -61,11 +61,11 @@ export function BasicFormFields({
               title={
                 currentIcon
                   ? t("providerIcon.clickToChange", {
-                      defaultValue: "点击更换图标",
-                    })
+                    defaultValue: "点击更换图标",
+                  })
                   : t("providerIcon.clickToSelect", {
-                      defaultValue: "点击选择图标",
-                    })
+                    defaultValue: "点击选择图标",
+                  })
               }
             >
               <ProviderIcon

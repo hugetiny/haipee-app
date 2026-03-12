@@ -16,7 +16,7 @@ export interface ResolvedDirectories {
 }
 
 const sanitizeDir = (value?: string | null): string | undefined => {
-  if (!value) return undefined;
+  if (!value || typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
 };

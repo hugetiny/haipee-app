@@ -78,13 +78,13 @@ export function ProxyPanel({
       toast.success(
         enabled
           ? t("proxy.takeover.enabled", {
-              app: appType,
-              defaultValue: `${appType} 接管已启用`,
-            })
+            app: appType,
+            defaultValue: `${appType} 接管已启用`,
+          })
           : t("proxy.takeover.disabled", {
-              app: appType,
-              defaultValue: `${appType} 接管已关闭`,
-            }),
+            app: appType,
+            defaultValue: `${appType} 接管已关闭`,
+          }),
         { closeButton: true },
       );
     } catch (error) {
@@ -255,7 +255,7 @@ export function ProxyPanel({
                   {(["claude", "codex", "gemini"] as const).map((appType) => {
                     const isEnabled =
                       takeoverStatus?.[
-                        appType as keyof typeof takeoverStatus
+                      appType as keyof typeof takeoverStatus
                       ] ?? false;
                     return (
                       <div
@@ -395,51 +395,51 @@ export function ProxyPanel({
               {(claudeQueue.length > 0 ||
                 codexQueue.length > 0 ||
                 geminiQueue.length > 0) && (
-                <div className="pt-3 border-t border-border space-y-3">
-                  <div className="flex items-center gap-2">
-                    <ListOrdered className="h-3.5 w-3.5 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">
-                      {t("proxy.failoverQueue.title")}
-                    </p>
+                  <div className="pt-3 border-t border-border space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ListOrdered className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">
+                        {t("proxy.failoverQueue.title")}
+                      </p>
+                    </div>
+
+                    {claudeQueue.length > 0 && (
+                      <ProviderQueueGroup
+                        appType="claude"
+                        appLabel="Claude"
+                        targets={claudeQueue.map((item) => ({
+                          id: item.providerId,
+                          name: item.providerName,
+                        }))}
+                        status={status}
+                      />
+                    )}
+
+                    {codexQueue.length > 0 && (
+                      <ProviderQueueGroup
+                        appType="codex"
+                        appLabel="Codex"
+                        targets={codexQueue.map((item) => ({
+                          id: item.providerId,
+                          name: item.providerName,
+                        }))}
+                        status={status}
+                      />
+                    )}
+
+                    {geminiQueue.length > 0 && (
+                      <ProviderQueueGroup
+                        appType="gemini"
+                        appLabel="Gemini"
+                        targets={geminiQueue.map((item) => ({
+                          id: item.providerId,
+                          name: item.providerName,
+                        }))}
+                        status={status}
+                      />
+                    )}
                   </div>
-
-                  {claudeQueue.length > 0 && (
-                    <ProviderQueueGroup
-                      appType="claude"
-                      appLabel="Claude"
-                      targets={claudeQueue.map((item) => ({
-                        id: item.providerId,
-                        name: item.providerName,
-                      }))}
-                      status={status}
-                    />
-                  )}
-
-                  {codexQueue.length > 0 && (
-                    <ProviderQueueGroup
-                      appType="codex"
-                      appLabel="Codex"
-                      targets={codexQueue.map((item) => ({
-                        id: item.providerId,
-                        name: item.providerName,
-                      }))}
-                      status={status}
-                    />
-                  )}
-
-                  {geminiQueue.length > 0 && (
-                    <ProviderQueueGroup
-                      appType="gemini"
-                      appLabel="Gemini"
-                      targets={geminiQueue.map((item) => ({
-                        id: item.providerId,
-                        name: item.providerName,
-                      }))}
-                      status={status}
-                    />
-                  )}
-                </div>
-              )}
+                )}
             </div>
 
             {/* [7] Stats cards */}
@@ -683,19 +683,17 @@ function ProviderQueueItem({
 
   return (
     <div
-      className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${
-        isCurrent
+      className={`flex items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors ${isCurrent
           ? "border-primary/40 bg-primary/10 text-primary font-medium"
           : "border-border bg-background/60"
-      }`}
+        }`}
     >
       <div className="flex items-center gap-2">
         <span
-          className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
-            isCurrent
+          className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${isCurrent
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground"
-          }`}
+            }`}
         >
           {priority}
         </span>

@@ -29,7 +29,7 @@ interface ListItem {
   value: string;
 }
 
-const ToolsPanel: React.FC = () => {
+export const ToolsPanel: React.FC = () => {
   const { t } = useTranslation();
   const { data: toolsData, isLoading } = useOpenClawTools();
   const saveToolsMutation = useSaveOpenClawTools();

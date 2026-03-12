@@ -64,11 +64,11 @@ export function UniversalProviderPanel() {
         toast.success(
           editingProvider
             ? t("universalProvider.updated", {
-                defaultValue: "统一供应商已更新",
-              })
+              defaultValue: "统一供应商已更新",
+            })
             : t("universalProvider.addedAndSynced", {
-                defaultValue: "统一供应商已添加并同步",
-              }),
+              defaultValue: "统一供应商已添加并同步",
+            }),
         );
         loadProviders();
         setEditingProvider(null);

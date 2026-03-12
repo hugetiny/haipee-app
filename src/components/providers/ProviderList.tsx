@@ -3,7 +3,7 @@ import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
   useSortable,
-  verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
   useEffect,
@@ -312,9 +312,9 @@ export function ProviderList({
     >
       <SortableContext
         items={filteredProviders.map((provider) => provider.id)}
-        strategy={verticalListSortingStrategy}
+        strategy={rectSortingStrategy}
       >
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProviders.map((provider) => {
             const isOmo = provider.category === "omo";
             const isOmoSlim = provider.category === "omo-slim";
@@ -386,7 +386,7 @@ export function ProviderList({
             transition={{ duration: 0.18, ease: "easeOut" }}
             className="fixed left-1/2 top-[6.5rem] z-40 w-[min(90vw,26rem)] -translate-x-1/2 sm:right-6 sm:left-auto sm:translate-x-0"
           >
-            <div className="p-4 space-y-3 border shadow-md rounded-2xl border-white/10 bg-background/95 shadow-black/20 backdrop-blur-md">
+            <div className="p-4 space-y-3 border shadow-md rounded-2xl border-border/50 bg-background/95 shadow-black/20 backdrop-blur-md">
               <div className="relative flex items-center gap-2">
                 <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none left-3 top-1/2 text-muted-foreground" />
                 <Input
@@ -423,7 +423,7 @@ export function ProviderList({
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                 <span>
                   {t("provider.searchScopeHint", {
                     defaultValue: "Matches provider name, notes, and URL.",

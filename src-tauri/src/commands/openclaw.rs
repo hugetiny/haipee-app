@@ -125,3 +125,40 @@ pub fn set_openclaw_tools(
 ) -> Result<openclaw_config::OpenClawWriteOutcome, String> {
     openclaw_config::set_tools_config(&tools).map_err(|e| e.to_string())
 }
+
+// ============================================================================
+// Generic JSON Configuration Commands
+// ============================================================================
+
+/// Get an arbitrary section from openclaw.json
+#[tauri::command]
+pub fn get_openclaw_json_section(section: String) -> Result<serde_json::Value, String> {
+    openclaw_config::get_json_section(&section).map_err(|e| e.to_string())
+}
+
+/// Set an arbitrary section in openclaw.json
+#[tauri::command]
+pub fn set_openclaw_json_section(
+    section: String,
+    value: serde_json::Value,
+) -> Result<openclaw_config::OpenClawWriteOutcome, String> {
+    openclaw_config::set_json_section(&section, &value).map_err(|e| e.to_string())
+}
+
+// ============================================================================
+// Raw JSON I/O Commands
+// ============================================================================
+
+/// Read raw openclaw.json text
+#[tauri::command]
+pub fn read_openclaw_json_raw() -> Result<String, String> {
+    openclaw_config::read_json_raw().map_err(|e| e.to_string())
+}
+
+/// Write raw openclaw.json text
+#[tauri::command]
+pub fn write_openclaw_json_raw(
+    content: String,
+) -> Result<openclaw_config::OpenClawWriteOutcome, String> {
+    openclaw_config::write_json_raw(&content).map_err(|e| e.to_string())
+}

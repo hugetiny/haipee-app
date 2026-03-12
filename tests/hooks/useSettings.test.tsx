@@ -44,6 +44,10 @@ vi.mock("@/lib/query", () => ({
     mutateAsync: mutateAsyncMock,
     isPending: false,
   }),
+  useProvidersQuery: () => ({ data: { providers: {}, currentProviderId: "" } }),
+  useUsageQuery: () => ({ data: null }),
+  useSessionsQuery: () => ({ data: [] }),
+  useSessionMessagesQuery: () => ({ data: [] }),
 }));
 
 vi.mock("@/lib/api", () => ({

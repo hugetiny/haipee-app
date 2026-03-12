@@ -8,9 +8,9 @@ import { usageApi, settingsApi, type AppId } from "@/lib/api";
 import { useSettingsQuery } from "@/lib/query";
 import { extractCodexBaseUrl } from "@/utils/providerConfigUtils";
 import JsonEditor from "./JsonEditor";
-import * as prettier from "prettier/standalone";
+import * as prettier from "prettier/standalone.js";
 import * as parserBabel from "prettier/parser-babel";
-import * as pluginEstree from "prettier/plugins/estree";
+import * as pluginEstree from "prettier/plugins/estree.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -221,7 +221,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
     if (clamped !== num && num > 0) {
       toast.info(
         t("usageScript.intervalAdjusted", { value: clamped }) ||
-          `自动查询间隔已调整为 ${clamped} 分钟`,
+        `自动查询间隔已调整为 ${clamped} 分钟`,
       );
     }
     return clamped;
@@ -455,7 +455,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
       onClose={onClose}
       footer={footer}
     >
-      <div className="glass rounded-xl border border-white/10 px-6 py-4 flex items-center justify-between gap-4">
+      <div className="glass rounded-xl border border-border/50 px-6 py-4 flex items-center justify-between gap-4">
         <p className="text-base font-medium leading-none text-foreground">
           {t("usageScript.enableUsageQuery")}
         </p>
@@ -469,7 +469,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
       {script.enabled && (
         <div className="space-y-6">
           {/* 预设模板选择 */}
-          <div className="space-y-4 glass rounded-xl border border-white/10 p-6">
+          <div className="space-y-4 glass rounded-xl border border-border/50 p-6">
             <Label className="text-base font-medium">
               {t("usageScript.presetTemplate")}
             </Label>
@@ -498,7 +498,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
 
             {/* 自定义模式：变量提示和具体值 */}
             {selectedTemplate === TEMPLATE_KEYS.CUSTOM && (
-              <div className="space-y-2 border-t border-white/10 pt-3">
+              <div className="space-y-2 border-t border-border/50 pt-3">
                 <h4 className="text-sm font-medium text-foreground">
                   {t("usageScript.supportedVariables")}
                 </h4>
@@ -596,7 +596,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
                             }
                             placeholder={t("usageScript.apiKeyPlaceholder")}
                             autoComplete="off"
-                            className="border-white/10"
+                            className="border-border/50"
                           />
                           {script.apiKey && (
                             <button
@@ -635,7 +635,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
                           }
                           placeholder={t("usageScript.baseUrlPlaceholder")}
                           autoComplete="off"
-                          className="border-white/10"
+                          className="border-border/50"
                         />
                       </div>
                     </>
@@ -656,7 +656,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
                           }
                           placeholder="https://api.newapi.com"
                           autoComplete="off"
-                          className="border-white/10"
+                          className="border-border/50"
                         />
                       </div>
 
@@ -679,7 +679,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
                               "usageScript.accessTokenPlaceholder",
                             )}
                             autoComplete="off"
-                            className="border-white/10"
+                            className="border-border/50"
                           />
                           {script.accessToken && (
                             <button
@@ -717,7 +717,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
                           }
                           placeholder={t("usageScript.userIdPlaceholder")}
                           autoComplete="off"
-                          className="border-white/10"
+                          className="border-border/50"
                         />
                       </div>
                     </>
@@ -727,7 +727,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
             )}
 
             {/* 通用配置（始终显示） */}
-            <div className="grid gap-4 md:grid-cols-2 pt-4 border-t border-white/10">
+            <div className="grid gap-4 md:grid-cols-2 pt-4 border-t border-border/50">
               {/* 超时时间 */}
               <div className="space-y-2">
                 <Label htmlFor="usage-timeout">
@@ -750,7 +750,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
                       timeout: validateTimeout(e.target.value),
                     })
                   }
-                  className="border-white/10"
+                  className="border-border/50"
                 />
               </div>
 
@@ -783,14 +783,14 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
                       ),
                     })
                   }
-                  className="border-white/10"
+                  className="border-border/50"
                 />
               </div>
             </div>
           </div>
 
           {/* 提取器代码 */}
-          <div className="space-y-4 glass rounded-xl border border-white/10 p-6">
+          <div className="space-y-4 glass rounded-xl border border-border/50 p-6">
             <div className="flex items-center justify-between">
               <Label className="text-base font-medium">
                 {t("usageScript.extractorCode")}
@@ -810,12 +810,12 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
           </div>
 
           {/* 帮助信息 */}
-          <div className="glass rounded-xl border border-white/10 p-6 text-sm text-foreground/90">
+          <div className="glass rounded-xl border border-border/50 p-6 text-sm text-foreground/90">
             <h4 className="font-medium mb-2">{t("usageScript.scriptHelp")}</h4>
             <div className="space-y-3 text-xs">
               <div>
                 <strong>{t("usageScript.configFormat")}</strong>
-                <pre className="mt-1 p-2 bg-black/20 text-foreground rounded border border-white/10 text-[10px] overflow-x-auto">
+                <pre className="mt-1 p-2 bg-black/20 text-foreground rounded border border-border/50 text-xs overflow-x-auto">
                   {`({
   request: {
     url: "{{baseUrl}}/api/usage",

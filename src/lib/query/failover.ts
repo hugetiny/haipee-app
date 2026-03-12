@@ -232,13 +232,13 @@ export function useSetAutoFailoverEnabled() {
       toast.success(
         variables.enabled
           ? t("failover.enabled", {
-              app: appLabel,
-              defaultValue: `${appLabel} 故障转移已启用`,
-            })
+            app: appLabel,
+            defaultValue: `${appLabel} 故障转移已启用`,
+          })
           : t("failover.disabled", {
-              app: appLabel,
-              defaultValue: `${appLabel} 故障转移已关闭`,
-            }),
+            app: appLabel,
+            defaultValue: `${appLabel} 故障转移已关闭`,
+          }),
         { closeButton: true },
       );
     },

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import JsonEditor from "@/components/JsonEditor";
 import { parseOpenClawEnvEditorValue } from "./utils";
 
-const EnvPanel: React.FC = () => {
+export const EnvPanel: React.FC = () => {
   const { t } = useTranslation();
   const { data: envData, isLoading } = useOpenClawEnv();
   const saveEnvMutation = useSaveOpenClawEnv();

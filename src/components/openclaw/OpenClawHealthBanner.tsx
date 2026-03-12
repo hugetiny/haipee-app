@@ -44,7 +44,7 @@ function getWarningText(
   }
 }
 
-const OpenClawHealthBanner: React.FC<OpenClawHealthBannerProps> = ({
+export const OpenClawHealthBanner: React.FC<OpenClawHealthBannerProps> = ({
   warnings,
 }) => {
   const { t } = useTranslation();
