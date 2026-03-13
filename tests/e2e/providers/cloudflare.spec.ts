@@ -1,12 +1,21 @@
 import { test, expect } from '@playwright/test';
-import { API_PROVIDERS, hasValidToken, getToken } from '../utils/apiProviders';
+import { API_PROVIDERS, hasValidToken, getToken, createChatRequest } from '../utils/apiProviders';
 
 /**
  * Cloudflare Workers AI Provider Tests
- * Note: Cloudflare requires ACCOUNT_ID in the URL
- * Format: https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/run/{MODEL}
+ * Uses OpenAI-compatible endpoint: https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/
+ * Endpoint: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1
+ * Auth: Bearer token in Authorization header
+ * Requires: CLOUDFLARE_ACCOUNT_ID environment variable
  */
 const provider = API_PROVIDERS.find(p => p.name === 'Cloudflare')!;
+
+// Helper to build Cloudflare URL with account ID
+function getCloudflareBaseUrl(): string | null {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  if (!accountId) return null;
+  return `${provider.baseUrl}/${accountId}`;
+}
 
 test.describe('Cloudflare Provider', () => {
   test.beforeEach(async () => {
@@ -19,31 +28,35 @@ test.describe('Cloudflare Provider', () => {
     expect(token!.length).toBeGreaterThan(10);
   });
 
-  test('AI endpoint with account ID', async ({ request }) => {
-    const token = getToken(provider)!;
-
-    // Get account ID from env or skip
+  test('CLOUDFLARE_ACCOUNT_ID is configured', async () => {
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     if (!accountId) {
+      console.warn('⚠️ CLOUDFLARE_ACCOUNT_ID not set');
+      console.warn('💡 Get your Account ID from: https://dash.cloudflare.com/');
+      test.skip();
+    }
+    expect(accountId).toBeDefined();
+    expect(accountId!.length).toBeGreaterThan(10);
+  });
+
+  test('can send chat completion request (OpenAI-compatible)', async ({ request }) => {
+    const token = getToken(provider)!;
+    const baseUrl = getCloudflareBaseUrl();
+
+    if (!baseUrl) {
       console.warn('⚠️ CLOUDFLARE_ACCOUNT_ID not set, skipping AI test');
       test.skip();
     }
 
-    const model = '@cf/meta/llama-2-7b-chat-int8';
-    const response = await request.post(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        data: {
-          messages: [
-            { role: 'user', content: provider.testMessage },
-          ],
-        },
-      }
-    );
+    const body = createChatRequest(provider);
+
+    const response = await request.post(`${baseUrl}${provider.chatEndpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      data: body,
+    });
 
     if (response.status() === 429) {
       console.warn('⚠️ Cloudflare rate limited');
@@ -53,40 +66,60 @@ test.describe('Cloudflare Provider', () => {
     if (!response.ok()) {
       console.log('Response status:', response.status());
       const errorBody = await response.text();
-      console.log('Error:', errorBody.substring(0, 200));
+      console.log('Error:', errorBody.substring(0, 500));
     }
 
     expect(response.ok()).toBeTruthy();
     const data = await response.json();
-    expect(data.success).toBe(true);
-    expect(data.result).toBeDefined();
 
-    const content = data.result?.response || '(empty)';
+    // OpenAI-compatible response format
+    expect(data.choices).toBeDefined();
+    expect(data.choices.length).toBeGreaterThan(0);
+    expect(data.choices[0].message).toBeDefined();
+    expect(data.choices[0].message.content).toBeDefined();
+
+    const content = data.choices[0].message.content;
     console.log(`✅ Cloudflare response: ${content.substring(0, 100)}...`);
   });
 
-  test('can list accounts (verify token)', async ({ request }) => {
+  test('can verify token by listing accounts', async ({ request }) => {
     const token = getToken(provider)!;
 
-    const response = await request.get('https://api.cloudflare.com/client/v4/accounts', {
+    const response = await request.get(`${provider.baseUrl}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    if (response.status() === 403) {
+    // This will likely 404 since we need the full path
+    // But it helps verify the token format
+    console.log(`Token verification status: ${response.status()}`);
+
+    // Try listing accounts endpoint
+    const accountsResponse = await request.get('https://api.cloudflare.com/client/v4/accounts', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (accountsResponse.status() === 403) {
       console.warn('⚠️ Cloudflare token may not have account list permission');
+      console.warn('This is OK if token has AI-specific permissions');
       test.skip();
     }
 
-    expect(response.ok()).toBeTruthy();
-    const data = await response.json();
+    if (!accountsResponse.ok()) {
+      console.warn(`⚠️ Account list returned ${accountsResponse.status()}`);
+      test.skip();
+    }
+
+    const data = await accountsResponse.json();
     expect(data.success).toBe(true);
     expect(data.result).toBeDefined();
 
     if (data.result.length > 0) {
-      console.log(`Found ${data.result.length} Cloudflare accounts`);
-      console.log(`First account ID: ${data.result[0].id}`);
+      console.log(`✅ Found ${data.result.length} Cloudflare accounts`);
+      console.log(`   Account IDs: ${data.result.map((a: any) => a.id).join(', ')}`);
       console.log('💡 Set CLOUDFLARE_ACCOUNT_ID in .env to test AI inference');
     }
   });

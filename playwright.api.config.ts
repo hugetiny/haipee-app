@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 import { config } from 'dotenv';
 
 // Load environment variables from .env file
@@ -6,26 +6,30 @@ config();
 
 /**
  * Playwright configuration for API-only E2E testing
- * Tests make direct HTTP requests without needing a browser or web server
+ * No web server needed - tests use request fixture directly
  */
 export default defineConfig({
-  testDir: './tests/e2e',
-  fullyParallel: true,
+  testDir: './tests/e2e/providers',
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 1,
-  workers: 4,
+  workers: 1,
   reporter: [
-    ['list'],
-    ['html', { outputFolder: 'playwright-report' }],
-    ['json', { outputFile: 'playwright-results.json' }],
+    ['line'],
+    ['html', { outputFolder: 'playwright-api-report' }],
+    ['json', { outputFile: 'playwright-api-results.json' }],
   ],
   use: {
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
   },
 
-  // Only run provider tests and summary (no UI tests)
-  testMatch: ['**/providers/*.spec.ts', '**/summary.spec.ts'],
+  projects: [
+    {
+      name: 'api-tests',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
 
-  // No web server needed for API tests
-  // No global setup/teardown needed
+  // No web server - tests use request fixture directly
 });

@@ -1,9 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { API_PROVIDERS, hasValidToken, getToken } from '../utils/apiProviders';
+import { API_PROVIDERS, hasValidToken, getToken, getRequestHeaders, createChatRequest } from '../utils/apiProviders';
 
 /**
  * Poe API Provider Tests
- * Poe uses a unique API format
+ * OpenAI-compatible API endpoint
+ * Endpoint: https://api.poe.com/v1
+ * Auth: Bearer token
+ * Docs: https://creator.poe.com/docs/external-applications/openai-compatible-api
+ * Get API key: https://poe.com/api/keys
  */
 const provider = API_PROVIDERS.find(p => p.name === 'Poe')!;
 
@@ -18,35 +22,13 @@ test.describe('Poe Provider', () => {
     expect(token!.length).toBeGreaterThan(10);
   });
 
-  test('API endpoint is reachable', async ({ request }) => {
-    const token = getToken(provider);
-
-    // Poe may not have a standard models endpoint
-    const response = await request.get(`${provider.baseUrl!}/health`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }).catch(() => null);
-
-    // Just verify the domain is reachable
-    expect(response !== null || (provider.baseUrl && provider.baseUrl.includes('poe.com'))).toBeTruthy();
-  });
-
   test('can send chat completion request', async ({ request }) => {
-    const token = getToken(provider);
+    const headers = getRequestHeaders(provider);
+    const body = createChatRequest(provider);
 
     const response = await request.post(`${provider.baseUrl}${provider.chatEndpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      data: {
-        model: provider.testModel,
-        messages: [
-          { role: 'user', content: provider.testMessage },
-        ],
-        max_tokens: 50,
-      },
+      headers,
+      data: body,
     });
 
     if (response.status() === 429) {
@@ -62,9 +44,38 @@ test.describe('Poe Provider', () => {
 
     expect(response.ok()).toBeTruthy();
     const data = await response.json();
-    expect(data.choices || data.text || data.content).toBeDefined();
 
-    const content = data.choices?.[0]?.message?.content || data.text || data.content || '(empty)';
-    console.log(`✅ Poe response: ${content.substring(0, 100)}...`);
+    // OpenAI-compatible response format
+    expect(data.choices).toBeDefined();
+    expect(data.choices.length).toBeGreaterThan(0);
+    expect(data.choices[0].message).toBeDefined();
+    expect(data.choices[0].message.content).toBeDefined();
+
+    console.log(`✅ Poe response: ${data.choices[0].message.content.substring(0, 100)}...`);
+  });
+
+  test('can fetch available models', async ({ request }) => {
+    const headers = getRequestHeaders(provider);
+
+    const response = await request.get(`${provider.baseUrl}${provider.modelsEndpoint}`, {
+      headers,
+    });
+
+    if (response.status() === 429) {
+      console.warn('⚠️ Poe rate limited');
+      test.skip();
+    }
+
+    if (!response.ok()) {
+      console.warn(`⚠️ Poe models fetch returned ${response.status()}`);
+      test.skip();
+    }
+
+    const data = await response.json();
+    expect(data.data).toBeDefined();
+    expect(data.data.length).toBeGreaterThan(0);
+
+    const modelIds = data.data.map((m: any) => m.id);
+    console.log(`✅ Poe models available: ${modelIds.slice(0, 5).join(', ')}...`);
   });
 });

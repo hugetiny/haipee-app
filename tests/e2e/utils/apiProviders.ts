@@ -48,9 +48,10 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'Google Gemini',
     tokenEnvVar: 'GEMINI_TOKEN',
-    baseUrl: 'https://generativelanguage.googleapis.com',
-    modelsEndpoint: '/v1beta/models',
-    chatEndpoint: '/v1beta/models/gemini-2.0-flash:generateContent',
+    // Gemini OpenAI-compatible endpoint: https://ai.google.dev/gemini-api/docs/openai
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    modelsEndpoint: '/models',
+    chatEndpoint: '/chat/completions',
     testModel: 'gemini-2.0-flash',
     testMessage: 'Hello, this is a test message from Haipee E2E tests.',
     expectedResponseContains: '',
@@ -75,10 +76,12 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'Kilo Code',
     tokenEnvVar: 'KILO_TOKEN',
-    baseUrl: 'https://api.kilocode.ai',
-    modelsEndpoint: '/v1/models',
-    chatEndpoint: '/v1/chat/completions',
-    testModel: 'kilo-default',
+    // Kilo.ai Gateway - OpenAI-compatible API
+    // https://kilo.ai/docs
+    baseUrl: 'https://api.kilocode.ai/v1',
+    modelsEndpoint: '/models',
+    chatEndpoint: '/chat/completions',
+    testModel: 'gpt-4o-mini',
     testMessage: 'Hello, this is a test message from Haipee E2E tests.',
     expectedResponseContains: '',
     headers: {
@@ -88,9 +91,12 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'XiaoMi MiNo',
     tokenEnvVar: 'XIAOMIMINO_TOKEN',
-    baseUrl: 'https://api.minos.ai',
-    modelsEndpoint: '/v1/models',
-    chatEndpoint: '/v1/chat/completions',
+    // Note: XiaoMi MiNo API endpoint information is limited
+    // Endpoint may differ from this configuration
+    // See: https://dev.mi.com/ or Xiaomi AI documentation
+    baseUrl: 'https://api.minos.ai/v1',
+    modelsEndpoint: '/models',
+    chatEndpoint: '/chat/completions',
     testModel: 'mino-default',
     testMessage: 'Hello, this is a test message from Haipee E2E tests.',
     expectedResponseContains: '',
@@ -101,10 +107,14 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'Huawei',
     tokenEnvVar: 'HUAWEI_TOKEN',
-    baseUrl: 'https://api.huaweicloud.com',
-    modelsEndpoint: '/v1/models',
-    chatEndpoint: '/v1/chat/completions',
-    testModel: 'huawei-default',
+    // Huawei Cloud Pangu AI - Regional endpoints
+    // Documentation: https://support.huaweicloud.com/pangulm/
+    // Note: Requires regional endpoint configuration
+    // OpenAI-compatible endpoint format
+    baseUrl: 'https://pangu.huaweicloud.com/v1',
+    modelsEndpoint: '/models',
+    chatEndpoint: '/chat/completions',
+    testModel: 'pangu-llm',
     testMessage: 'Hello, this is a test message from Haipee E2E tests.',
     expectedResponseContains: '',
     headers: {
@@ -114,10 +124,13 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'Cloudflare',
     tokenEnvVar: 'CLOUDFLARE_API_TOKEN',
-    baseUrl: 'https://api.cloudflare.com',
-    modelsEndpoint: '/client/v4/ai/models',
-    chatEndpoint: '/client/v4/ai/run/@cf/meta/llama-2-7b-chat-int8',
-    testModel: '@cf/meta/llama-2-7b-chat-int8',
+    // Cloudflare Workers AI OpenAI-compatible endpoint
+    // Requires CLOUDFLARE_ACCOUNT_ID env var for the account ID
+    // https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/
+    baseUrl: 'https://api.cloudflare.com/client/v4/accounts',
+    modelsEndpoint: '', // No standard models endpoint in OpenAI-compatible mode
+    chatEndpoint: '/ai/v1/chat/completions',
+    testModel: '@cf/meta/llama-3.1-8b-instruct',
     testMessage: 'Hello, this is a test message from Haipee E2E tests.',
     expectedResponseContains: '',
     headers: {
@@ -127,10 +140,13 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'Poe',
     tokenEnvVar: 'POE_TOKEN',
-    baseUrl: 'https://api.poe.com',
-    modelsEndpoint: '/v1/models',
-    chatEndpoint: '/v1/chat/completions',
-    testModel: 'claude-3-sonnet',
+    // Poe API - OpenAI-compatible endpoint
+    // Documentation: https://creator.poe.com/docs/external-applications/openai-compatible-api
+    // Get API key: https://poe.com/api/keys
+    baseUrl: 'https://api.poe.com/v1',
+    modelsEndpoint: '/models',
+    chatEndpoint: '/chat/completions',
+    testModel: 'Claude-Sonnet-4',
     testMessage: 'Hello, this is a test message from Haipee E2E tests.',
     expectedResponseContains: '',
     headers: {
