@@ -320,7 +320,6 @@ describe("OpenClaw Configuration & Real Data Integration", () => {
       "CLOUDFLARE_API_TOKEN",
       "OPENCODE_TOKEN",
       "KILO_TOKEN",
-      "HUAWEI_TOKEN",
       "VERCEL_TOKEN",
     ] as const;
 

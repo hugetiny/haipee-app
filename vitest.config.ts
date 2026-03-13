@@ -13,6 +13,12 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setupGlobals.ts", "./tests/setupTests.ts"],
     globals: true,
+    exclude: ["tests/e2e/**/*", "node_modules"],
+    poolOptions: {
+      forks: {
+        maxWorkers: 2,
+      },
+    },
     coverage: {
       reporter: ["text", "lcov"],
     },
