@@ -55,6 +55,15 @@ test.describe('OpenAI Provider', () => {
       },
     });
 
+    // Handle quota issues gracefully
+    if (response.status() === 429) {
+      const errorData = await response.json().catch(() => ({}));
+      if (errorData.error?.type === 'insufficient_quota') {
+        console.warn('⚠️ OpenAI quota exceeded - skipping chat test');
+        test.skip();
+      }
+    }
+
     expect(response.ok()).toBeTruthy();
     const data = await response.json();
     expect(data.choices).toBeDefined();

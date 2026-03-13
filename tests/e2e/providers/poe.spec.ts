@@ -36,9 +36,14 @@ test.describe('Poe Provider', () => {
       test.skip();
     }
 
+    // Handle subscription required
     if (!response.ok()) {
-      console.log('Response status:', response.status());
       const errorBody = await response.text();
+      if (errorBody.includes('subscription_required')) {
+        console.warn('⚠️ Poe subscription required - skipping chat test');
+        test.skip();
+      }
+      console.log('Response status:', response.status());
       console.log('Error:', errorBody.substring(0, 200));
     }
 

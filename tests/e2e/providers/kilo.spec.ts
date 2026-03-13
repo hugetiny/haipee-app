@@ -64,6 +64,15 @@ test.describe('Kilo Code Provider', () => {
       test.skip();
     }
 
+    // Handle payment required (credits needed)
+    if (response.status() === 402) {
+      const errorData = await response.json().catch(() => ({}));
+      if (errorData.error?.title?.includes('Credits Required') || errorData.error?.message?.includes('paid model')) {
+        console.warn('⚠️ Kilo Code credits required - skipping chat test');
+        test.skip();
+      }
+    }
+
     if (!response.ok()) {
       console.log('Response status:', response.status());
       const errorBody = await response.text();

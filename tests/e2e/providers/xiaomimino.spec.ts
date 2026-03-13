@@ -61,6 +61,12 @@ test.describe('XiaoMi MiNo Provider', () => {
     }
 
     if (!response.ok()) {
+      const errorBody = await response.text();
+      // Handle insufficient balance (402) or other payment issues
+      if (response.status() === 402 || errorBody.includes('balance') || errorBody.includes('Insufficient')) {
+        console.warn(`⚠️ XiaoMi MiNo balance required - skipping chat test`);
+        test.skip();
+      }
       console.warn(`⚠️ XiaoMi MiNo chat returned ${response.status()}`);
       console.warn('Note: Endpoint may differ from expected. Check https://dev.mi.com/ for updated documentation.');
       test.skip();
