@@ -78,8 +78,7 @@ export const API_PROVIDERS: ProviderConfig[] = [
     tokenEnvVar: 'KILO_TOKEN',
     // Kilo.ai Gateway - OpenAI-compatible API
     // https://kilo.ai/docs/gateway
-    // Note: Actual API endpoint may differ - needs verification
-    baseUrl: 'https://gateway.kilo.ai/v1',
+    baseUrl: 'https://api.kilo.ai/api/gateway/v1',
     modelsEndpoint: '/models',
     chatEndpoint: '/chat/completions',
     testModel: 'gpt-4o-mini',
@@ -92,30 +91,13 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'XiaoMi MiNo',
     tokenEnvVar: 'XIAOMIMINO_TOKEN',
-    // Note: XiaoMi MiNo API endpoint information is limited
-    // Endpoint may differ from this configuration
-    // See: https://dev.mi.com/ or Xiaomi AI documentation
-    baseUrl: 'https://api.minos.ai/v1',
+    // XiaoMi MiNo API endpoint
+    // Supports both OpenAI format: /v1/chat/completions
+    // and Anthropic format: /anthropic/v1/messages
+    baseUrl: 'https://api.xiaomimimo.com/v1',
     modelsEndpoint: '/models',
     chatEndpoint: '/chat/completions',
-    testModel: 'mino-default',
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  },
-  {
-    name: 'Huawei',
-    tokenEnvVar: 'HUAWEI_TOKEN',
-    // Huawei Cloud Pangu AI - Regional endpoints
-    // Documentation: https://support.huaweicloud.com/pangulm/
-    // Note: Requires regional endpoint configuration
-    // OpenAI-compatible endpoint format
-    baseUrl: 'https://pangu.huaweicloud.com/v1',
-    modelsEndpoint: '/models',
-    chatEndpoint: '/chat/completions',
-    testModel: 'pangu-llm',
+    testModel: 'mimo-v2-flash',
     testMessage: 'Hello, this is a test message from Haipee E2E tests.',
     expectedResponseContains: '',
     headers: {
