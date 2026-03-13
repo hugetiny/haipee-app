@@ -78,10 +78,11 @@ export const API_PROVIDERS: ProviderConfig[] = [
     tokenEnvVar: 'KILO_TOKEN',
     // Kilo.ai Gateway - OpenAI-compatible API
     // https://kilo.ai/docs/gateway
-    baseUrl: 'https://api.kilo.ai/api/gateway/v1',
-    modelsEndpoint: '/models',
+    // Base URL: https://api.kilo.ai/api/gateway (no /v1)
+    baseUrl: 'https://api.kilo.ai/api/gateway',
+    modelsEndpoint: '', // Gateway doesn't have standard models endpoint
     chatEndpoint: '/chat/completions',
-    testModel: 'gpt-4o-mini',
+    testModel: 'openai/gpt-4o-mini', // Kilo uses provider/model format
     testMessage: 'Hello, this is a test message from Haipee E2E tests.',
     expectedResponseContains: '',
     headers: {
