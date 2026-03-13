@@ -142,3 +142,197 @@ pub fn format_skill_error(
         format!("ERROR:{code}")
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json;
+    use std::io;
+
+    #[test]
+    fn test_app_error_config() {
+        let err = AppError::Config("invalid setting".to_string());
+        assert_eq!(err.to_string(), "配置错误: invalid setting");
+    }
+
+    #[test]
+    fn test_app_error_invalid_input() {
+        let err = AppError::InvalidInput("missing field".to_string());
+        assert_eq!(err.to_string(), "无效输入: missing field");
+    }
+
+    #[test]
+    fn test_app_error_io() {
+        let io_err = io::Error::new(io::ErrorKind::NotFound, "file not found");
+        let err = AppError::io("/path/to/file", io_err);
+        assert!(err.to_string().contains("IO 错误: /path/to/file"));
+        assert!(err.to_string().contains("file not found"));
+    }
+
+    #[test]
+    fn test_app_error_io_context() {
+        let io_err = io::Error::new(io::ErrorKind::PermissionDenied, "access denied");
+        let err = AppError::IoContext {
+            context: "reading config".to_string(),
+            source: io_err,
+        };
+        assert!(err.to_string().contains("reading config: access denied"));
+    }
+
+    #[test]
+    fn test_app_error_json() {
+        let json_err = serde_json::from_str::<serde_json::Value>("invalid").unwrap_err();
+        let err = AppError::json("/config.json", json_err);
+        assert!(err.to_string().contains("JSON 解析错误: /config.json"));
+    }
+
+    #[test]
+    fn test_app_error_json_serialize() {
+        // Create a value that can't be serialized (circular reference not possible in Rust)
+        // Just test the error path
+        let json_err = serde_json::to_string(&serde_json::Value::Null).unwrap_err();
+        let err = AppError::JsonSerialize { source: json_err };
+        assert!(err.to_string().contains("JSON 序列化失败"));
+    }
+
+    #[test]
+    fn test_app_error_toml() {
+        let toml_err = toml::from_str::<toml::Table>("invalid = ").unwrap_err();
+        let err = AppError::toml("/config.toml", toml_err);
+        assert!(err.to_string().contains("TOML 解析错误: /config.toml"));
+    }
+
+    #[test]
+    fn test_app_error_lock() {
+        let err = AppError::Lock("mutex poisoned".to_string());
+        assert_eq!(err.to_string(), "锁获取失败: mutex poisoned");
+    }
+
+    #[test]
+    fn test_app_error_mcp_validation() {
+        let err = AppError::McpValidation("missing command".to_string());
+        assert_eq!(err.to_string(), "MCP 校验失败: missing command");
+    }
+
+    #[test]
+    fn test_app_error_message() {
+        let err = AppError::Message("custom error".to_string());
+        assert_eq!(err.to_string(), "custom error");
+    }
+
+    #[test]
+    fn test_app_error_localized() {
+        let err = AppError::localized("test_key", "中文错误", "English error");
+        assert_eq!(err.to_string(), "中文错误 (English error)");
+    }
+
+    #[test]
+    fn test_app_error_database() {
+        let err = AppError::Database("connection failed".to_string());
+        assert_eq!(err.to_string(), "数据库错误: connection failed");
+    }
+
+    #[test]
+    fn test_app_error_omo_config_not_found() {
+        let err = AppError::OmoConfigNotFound;
+        assert_eq!(err.to_string(), "OMO 配置文件不存在");
+    }
+
+    #[test]
+    fn test_app_error_all_providers_circuit_open() {
+        let err = AppError::AllProvidersCircuitOpen;
+        assert_eq!(err.to_string(), "所有供应商已熔断，无可用渠道");
+    }
+
+    #[test]
+    fn test_app_error_no_providers_configured() {
+        let err = AppError::NoProvidersConfigured;
+        assert_eq!(err.to_string(), "未配置供应商");
+    }
+
+    #[test]
+    fn test_from_rusqlite_error() {
+        let sqlite_err = rusqlite::Error::InvalidQuery;
+        let err: AppError = sqlite_err.into();
+        assert!(err.to_string().starts_with("数据库错误:"));
+    }
+
+    #[test]
+    fn test_from_app_error_to_string() {
+        let err = AppError::Message("test".to_string());
+        let s: String = err.into();
+        assert_eq!(s, "test");
+    }
+
+    #[test]
+    fn test_serialize_app_error() {
+        let err = AppError::Message("test error".to_string());
+        let json = serde_json::to_string(&err).unwrap();
+        assert_eq!(json, "\"test error\"");
+    }
+
+    #[test]
+    fn test_format_skill_error() {
+        let result = format_skill_error(
+            "TEST_ERROR",
+            &[("field", "value"), ("count", "42")],
+            Some("Try again"),
+        );
+
+        let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(parsed["code"], "TEST_ERROR");
+        assert_eq!(parsed["context"]["field"], "value");
+        assert_eq!(parsed["context"]["count"], "42");
+        assert_eq!(parsed["suggestion"], "Try again");
+    }
+
+    #[test]
+    fn test_format_skill_error_no_suggestion() {
+        let result = format_skill_error("NO_SUGGESTION", &["key", "val"], None);
+
+        let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(parsed["code"], "NO_SUGGESTION");
+        assert_eq!(parsed["context"]["key"], "val");
+        assert!(parsed["suggestion"].is_null());
+    }
+
+    #[test]
+    fn test_app_error_factory_methods() {
+        // Test io factory
+        let io_err = io::Error::new(io::ErrorKind::NotFound, "test");
+        let err = AppError::io("/test/path", io_err);
+        assert!(matches!(err, AppError::Io { .. }));
+
+        // Test json factory
+        let json_err = serde_json::from_str::<i32>("abc").unwrap_err();
+        let err = AppError::json("/test.json", json_err);
+        assert!(matches!(err, AppError::Json { .. }));
+
+        // Test toml factory
+        let toml_err = toml::from_str::<toml::Table>("bad").unwrap_err();
+        let err = AppError::toml("/test.toml", toml_err);
+        assert!(matches!(err, AppError::Toml { .. }));
+
+        // Test localized factory
+        let err = AppError::localized("key", "中文", "English");
+        assert!(matches!(err, AppError::Localized { .. }));
+    }
+
+    #[test]
+    fn test_app_error_source() {
+        // Test that errors with sources properly chain
+        let io_err = io::Error::new(io::ErrorKind::NotFound, "file missing");
+        let err = AppError::io("/missing", io_err);
+
+        // The error should have a source
+        assert!(std::error::Error::source(&err).is_some());
+    }
+
+    #[test]
+    fn test_app_error_debug() {
+        let err = AppError::Message("test".to_string());
+        let debug_str = format!("{:?}", err);
+        assert!(debug_str.contains("Message"));
+        assert!(debug_str.contains("test"));
+    }
+}

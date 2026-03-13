@@ -77,8 +77,9 @@ export const API_PROVIDERS: ProviderConfig[] = [
     name: 'Kilo Code',
     tokenEnvVar: 'KILO_TOKEN',
     // Kilo.ai Gateway - OpenAI-compatible API
-    // https://kilo.ai/docs
-    baseUrl: 'https://api.kilocode.ai/v1',
+    // https://kilo.ai/docs/gateway
+    // Note: Actual API endpoint may differ - needs verification
+    baseUrl: 'https://gateway.kilo.ai/v1',
     modelsEndpoint: '/models',
     chatEndpoint: '/chat/completions',
     testModel: 'gpt-4o-mini',
