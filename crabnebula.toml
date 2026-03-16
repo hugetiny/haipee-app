@@ -1,0 +1,79 @@
+# CrabNebula Cloud Configuration for Haipee
+# https://docs.crabnebula.dev/cloud/
+
+[project]
+# Project slug from CrabNebula Cloud dashboard
+slug = "haipee"
+
+# Build configuration
+[build]
+# Targets to build for
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+]
+
+# Build command
+command = "bun run tauri build"
+
+# Output directory (relative to project root)
+output_dir = "src-tauri/target/release/bundle"
+
+# Signing configuration (using CrabNebula Cloud signing)
+[sign]
+# Enable CrabNebula Cloud code signing
+enabled = true
+
+# macOS signing
+[sign.macos]
+enabled = true
+# Uses CrabNebula Cloud's Apple Developer certificates
+# No local certificate needed
+
+# Windows signing
+[sign.windows]
+enabled = true
+# Uses CrabNebula Cloud's code signing certificate
+# No local certificate needed
+
+# Update configuration
+[update]
+# Enable auto-updater
+enabled = true
+# Update endpoints (using GitHub releases)
+endpoints = [
+    "https://github.com/hugetiny/haipee/releases/latest/download/latest.json",
+    "https://cdn.crabnebula.app/update/haipee/haipee/latest.json"
+]
+
+# Environment variables for build
+[env]
+# Frontend build environment
+TAURI_FRONTEND_DIST = "../dist"
+TAURI_DEV_URL = "http://localhost:3000"
+
+# Feature flags for different platforms
+[features]
+# Default features for all builds
+default = []
+
+# macOS specific features
+[target.aarch64-apple-darwin]
+features = []
+
+[target.x86_64-apple-darwin]
+features = []
+
+# Linux specific features
+[target.aarch64-unknown-linux-gnu]
+features = []
+
+[target.x86_64-unknown-linux-gnu]
+features = []
+
+# Windows specific features
+[target.x86_64-pc-windows-msvc]
+features = []
