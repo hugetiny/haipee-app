@@ -18,15 +18,36 @@ on:
         required: false
         default: ''
 
+# Cancel in-flight runs for the same branch/tag
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
   BUN_VERSION: '1.2.0'
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
-  RUSTFLAGS: "-D warnings"
 
 jobs:
+  # Optional: fast typecheck before triggering expensive cloud build
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+
   build-and-release:
+    needs: typecheck
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -39,54 +60,17 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
-      # Cache Bun dependencies
       - name: Cache Bun dependencies
         uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          restore-keys: ${{ runner.os }}-bun-
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      # Cache Rust toolchain and cargo
-      - name: Cache Rust toolchain
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.rustup
-            ~/.cargo/bin
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-
-
-      - name: Install Rust
-        run: |
-          if ! command -v rustc &> /dev/null; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-            echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-          fi
-          source "$HOME/.cargo/env"
-          rustup target add aarch64-apple-darwin x86_64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu x86_64-pc-windows-msvc || true
-          rustc --version
-
-      # Cache and install Tauri CLI
-      - name: Cache Tauri CLI
-        id: cache-tauri-cli
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin/cargo-tauri
-          key: ${{ runner.os }}-tauri-cli-v2
-
-      - name: Install Tauri CLI
-        if: steps.cache-tauri-cli.outputs.cache-hit != 'true'
-        run: cargo install tauri-cli --version '^2.0.0' --locked
-
-      # Cache CrabNebula CLI
+      # CrabNebula Cloud builds in their cloud — only the CLI is needed here
       - name: Cache CrabNebula CLI
         id: cache-cncloud
         uses: actions/cache@v4
@@ -96,40 +80,19 @@ jobs:
 
       - name: Install CrabNebula Cloud CLI
         if: steps.cache-cncloud.outputs.cache-hit != 'true'
-        run: |
-          curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
+        run: curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
 
-      - name: Setup CLI paths
-        run: |
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-          echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
-
-      - name: Verify CLIs
-        run: |
-          cargo tauri --version
-          cncloud --version
-
-      - name: Build frontend
-        run: bun run build:renderer
+      - name: Setup CLI path
+        run: echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
 
       - name: Build with CrabNebula Cloud
+        env:
+          CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
+        # tauri.conf.json has beforeBuildCommand set, so no need to pre-build renderer
         run: |
           cncloud build \
             --project haipee \
-            --api-key ${{ secrets.CRABNEBULA_API_KEY }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: haipee-builds
-          path: |
-            src-tauri/target/release/bundle/**/*.dmg
-            src-tauri/target/release/bundle/**/*.app.tar.gz
-            src-tauri/target/release/bundle/**/*.deb
-            src-tauri/target/release/bundle/**/*.AppImage
-            src-tauri/target/release/bundle/**/*.msi
-            src-tauri/target/release/bundle/**/*.exe
-          retention-days: 7
+            --api-key $CRABNEBULA_API_KEY
 
   release:
     needs: build-and-release
@@ -138,11 +101,31 @@ jobs:
       contents: write
     if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      # CrabNebula Cloud builds on their infrastructure.
+      # Download artifacts via their CLI instead of expecting them on the runner.
+      - name: Cache CrabNebula CLI
+        id: cache-cncloud
+        uses: actions/cache@v4
         with:
-          name: haipee-builds
-          path: releases
+          path: ~/.cncloud/bin/cncloud
+          key: ${{ runner.os }}-cncloud-cli
+
+      - name: Install CrabNebula Cloud CLI
+        if: steps.cache-cncloud.outputs.cache-hit != 'true'
+        run: curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
+
+      - name: Setup CLI path
+        run: echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
+
+      - name: Download build artifacts from CrabNebula Cloud
+        env:
+          CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
+        run: |
+          mkdir -p releases
+          cncloud download \
+            --project haipee \
+            --api-key $CRABNEBULA_API_KEY \
+            --output releases
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -162,37 +145,45 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: haipee-builds
-          path: releases
-
-      - name: Generate latest.json
+      - name: Generate latest.json with signatures
         run: |
-          VERSION=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
-          VERSION=${VERSION#v}
+          TAG=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
+          VERSION=${TAG#v}
+          RELEASE_BASE="https://github.com/${{ github.repository }}/releases/download/${TAG}"
+
+          # Extract minisign signatures from the .sig files in the release
+          # (Tauri bundler produces .sig alongside each artifact)
+          fetch_sig() {
+            local url="$1"
+            curl -fsSL "${url}.sig" 2>/dev/null || echo ""
+          }
+
+          DARWIN_AARCH64_URL="${RELEASE_BASE}/Haipee_${VERSION}_aarch64.app.tar.gz"
+          DARWIN_X64_URL="${RELEASE_BASE}/Haipee_${VERSION}_x64.app.tar.gz"
+          LINUX_X64_URL="${RELEASE_BASE}/haipee_${VERSION}_amd64.AppImage"
+          WINDOWS_X64_URL="${RELEASE_BASE}/Haipee_${VERSION}_x64-setup.nsis.zip"
+
           cat > latest.json << EOF
           {
-            "version": "v$VERSION",
+            "version": "${TAG}",
             "notes": "See the assets to download this version and install.",
             "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "platforms": {
               "darwin-aarch64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/Haipee_aarch64.app.tar.gz"
+                "signature": "$(fetch_sig "$DARWIN_AARCH64_URL")",
+                "url": "${DARWIN_AARCH64_URL}"
               },
               "darwin-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/Haipee_x64.app.tar.gz"
+                "signature": "$(fetch_sig "$DARWIN_X64_URL")",
+                "url": "${DARWIN_X64_URL}"
               },
               "linux-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/haipee_${VERSION}_amd64.AppImage"
+                "signature": "$(fetch_sig "$LINUX_X64_URL")",
+                "url": "${LINUX_X64_URL}"
               },
               "windows-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/Haipee_${VERSION}_x64-setup.exe"
+                "signature": "$(fetch_sig "$WINDOWS_X64_URL")",
+                "url": "${WINDOWS_X64_URL}"
               }
             }
           }
@@ -207,27 +198,32 @@ jobs:
   publish-to-crabnebula:
     needs: build-and-release
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/') && github.event_name == 'push'
+    # Publish on tag push OR manual dispatch with a tag specified
+    if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Restore CrabNebula CLI cache
+      - name: Cache CrabNebula CLI
+        id: cache-cncloud
         uses: actions/cache@v4
         with:
           path: ~/.cncloud/bin/cncloud
           key: ${{ runner.os }}-cncloud-cli
 
       - name: Install CrabNebula CLI
-        run: |
-          if [ ! -f ~/.cncloud/bin/cncloud ]; then
-            curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
-          fi
-          echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
+        if: steps.cache-cncloud.outputs.cache-hit != 'true'
+        run: curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
+
+      - name: Setup CLI path
+        run: echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
 
       - name: Publish to CrabNebula Cloud
+        env:
+          CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
         run: |
+          TAG=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
           cncloud publish \
             --project haipee \
-            --api-key ${{ secrets.CRABNEBULA_API_KEY }} \
-            --tag ${GITHUB_REF_NAME}
+            --api-key $CRABNEBULA_API_KEY \
+            --tag ${TAG}
