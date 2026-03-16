@@ -193,6 +193,12 @@ pub fn run() {
 
     let mut builder = tauri::Builder::default();
 
+    // Enable WebDriver endpoint for automated E2E testing (cargo build --features webdriver)
+    #[cfg(feature = "webdriver")]
+    {
+        builder = builder.plugin(tauri_plugin_webdriver::init());
+    }
+
     #[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {

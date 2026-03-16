@@ -15,6 +15,7 @@ export interface Checkpoint {
     rust: TestLayerResult;
     integration: TestLayerResult;
     e2e: TestLayerResult;
+    tauri_e2e: TestLayerResult;
   };
 
   pendingFailures: TestFailure[];
@@ -113,7 +114,7 @@ export interface LoopConfig {
 }
 
 export interface TestLayerConfig {
-  name: 'unit' | 'rust' | 'integration' | 'e2e';
+  name: 'unit' | 'rust' | 'integration' | 'e2e' | 'tauri-e2e';
   command: string;
   timeout: number;
   priority: number;

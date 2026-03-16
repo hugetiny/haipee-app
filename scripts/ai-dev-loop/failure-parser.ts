@@ -241,3 +241,60 @@ export function detectFlakyTests(failures: TestFailure[], history: TestFailure[]
     return failure;
   });
 }
+
+/**
+ * Parse WebdriverIO spec-reporter output for Tauri WebView E2E failures.
+ *
+ * Mocha spec format (abbreviated):
+ *   N) Suite name test name:
+ *      Error: <message>
+ *        at Context.<anonymous> (tests/e2e/tauri/app.spec.ts:28:7)
+ */
+export function parseWdioFailures(output: string): TestFailure[] {
+  const failures: TestFailure[] = [];
+
+  // Each numbered failure block starts with "  N) " on its own line
+  const failureBlocks = output.split(/^\s+\d+\)/m).slice(1);
+
+  for (const block of failureBlocks) {
+    const lines = block.split('\n');
+    // First line: "Suite name test name:"
+    const titleLine = (lines[0] || '').trim().replace(/:$/, '');
+
+    // Find the source file reference from the stack trace
+    const stackLine = lines.find((l) => l.includes('.spec.ts') || l.includes('.spec.js'));
+    const fileMatch = stackLine?.match(/\((.+?\.spec\.[jt]s):(\d+)/);
+    const filePath = fileMatch ? fileMatch[1] : 'tests/e2e/tauri/unknown.spec.ts';
+
+    // Error message is typically on the line after the title
+    const errorLine = lines.find((l) => l.trim().startsWith('Error:') || l.trim().startsWith('AssertionError:'));
+    const errorMessage = errorLine?.trim() || `WebdriverIO test failed: ${titleLine}`;
+
+    if (titleLine) {
+      failures.push({
+        id: generateFailureId(filePath, titleLine),
+        testName: titleLine.substring(0, 200),
+        filePath,
+        errorMessage: errorMessage.substring(0, 500),
+        stackTrace: block.substring(0, 2000),
+        type: classifyWdioErrorType(block),
+        fixAttempts: 0,
+        status: 'pending',
+        firstSeen: Date.now(),
+        context: { sourceFiles: [], testFile: filePath, relatedFiles: [] },
+      });
+    }
+  }
+
+  return failures;
+}
+
+function classifyWdioErrorType(errorSection: string): FailureType {
+  if (errorSection.includes('Timeout') || errorSection.includes('timed out') || errorSection.includes('waitUntil')) return 'timeout-error';
+  if (errorSection.includes('ECONNREFUSED') || errorSection.includes('WebDriver')) return 'network-error';
+  if (errorSection.includes('AssertionError') || errorSection.includes('expect(') || errorSection.includes('to be')) return 'assertion-failure';
+  if (errorSection.includes('TypeError')) return 'type-error';
+  if (errorSection.includes('Error:')) return 'runtime-error';
+  return 'unknown';
+}
+

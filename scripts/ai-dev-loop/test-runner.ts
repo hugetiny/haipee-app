@@ -22,6 +22,8 @@ export async function runTestLayer(config: TestLayerConfig, options: RunOptions 
       return await runPlaywrightLayer(config, options);
     } else if (config.name === 'rust') {
       return await runCargoTestLayer(config);
+    } else if (config.name === 'tauri-e2e') {
+      return await runTauriE2ELayer(config);
     }
     throw new Error(`Unknown test layer: ${config.name}`);
   } catch (error) {
@@ -162,8 +164,33 @@ export async function runSingleTest(testPath: string, timeout: number = 120000):
   }
 }
 
-function getFailureLayer(failure: TestFailure): 'unit' | 'rust' | 'integration' | 'e2e' {
+async function runTauriE2ELayer(config: TestLayerConfig): Promise<TestLayerResult> {
+  const startTime = Date.now();
+  const cmd = 'bunx';
+  const args = ['wdio', 'run', 'wdio.conf.ts'];
+
+  log('info', `Executing: ${cmd} ${args.join(' ')}`);
+  const { stdout, exitCode } = await executeCommand(cmd, args, config.timeout);
+
+  // WebdriverIO spec-reporter output: "X passing", "X failing", "X pending"
+  const passedMatch = stdout.match(/(\d+)\s+passing/);
+  const failedMatch = stdout.match(/(\d+)\s+failing/);
+  const skippedMatch = stdout.match(/(\d+)\s+pending/);
+
+  const passed = parseInt(passedMatch?.[1] || '0', 10);
+  const failed = parseInt(failedMatch?.[1] || '0', 10);
+  const skipped = parseInt(skippedMatch?.[1] || '0', 10);
+
+  const result: TestLayerResult = { passed, failed, skipped, duration: Date.now() - startTime, tests: [], rawOutput: stdout };
+  const total = passed + failed + skipped;
+  log('info', `tauri-e2e results: ${passed}/${total} passed (${failed} failed) in ${result.duration}ms`);
+
+  return result;
+}
+
+function getFailureLayer(failure: TestFailure): 'unit' | 'rust' | 'integration' | 'e2e' | 'tauri-e2e' {
   const fp = failure.filePath.replace(/\\/g, '/');
+  if (fp.includes('/e2e/tauri')) return 'tauri-e2e';
   if (fp.includes('/e2e/')) return 'e2e';
   if (fp.includes('/integration/')) return 'integration';
   if (fp.includes('src-tauri') || fp.endsWith('.rs')) return 'rust';
@@ -178,8 +205,11 @@ export function shouldSkipLayer(layer: TestLayerConfig, pendingFailures: TestFai
     const failureLayer = getFailureLayer(f);
     // Skip integration if JS unit tests are red
     if (layer.name === 'integration') return failureLayer === 'unit';
-    // Skip E2E if JS unit OR integration are red (rust failures don't block E2E)
+    // Skip Playwright E2E if JS unit OR integration are red (rust failures don't block E2E)
     if (layer.name === 'e2e') return failureLayer === 'unit' || failureLayer === 'integration';
+    // Skip Tauri WebView E2E if Rust OR integration layer has failures
+    // (a broken Rust backend means the binary won't behave correctly)
+    if (layer.name === 'tauri-e2e') return failureLayer === 'rust' || failureLayer === 'integration';
     return false;
   });
 
