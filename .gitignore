@@ -5,6 +5,7 @@ release/
 *.log
 .env
 .env.local
+.secrets
 *.tsbuildinfo
 .npmrc
 # AGENTS.md
