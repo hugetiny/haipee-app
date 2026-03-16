@@ -1,6 +1,5 @@
-# CrabNebula Cloud Build & Release Workflow
-# Builds and signs Haipee for all platforms using CrabNebula Cloud
-# https://docs.crabnebula.dev/cloud/ci/github-actions
+# Tauri Build & Release Workflow
+# Builds Haipee for Linux and publishes to GitHub Releases
 
 name: CrabNebula Cloud Build
 
@@ -29,7 +28,6 @@ env:
   CARGO_NET_RETRY: 10
 
 jobs:
-  # Optional: fast typecheck before triggering expensive cloud build
   typecheck:
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +44,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
 
-  build-and-release:
+  build-linux:
     needs: typecheck
     runs-on: ubuntu-latest
     permissions:
@@ -70,56 +68,38 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      # CrabNebula Cloud builds in their cloud — only the CLI is needed here
-      - name: Cache CrabNebula CLI
-        id: cache-cncloud
-        uses: actions/cache@v4
+      - name: Install Rust
+        uses: dtolnay/rust-action@v1
         with:
-          path: ~/.cargo/bin/cncloud
-          key: ${{ runner.os }}-cncloud-cli
+          targets: x86_64-unknown-linux-gnu
 
-      - name: Install CrabNebula Cloud CLI
-        if: steps.cache-cncloud.outputs.cache-hit != 'true'
-        run: cargo install cncloud-cli --locked
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version '^2.0.0' --locked
 
-      - name: Build with CrabNebula Cloud
-        env:
-          CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
-        # tauri.conf.json has beforeBuildCommand set, so no need to pre-build renderer
+      - name: Build Tauri App (Linux)
         run: |
-          cncloud build \
-            --project haipee \
-            --api-key $CRABNEBULA_API_KEY
+          cd src-tauri
+          cargo tauri build --target x86_64-unknown-linux-gnu
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**
+          retention-days: 7
 
   release:
-    needs: build-and-release
+    needs: build-linux
     runs-on: ubuntu-latest
     permissions:
       contents: write
     if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
     steps:
-      # CrabNebula Cloud builds on their infrastructure.
-      # Download artifacts via their CLI instead of expecting them on the runner.
-      - name: Cache CrabNebula CLI
-        id: cache-cncloud
-        uses: actions/cache@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: ~/.cargo/bin/cncloud
-          key: ${{ runner.os }}-cncloud-cli
-
-      - name: Install CrabNebula Cloud CLI
-        if: steps.cache-cncloud.outputs.cache-hit != 'true'
-        run: cargo install cncloud-cli --locked
-
-      - name: Download build artifacts from CrabNebula Cloud
-        env:
-          CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
-        run: |
-          mkdir -p releases
-          cncloud download \
-            --project haipee \
-            --api-key $CRABNEBULA_API_KEY \
-            --output releases
+          name: linux-build
+          path: releases
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -139,23 +119,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate latest.json with signatures
+      - name: Generate latest.json
         run: |
           TAG=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
           VERSION=${TAG#v}
           RELEASE_BASE="https://github.com/${{ github.repository }}/releases/download/${TAG}"
-
-          # Extract minisign signatures from the .sig files in the release
-          # (Tauri bundler produces .sig alongside each artifact)
-          fetch_sig() {
-            local url="$1"
-            curl -fsSL "${url}.sig" 2>/dev/null || echo ""
-          }
-
-          DARWIN_AARCH64_URL="${RELEASE_BASE}/Haipee_${VERSION}_aarch64.app.tar.gz"
-          DARWIN_X64_URL="${RELEASE_BASE}/Haipee_${VERSION}_x64.app.tar.gz"
-          LINUX_X64_URL="${RELEASE_BASE}/haipee_${VERSION}_amd64.AppImage"
-          WINDOWS_X64_URL="${RELEASE_BASE}/Haipee_${VERSION}_x64-setup.nsis.zip"
 
           cat > latest.json << EOF
           {
@@ -163,21 +131,9 @@ jobs:
             "notes": "See the assets to download this version and install.",
             "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "platforms": {
-              "darwin-aarch64": {
-                "signature": "$(fetch_sig "$DARWIN_AARCH64_URL")",
-                "url": "${DARWIN_AARCH64_URL}"
-              },
-              "darwin-x86_64": {
-                "signature": "$(fetch_sig "$DARWIN_X64_URL")",
-                "url": "${DARWIN_X64_URL}"
-              },
               "linux-x86_64": {
-                "signature": "$(fetch_sig "$LINUX_X64_URL")",
-                "url": "${LINUX_X64_URL}"
-              },
-              "windows-x86_64": {
-                "signature": "$(fetch_sig "$WINDOWS_X64_URL")",
-                "url": "${WINDOWS_X64_URL}"
+                "signature": "",
+                "url": "${RELEASE_BASE}/haipee_${VERSION}_amd64.AppImage"
               }
             }
           }
@@ -188,33 +144,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: latest.json
-
-  publish-to-crabnebula:
-    needs: build-and-release
-    runs-on: ubuntu-latest
-    # Publish on tag push OR manual dispatch with a tag specified
-    if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Cache CrabNebula CLI
-        id: cache-cncloud
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin/cncloud
-          key: ${{ runner.os }}-cncloud-cli
-
-      - name: Install CrabNebula CLI
-        if: steps.cache-cncloud.outputs.cache-hit != 'true'
-        run: cargo install cncloud-cli --locked
-
-      - name: Publish to CrabNebula Cloud
-        env:
-          CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
-        run: |
-          TAG=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
-          cncloud publish \
-            --project haipee \
-            --api-key $CRABNEBULA_API_KEY \
-            --tag ${TAG}
