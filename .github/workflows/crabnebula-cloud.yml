@@ -112,22 +112,17 @@ jobs:
 
       - name: Upload artifacts to CrabNebula Cloud
         run: |
-          # Download cn CLI if not cached
-          if [ ! -f ./cn ]; then
-            curl -fsSL https://get.crabnebula.cloud/cn.sh | sh
-          fi
-          chmod +x ./cn
-
+          set -e
           BUNDLE_DIR="src-tauri/target/x86_64-unknown-linux-gnu/release/bundle"
-          echo "Bundle contents:"
-          find "$BUNDLE_DIR" -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \) | head -20
 
-          # Upload each artifact file
-          for file in "$BUNDLE_DIR"/appimage/*.AppImage "$BUNDLE_DIR"/deb/*.deb "$BUNDLE_DIR"/rpm/*.rpm; do
-            if [ -f "$file" ]; then
-              echo "Uploading: $file"
-              ./cn release upload --api-key "${{ secrets.CRABNEBULA_API_KEY }}" --file "$file" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
-            fi
+          # Find and upload each artifact type
+          for pattern in "$BUNDLE_DIR"/appimage/*.AppImage "$BUNDLE_DIR"/deb/*.deb "$BUNDLE_DIR"/rpm/*.rpm; do
+            for file in $pattern; do
+              if [ -f "$file" ]; then
+                echo "Uploading: $file"
+                cn release upload --api-key "${{ secrets.CRABNEBULA_API_KEY }}" --file "$file" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
+              fi
+            done
           done
         shell: bash
 
