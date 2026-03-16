@@ -2,7 +2,7 @@
  * AI Development Loop - Main Loop
  */
 
-import type { LoopConfig, Checkpoint, TestFailure, ResolvedFailure, SkippedFailure, RunStats } from './types.ts';
+import type { LoopConfig, Checkpoint, TestFailure, ResolvedFailure, SkippedFailure, RunStats, FailureType } from './types.ts';
 import { initLogger, log, logSection, logProgress, logAlert } from './logger.ts';
 import { generateRunId, getGitCommit, createCheckpoint, saveCheckpoint, loadCheckpoint, shouldCreateCheckpoint, createGitSnapshot } from './checkpoint.ts';
 import { runTestLayer, shouldSkipLayer } from './test-runner.ts';
@@ -123,10 +123,38 @@ async function runTestIterations(state: LoopState, config: LoopConfig): Promise<
     const result = await runTestLayer(layer, { targetTest: config.targetTest });
     state.testResults[layer.name] = result;
 
-    if (result.failed > 0) {
-      log('info', `${result.failed} tests failed in ${layer.name} layer`);
-      // Simplified: we don't re-run to get output, just track that failures exist
-      // In a full implementation, we'd capture and parse the actual failure details
+    if (result.failed > 0 && result.rawOutput) {
+      log('info', `${result.failed} tests failed in ${layer.name} layer, parsing failures...`);
+
+      const rawFailures = layer.name === 'e2e'
+        ? parsePlaywrightFailures(result.rawOutput)
+        : parseVitestFailures(result.rawOutput);
+
+      const historySnapshot: TestFailure[] = [
+        ...state.pendingFailures,
+        ...state.resolvedFailures.map((r) => ({
+          id: r.failureId,
+          testName: r.testName,
+          filePath: '',
+          errorMessage: '',
+          type: 'unknown' as FailureType,
+          fixAttempts: r.fixAttempts,
+          status: 'fixed' as const,
+          firstSeen: r.resolvedAt,
+        })),
+      ];
+
+      const processedFailures = detectFlakyTests(rawFailures, historySnapshot);
+
+      for (const failure of processedFailures) {
+        const alreadyTracked = state.pendingFailures.some((f) => f.id === failure.id);
+        if (!alreadyTracked) {
+          state.pendingFailures.push(failure);
+          log('info', `  → New failure: ${failure.testName} (${failure.type})`);
+        }
+      }
+    } else if (result.failed > 0) {
+      log('warn', `${result.failed} failures detected in ${layer.name} but no raw output to parse`);
     }
   }
 }
@@ -184,7 +212,7 @@ async function processFailures(state: LoopState, config: LoopConfig): Promise<vo
         log('info', `✅ Fixed: ${failure.testName}`);
       } else {
         log('warn', `Fix validation failed for: ${failure.testName}`);
-        rollbackChanges();
+        rollbackChanges(fixResult.filesModified);
         failure.status = 'pending';
         state.stats.fixesFailed++;
       }

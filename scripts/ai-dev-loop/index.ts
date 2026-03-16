@@ -43,7 +43,7 @@ Examples:
 
 function parseCliOptions(): CliOptions {
   const { values } = parseArgs({
-    args: Bun.argv.slice(2),
+    args: process.argv.slice(2),
     options: {
       duration: { type: 'string', default: '10' },
       resume: { type: 'string' },

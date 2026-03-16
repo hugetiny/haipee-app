@@ -4,6 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import type { Checkpoint } from './types.ts';
 import { log, logCheckpointSaved } from './logger.ts';
 
@@ -19,7 +20,6 @@ export function generateRunId(): string {
 
 export function getGitCommit(): string {
   try {
-    const { execSync } = require('child_process');
     return execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
   } catch {
     return 'unknown';
@@ -119,7 +119,6 @@ export function shouldCreateCheckpoint(lastCheckpointTime: number, intervalMinut
 
 export function createGitSnapshot(runId: string): void {
   try {
-    const { execSync } = require('child_process');
     const snapshotName = `ai-loop-snapshot-${runId}`;
 
     const status = execSync('git status --porcelain', { encoding: 'utf-8' });

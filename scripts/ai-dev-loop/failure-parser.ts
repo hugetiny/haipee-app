@@ -3,6 +3,8 @@
  */
 
 import * as fs from 'fs';
+import * as path from 'path';
+import { createHash } from 'crypto';
 import type { TestFailure, FailureType, FailureContext } from './types.ts';
 import { log } from './logger.ts';
 
@@ -117,6 +119,7 @@ function extractErrorMessage(errorSection: string, type: FailureType): string {
 
 function buildFailureContext(testFile: string): FailureContext {
   const relatedFiles: string[] = [];
+  const sourceFiles: string[] = [];
 
   if (fs.existsSync(testFile)) {
     const content = fs.readFileSync(testFile, 'utf-8');
@@ -126,11 +129,17 @@ function buildFailureContext(testFile: string): FailureContext {
     while ((match = importRegex.exec(content)) !== null) {
       const importPath = match[1];
       if (importPath.startsWith('.') || importPath.startsWith('/')) {
-        const resolvedPath = require('path').resolve(require('path').dirname(testFile), importPath);
+        const resolvedBase = path.resolve(path.dirname(testFile), importPath);
         const extensions = ['', '.ts', '.tsx', '.js', '.jsx'];
         for (const ext of extensions) {
-          if (fs.existsSync(resolvedPath + ext)) {
-            relatedFiles.push(resolvedPath + ext);
+          const resolved = resolvedBase + ext;
+          if (fs.existsSync(resolved)) {
+            const isTestFile = resolved.includes('.test.') || resolved.includes('.spec.');
+            if (isTestFile) {
+              relatedFiles.push(resolved);
+            } else {
+              sourceFiles.push(resolved);
+            }
             break;
           }
         }
@@ -138,11 +147,12 @@ function buildFailureContext(testFile: string): FailureContext {
     }
   }
 
-  return { sourceFiles: [], testFile, relatedFiles: [...new Set(relatedFiles)].slice(0, 5) };
+  const unique = (arr: string[]) => [...new Set(arr)].slice(0, 5);
+  return { sourceFiles: unique(sourceFiles), testFile, relatedFiles: unique(relatedFiles) };
 }
 
 function generateFailureId(filePath: string, testName: string): string {
-  const hash = require('crypto').createHash('md5').update(`${filePath}:${testName}`).digest('hex').substring(0, 8);
+  const hash = createHash('md5').update(`${filePath}:${testName}`).digest('hex').substring(0, 8);
   return `fail-${hash}`;
 }
 

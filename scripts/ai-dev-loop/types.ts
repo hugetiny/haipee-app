@@ -29,6 +29,7 @@ export interface TestLayerResult {
   skipped: number;
   duration: number;
   tests: TestInfo[];
+  rawOutput?: string;
 }
 
 export interface TestInfo {

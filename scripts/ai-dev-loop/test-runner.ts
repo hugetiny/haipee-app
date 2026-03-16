@@ -56,6 +56,7 @@ async function runVitestLayer(config: TestLayerConfig, options: RunOptions): Pro
     skipped: parseInt(skippedMatch?.[1] || '0', 10),
     duration: Date.now() - startTime,
     tests: [],
+    rawOutput: stdout,
   };
 
   const total = result.passed + result.failed + result.skipped;
@@ -87,7 +88,7 @@ async function runPlaywrightLayer(config: TestLayerConfig, options: RunOptions):
   const failed = parseInt(failedMatch?.[1] || '0', 10) + parseInt(timedOutMatch?.[1] || '0', 10);
   const skipped = parseInt(skippedMatch?.[1] || '0', 10);
 
-  const result: TestLayerResult = { passed, failed, skipped, duration: Date.now() - startTime, tests: [] };
+  const result: TestLayerResult = { passed, failed, skipped, duration: Date.now() - startTime, tests: [], rawOutput: stdout };
   const total = passed + failed + skipped;
   log('info', `${config.name} results: ${passed}/${total} passed (${failed} failed) in ${result.duration}ms`);
 
@@ -136,15 +137,25 @@ export async function runSingleTest(testPath: string, timeout: number = 120000):
   }
 }
 
+function getFailureLayer(failure: TestFailure): 'unit' | 'integration' | 'e2e' {
+  const fp = failure.filePath.replace(/\\/g, '/');
+  if (fp.includes('/e2e/')) return 'e2e';
+  if (fp.includes('/integration/')) return 'integration';
+  return 'unit';
+}
+
 export function shouldSkipLayer(layer: TestLayerConfig, pendingFailures: TestFailure[]): boolean {
-  const higherPriorityFailures = pendingFailures.filter((f) => {
-    if (layer.name === 'integration') return f.filePath.includes('unit');
-    if (layer.name === 'e2e') return f.filePath.includes('unit') || f.filePath.includes('integration');
+  if (layer.name === 'unit') return false;
+
+  const blockers = pendingFailures.filter((f) => {
+    const failureLayer = getFailureLayer(f);
+    if (layer.name === 'e2e') return failureLayer === 'unit' || failureLayer === 'integration';
+    if (layer.name === 'integration') return failureLayer === 'unit';
     return false;
   });
 
-  if (higherPriorityFailures.length > 0) {
-    log('info', `Skipping ${layer.name} tests - ${higherPriorityFailures.length} higher priority failures pending`);
+  if (blockers.length > 0) {
+    log('info', `Skipping ${layer.name} tests — ${blockers.length} higher-priority failures pending`);
     return true;
   }
   return false;

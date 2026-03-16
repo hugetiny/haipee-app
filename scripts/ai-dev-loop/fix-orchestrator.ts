@@ -3,8 +3,9 @@
  * Coordinate AI agents to fix test failures
  */
 
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import * as fs from 'fs';
+import * as path from 'path';
 import type { TestFailure, FixResult } from './types.ts';
 import { log, logFixAttempt, logFixSuccess, logFixFailed } from './logger.ts';
 
@@ -232,40 +233,104 @@ function getFileContent(filePath: string): string {
 }
 
 /**
- * Call Claude Code agent using the Skill system
+ * Call Claude Code agent via CLI in non-interactive print mode.
+ * The prompt instructs Claude to output changed files as <file path="..."> blocks,
+ * which are then parsed and written to disk.
  */
 async function callClaudeAgent(agentName: string, prompt: string): Promise<FixResult> {
-  log('info', `Calling agent: ${agentName}`);
+  log('info', `Calling Claude agent: ${agentName}`);
+
+  const outputDir = './ai-loop-logs';
+  fs.mkdirSync(outputDir, { recursive: true });
+  const promptFile = path.join(outputDir, `agent-prompt-${Date.now()}.txt`);
+
+  const structuredPrompt = `You are acting as the ${agentName} agent.\n\n${prompt}\n\nCRITICAL INSTRUCTIONS FOR OUTPUT FORMAT:\nFor each file you need to create or modify, output a complete file block in this exact XML format:\n<file path="relative/path/to/file.ts">\n// complete updated file content here\n</file>\n\nRules:\n- Use the project-root-relative path (e.g. "src/components/Foo.tsx")\n- Output the COMPLETE file content, not a diff or partial snippet\n- Only include files that actually need changes\n- Do not include any unchanged files`;
+
+  fs.writeFileSync(promptFile, structuredPrompt);
+  log('info', `Prompt saved to: ${promptFile}`);
 
   try {
-    // In this environment, we use the Skill tool to invoke agents
-    // The skill will write files directly to fix the issue
+    const { stdout, exitCode } = await executeClaudeCLI(structuredPrompt, 300_000);
 
-    // Save prompt for debugging
-    const promptFile = `./ai-loop-logs/agent-prompt-${Date.now()}.txt`;
-    fs.writeFileSync(promptFile, `Agent: ${agentName}\n\n${prompt}`);
-    log('info', `Agent prompt saved to: ${promptFile}`);
+    if (!stdout.trim()) {
+      return { success: false, filesModified: [], error: 'No output received from Claude CLI' };
+    }
 
-    // For now, we return a placeholder indicating the agent needs to be called
-    // In production, this would invoke the actual skill
-    log('info', `Agent ${agentName} would be called with prompt (${prompt.length} chars)`);
+    const filesModified = await applyFileBlocks(stdout);
 
-    // Simulate agent execution - in real implementation, this would:
-    // 1. Call the skill: skill "${agentName}" with the prompt
-    // 2. Wait for the agent to complete file modifications
-    // 3. Check which files were modified
+    if (filesModified.length > 0) {
+      log('info', `Applied changes to: ${filesModified.join(', ')}`);
+      return {
+        success: true,
+        filesModified,
+        description: `${agentName} modified ${filesModified.length} file(s): ${filesModified.join(', ')}`,
+      };
+    }
 
+    log('warn', `Agent ${agentName} produced no file changes. Output preview: ${stdout.substring(0, 300)}`);
     return {
       success: false,
       filesModified: [],
-      error: `Agent ${agentName} invocation requires manual execution. Prompt saved to ${promptFile}. Run: skill "${agentName}" "$(cat ${promptFile})"`,
+      error: 'Agent produced no file modifications — check prompt format or agent output',
     };
-
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    log('error', `Agent call failed: ${errorMsg}`);
-    return { success: false, filesModified: [], error: errorMsg };
+    const msg = error instanceof Error ? error.message : String(error);
+    logFixFailed(agentName, msg);
+    return { success: false, filesModified: [], error: msg };
   }
+}
+
+function executeClaudeCLI(prompt: string, timeout: number): Promise<{ stdout: string; exitCode: number }> {
+  return new Promise((resolve) => {
+    const child = spawn('claude', ['-p', prompt], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: process.cwd(),
+    });
+
+    let output = '';
+    child.stdout?.on('data', (d: Buffer) => { output += d.toString(); });
+    child.stderr?.on('data', (d: Buffer) => { output += d.toString(); });
+
+    const timer = setTimeout(() => {
+      child.kill('SIGTERM');
+      log('warn', `Claude CLI timed out after ${timeout}ms`);
+    }, timeout);
+
+    child.on('close', (code: number | null) => {
+      clearTimeout(timer);
+      resolve({ stdout: output, exitCode: code ?? 1 });
+    });
+
+    child.on('error', () => {
+      clearTimeout(timer);
+      resolve({ stdout: output, exitCode: 1 });
+    });
+  });
+}
+
+async function applyFileBlocks(output: string): Promise<string[]> {
+  const fileBlockRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
+  const filesModified: string[] = [];
+  const cwd = process.cwd();
+  let match;
+
+  while ((match = fileBlockRegex.exec(output)) !== null) {
+    const [, filePath, content] = match;
+
+    // Security: prevent path traversal
+    const safePath = path.resolve(cwd, filePath);
+    if (!safePath.startsWith(cwd + path.sep) && safePath !== cwd) {
+      log('warn', `Skipping unsafe path: ${filePath}`);
+      continue;
+    }
+
+    fs.mkdirSync(path.dirname(safePath), { recursive: true });
+    fs.writeFileSync(safePath, content.trimEnd() + '\n', 'utf-8');
+    filesModified.push(filePath);
+    log('info', `  ✏️  Written: ${filePath}`);
+  }
+
+  return filesModified;
 }
 
 export async function validateFix(failure: TestFailure): Promise<boolean> {
@@ -283,13 +348,18 @@ export async function validateFix(failure: TestFailure): Promise<boolean> {
   return false;
 }
 
-export function rollbackChanges(): void {
+export function rollbackChanges(filesModified: string[] = []): void {
   log('info', 'Rolling back changes...');
 
   try {
-    const { execSync } = require('child_process');
-    execSync('git checkout -- .', { stdio: 'ignore' });
-    log('info', 'Changes rolled back successfully');
+    if (filesModified.length > 0) {
+      const quoted = filesModified.map((f) => `"${f.replace(/"/g, '\\"')}"`).join(' ');
+      execSync(`git checkout -- ${quoted}`, { stdio: 'ignore' });
+      log('info', `Rolled back ${filesModified.length} file(s): ${filesModified.join(', ')}`);
+    } else {
+      execSync('git checkout -- .', { stdio: 'ignore' });
+      log('info', 'Rolled back all unstaged changes');
+    }
   } catch (error) {
     log('error', 'Failed to rollback changes', {
       error: error instanceof Error ? error.message : String(error),
