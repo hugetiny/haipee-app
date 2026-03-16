@@ -12,6 +12,7 @@ export interface Checkpoint {
 
   testResults: {
     unit: TestLayerResult;
+    rust: TestLayerResult;
     integration: TestLayerResult;
     e2e: TestLayerResult;
   };
@@ -112,7 +113,7 @@ export interface LoopConfig {
 }
 
 export interface TestLayerConfig {
-  name: 'unit' | 'integration' | 'e2e';
+  name: 'unit' | 'rust' | 'integration' | 'e2e';
   command: string;
   timeout: number;
   priority: number;

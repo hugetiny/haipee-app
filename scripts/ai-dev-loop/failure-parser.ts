@@ -77,6 +77,77 @@ export function parsePlaywrightFailures(output: string): TestFailure[] {
   return failures;
 }
 
+/**
+ * Parse `cargo test` output into TestFailure objects.
+ *
+ * Cargo test output format:
+ *   test module::test_name ... FAILED
+ *   ...
+ *   failures:
+ *       module::test_name
+ *   ...
+ *   thread 'module::test_name' panicked at 'assertion failed: ...', src/lib.rs:42:5
+ */
+export function parseCargoTestFailures(output: string): TestFailure[] {
+  const failures: TestFailure[] = [];
+
+  // Collect names of failed tests from the "failures:" section
+  const failuresSectionMatch = output.match(/failures:\n([\s\S]*?)(?:\ntest result:|$)/);
+  const failedNames = new Set<string>();
+  if (failuresSectionMatch) {
+    for (const line of failuresSectionMatch[1].split('\n')) {
+      const name = line.trim();
+      if (name) failedNames.add(name);
+    }
+  }
+
+  // Match each "test X ... FAILED" line
+  const testLineRegex = /^test (.+?) \.\.\. FAILED$/gm;
+  let match;
+  while ((match = testLineRegex.exec(output)) !== null) {
+    const fullTestName = match[1].trim();
+    failedNames.add(fullTestName);
+  }
+
+  for (const testName of failedNames) {
+    // Extract panic/error message for this test
+    const panicRegex = new RegExp(
+      `thread '${testName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}' panicked at ([\\s\\S]*?)(?:note:|stack backtrace:|^test |$)`,
+      'm',
+    );
+    const panicMatch = output.match(panicRegex);
+    const errorSection = panicMatch ? panicMatch[0].substring(0, 2000) : `Test ${testName} failed`;
+
+    // Derive file path from test module path: "provider_commands::switch_..." → "src-tauri/tests/provider_commands.rs"
+    const moduleParts = testName.split('::');
+    const inferredFile = moduleParts.length > 1
+      ? `src-tauri/tests/${moduleParts[0]}.rs`
+      : 'src-tauri/src/lib.rs';
+
+    failures.push({
+      id: generateFailureId(inferredFile, testName),
+      testName: testName.substring(0, 200),
+      filePath: inferredFile,
+      errorMessage: (panicMatch?.[1] ?? `Test failed: ${testName}`).trim().substring(0, 500),
+      stackTrace: errorSection,
+      type: classifyCargoErrorType(errorSection),
+      fixAttempts: 0,
+      status: 'pending',
+      firstSeen: Date.now(),
+      context: { sourceFiles: [], testFile: inferredFile, relatedFiles: [] },
+    });
+  }
+
+  return failures;
+}
+
+function classifyCargoErrorType(errorSection: string): FailureType {
+  if (errorSection.includes('assertion') || errorSection.includes('assert_eq') || errorSection.includes('assert_ne')) return 'assertion-failure';
+  if (errorSection.includes('panicked') || errorSection.includes('unwrap()')) return 'runtime-error';
+  if (errorSection.includes('error[E') || errorSection.includes('cannot find')) return 'build-error';
+  return 'runtime-error';
+}
+
 function createFailure(filePath: string, testName: string, errorSection: string): TestFailure {
   const type = classifyErrorType(errorSection);
   const errorMessage = extractErrorMessage(errorSection, type);

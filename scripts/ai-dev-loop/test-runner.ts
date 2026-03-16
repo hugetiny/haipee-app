@@ -20,6 +20,8 @@ export async function runTestLayer(config: TestLayerConfig, options: RunOptions 
       return await runVitestLayer(config, options);
     } else if (config.name === 'e2e') {
       return await runPlaywrightLayer(config, options);
+    } else if (config.name === 'rust') {
+      return await runCargoTestLayer(config);
     }
     throw new Error(`Unknown test layer: ${config.name}`);
   } catch (error) {
@@ -95,6 +97,29 @@ async function runPlaywrightLayer(config: TestLayerConfig, options: RunOptions):
   return result;
 }
 
+async function runCargoTestLayer(config: TestLayerConfig): Promise<TestLayerResult> {
+  const startTime = Date.now();
+  const cmd = 'cargo';
+  const args = ['test', '--manifest-path', 'src-tauri/Cargo.toml', '--', '--test-output', 'immediate'];
+
+  log('info', `Executing: ${cmd} ${args.join(' ')}`);
+  const { stdout, exitCode } = await executeCommand(cmd, args, config.timeout);
+
+  // Cargo test output: "test result: FAILED. N passed; M failed; ..."
+  const resultMatch = stdout.match(/test result:.*?(\d+) passed;\s*(\d+) failed/);
+  const passed = parseInt(resultMatch?.[1] || '0', 10);
+  const failed = parseInt(resultMatch?.[2] || '0', 10);
+  // count ignored as skipped
+  const ignoredMatch = stdout.match(/(\d+) ignored/);
+  const skipped = parseInt(ignoredMatch?.[1] || '0', 10);
+
+  const result: TestLayerResult = { passed, failed, skipped, duration: Date.now() - startTime, tests: [], rawOutput: stdout };
+  const total = passed + failed + skipped;
+  log('info', `rust results: ${passed}/${total} passed (${failed} failed) in ${result.duration}ms`);
+
+  return result;
+}
+
 function executeCommand(cmd: string, args: string[], timeout: number): Promise<{ stdout: string; exitCode: number }> {
   return new Promise((resolve) => {
     const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, CI: 'true' } });
@@ -137,20 +162,24 @@ export async function runSingleTest(testPath: string, timeout: number = 120000):
   }
 }
 
-function getFailureLayer(failure: TestFailure): 'unit' | 'integration' | 'e2e' {
+function getFailureLayer(failure: TestFailure): 'unit' | 'rust' | 'integration' | 'e2e' {
   const fp = failure.filePath.replace(/\\/g, '/');
   if (fp.includes('/e2e/')) return 'e2e';
   if (fp.includes('/integration/')) return 'integration';
+  if (fp.includes('src-tauri') || fp.endsWith('.rs')) return 'rust';
   return 'unit';
 }
 
 export function shouldSkipLayer(layer: TestLayerConfig, pendingFailures: TestFailure[]): boolean {
-  if (layer.name === 'unit') return false;
+  // rust tests cover the Tauri backend — independent of JS unit/integration failures
+  if (layer.name === 'unit' || layer.name === 'rust') return false;
 
   const blockers = pendingFailures.filter((f) => {
     const failureLayer = getFailureLayer(f);
-    if (layer.name === 'e2e') return failureLayer === 'unit' || failureLayer === 'integration';
+    // Skip integration if JS unit tests are red
     if (layer.name === 'integration') return failureLayer === 'unit';
+    // Skip E2E if JS unit OR integration are red (rust failures don't block E2E)
+    if (layer.name === 'e2e') return failureLayer === 'unit' || failureLayer === 'integration';
     return false;
   });
 

@@ -6,7 +6,7 @@ import type { LoopConfig, Checkpoint, TestFailure, ResolvedFailure, SkippedFailu
 import { initLogger, log, logSection, logProgress, logAlert } from './logger.ts';
 import { generateRunId, getGitCommit, createCheckpoint, saveCheckpoint, loadCheckpoint, shouldCreateCheckpoint, createGitSnapshot } from './checkpoint.ts';
 import { runTestLayer, shouldSkipLayer } from './test-runner.ts';
-import { parseVitestFailures, parsePlaywrightFailures, detectFlakyTests } from './failure-parser.ts';
+import { parseVitestFailures, parsePlaywrightFailures, parseCargoTestFailures, detectFlakyTests } from './failure-parser.ts';
 import { fixFailure, validateFix, rollbackChanges } from './fix-orchestrator.ts';
 
 const DEFAULT_CONFIG: LoopConfig = {
@@ -15,9 +15,16 @@ const DEFAULT_CONFIG: LoopConfig = {
   maxFixAttempts: 3,
   dryRun: false,
   layers: [
+    // 1. Fast JS unit tests (React components / hooks / utils)
     { name: 'unit', command: 'bun vitest run', timeout: 120000, priority: 1 },
-    { name: 'integration', command: 'bun vitest run tests/integration', timeout: 300000, priority: 2 },
-    { name: 'e2e', command: 'bun playwright test', timeout: 900000, priority: 3 },
+    // 2. Rust backend tests (Tauri commands, config, MCP — cargo test in src-tauri/)
+    //    Independent of JS layers; runs in parallel priority with integration.
+    { name: 'rust', command: 'cargo test --manifest-path src-tauri/Cargo.toml', timeout: 300000, priority: 2 },
+    // 3. JS integration tests
+    { name: 'integration', command: 'bun vitest run tests/integration', timeout: 300000, priority: 3 },
+    // 4. Playwright E2E — tests the Vite renderer only (no Tauri IPC).
+    //    For full Tauri WebView E2E, tauri-driver is needed (run separately).
+    { name: 'e2e', command: 'bun playwright test', timeout: 900000, priority: 4 },
   ],
 };
 
@@ -87,12 +94,15 @@ export async function runAutonomousLoop(config: Partial<LoopConfig> = {}): Promi
 
       const totalTests =
         state.testResults.unit.passed + state.testResults.unit.failed +
+        state.testResults.rust.passed + state.testResults.rust.failed +
         state.testResults.integration.passed + state.testResults.integration.failed +
         state.testResults.e2e.passed + state.testResults.e2e.failed;
       const totalPassed =
-        state.testResults.unit.passed + state.testResults.integration.passed + state.testResults.e2e.passed;
+        state.testResults.unit.passed + state.testResults.rust.passed +
+        state.testResults.integration.passed + state.testResults.e2e.passed;
       const totalFailed =
-        state.testResults.unit.failed + state.testResults.integration.failed + state.testResults.e2e.failed;
+        state.testResults.unit.failed + state.testResults.rust.failed +
+        state.testResults.integration.failed + state.testResults.e2e.failed;
 
       logProgress(state.iteration, totalTests, totalPassed, totalFailed);
       await sleep(5000);
@@ -126,9 +136,14 @@ async function runTestIterations(state: LoopState, config: LoopConfig): Promise<
     if (result.failed > 0 && result.rawOutput) {
       log('info', `${result.failed} tests failed in ${layer.name} layer, parsing failures...`);
 
-      const rawFailures = layer.name === 'e2e'
-        ? parsePlaywrightFailures(result.rawOutput)
-        : parseVitestFailures(result.rawOutput);
+      let rawFailures;
+      if (layer.name === 'e2e') {
+        rawFailures = parsePlaywrightFailures(result.rawOutput);
+      } else if (layer.name === 'rust') {
+        rawFailures = parseCargoTestFailures(result.rawOutput);
+      } else {
+        rawFailures = parseVitestFailures(result.rawOutput);
+      }
 
       const historySnapshot: TestFailure[] = [
         ...state.pendingFailures,
@@ -248,6 +263,7 @@ function shouldContinue(state: LoopState, config: LoopConfig): boolean {
 
   const allTestsPassing =
     state.testResults.unit.failed === 0 &&
+    state.testResults.rust.failed === 0 &&
     state.testResults.integration.failed === 0 &&
     state.testResults.e2e.failed === 0;
 
@@ -283,6 +299,7 @@ function createInitialState(runId: string): LoopState {
     lastCheckpointTime: Date.now(),
     testResults: {
       unit: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
+      rust: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
       integration: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
       e2e: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
     },
@@ -313,12 +330,15 @@ function restoreStateFromCheckpoint(checkpoint: Checkpoint, runId: string): Loop
 function updateStats(state: LoopState): void {
   const totalTests =
     state.testResults.unit.passed + state.testResults.unit.failed +
+    state.testResults.rust.passed + state.testResults.rust.failed +
     state.testResults.integration.passed + state.testResults.integration.failed +
     state.testResults.e2e.passed + state.testResults.e2e.failed;
   const totalPassed =
-    state.testResults.unit.passed + state.testResults.integration.passed + state.testResults.e2e.passed;
+    state.testResults.unit.passed + state.testResults.rust.passed +
+    state.testResults.integration.passed + state.testResults.e2e.passed;
   const totalFailed =
-    state.testResults.unit.failed + state.testResults.integration.failed + state.testResults.e2e.failed;
+    state.testResults.unit.failed + state.testResults.rust.failed +
+    state.testResults.integration.failed + state.testResults.e2e.failed;
 
   state.stats.totalTestsRun = totalTests;
   state.stats.totalTestsPassed = totalPassed;

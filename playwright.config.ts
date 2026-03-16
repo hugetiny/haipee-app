@@ -20,7 +20,10 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-results.json' }],
   ],
   use: {
-    baseURL: process.env.WEB_URL || 'http://localhost:1420',
+    // NOTE: E2E tests target the Vite renderer only (no Tauri IPC).
+    // For full Tauri + native API testing, see src-tauri/tests/ (cargo test).
+    // To test against the real Tauri WebView, use tauri-driver separately.
+    baseURL: process.env.WEB_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -36,10 +39,10 @@ export default defineConfig({
     },
   ],
 
-  // Web server configuration for Vite dev server
+  // Web server configuration for Vite dev server (renderer-only, no Tauri binary)
   webServer: {
     command: 'bun run dev:renderer',
-    url: 'http://localhost:1420',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },
