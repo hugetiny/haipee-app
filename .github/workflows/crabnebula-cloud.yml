@@ -75,25 +75,18 @@ jobs:
         id: cache-cncloud
         uses: actions/cache@v4
         with:
-          path: ~/.cncloud/bin/cncloud
+          path: ~/.cargo/bin/cncloud
           key: ${{ runner.os }}-cncloud-cli
 
       - name: Install CrabNebula Cloud CLI
         if: steps.cache-cncloud.outputs.cache-hit != 'true'
-        run: curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
-
-      - name: Setup CLI path
-        run: |
-          ls -la ~/.cncloud/bin/ || echo "Directory not found"
-          echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
+        run: cargo install cncloud-cli --locked
 
       - name: Build with CrabNebula Cloud
         env:
           CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
         # tauri.conf.json has beforeBuildCommand set, so no need to pre-build renderer
         run: |
-          export PATH="$HOME/.cncloud/bin:$PATH"
-          which cncloud || (echo "cncloud not found, installing..." && curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh)
           cncloud build \
             --project haipee \
             --api-key $CRABNEBULA_API_KEY
@@ -111,21 +104,17 @@ jobs:
         id: cache-cncloud
         uses: actions/cache@v4
         with:
-          path: ~/.cncloud/bin/cncloud
+          path: ~/.cargo/bin/cncloud
           key: ${{ runner.os }}-cncloud-cli
 
       - name: Install CrabNebula Cloud CLI
         if: steps.cache-cncloud.outputs.cache-hit != 'true'
-        run: curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
-
-      - name: Setup CLI path
-        run: echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
+        run: cargo install cncloud-cli --locked
 
       - name: Download build artifacts from CrabNebula Cloud
         env:
           CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
         run: |
-          export PATH="$HOME/.cncloud/bin:$PATH"
           mkdir -p releases
           cncloud download \
             --project haipee \
@@ -213,21 +202,17 @@ jobs:
         id: cache-cncloud
         uses: actions/cache@v4
         with:
-          path: ~/.cncloud/bin/cncloud
+          path: ~/.cargo/bin/cncloud
           key: ${{ runner.os }}-cncloud-cli
 
       - name: Install CrabNebula CLI
         if: steps.cache-cncloud.outputs.cache-hit != 'true'
-        run: curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
-
-      - name: Setup CLI path
-        run: echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
+        run: cargo install cncloud-cli --locked
 
       - name: Publish to CrabNebula Cloud
         env:
           CRABNEBULA_API_KEY: ${{ secrets.CRABNEBULA_API_KEY }}
         run: |
-          export PATH="$HOME/.cncloud/bin:$PATH"
           TAG=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
           cncloud publish \
             --project haipee \
