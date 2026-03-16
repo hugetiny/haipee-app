@@ -113,7 +113,7 @@ jobs:
       - name: Upload artifacts to CrabNebula Cloud
         uses: crabnebula-dev/cloud-release@v0.2.0
         with:
-          command: release upload ${{ env.CN_APPLICATION }}
+          command: release upload ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
           api-key: ${{ secrets.CRABNEBULA_API_KEY }}
 
       - name: Upload artifacts for GitHub Release
