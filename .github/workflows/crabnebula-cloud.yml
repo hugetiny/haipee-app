@@ -1,5 +1,5 @@
 # CrabNebula Cloud Build & Release Workflow
-# Builds and signs Haipee using CrabNebula Cloud
+# Builds Haipee for Linux and publishes to GitHub Releases and CrabNebula Cloud
 # https://docs.crabnebula.dev/cloud/ci/github-actions
 
 name: CrabNebula Cloud Build
@@ -25,6 +25,9 @@ concurrency:
 
 env:
   BUN_VERSION: '1.2.0'
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CN_APPLICATION: haipee/haipee
 
 jobs:
   typecheck:
@@ -43,12 +46,22 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
 
-  # CrabNebula Cloud build - handles all platforms in parallel
-  build:
+  # Create draft release on CrabNebula Cloud
+  draft:
     needs: typecheck
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create draft release
+        uses: crabnebula-dev/cloud-release@v0.2.0
+        with:
+          command: release draft ${{ env.CN_APPLICATION }}
+          api-key: ${{ secrets.CRABNEBULA_API_KEY }}
+
+  # Build Linux only (saves credits vs macOS/Windows runners)
+  build-linux:
+    needs: draft
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -68,32 +81,50 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      # Build using CrabNebula Cloud (builds all platforms in parallel)
-      - name: Build with CrabNebula Cloud
+      - name: Install Rust
+        uses: dtolnay/rust-action@v1
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version '^2.0.0' --locked
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Build Tauri App (Linux)
+        run: |
+          cd src-tauri
+          cargo tauri build --target x86_64-unknown-linux-gnu
+
+      - name: Upload artifacts to CrabNebula Cloud
         uses: crabnebula-dev/cloud-release@v0.2.0
         with:
-          command: build --project haipee
+          command: release upload ${{ env.CN_APPLICATION }}
           api-key: ${{ secrets.CRABNEBULA_API_KEY }}
 
-  # Create GitHub Release with artifacts from CrabNebula Cloud
+      - name: Upload artifacts for GitHub Release
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**
+          retention-days: 7
+
+  # Publish release on GitHub
   release:
-    needs: build
+    needs: build-linux
     runs-on: ubuntu-latest
     permissions:
       contents: write
     if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download artifacts from CrabNebula Cloud
-        uses: crabnebula-dev/cloud-release@v0.2.0
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
-          command: download --project haipee --latest --output releases
-          api-key: ${{ secrets.CRABNEBULA_API_KEY }}
-
-      - name: List downloaded artifacts
-        run: ls -la releases/
+          name: linux-build
+          path: releases
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -114,27 +145,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download artifacts from CrabNebula Cloud
-        uses: crabnebula-dev/cloud-release@v0.2.0
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
-          command: download --project haipee --latest --output releases
-          api-key: ${{ secrets.CRABNEBULA_API_KEY }}
+          name: linux-build
+          path: releases
 
-      - name: Generate latest.json with signatures
+      - name: Generate latest.json
         run: |
-          TAG=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}
+          TAG=${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}
           VERSION=${TAG#v}
           RELEASE_BASE="https://github.com/${{ github.repository }}/releases/download/${TAG}"
-
-          # Helper to fetch signature from .sig files
-          fetch_sig() {
-            local file="$1"
-            if [ -f "releases/${file}.sig" ]; then
-              cat "releases/${file}.sig"
-            else
-              echo ""
-            fi
-          }
 
           # Find actual artifact names
           APP_IMAGE=$(ls releases/*.AppImage 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "haipee_${VERSION}_amd64.AppImage")
@@ -159,17 +180,15 @@ jobs:
         with:
           files: latest.json
 
-  # Publish to CrabNebula Cloud (makes update available via CDN)
-  publish-to-crabnebula:
-    needs: build
+  # Publish to CrabNebula Cloud
+  publish:
+    needs: [build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Publish to CrabNebula Cloud
+      - uses: actions/checkout@v4
+      - name: Publish release
         uses: crabnebula-dev/cloud-release@v0.2.0
         with:
-          command: release draft haipee ${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}]
+          command: release publish ${{ env.CN_APPLICATION }}
           api-key: ${{ secrets.CRABNEBULA_API_KEY }}
