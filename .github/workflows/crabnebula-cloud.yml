@@ -83,7 +83,9 @@ jobs:
         run: curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh
 
       - name: Setup CLI path
-        run: echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
+        run: |
+          ls -la ~/.cncloud/bin/ || echo "Directory not found"
+          echo "$HOME/.cncloud/bin" >> $GITHUB_PATH
 
       - name: Build with CrabNebula Cloud
         env:
@@ -91,6 +93,7 @@ jobs:
         # tauri.conf.json has beforeBuildCommand set, so no need to pre-build renderer
         run: |
           export PATH="$HOME/.cncloud/bin:$PATH"
+          which cncloud || (echo "cncloud not found, installing..." && curl -fsSL https://cdn.crabnebula.app/install/cncloud-cli.sh | sh)
           cncloud build \
             --project haipee \
             --api-key $CRABNEBULA_API_KEY
