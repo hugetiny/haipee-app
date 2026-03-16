@@ -111,10 +111,25 @@ jobs:
           cargo tauri build --target x86_64-unknown-linux-gnu
 
       - name: Upload artifacts to CrabNebula Cloud
-        uses: crabnebula-dev/cloud-release@v0.2.0
-        with:
-          command: release upload ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
-          api-key: ${{ secrets.CRABNEBULA_API_KEY }}
+        run: |
+          # Download cn CLI if not cached
+          if [ ! -f ./cn ]; then
+            curl -fsSL https://get.crabnebula.cloud/cn.sh | sh
+          fi
+          chmod +x ./cn
+
+          BUNDLE_DIR="src-tauri/target/x86_64-unknown-linux-gnu/release/bundle"
+          echo "Bundle contents:"
+          find "$BUNDLE_DIR" -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" \) | head -20
+
+          # Upload each artifact file
+          for file in "$BUNDLE_DIR"/appimage/*.AppImage "$BUNDLE_DIR"/deb/*.deb "$BUNDLE_DIR"/rpm/*.rpm; do
+            if [ -f "$file" ]; then
+              echo "Uploading: $file"
+              ./cn release upload --api-key "${{ secrets.CRABNEBULA_API_KEY }}" --file "$file" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
+            fi
+          done
+        shell: bash
 
       - name: Upload artifacts for GitHub Release
         uses: actions/upload-artifact@v4
