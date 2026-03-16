@@ -16,7 +16,11 @@
     "test:unit:watch": "vitest watch",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "ai:dev": "bun run scripts/ai-dev-loop/index.ts",
+    "ai:dev:resume": "bun run scripts/ai-dev-loop/index.ts --resume-latest",
+    "ai:dev:dry": "bun run scripts/ai-dev-loop/index.ts --dry-run",
+    "ai:dev:checkpoints": "bun run scripts/ai-dev-loop/index.ts --list-checkpoints"
   },
   "keywords": [],
   "author": "",

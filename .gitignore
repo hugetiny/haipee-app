@@ -25,3 +25,18 @@ flatpak-build/
 flatpak-repo/
 .worktrees/
 .spec-workflow/
+
+# AI Development Loop logs
+ai-loop-logs/
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright-results.xml
+vitest-report.json
+playwright-api-report/
+
+# Package manager lock files (using bun.lock)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
