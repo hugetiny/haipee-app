@@ -42,14 +42,11 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
-        with:
-          targets: |
-            aarch64-apple-darwin
-            x86_64-apple-darwin
-            aarch64-unknown-linux-gnu
-            x86_64-unknown-linux-gnu
-            x86_64-pc-windows-msvc
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          source "$HOME/.cargo/env"
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu x86_64-pc-windows-msvc
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version '^2.0.0' --locked
