@@ -10,12 +10,12 @@
 ### Method 1: GitHub CLI (Recommended)
 
 ```bash
-gh secret set CRABNEBULA_API_KEY --body "cn_kdVPgOAr-vWn7oc4oD82rlNMF3QOifrlMKtYC1qxB4bAJVozfeQ4GrL7uTQ17vzaLykavB-seQ1i7FNbXou0DQ" --repo hugetiny/haipee
+gh secret set CRABNEBULA_API_KEY --body "cn_kdVPgOAr-vWn7oc4oD82rlNMF3QOifrlMKtYC1qxB4bAJVozfeQ4GrL7uTQ17vzaLykavB-seQ1i7FNbXou0DQ" --repo hugetiny/haipee-app
 ```
 
 ### Method 2: GitHub Web Interface
 
-1. Go to: https://github.com/hugetiny/haipee/settings/secrets/actions
+1. Go to: https://github.com/hugetiny/haipee-app/settings/secrets/actions
 2. Click "New repository secret"
 3. Name: `CRABNEBULA_API_KEY`
 4. Value: `cn_kdVPgOAr-vWn7oc4oD82rlNMF3QOifrlMKtYC1qxB4bAJVozfeQ4GrL7uTQ17vzaLykavB-seQ1i7FNbXou0DQ`
@@ -25,7 +25,7 @@ gh secret set CRABNEBULA_API_KEY --body "cn_kdVPgOAr-vWn7oc4oD82rlNMF3QOifrlMKtY
 
 ### Manual Build Trigger
 
-1. Go to Actions tab: https://github.com/hugetiny/haipee/actions
+1. Go to Actions tab: https://github.com/hugetiny/haipee-app/actions
 2. Select "CrabNebula Cloud Build"
 3. Click "Run workflow"
 4. Optional: Enter a tag (e.g., `v3.12.1`)
@@ -39,7 +39,7 @@ gh secret set CRABNEBULA_API_KEY --body "cn_kdVPgOAr-vWn7oc4oD82rlNMF3QOifrlMKtY
 
 The app checks these endpoints in order:
 
-1. **GitHub Releases:** `https://github.com/hugetiny/haipee/releases/latest/download/latest.json`
+1. **GitHub Releases:** `https://github.com/hugetiny/haipee-app/releases/latest/download/latest.json`
 2. **CrabNebula Cloud:** `https://cdn.crabnebula.app/update/haipee/haipee/latest.json`
 
 ## Cloud Features Enabled

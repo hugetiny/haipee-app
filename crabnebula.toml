@@ -45,7 +45,7 @@ enabled = true
 enabled = true
 # Update endpoints (using GitHub releases)
 endpoints = [
-    "https://github.com/hugetiny/haipee/releases/latest/download/latest.json",
+    "https://github.com/hugetiny/haipee-app/releases/latest/download/latest.json",
     "https://cdn.crabnebula.app/update/haipee/haipee/latest.json"
 ]
 
