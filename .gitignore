@@ -31,9 +31,11 @@ ai-loop-logs/
 # Test artifacts
 test-results/
 playwright-report/
+playwright-results.json
 playwright-results.xml
 vitest-report.json
 playwright-api-report/
+tsc_errors.txt
 
 # Package manager lock files (using bun.lock)
 pnpm-lock.yaml
