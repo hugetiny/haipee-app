@@ -50,6 +50,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
+const VALID_TABS = ["models", "env", "gateway", "channels", "skills", "tools", "agents", "raw"];
+
 export function OpenClawDashboard({
   providers,
   currentProviderId,
@@ -57,12 +59,14 @@ export function OpenClawDashboard({
   isProxyRunning,
   isProxyTakeover,
   activeProviderId,
+  currentView,
   onSwitchProvider,
   onEditProvider,
   onDeleteProvider,
   onDuplicateProvider,
   onSetAsDefaultModel,
   onOpenWebsite,
+  onChangeView,
 }: {
   providers: any;
   currentProviderId: string;
@@ -70,15 +74,31 @@ export function OpenClawDashboard({
   isProxyRunning: boolean;
   isProxyTakeover: boolean;
   activeProviderId?: string;
+  currentView?: string;
   onSwitchProvider: (p: any) => void;
   onEditProvider: (p: any) => void;
   onDeleteProvider: (p: any) => void;
   onDuplicateProvider: (p: any) => void;
   onSetAsDefaultModel: (p: any) => void;
   onOpenWebsite: (url: string) => void;
+  onChangeView?: (view: string) => void;
 }) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("models");
+  const [activeTab, setActiveTabState] = useState("models");
+
+  // Sync activeTab with external currentView
+  React.useEffect(() => {
+    if (currentView && VALID_TABS.includes(currentView)) {
+      setActiveTabState(currentView);
+    }
+  }, [currentView]);
+
+  const setActiveTab = useCallback((tab: string) => {
+    setActiveTabState(tab);
+    if (onChangeView && VALID_TABS.includes(tab)) {
+      onChangeView(tab);
+    }
+  }, [onChangeView]);
   const { updateSettings, saveSettings } = useSettings();
   const { activeInstance, instanceId, allInstances } =
     useActiveOpenClawInstance();

@@ -58,7 +58,13 @@ type View =
   | "universal"
   | "sessions"
   | "workspace"
-  | "openclawDashboard";
+  | "openclawDashboard"
+  | "models"
+  | "env"
+  | "gateway"
+  | "channels"
+  | "tools"
+  | "json";
 
 interface WebDavSyncStatusUpdatedPayload {
   source?: string;
@@ -702,6 +708,14 @@ function App() {
         case "workspace":
           return <WorkspaceFilesPanel />;
         case "openclawDashboard":
+        case "models":
+        case "env":
+        case "gateway":
+        case "channels":
+        case "skills":
+        case "tools":
+        case "agents":
+        case "json":
           return (
             <OpenClawDashboard
               providers={providers}
@@ -710,6 +724,7 @@ function App() {
               isProxyRunning={isProxyRunning}
               isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
               activeProviderId={activeProviderId}
+              currentView={currentView}
               onSwitchProvider={switchProvider}
               onEditProvider={setEditingProvider}
               onDeleteProvider={(provider) =>
@@ -718,6 +733,7 @@ function App() {
               onDuplicateProvider={handleDuplicateProvider}
               onSetAsDefaultModel={setAsDefaultModel}
               onOpenWebsite={handleOpenWebsite}
+              onChangeView={(view) => setCurrentView(view as View)}
             />
           );
         default:
