@@ -66,7 +66,7 @@ interface WebDavSyncStatusUpdatedPayload {
   error?: string;
 }
 
-const STORAGE_KEY = "cc-switch-last-app";
+const STORAGE_KEY = "haipee-last-app";
 const VALID_APPS: AppId[] = [
   // "claude",
   // "codex",
@@ -83,7 +83,7 @@ const getInitialApp = (): AppId => {
   return "openclaw";
 };
 
-const VIEW_STORAGE_KEY = "cc-switch-last-view";
+const VIEW_STORAGE_KEY = "haipee-last-view";
 const VALID_VIEWS: View[] = [
   "providers",
   "settings",

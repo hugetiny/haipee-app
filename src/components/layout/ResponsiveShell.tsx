@@ -141,7 +141,7 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
           {/* App logo / branding */}
           <div className="flex items-center h-14 px-4 shrink-0">
             <span className="font-bold text-lg tracking-tight text-primary select-none">
-              OpenClaw Base
+              Haipee
             </span>
           </div>
 
@@ -219,7 +219,7 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
       const mainItem = MAIN_MENU_ITEMS.find((i) => i.id === activeMainMenu);
       const label = currentView === "settings"
         ? t("settings.title", "Settings")
-        : (mainItem?.labelFallback ?? t("app.title", "OpenClaw Base"));
+        : (mainItem?.labelFallback ?? t("app.title", "Haipee"));
 
       return (
         <header

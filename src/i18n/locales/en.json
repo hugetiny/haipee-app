@@ -509,7 +509,7 @@
     "configDirectoryDescription": "When using Claude Code or Codex in environments like WSL, you can manually specify the configuration directory to the one in WSL to keep provider data consistent with the main environment.",
     "appConfigDir": "Haipee Configuration Directory",
     "appConfigDirDescription": "Customize the storage location for Haipee configuration (point to cloud sync folder to enable config sync)",
-    "browsePlaceholderApp": "e.g., C:\\Users\\Administrator\\.cc-switch",
+    "browsePlaceholderApp": "e.g., C:\\Users\\Administrator\\.haipee",
     "claudeConfigDir": "Claude Code Configuration Directory",
     "claudeConfigDirDescription": "Override Claude configuration directory (settings.json) and keep claude.json (MCP) alongside it.",
     "codexConfigDir": "Codex Configuration Directory",
