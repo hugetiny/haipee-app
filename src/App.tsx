@@ -74,10 +74,10 @@ interface WebDavSyncStatusUpdatedPayload {
 
 const STORAGE_KEY = "haipee-last-app";
 const VALID_APPS: AppId[] = [
-  // "claude",
-  // "codex",
-  // "gemini",
-  // "opencode",
+  "claude",
+  "codex",
+  "gemini",
+  "opencode",
   "openclaw",
 ];
 
@@ -121,16 +121,17 @@ function App() {
   const [currentView, setCurrentView] = useState<View>(getInitialView);
   const [settingsDefaultTab, setSettingsDefaultTab] = useState("general");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [sessionProviderFilter, setSessionProviderFilter] = useState<string>("all");
 
   useEffect(() => {
     localStorage.setItem(VIEW_STORAGE_KEY, currentView);
   }, [currentView]);
 
   const visibleApps: VisibleApps = {
-    claude: false,
-    codex: false,
-    gemini: false,
-    opencode: false,
+    claude: true,
+    codex: true,
+    gemini: true,
+    opencode: true,
     openclaw: true,
   };
 
@@ -703,6 +704,8 @@ function App() {
                 setSettingsDefaultTab(tab);
                 setCurrentView("settings");
               }}
+              providerFilter={sessionProviderFilter as any}
+              onProviderFilterChange={(filter) => setSessionProviderFilter(filter)}
             />
           );
         case "workspace":
@@ -715,27 +718,81 @@ function App() {
         case "skills":
         case "tools":
         case "agents":
-        case "raw":
+        case "raw": {
+          // TypeScript 过度推断 activeApp 类型，使用本地变量避免错误
+          const app = activeApp;
+          // OpenClaw 使用 OpenClawDashboard（有多个子视图）
+          if (app === "openclaw") {
+            return (
+              <OpenClawDashboard
+                providers={providers}
+                currentProviderId={currentProviderId}
+                isLoadingProviders={isLoading}
+                isProxyRunning={isProxyRunning}
+                isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+                activeProviderId={activeProviderId}
+                currentView={currentView}
+                onSwitchProvider={switchProvider}
+                onEditProvider={setEditingProvider}
+                onDeleteProvider={(provider) =>
+                  setConfirmAction({ provider, action: "delete" })
+                }
+                onDuplicateProvider={handleDuplicateProvider}
+                onSetAsDefaultModel={setAsDefaultModel}
+                onOpenWebsite={handleOpenWebsite}
+                onChangeView={(view) => setCurrentView(view as View)}
+              />
+            );
+          }
+          // Claude/Codex/OpenCode/Gemini 的 Dashboard 就是 ProviderList
           return (
-            <OpenClawDashboard
-              providers={providers}
-              currentProviderId={currentProviderId}
-              isLoadingProviders={isLoading}
-              isProxyRunning={isProxyRunning}
-              isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
-              activeProviderId={activeProviderId}
-              currentView={currentView}
-              onSwitchProvider={switchProvider}
-              onEditProvider={setEditingProvider}
-              onDeleteProvider={(provider) =>
-                setConfirmAction({ provider, action: "delete" })
-              }
-              onDuplicateProvider={handleDuplicateProvider}
-              onSetAsDefaultModel={setAsDefaultModel}
-              onOpenWebsite={handleOpenWebsite}
-              onChangeView={(view) => setCurrentView(view as View)}
-            />
+            <div className="p-4 md:p-6 space-y-4">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeApp}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <ProviderList
+                    providers={providers}
+                    currentProviderId={currentProviderId}
+                    appId={activeApp}
+                    isLoading={isLoading}
+                    isProxyRunning={isProxyRunning}
+                    isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+                    activeProviderId={activeProviderId}
+                    onSwitch={switchProvider}
+                    onEdit={(provider) => setEditingProvider(provider)}
+                    onDelete={(provider) =>
+                      setConfirmAction({ provider, action: "delete" })
+                    }
+                    onRemoveFromConfig={
+                      (activeApp === "opencode" || activeApp === "openclaw")
+                        ? (provider) =>
+                          setConfirmAction({ provider, action: "remove" })
+                        : undefined
+                    }
+                    onDisableOmo={
+                      activeApp === "opencode" ? handleDisableOmo : undefined
+                    }
+                    onDisableOmoSlim={
+                      activeApp === "opencode" ? handleDisableOmoSlim : undefined
+                    }
+                    onDuplicate={handleDuplicateProvider}
+                    onConfigureUsage={setUsageProvider}
+                    onOpenWebsite={handleOpenWebsite}
+                    onOpenTerminal={
+                      activeApp === "claude" ? handleOpenTerminal : undefined
+                    }
+                    onCreate={() => setIsAddOpen(true)}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
           );
+        }
         default:
           return (
             <div className="p-4 md:p-6 space-y-4">
@@ -765,7 +822,7 @@ function App() {
                       setConfirmAction({ provider, action: "delete" })
                     }
                     onRemoveFromConfig={
-                      activeApp === "opencode" || activeApp === "openclaw"
+                      (activeApp === "opencode" || activeApp === "openclaw")
                         ? (provider) =>
                           setConfirmAction({ provider, action: "remove" })
                         : undefined

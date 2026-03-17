@@ -30,12 +30,6 @@ import type { SessionMeta } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -91,12 +85,18 @@ export function SessionManagerPage({
   appId,
   setCurrentView,
   openSettings,
+  providerFilter,
+  onProviderFilterChange,
 }: {
   appId: string;
   setCurrentView?: (view: string) => void;
   openSettings?: (tab?: string) => void;
+  providerFilter?: ProviderFilter;
+  onProviderFilterChange?: (filter: ProviderFilter) => void;
 }) {
   const { t } = useTranslation();
+  // Void the callback to avoid unused variable warning - used by parent ResponsiveShell
+  void onProviderFilterChange;
   const { data, isLoading } = useSessionsQuery();
   const sessions = Array.isArray(data) ? data : [];
   const detailRef = useRef<HTMLDivElement | null>(null);
@@ -111,9 +111,11 @@ export function SessionManagerPage({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const [search, setSearch] = useState("");
-  const [providerFilter, setProviderFilter] = useState<ProviderFilter>(
+  // Use external providerFilter if provided, otherwise internal state
+  const [internalProviderFilter, _setInternalProviderFilter] = useState<ProviderFilter>(
     appId as ProviderFilter,
   );
+  const providerFilterValue = providerFilter ?? internalProviderFilter;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState("");
 
@@ -121,7 +123,7 @@ export function SessionManagerPage({
   const sendMessageMutation = useSendMessageMutation();
   const { search: searchSessions } = useSessionSearch({
     sessions,
-    providerFilter,
+    providerFilter: providerFilterValue,
   });
 
   const filteredSessions = useMemo(() => {
@@ -321,71 +323,7 @@ export function SessionManagerPage({
                 </TooltipContent>
               </Tooltip>
 
-              <Select
-                value={providerFilter}
-                onValueChange={(value) =>
-                  setProviderFilter(value as ProviderFilter)
-                }
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SelectTrigger className="size-8 rounded-full p-0 flex items-center justify-center border-0 bg-transparent hover:bg-muted focus:ring-0 shadow-none">
-                      <ProviderIcon
-                        icon={
-                          providerFilter === "all"
-                            ? "apps"
-                            : getProviderIconName(providerFilter)
-                        }
-                        name={providerFilter}
-                        size={16}
-                      />
-                    </SelectTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {providerFilter === "all"
-                      ? t("sessionManager.providerFilterAll")
-                      : providerFilter}
-                  </TooltipContent>
-                </Tooltip>
-                <SelectContent side="bottom" align="end">
-                  <SelectItem value="all">
-                    <div className="flex items-center gap-2">
-                      <ProviderIcon icon="apps" name="all" size={14} />
-                      <span>{t("sessionManager.providerFilterAll")}</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="codex">
-                    <div className="flex items-center gap-2">
-                      <ProviderIcon icon="openai" name="codex" size={14} />
-                      <span>Codex</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="claude">
-                    <div className="flex items-center gap-2">
-                      <ProviderIcon icon="claude" name="claude" size={14} />
-                      <span>Claude Code</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="opencode">
-                    <div className="flex items-center gap-2">
-                      <ProviderIcon icon="opencode" name="opencode" size={14} />
-                      <span>OpenCode</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="openclaw">
-                    <div className="flex items-center gap-2">
-                      <ProviderIcon icon="openclaw" name="openclaw" size={14} />
-                      <span>OpenClaw</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="gemini">
-                    <div className="flex items-center gap-2">
-                      <ProviderIcon icon="gemini" name="gemini" size={14} />
-                      <span>Gemini CLI</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Provider filter removed - now in ResponsiveShell sidebar */}
             </div>
           </div>
         )}

@@ -23,6 +23,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ProviderIcon } from "@/components/ProviderIcon";
+import { useActiveOpenClawInstance } from "@/hooks/useOpenClaw";
 
 export type AppView =
   | "providers"
@@ -47,6 +49,8 @@ interface NavigationBadgeProps {
   isMac: boolean;
   className?: string;
   children: React.ReactNode;
+  sessionProviderFilter?: string;
+  onSessionProviderFilterChange?: (filter: string) => void;
 }
 
 // 底部4个主菜单
@@ -154,9 +158,36 @@ const MainMenuButton = ({ item, isActive, onClick, variant }: MainMenuButtonProp
   );
 };
 
+// Provider Filter Button Component
+interface FilterButtonProps {
+  icon: string;
+  name: string;
+  label: string;
+  isActive: boolean;
+  isSubItem?: boolean;
+  onClick: () => void;
+}
+
+const FilterButton = ({ icon, name, label, isActive, isSubItem, onClick }: FilterButtonProps) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
+      isActive
+        ? "bg-primary/10 text-primary"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted",
+      isSubItem && "pl-8"
+    )}
+  >
+    <ProviderIcon icon={icon} name={name} size={16} />
+    <span className="truncate">{label}</span>
+  </button>
+);
+
 export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
   (
-    { currentView, setCurrentView, openSettings, isMac, className, children },
+    { currentView, setCurrentView, openSettings, isMac, className, children, sessionProviderFilter, onSessionProviderFilterChange },
     ref,
   ) => {
     const { t } = useTranslation();
@@ -175,14 +206,10 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
 
     // ─── Desktop Sidebar ─────────────────────────────────────────────────────
     // 顶部Logo + 中间二级菜单 + 底部一级菜单图标
-    // 会话页面使用自己的侧边栏，这里隐藏
     const DesktopSidebar = () => {
       const subItems = SUB_MENU_ITEMS[activeMainMenu] || [];
-
-      // 会话页面有自己的侧边栏布局，不显示 ResponsiveShell 的侧边栏
-      if (currentView === "sessions") {
-        return null;
-      }
+      const isSessionsView = activeMainMenu === "sessions";
+      const { allInstances } = useActiveOpenClawInstance();
 
       return (
         <aside
@@ -215,7 +242,78 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
           {/* 二级菜单导航 */}
           <ScrollArea className="flex-1">
             <nav className="flex flex-col gap-0.5 p-2 py-3">
-              {subItems.length > 0 ? (
+              {/* Sessions 视图的 Provider Filter - 按钮列表形式 */}
+              {isSessionsView && (
+                <div className="px-1 pb-2 space-y-0.5">
+                  {/* 全部 */}
+                  <FilterButton
+                    icon="apps"
+                    name="all"
+                    label="全部"
+                    isActive={!sessionProviderFilter || sessionProviderFilter === "all"}
+                    onClick={() => onSessionProviderFilterChange?.("all")}
+                  />
+
+                  {/* Claude */}
+                  <FilterButton
+                    icon="claude"
+                    name="claude"
+                    label="Claude"
+                    isActive={sessionProviderFilter === "claude"}
+                    onClick={() => onSessionProviderFilterChange?.("claude")}
+                  />
+
+                  {/* Codex */}
+                  <FilterButton
+                    icon="openai"
+                    name="codex"
+                    label="Codex"
+                    isActive={sessionProviderFilter === "codex"}
+                    onClick={() => onSessionProviderFilterChange?.("codex")}
+                  />
+
+                  {/* OpenCode */}
+                  <FilterButton
+                    icon="opencode"
+                    name="opencode"
+                    label="OpenCode"
+                    isActive={sessionProviderFilter === "opencode"}
+                    onClick={() => onSessionProviderFilterChange?.("opencode")}
+                  />
+
+                  {/* Gemini */}
+                  <FilterButton
+                    icon="gemini"
+                    name="gemini"
+                    label="Gemini"
+                    isActive={sessionProviderFilter === "gemini"}
+                    onClick={() => onSessionProviderFilterChange?.("gemini")}
+                  />
+
+                  {/* OpenClaw - 多实例展开（始终显示，包含本地和远程实例） */}
+                  <div className="pt-1">
+                    <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+                      OpenClaw
+                    </div>
+                    <div className="space-y-0.5">
+                      {allInstances.map((inst) => (
+                        <FilterButton
+                          key={inst.id}
+                          icon="openclaw"
+                          name={inst.name}
+                          label={inst.name}
+                          isActive={sessionProviderFilter === "openclaw"}
+                          isSubItem
+                          onClick={() => onSessionProviderFilterChange?.("openclaw")}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 常规二级菜单 */}
+              {!isSessionsView && subItems.length > 0 ? (
                 subItems.map((item) => (
                   <Button
                     key={item.id}
@@ -239,11 +337,11 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
                     <span className="truncate">{item.label}</span>
                   </Button>
                 ))
-              ) : (
+              ) : !isSessionsView ? (
                 <div className="px-3 py-4 text-sm text-muted-foreground text-center">
                   无二级菜单
                 </div>
-              )}
+              ) : null}
             </nav>
           </ScrollArea>
 
