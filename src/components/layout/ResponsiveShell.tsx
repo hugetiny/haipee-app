@@ -15,6 +15,10 @@ import {
   Cpu,
   FileJson,
   List,
+  Globe,
+  ShieldAlert,
+  BarChart,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -39,7 +43,7 @@ export type AppView =
 interface NavigationBadgeProps {
   currentView: AppView;
   setCurrentView: (view: AppView) => void;
-  openSettings: () => void;
+  openSettings: (tab?: string) => void;
   isMac: boolean;
   className?: string;
   children: React.ReactNode;
@@ -90,7 +94,11 @@ const SUB_MENU_ITEMS: Record<string, { id: AppView; icon: React.ElementType; lab
     { id: "json", icon: FileJson, label: "JSON" },
   ],
   settings: [
-    { id: "settings", icon: Settings, label: "通用设置" },
+    { id: "settings-general", icon: Settings, label: "通用设置" },
+    { id: "settings-proxy", icon: Globe, label: "代理" },
+    { id: "settings-advanced", icon: ShieldAlert, label: "高级" },
+    { id: "settings-usage", icon: BarChart, label: "用量" },
+    { id: "settings-about", icon: Info, label: "关于" },
   ],
 };
 
@@ -104,7 +112,7 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
 
     // 确定当前选中的主菜单
     const activeMainMenu = useMemo(() => {
-      if (currentView === "settings") return "settings";
+      if (currentView === "settings" || currentView.startsWith("settings-")) return "settings";
       if (currentView === "sessions") return "sessions";
       if (currentView === "workspace") return "workspace";
       if (["models", "env", "gateway", "channels", "skills", "tools", "agents", "json", "providers"].includes(currentView)) {
@@ -161,7 +169,14 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
                         ? "bg-primary/10 text-primary hover:bg-primary/15"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted",
                     )}
-                    onClick={() => setCurrentView(item.id)}
+                    onClick={() => {
+                      if (item.id.startsWith("settings-")) {
+                        const tab = item.id.replace("settings-", "");
+                        openSettings(tab);
+                      } else {
+                        setCurrentView(item.id);
+                      }
+                    }}
                   >
                     <item.icon className="w-4 h-4 mr-3 shrink-0" />
                     <span className="truncate">{item.label}</span>

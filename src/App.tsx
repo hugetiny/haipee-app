@@ -693,8 +693,8 @@ function App() {
               key={activeApp}
               appId={activeApp}
               setCurrentView={(v) => setCurrentView(v as View)}
-              openSettings={() => {
-                setSettingsDefaultTab("general");
+              openSettings={(tab = "general") => {
+                setSettingsDefaultTab(tab);
                 setCurrentView("settings");
               }}
             />
@@ -800,8 +800,8 @@ function App() {
       <ResponsiveShell
         currentView={currentView}
         setCurrentView={(v) => setCurrentView(v as View)}
-        openSettings={() => {
-          setSettingsDefaultTab("general");
+        openSettings={(tab = "general") => {
+          setSettingsDefaultTab(tab);
           setCurrentView("settings");
         }}
         isMac={!isWindows() && !isLinux()}

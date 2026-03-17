@@ -94,7 +94,7 @@ export function SessionManagerPage({
 }: {
   appId: string;
   setCurrentView?: (view: string) => void;
-  openSettings?: () => void;
+  openSettings?: (tab?: string) => void;
 }) {
   const { t } = useTranslation();
   const { data, isLoading } = useSessionsQuery();
