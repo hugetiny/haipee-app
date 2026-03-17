@@ -110,9 +110,16 @@ jobs:
           cd src-tauri
           cargo tauri build --target x86_64-unknown-linux-gnu
 
+      - name: Install CrabNebula CLI
+        run: |
+          curl -fsSL https://get.crabnebula.cloud/cn.sh | sh
+          echo "$HOME/.cn/bin" >> $GITHUB_PATH
+        shell: bash
+
       - name: Upload artifacts to CrabNebula Cloud
         run: |
           set -e
+          export PATH="$HOME/.cn/bin:$PATH"
           BUNDLE_DIR="src-tauri/target/x86_64-unknown-linux-gnu/release/bundle"
 
           # Find and upload each artifact type
