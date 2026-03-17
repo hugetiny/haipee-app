@@ -213,17 +213,11 @@ export function SettingsPage({
           </div>
           <div className="hidden md:block h-px bg-border my-6" />
 
-          {/* Navigation (Tabs on Desktop, List on Mobile) */}
+          {/* Mobile Navigation List Only - Desktop uses sidebar submenu */}
           <div
-            className={cn("w-full", isDetailOpen ? "hidden md:flex" : "flex")}
+            className={cn("w-full md:hidden", isDetailOpen ? "hidden" : "flex")}
           >
-            <nav
-              className={cn(
-                "flex overflow-x-auto no-scrollbar",
-                "md:flex-row md:space-x-2 md:space-y-0 md:border-b md:pb-px",
-                "flex-col space-y-1 w-full",
-              )}
-            >
+            <nav className="flex flex-col space-y-1 w-full">
               {[
                 {
                   id: "general",
@@ -248,13 +242,13 @@ export function SettingsPage({
                   variant={activeTab === item.id ? "secondary" : "ghost"}
                   onClick={() => handleTabChange(item.id)}
                   className={cn(
-                    "justify-start md:justify-center rounded-xl md:rounded-b-none md:border-b-2 transition-all h-12 md:px-6 shrink-0",
+                    "justify-start rounded-xl transition-all h-12 shrink-0",
                     activeTab === item.id
-                      ? "bg-secondary md:bg-transparent md:border-primary text-primary"
-                      : "md:border-transparent md:hover:border-border",
+                      ? "bg-secondary text-primary"
+                      : "",
                   )}
                 >
-                  <item.icon className="w-5 h-5 mr-3 md:mr-2" />
+                  <item.icon className="w-5 h-5 mr-3" />
                   <span className="font-medium">{item.label}</span>
                 </Button>
               ))}
