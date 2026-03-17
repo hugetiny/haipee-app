@@ -114,28 +114,34 @@ jobs:
         id: bundle
         run: |
           BUNDLE_DIR="src-tauri/target/x86_64-unknown-linux-gnu/release/bundle"
-          echo "AppImage: $(ls $BUNDLE_DIR/appimage/*.AppImage 2>/dev/null | head -1)" >> $GITHUB_OUTPUT
-          echo "Deb: $(ls $BUNDLE_DIR/deb/*.deb 2>/dev/null | head -1)" >> $GITHUB_OUTPUT
-          echo "Rpm: $(ls $BUNDLE_DIR/rpm/*.rpm 2>/dev/null | head -1)" >> $GITHUB_OUTPUT
-          ls -la $BUNDLE_DIR/
+          APPIMAGE=$(ls $BUNDLE_DIR/appimage/*.AppImage 2>/dev/null | head -1)
+          DEB=$(ls $BUNDLE_DIR/deb/*.deb 2>/dev/null | head -1)
+          RPM=$(ls $BUNDLE_DIR/rpm/*.rpm 2>/dev/null | head -1)
+          echo "appimage=$APPIMAGE" >> $GITHUB_OUTPUT
+          echo "deb=$DEB" >> $GITHUB_OUTPUT
+          echo "rpm=$RPM" >> $GITHUB_OUTPUT
+          echo "Found:"
+          echo "  AppImage: $APPIMAGE"
+          echo "  DEB: $DEB"
+          echo "  RPM: $RPM"
         shell: bash
 
       - name: Upload AppImage to CrabNebula Cloud
         uses: crabnebula-dev/cloud-release@v0.2.0
         with:
-          command: release upload --file "${{ steps.bundle.outputs.AppImage }}" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
+          command: release upload --file "${{ steps.bundle.outputs.appimage }}" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
           api-key: ${{ secrets.CRABNEBULA_API_KEY }}
 
       - name: Upload DEB to CrabNebula Cloud
         uses: crabnebula-dev/cloud-release@v0.2.0
         with:
-          command: release upload --file "${{ steps.bundle.outputs.Deb }}" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
+          command: release upload --file "${{ steps.bundle.outputs.deb }}" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
           api-key: ${{ secrets.CRABNEBULA_API_KEY }}
 
       - name: Upload RPM to CrabNebula Cloud
         uses: crabnebula-dev/cloud-release@v0.2.0
         with:
-          command: release upload --file "${{ steps.bundle.outputs.Rpm }}" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
+          command: release upload --file "${{ steps.bundle.outputs.rpm }}" ${{ env.CN_APPLICATION }} ${{ needs.draft.outputs.version }}
           api-key: ${{ secrets.CRABNEBULA_API_KEY }}
 
       - name: Upload artifacts for GitHub Release
