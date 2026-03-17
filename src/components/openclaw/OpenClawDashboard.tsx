@@ -38,9 +38,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Globe, Laptop, Settings2 } from "lucide-react";
+import { Plus, Trash2, Globe, Laptop, Settings2, X } from "lucide-react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -233,8 +234,14 @@ export function OpenClawDashboard({
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
+                    <DialogHeader className="flex flex-row items-center justify-between space-y-0">
                       <DialogTitle>Manage OpenClaw Instances</DialogTitle>
+                      <DialogClose asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                          <X className="h-4 w-4" />
+                          <span className="sr-only">Close</span>
+                        </Button>
+                      </DialogClose>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                       <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
