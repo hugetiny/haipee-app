@@ -289,7 +289,8 @@ export function ProviderCard({
                   <FailoverPriorityBadge priority={failoverPriority} />
                 )}
 
-              {provider.category === "third_party" &&
+              {/* 合作伙伴标识 - 已隐藏 */}
+              {/* {provider.category === "third_party" &&
                 provider.meta?.isPartner && (
                   <span
                     className="text-yellow-500 dark:text-yellow-400"
@@ -299,7 +300,7 @@ export function ProviderCard({
                   >
                     ⭐
                   </span>
-                )}
+                )} */}
             </div>
 
             {displayUrl && (

@@ -15,7 +15,9 @@ interface ApiKeySectionProps {
     thirdParty: string;
   };
   disabled?: boolean;
+  /** @deprecated 合作伙伴标识 - 已隐藏 */
   isPartner?: boolean;
+  /** @deprecated 合作伙伴推广码 - 已隐藏 */
   partnerPromotionKey?: string;
 }
 
@@ -29,8 +31,10 @@ export function ApiKeySection({
   websiteUrl,
   placeholder,
   disabled,
-  isPartner,
-  partnerPromotionKey,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isPartner: _isPartner,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  partnerPromotionKey: _partnerPromotionKey,
 }: ApiKeySectionProps) {
   const { t } = useTranslation();
 
@@ -73,8 +77,8 @@ export function ApiKeySection({
             })}
           </a>
 
-          {/* 合作伙伴促销信息 */}
-          {isPartner && partnerPromotionKey && (
+          {/* 合作伙伴促销信息 - 已隐藏 */}
+          {/* {isPartner && partnerPromotionKey && (
             <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-2.5 border border-blue-200 dark:border-blue-800">
               <p className="text-xs leading-relaxed text-blue-700 dark:text-blue-300">
                 💡{" "}
@@ -83,7 +87,7 @@ export function ApiKeySection({
                 })}
               </p>
             </div>
-          )}
+          )} */}
         </div>
       )}
     </div>
