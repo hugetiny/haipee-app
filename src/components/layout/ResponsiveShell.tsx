@@ -174,12 +174,45 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
               )}
             </nav>
           </ScrollArea>
+
+          <Separator className="opacity-40" />
+
+          {/* 底部4个主菜单按钮 */}
+          <div className="p-2 shrink-0">
+            <div className="grid grid-cols-4 gap-1">
+              {MAIN_MENU_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-md text-xs transition-colors",
+                    (item.id === "settings" && currentView === "settings") ||
+                    (item.id !== "settings" && activeMainMenu === item.id)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  )}
+                  onClick={() => {
+                    if (item.id === "settings") {
+                      openSettings();
+                    } else {
+                      setCurrentView(item.id);
+                    }
+                  }}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="text-[10px] leading-none truncate max-w-full">
+                    {t(item.labelKey, item.labelFallback)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </aside>
       );
     };
 
     // ─── Mobile Bottom Navigation ──────────────────────────────────────────
-    // 始终显示4个主菜单按钮
+    // 只在移动端显示（桌面端按钮在左侧边栏底部）
     const MobileBottomNav = () => (
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur-sm safe-area-bottom shrink-0">
         <div className="flex items-stretch justify-around h-[56px]">
