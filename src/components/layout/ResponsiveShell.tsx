@@ -102,6 +102,58 @@ const SUB_MENU_ITEMS: Record<string, { id: AppView; icon: React.ElementType; lab
   ],
 };
 
+// 可复用的主菜单按钮组件
+type MainMenuItem = typeof MAIN_MENU_ITEMS[number];
+
+interface MainMenuButtonProps {
+  item: MainMenuItem;
+  isActive: boolean;
+  onClick: () => void;
+  variant: "desktop" | "mobile";
+}
+
+const MainMenuButton = ({ item, isActive, onClick, variant }: MainMenuButtonProps) => {
+  const { t } = useTranslation();
+
+  if (variant === "desktop") {
+    return (
+      <button
+        type="button"
+        className={cn(
+          "flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-md text-xs transition-colors",
+          isActive
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted",
+        )}
+        onClick={onClick}
+      >
+        <item.icon className="w-5 h-5" />
+        <span className="text-[10px] leading-none truncate max-w-full">
+          {t(item.labelKey, item.labelFallback)}
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={cn(
+        "flex-1 flex flex-col items-center justify-center gap-0.5 px-1 text-xs transition-colors",
+        isActive
+          ? "text-primary"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+      onClick={onClick}
+    >
+      <item.icon className="w-[22px] h-[22px]" />
+      <span className="text-xs leading-none truncate max-w-[56px]">
+        {t(item.labelKey, item.labelFallback)}
+      </span>
+    </button>
+  );
+};
+
 export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
   (
     { currentView, setCurrentView, openSettings, isMac, className, children },
@@ -196,16 +248,10 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
           <div className="p-2 shrink-0">
             <div className="grid grid-cols-4 gap-1">
               {MAIN_MENU_ITEMS.map((item) => (
-                <button
+                <MainMenuButton
                   key={item.id}
-                  type="button"
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-md text-xs transition-colors",
-                    (item.id === "settings" && currentView === "settings") ||
-                    (item.id !== "settings" && activeMainMenu === item.id)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
-                  )}
+                  item={item}
+                  isActive={activeMainMenu === item.id}
                   onClick={() => {
                     if (item.id === "settings") {
                       openSettings();
@@ -213,12 +259,8 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
                       setCurrentView(item.id);
                     }
                   }}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="text-[10px] leading-none truncate max-w-full">
-                    {t(item.labelKey, item.labelFallback)}
-                  </span>
-                </button>
+                  variant="desktop"
+                />
               ))}
             </div>
           </div>
@@ -232,16 +274,10 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur-sm safe-area-bottom shrink-0">
         <div className="flex items-stretch justify-around h-[56px]">
           {MAIN_MENU_ITEMS.map((item) => (
-            <button
+            <MainMenuButton
               key={item.id}
-              type="button"
-              className={cn(
-                "flex-1 flex flex-col items-center justify-center gap-0.5 px-1 text-xs transition-colors",
-                (item.id === "settings" && currentView === "settings") ||
-                (item.id !== "settings" && activeMainMenu === item.id)
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
+              item={item}
+              isActive={activeMainMenu === item.id}
               onClick={() => {
                 if (item.id === "settings") {
                   openSettings();
@@ -249,12 +285,8 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
                   setCurrentView(item.id);
                 }
               }}
-            >
-              <item.icon className="w-[22px] h-[22px]" />
-              <span className="text-xs leading-none truncate max-w-[56px]">
-                {t(item.labelKey, item.labelFallback)}
-              </span>
-            </button>
+              variant="mobile"
+            />
           ))}
         </div>
       </nav>

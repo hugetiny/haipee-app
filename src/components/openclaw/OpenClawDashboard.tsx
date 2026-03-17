@@ -376,84 +376,83 @@ export function OpenClawDashboard({
           <OpenClawHealthBanner warnings={healthWarnings} />
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-muted/50 p-1 mb-2">
-            <TabsTrigger
-              value="models"
-              className="flex items-center gap-2 px-4 py-2"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t("models.title", "Models")}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="env"
-              className="flex items-center gap-2 px-4 py-2"
-            >
-              <KeyRound className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t("openclaw.env.title", "Keys")}
-              </span>
-            </TabsTrigger>
-
-            {/* New Config Tabs */}
-            <TabsTrigger
-              value="gateway"
-              className="flex items-center gap-2 px-4 py-2"
-            >
-              <Globe className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t("openclaw.gateway.title", "Gateway")}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="channels"
-              className="flex items-center gap-2 px-4 py-2"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t("openclaw.channels.title", "Channels")}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="skills"
-              className="flex items-center gap-2 px-4 py-2"
-            >
-              <Code2 className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t("openclaw.skillsPlugins.title", "Skills & Plugins")}
-              </span>
-            </TabsTrigger>
-
-            {/* Advanced Tabs */}
-            <TabsTrigger
-              value="tools"
-              className="flex items-center gap-2 px-4 py-2 text-zinc-500"
-            >
-              <Shield className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t("openclaw.tools.title", "Tools")}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="agents"
-              className="flex items-center gap-2 px-4 py-2 text-zinc-500"
-            >
-              <Cpu className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t("openclaw.agents.title", "Agents")}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="raw"
-              className="flex items-center gap-2 px-4 py-2 text-zinc-500"
-            >
-              <Settings2 className="w-4 h-4" />
-              <span className="hidden sm:inline">JSON</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Mobile Only: Tab navigation - Desktop uses sidebar submenu */}
+        <div className="md:hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="bg-muted/50 p-1 mb-2">
+              <TabsTrigger
+                value="models"
+                className="flex items-center gap-2 px-4 py-2"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {t("models.title", "Models")}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="env"
+                className="flex items-center gap-2 px-4 py-2"
+              >
+                <KeyRound className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {t("openclaw.env.title", "Keys")}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="gateway"
+                className="flex items-center gap-2 px-4 py-2"
+              >
+                <Globe className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {t("openclaw.gateway.title", "Gateway")}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="channels"
+                className="flex items-center gap-2 px-4 py-2"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {t("openclaw.channels.title", "Channels")}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="skills"
+                className="flex items-center gap-2 px-4 py-2"
+              >
+                <Code2 className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {t("openclaw.skillsPlugins.title", "Skills & Plugins")}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="tools"
+                className="flex items-center gap-2 px-4 py-2 text-zinc-500"
+              >
+                <Shield className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {t("openclaw.tools.title", "Tools")}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="agents"
+                className="flex items-center gap-2 px-4 py-2 text-zinc-500"
+              >
+                <Cpu className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {t("openclaw.agents.title", "Agents")}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="raw"
+                className="flex items-center gap-2 px-4 py-2 text-zinc-500"
+              >
+                <Settings2 className="w-4 h-4" />
+                <span className="hidden sm:inline">JSON</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden relative no-scrollbar">
