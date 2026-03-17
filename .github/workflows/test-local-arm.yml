@@ -1,0 +1,39 @@
+# Local test workflow for act with ARM architecture
+# Run with: act -W .github/workflows/test-local-arm.yml --container-architecture linux/arm64
+name: Test Local ARM
+
+on:
+  workflow_dispatch:
+
+env:
+  BUN_VERSION: '1.2.0'
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  # Disable sccache for local act (no GHA cache API)
+  SCCACHE_GHA_ENABLED: 'false'
+  CN_APPLICATION: haipee/haipee
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Tauri Build Environment
+        uses: ./.github/actions/setup-tauri-build
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+          rust-target: aarch64-unknown-linux-gnu
+          enable-sccache: 'false'
+        env:
+          # Override RUSTC_WRAPPER to disable sccache locally
+          RUSTC_WRAPPER: ""
+
+      - name: Build Tauri App (Linux ARM)
+        working-directory: src-tauri
+        run: cargo tauri build --target aarch64-unknown-linux-gnu
+        env:
+          RUSTC_WRAPPER: ""
