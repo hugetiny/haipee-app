@@ -16,7 +16,7 @@ export default defineConfig({
     exclude: ["tests/e2e/**/*", "node_modules"],
     poolOptions: {
       forks: {
-        maxWorkers: 2,
+        maxWorkers: 1,
       },
     },
     coverage: {
