@@ -64,7 +64,7 @@ type View =
   | "gateway"
   | "channels"
   | "tools"
-  | "json";
+  | "raw";
 
 interface WebDavSyncStatusUpdatedPayload {
   source?: string;
@@ -715,7 +715,7 @@ function App() {
         case "skills":
         case "tools":
         case "agents":
-        case "json":
+        case "raw":
           return (
             <OpenClawDashboard
               providers={providers}

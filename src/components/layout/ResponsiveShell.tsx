@@ -37,7 +37,7 @@ export type AppView =
   | "skills"
   | "tools"
   | "agents"
-  | "json"
+  | "raw"
   | string;
 
 interface NavigationBadgeProps {
@@ -91,7 +91,7 @@ const SUB_MENU_ITEMS: Record<string, { id: AppView; icon: React.ElementType; lab
     { id: "skills", icon: Code2, label: "Skills & Plugins" },
     { id: "tools", icon: Shield, label: "工具权限" },
     { id: "agents", icon: Cpu, label: "Agents 配置" },
-    { id: "json", icon: FileJson, label: "JSON" },
+    { id: "raw", icon: FileJson, label: "JSON" },
   ],
   settings: [
     { id: "settings-general", icon: Settings, label: "通用设置" },
@@ -167,7 +167,7 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
       if (currentView === "settings" || currentView.startsWith("settings-")) return "settings";
       if (currentView === "sessions") return "sessions";
       if (currentView === "workspace") return "workspace";
-      if (["models", "env", "gateway", "channels", "skills", "tools", "agents", "json", "providers"].includes(currentView)) {
+      if (["models", "env", "gateway", "channels", "skills", "tools", "agents", "raw", "providers"].includes(currentView)) {
         return "openclawDashboard";
       }
       return "sessions";
@@ -175,8 +175,14 @@ export const ResponsiveShell = forwardRef<HTMLDivElement, NavigationBadgeProps>(
 
     // ─── Desktop Sidebar ─────────────────────────────────────────────────────
     // 顶部Logo + 中间二级菜单 + 底部一级菜单图标
+    // 会话页面使用自己的侧边栏，这里隐藏
     const DesktopSidebar = () => {
       const subItems = SUB_MENU_ITEMS[activeMainMenu] || [];
+
+      // 会话页面有自己的侧边栏布局，不显示 ResponsiveShell 的侧边栏
+      if (currentView === "sessions") {
+        return null;
+      }
 
       return (
         <aside
