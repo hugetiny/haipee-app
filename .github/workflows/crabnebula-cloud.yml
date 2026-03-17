@@ -31,14 +31,12 @@ env:
   SCCACHE_GHA_ENABLED: 'true'
   RUSTC_WRAPPER: 'sccache'
   CN_APPLICATION: haipee/haipee
-  # Force Node.js 24 for all actions to fix deprecation warnings
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -46,7 +44,7 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - name: Cache Bun dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
@@ -62,7 +60,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Extract version
         id: version
         run: |
@@ -82,7 +80,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Tauri Build Environment
         uses: ./.github/actions/setup-tauri-build
@@ -131,7 +129,7 @@ jobs:
           api-key: ${{ secrets.CRABNEBULA_API_KEY }}
 
       - name: Upload artifacts for GitHub Release
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: linux-build
           path: |
@@ -149,7 +147,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: linux-build
           path: releases
@@ -171,10 +169,10 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: linux-build
           path: releases
@@ -214,7 +212,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.tag != ''
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Publish release
         uses: crabnebula-dev/cloud-release@v0.2.0
         with:
