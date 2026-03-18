@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "Haipee",
+    "title": "CC Switch",
     "description": "All-in-One Assistant for Claude Code, Codex & Gemini CLI"
   },
   "common": {
@@ -63,8 +63,9 @@
     "extractFailed": "Extract failed: {{error}}",
     "saveFailed": "Save failed: {{error}}",
     "hideAttribution": "Hide AI Attribution",
-    "alwaysThinking": "Extended Thinking",
-    "enableTeammates": "Teammates Mode"
+    "enableTeammates": "Teammates Mode",
+    "enableToolSearch": "Enable Tool Search",
+    "effortHigh": "High Effort Thinking"
   },
   "header": {
     "viewOnGithub": "View on GitHub",
@@ -80,7 +81,8 @@
     "tabProvider": "Provider",
     "tabUniversal": "Universal",
     "noProviders": "No providers added yet",
-    "noProvidersDescription": "Import your current live config below, or manually add a new provider",
+    "noProvidersDescription": "If you already have a config, click \"Import Current Config\" — all data will be safely saved in a default provider",
+    "noProvidersDescriptionSnippet": "Settings other than API key and endpoint (e.g. plugins) will be saved to a common config snippet for sharing across providers",
     "importCurrent": "Import Current Config",
     "importCurrentDescription": "Import current live config as default provider",
     "currentlyUsing": "Currently Using",
@@ -184,7 +186,7 @@
     "deleteProvider": "Delete Provider",
     "deleteProviderMessage": "Are you sure you want to delete provider \"{{name}}\"? This action cannot be undone.",
     "removeProvider": "Remove Provider",
-    "removeProviderMessage": "Are you sure you want to remove provider \"{{name}}\" from the configuration?\n\nAfter removal, this provider will no longer be active, but the configuration data will be retained in Haipee. You can re-add it at any time.",
+    "removeProviderMessage": "Are you sure you want to remove provider \"{{name}}\" from the configuration?\n\nAfter removal, this provider will no longer be active, but the configuration data will be retained in CC Switch. You can re-add it at any time.",
     "proxy": {
       "title": "Enable Local Proxy",
       "message": "Local proxy is an advanced feature. Please make sure you understand how it works before enabling.\n\nWe recommend consulting the relevant documentation or your provider for proper configuration.",
@@ -246,7 +248,7 @@
       },
       "globalProxy": {
         "title": "Global Outbound Proxy",
-        "description": "Configure proxy for Haipee to access external APIs"
+        "description": "Configure proxy for CC Switch to access external APIs"
       },
       "data": {
         "title": "Data Management",
@@ -316,7 +318,7 @@
     "themeDark": "Dark",
     "themeSystem": "System",
     "importExport": "SQL Import/Export",
-    "importExportHint": "Import or export database SQL backups for migration or restore (import supports only backups exported by Haipee).",
+    "importExportHint": "Import or export database SQL backups for migration or restore (import supports only backups exported by CC Switch).",
     "exportConfig": "Export SQL Backup",
     "selectConfigFile": "Select SQL File",
     "noFileSelected": "No configuration file selected.",
@@ -452,7 +454,7 @@
     "windowBehavior": "Window Behavior",
     "windowBehaviorHint": "Configure window minimize and Claude plugin integration policies.",
     "launchOnStartup": "Launch on Startup",
-    "launchOnStartupDescription": "Automatically run Haipee when system starts",
+    "launchOnStartupDescription": "Automatically run CC Switch when system starts",
     "silentStartup": "Silent Startup",
     "silentStartupDescription": "Start in background mode without showing main window",
     "autoLaunchFailed": "Failed to set auto-launch",
@@ -507,9 +509,9 @@
     },
     "configDirectoryOverride": "Configuration Directory Override (Advanced)",
     "configDirectoryDescription": "When using Claude Code or Codex in environments like WSL, you can manually specify the configuration directory to the one in WSL to keep provider data consistent with the main environment.",
-    "appConfigDir": "Haipee Configuration Directory",
-    "appConfigDirDescription": "Customize the storage location for Haipee configuration (point to cloud sync folder to enable config sync)",
-    "browsePlaceholderApp": "e.g., C:\\Users\\Administrator\\.haipee",
+    "appConfigDir": "CC Switch Configuration Directory",
+    "appConfigDirDescription": "Customize the storage location for CC Switch configuration (point to cloud sync folder to enable config sync)",
+    "browsePlaceholderApp": "e.g., C:\\Users\\Administrator\\.cc-switch",
     "claudeConfigDir": "Claude Code Configuration Directory",
     "claudeConfigDirDescription": "Override Claude configuration directory (settings.json) and keep claude.json (MCP) alongside it.",
     "codexConfigDir": "Codex Configuration Directory",
@@ -555,7 +557,7 @@
     "importFailedError": "Import config failed: {{message}}",
     "exportFailedError": "Export config failed:",
     "restartRequired": "Restart Required",
-    "restartRequiredMessage": "Modifying the Haipee configuration directory requires restarting the application to take effect. Restart now?",
+    "restartRequiredMessage": "Modifying the CC Switch configuration directory requires restarting the application to take effect. Restart now?",
     "restartNow": "Restart Now",
     "restartLater": "Restart Later",
     "restartFailed": "Application restart failed, please manually close and reopen.",
@@ -589,31 +591,7 @@
       "defaultCostMultiplierRequired": "Default multiplier is required",
       "defaultCostMultiplierInvalid": "Invalid multiplier format"
     },
-    "saveFailedGeneric": "Save failed, please try again",
-    "remoteConnect": {
-      "title": "Remote Connect",
-      "description": "Connect two machines over WAN via Tailscale (both machines must install it)"
-    }
-  },
-  "remoteConnect": {
-    "noticeTitle": "⚠️ For Remote WAN Connections Only",
-    "noticeBody": "This feature is designed for connecting two machines over the internet. If you are on the same local network, use the LAN IP directly — Tailscale is not required. Both machines must install and log in to Tailscale with the same account.",
-    "step1Title": "Install & log in to Tailscale on both machines",
-    "step1Desc": "Download the Tailscale client, install it, and sign in with the same account on both machines.",
-    "step1Btn": "Open Tailscale Download Page",
-    "step2Title": "Enter the remote machine's Tailscale IP",
-    "step2Desc": "Find the IP address in the Tailscale client (it looks like 100.x.x.x) on the remote machine.",
-    "step3Title": "Verify connection and auto-configure",
-    "step3Desc": "Click Verify — if successful, OpenClaw's Tailscale gateway integration will be enabled automatically.",
-    "verifyBtn": "Verify Connection",
-    "verifying": "Verifying...",
-    "successMsg": "Connected! OpenClaw auto-configured",
-    "configApplied": "OpenClaw Tailscale integration enabled",
-    "configFailed": "Connection OK, but failed to write OpenClaw config — please enable Tailscale manually in Gateway settings",
-    "errorEmptyIp": "Please enter the remote Tailscale IP",
-    "errorInvalidIp": "Invalid IP format — Tailscale IPs start with 100. (e.g. 100.x.x.x)",
-    "errorUnreachable": "Cannot connect. Check: ① Both machines are signed into the same Tailscale account ② Remote OpenClaw is running",
-    "errorHint": "Tip: Open the Tailscale client on both machines and confirm they appear in the same network (tailnet)."
+    "saveFailedGeneric": "Save failed, please try again"
   },
   "apps": {
     "claude": "Claude",
@@ -718,21 +696,25 @@
     "officialHint": "💡 Official provider uses browser login, no API Key needed",
     "getApiKey": "Get API Key",
     "partnerPromotion": {
-      "packycode": "PackyCode is an official partner of Haipee. Register using this link and enter \"haipee\" promo code during recharge to get 10% off",
+      "packycode": "PackyCode is an official partner of CC Switch. Register using this link and enter \"cc-switch\" promo code during recharge to get 10% off",
       "minimax_cn": "MiniMax Coding Plan Special Offer, Starter from ¥9.9",
       "minimax_en": "MiniMax Coding Plan Black Friday, Starter is now $2/mo (80% OFF!)",
       "dmxapi": "Claude Code exclusive model 66% OFF now!",
-      "cubence": "Cubence is an official partner of Haipee. Register using this link and enter \"CCSWITCH\" promo code during recharge to get 10% off every top-up",
-      "aigocode": "AIGoCode is an official partner of Haipee. Register using this link and get 10% bonus credit on your first top-up!",
-      "rightcode": "RightCode is an official partner of Haipee. Register using this link and get 5% bonus credit on every top-up!",
-      "aicodemirror": "AICodeMirror is an official partner of Haipee. Register using this link to get 20% off!",
-      "aicoding": "AI Coding offers an exclusive discount for Haipee users — 10% off your first top-up!",
-      "crazyrouter": "CrazyRouter offers an exclusive bonus for Haipee users — 30% extra credit on your first top-up!",
-      "sssaicode": "SSAI Code offers an exclusive bonus for Haipee users — $10 extra credit on every top-up!",
-      "siliconflow": "SiliconFlow is an official partner of Haipee",
-      "ucloud": "UCloud offers an exclusive bonus for Haipee users — register via this link to get ¥5 platform trial credit!",
-      "micu": "Micu is an official partner of Haipee",
-      "x-code": "XCodeAPI offers a special bonus for Haipee users — register via this link and get 10% extra credit on your first order (contact admin to claim)"
+      "cubence": "Cubence is an official partner of CC Switch. Register using this link and enter \"CCSWITCH\" promo code during recharge to get 10% off every top-up",
+      "aigocode": "AIGoCode is an official partner of CC Switch. Register using this link and get 10% bonus credit on your first top-up!",
+      "rightcode": "RightCode is an official partner of CC Switch. Register using this link and get 5% bonus credit on every top-up!",
+      "aicodemirror": "AICodeMirror is an official partner of CC Switch. Register using this link to get 20% off!",
+      "aicoding": "AI Coding offers an exclusive discount for CC Switch users — 10% off your first top-up!",
+      "crazyrouter": "CrazyRouter offers an exclusive bonus for CC Switch users — 30% extra credit on your first top-up!",
+      "sssaicode": "SSAI Code offers an exclusive bonus for CC Switch users — $10 extra credit on every top-up!",
+      "siliconflow": "SiliconFlow is an official partner of CC Switch",
+      "ucloud": "Compshare offers an exclusive bonus for CC Switch users — register via this link to get ¥5 platform trial credit!",
+      "micu": "Micu is an official partner of CC Switch",
+      "x-code": "XCodeAPI offers a special bonus for CC Switch users — register via this link and get 10% extra credit on your first order (contact admin to claim)",
+      "ctok": "Join the CTok community on the official website and subscribe to a plan."
+    },
+    "presets": {
+      "ucloud": "Compshare"
     },
     "parameterConfig": "Parameter Config - {{name}} *",
     "mainModel": "Main Model (optional)",
@@ -775,10 +757,44 @@
     "smallModelPlaceholder": "",
     "haikuModelPlaceholder": "",
     "modelHelper": "Optional: Specify default Claude model to use, leave blank to use system default.",
+    "modelMappingLabel": "Model Mapping",
+    "modelMappingHint": "Usually not needed if the provider natively serves Claude models. Only configure when you need to map requests to different model names.",
+    "advancedOptionsToggle": "Advanced Options",
+    "advancedOptionsHint": "Includes API format, auth field, and model mapping. Defaults work for most use cases.",
     "categoryOfficial": "Official",
     "categoryCnOfficial": "Opensource Official",
     "categoryAggregation": "Aggregation",
     "categoryThirdParty": "Third Party"
+  },
+  "copilot": {
+    "authSection": "GitHub Copilot Authentication",
+    "authStatus": "Authentication Status",
+    "authenticated": "Authenticated as {{username}}",
+    "notAuthenticated": "Not authenticated",
+    "loginWithGitHub": "Login with GitHub",
+    "loginRequired": "Please login to GitHub Copilot first",
+    "waitingForAuth": "Waiting for authorization...",
+    "enterCode": "Please enter the code in your browser:",
+    "logout": "Logout",
+    "authSuccess": "GitHub Copilot authentication successful",
+    "authFailed": "Authentication failed: {{error}}",
+    "authTimeout": "Authentication timed out, please try again",
+    "tokenExpired": "Token expired, please re-authenticate",
+    "accountCount": "{{count}} account(s)",
+    "selectAccount": "Select Account",
+    "selectAccountPlaceholder": "Select a GitHub account",
+    "useDefaultAccount": "Use default account",
+    "loggedInAccounts": "Logged in accounts",
+    "defaultAccount": "Default",
+    "selected": "Selected",
+    "removeAccount": "Remove account",
+    "setAsDefault": "Set as default",
+    "addAnotherAccount": "Add another account",
+    "logoutAll": "Logout all accounts",
+    "retry": "Retry",
+    "copyCode": "Copy code",
+    "migrationFailed": "Legacy auth migration failed: {{error}}",
+    "loadModelsFailed": "Failed to load Copilot models"
   },
   "endpointTest": {
     "title": "API Endpoint Management",
@@ -850,7 +866,10 @@
     "saveFailed": "Save failed: {{error}}",
     "modelNameHint": "Specify the model to use, will be auto-updated in config.toml",
     "modelName": "Model Name",
-    "modelNamePlaceholder": "e.g., gpt-5-codex"
+    "modelNamePlaceholder": "e.g., gpt-5-codex",
+    "contextWindow1M": "1M Context Window",
+    "autoCompactLimit": "Auto Compact Limit",
+    "autoCompactLimitHint": "Auto-compacts history when context reaches this token limit"
   },
   "geminiConfig": {
     "envFile": "Environment Variables (.env)",
@@ -901,6 +920,10 @@
     "extraOptionValuePlaceholder": "600000",
     "noExtraOptions": "No extra options configured",
     "noModelOptions": "Model options, click + to add",
+    "modelExtraFields": "Model Properties",
+    "noModelExtraFields": "Model properties (variants, cost, etc.), click + to add",
+    "modelExtraFieldKeyPlaceholder": "variants",
+    "sdkOptions": "SDK Options",
     "modelOptionKeyPlaceholder": "provider",
     "modelOptionValuePlaceholder": "{\"order\": [\"baseten\"]}"
   },
@@ -1028,6 +1051,10 @@
     "templateCustom": "Custom",
     "templateGeneral": "General",
     "templateNewAPI": "NewAPI",
+    "templateCopilot": "GitHub Copilot",
+    "copilotAutoAuth": "Auto OAuth authentication, no manual credentials needed",
+    "resetDate": "Reset date",
+    "premiumRequests": "Premium Requests",
     "credentialsConfig": "Credentials",
     "credentialsHint": "Leave empty to use provider config",
     "optional": "optional",
@@ -1114,7 +1141,7 @@
       "deleteConfirm": "Are you sure you want to delete server \"{{id}}\"? This action cannot be undone.",
       "noServers": "No servers yet",
       "enabledApps": "Enabled Apps",
-      "noImportFound": "No MCP servers to import found. All servers are already managed by Haipee.",
+      "noImportFound": "No MCP servers to import found. All servers are already managed by CC Switch.",
       "importSuccess": "Successfully imported {{count}} MCP servers",
       "apps": {
         "claude": "Claude",
@@ -1569,15 +1596,36 @@
     "noInstalledDescription": "Discover and install skills from repositories, or import existing skills",
     "discover": "Discover Skills",
     "import": "Import Existing",
-    "importDescription": "Select skills to import into Haipee unified management",
+    "importDescription": "Select skills to import into CC Switch unified management",
     "importSuccess": "Successfully imported {{count}} skills",
     "importSelected": "Import Selected ({{count}})",
-    "noUnmanagedFound": "No skills to import found. All skills are already managed by Haipee.",
+    "noUnmanagedFound": "No skills to import found. All skills are already managed by CC Switch.",
     "foundIn": "Found in",
     "local": "Local",
-    "uninstallConfirm": "Are you sure you want to uninstall \"{{name}}\"? This will remove the skill from all apps.",
+    "uninstallConfirm": "Are you sure you want to uninstall \"{{name}}\"? This will remove the skill from all apps and create a local backup first.",
     "uninstallInMainPanel": "Please uninstall skills from the main panel",
     "notFound": "Skill not found",
+    "backup": {
+      "location": "Backup location: {{path}}"
+    },
+    "restoreFromBackup": {
+      "button": "Restore Backup",
+      "title": "Restore From Backup",
+      "description": "Choose a Skills backup to restore its files locally and add it back to the current list.",
+      "empty": "No Skills backups available to restore",
+      "createdAt": "Backed up at",
+      "path": "Backup path",
+      "restore": "Restore",
+      "restoring": "Restoring...",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleteSuccess": "Deleted backup for {{name}}",
+      "deleteFailed": "Failed to delete skill backup",
+      "deleteConfirmTitle": "Delete Backup",
+      "deleteConfirmMessage": "Are you sure you want to delete the backup for \"{{name}}\"? This action cannot be undone.",
+      "success": "Skill {{name}} restored from backup",
+      "failed": "Failed to restore from backup"
+    },
     "apps": {
       "claude": "Claude",
       "codex": "Codex",
@@ -1595,7 +1643,7 @@
   },
   "deeplink": {
     "confirmImport": "Confirm Import Provider",
-    "confirmImportDescription": "The following configuration will be imported from deep link into Haipee",
+    "confirmImportDescription": "The following configuration will be imported from deep link into CC Switch",
     "importPrompt": "Import Prompt",
     "importPromptDescription": "Please confirm whether to import this system prompt",
     "importMcp": "Import MCP Servers",
@@ -2188,89 +2236,6 @@
       "emptyHint": "Add models to the catalog to configure aliases"
     },
     "suggestedDefaults": "Apply Suggested Defaults",
-    "suggestedDefaultsHint": "Use this preset's recommended default model configuration",
-    "gateway": {
-      "title": "Gateway Settings",
-      "description": "Configure OpenClaw's network gateway, HTTP endpoints, auth mode, and Tailscale integration.",
-      "port": "Port",
-      "portHint": "Port OpenClaw listens on (e.g., 8000).",
-      "bindMode": "Bind Mode",
-      "bindModeHint": "Network interface to bind to.",
-      "bindModeOptions": {
-        "local": "Local Only (localhost)",
-        "remote": "Remote (0.0.0.0)"
-      },
-      "customIp": "Custom IP",
-      "customIpHint": "Leave blank to use default IP for the selected bind mode.",
-      "enableHttpChat": "HTTP Chat Completions",
-      "enableHttpChatHint": "Enable standard OpenAI-compatible API endpoint (/v1/chat/completions).",
-      "authMode": "Authentication Mode",
-      "authModeHint": "Set how the gateway authenticates incoming requests.",
-      "authModeOptions": {
-        "none": "None (Open)",
-        "token": "Token (Bearer)"
-      },
-      "token": "Security Token",
-      "tokenHint": "The token required for Bearer authentication.",
-      "tailscale": "Tailscale Integration",
-      "tailscaleHint": "Expose OpenClaw via Tailscale subnet routing.",
-      "tsMode": "Tailscale Mode",
-      "tsModeOptions": {
-        "disabled": "Disabled",
-        "ephemeral": "Ephemeral (Temporary)",
-        "stateful": "Stateful (Persistent)"
-      },
-      "tsResetOnExitHint": "Clear Tailscale state when OpenClaw stops. (Only applies to stateful mode)",
-      "tsAuthKey": "Tailscale Auth Key",
-      "tsAuthKeyHint": "Optional: Supply an auth key. Typically not required if Tailscale is already logged in on the host."
-    },
-    "channels": {
-      "title": "Channels Settings",
-      "description": "Configure third-party platform connectors like Feishu, DingTalk, and MoLiLi.",
-      "enabled": "Enable Channel",
-      "dingtalk": {
-        "title": "DingTalk",
-        "clientId": "Client ID (AppKey)",
-        "clientSecret": "Client Secret (AppSecret)",
-        "webhookSecret": "Webhook Secret (Optional)"
-      },
-      "feishu": {
-        "title": "Feishu",
-        "appId": "App ID",
-        "appSecret": "App Secret",
-        "verificationToken": "Verification Token",
-        "encryptKey": "Encrypt Key (Optional)"
-      },
-      "molili": {
-        "title": "MoLiLi",
-        "apiKey": "API Key",
-        "endpoint": "Endpoint",
-        "endpointHint": "Custom API Endpoint for MoLiLi."
-      },
-      "common": {
-        "autoApprovePolicy": "Auto Approve Policy",
-        "autoApprovePolicyHint": "Conditions under which the bot auto-approves incoming requests."
-      }
-    },
-    "skillsPlugins": {
-      "title": "Skills & Plugins",
-      "description": "Configure OpenClaw Skills (built-in) and Plugins (extensions).",
-      "skills": {
-        "title": "Skills Settings",
-        "installEnabled": "Enable Built-in Skills Installation",
-        "installEnabledHint": "Allow OpenClaw to automatically manage and install built-in node/python skills.",
-        "installDir": "Installation Directory",
-        "installDirHint": "Where downloaded skills should be stored.",
-        "codeExecEnabled": "Enable Code Executor",
-        "codeExecEnabledHint": "Allow skills to securely run containerized code."
-      },
-      "plugins": {
-        "title": "Plugins",
-        "enabled": "Enable Plugin Subsystem",
-        "enabledHint": "Enable the dynamic plugin loading system.",
-        "directories": "Plugin Directories",
-        "directoriesHint": "List of absolute paths to scan for plugins (JSON array of strings)."
-      }
-    }
+    "suggestedDefaultsHint": "Use this preset's recommended default model configuration"
   }
 }

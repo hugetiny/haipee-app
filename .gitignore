@@ -5,9 +5,9 @@ release/
 *.log
 .env
 .env.local
-.secrets
 *.tsbuildinfo
 .npmrc
+CLAUDE.md
 # AGENTS.md
 GEMINI.md
 /.claude
@@ -25,6 +25,10 @@ flatpak-build/
 flatpak-repo/
 .worktrees/
 .spec-workflow/
+copilot-api
+.history
+CODEBUDDY.md
+.github
 
 # AI Development Loop logs
 ai-loop-logs/
@@ -37,11 +41,6 @@ playwright-results.xml
 vitest-report.json
 playwright-api-report/
 tsc_errors.txt
-
-# Package manager lock files (using bun.lock)
-pnpm-lock.yaml
-package-lock.json
-yarn.lock
 
 # Root-level screenshots (keep assets/screenshots/ for app)
 /*.png

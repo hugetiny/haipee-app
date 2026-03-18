@@ -1,13 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Haipee",
-  "version": "3.12.0",
+  "productName": "CC Switch",
+  "version": "3.12.3",
   "identifier": "com.ccswitch.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "bun run dev:renderer",
-    "beforeBuildCommand": "bun run build:renderer"
+    "beforeDevCommand": "pnpm run dev:renderer",
+    "beforeBuildCommand": "pnpm run build:renderer"
   },
   "app": {
     "windows": [
@@ -15,10 +15,10 @@
         "label": "main",
         "title": "",
         "titleBarStyle": "Overlay",
-        "width": 1024,
-        "height": 768,
-        "minWidth": 375,
-        "minHeight": 667,
+        "width": 1000,
+        "height": 650,
+        "minWidth": 900,
+        "minHeight": 600,
         "visible": false,
         "resizable": true,
         "fullscreen": false,
@@ -26,7 +26,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost https: http:",
+      "csp": "default-src 'self'; img-src 'self' data: https: http:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost https: http:",
       "assetProtocol": {
         "enable": true,
         "scope": []
@@ -36,7 +36,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -50,22 +50,19 @@
       }
     },
     "macOS": {
-      "minimumSystemVersion": "10.15"
+      "minimumSystemVersion": "12.0"
     }
   },
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": [
-          "ccswitch"
-        ]
+        "schemes": ["ccswitch"]
       }
     },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM4MDI4QzlBNTczOTI4RTMKUldUaktEbFhtb3dDeUM5US9kT0FmdGR5Ti9vQzcwa2dTMlpibDVDUmQ2M0VGTzVOWnd0SGpFVlEK",
       "endpoints": [
-        "https://github.com/hugetiny/haipee-app/releases/latest/download/latest.json",
-        "https://cdn.crabnebula.app/update/haipee/haipee/latest.json"
+        "https://github.com/farion1231/cc-switch/releases/latest/download/latest.json"
       ]
     }
   }
