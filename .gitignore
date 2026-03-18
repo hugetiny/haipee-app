@@ -42,3 +42,11 @@ tsc_errors.txt
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+
+# Root-level screenshots (keep assets/screenshots/ for app)
+/*.png
+/*.jpg
+/*.jpeg
+
+# Docs with sensitive info
+docs/

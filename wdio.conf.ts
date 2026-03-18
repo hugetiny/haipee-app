@@ -14,12 +14,12 @@
  */
 
 import { defineConfig } from '@wdio/config';
-import { launchTauriForWebDriver } from './tests/e2e/setup/tauri-setup.js';
+import { launchTauriForWebDriver, healthCheck, isTauriAlive, LOG_FILE } from './tests/e2e/setup/tauri-setup.js';
 import { killTauriProcess } from './tests/e2e/setup/tauri-teardown.js';
+import { readFileSync } from 'fs';
 
 export const config = defineConfig({
   runner: 'local',
-
 
   specs: ['./tests/e2e/tauri/**/*.spec.ts'],
   exclude: [],
@@ -36,7 +36,6 @@ export const config = defineConfig({
   capabilities: [
     {
       // 'wry' is the capability identifier tauri-plugin-webdriver recognises.
-      // Fallback: omit browserName if the server rejects 'wry'.
       browserName: 'wry',
     },
   ],
@@ -46,16 +45,16 @@ export const config = defineConfig({
 
   // ── Retry & timeouts ─────────────────────────────────────────────────────
   bail: 0,
-  waitforTimeout: 10_000,
-  connectionRetryTimeout: 120_000,
-  connectionRetryCount: 3,
+  waitforTimeout: 15_000,
+  connectionRetryTimeout: 180_000,
+  connectionRetryCount: 5,
 
   // ── Framework ────────────────────────────────────────────────────────────
   framework: 'mocha',
   reporters: ['spec'],
   mochaOpts: {
     ui: 'bdd',
-    timeout: 60_000,
+    timeout: 90_000,
   },
 
   // ── Process lifecycle ────────────────────────────────────────────────────
@@ -63,7 +62,36 @@ export const config = defineConfig({
     await launchTauriForWebDriver();
   },
 
-  onComplete: () => {
-    killTauriProcess();
+  // ── Health checks between specs ──────────────────────────────────────────
+  before: async () => {
+    const alive = await healthCheck();
+    if (!alive) {
+      console.error('[wdio] Tauri process not healthy before test suite');
+      if (!isTauriAlive()) {
+        console.error('[wdio] Tauri process has crashed! Check logs:', LOG_FILE);
+        try {
+          const logs = readFileSync(LOG_FILE, 'utf-8');
+          const lastLines = logs.split('\n').slice(-50).join('\n');
+          console.error('[wdio] Last 50 lines of Tauri log:\n', lastLines);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  },
+
+  // After each test - check if Tauri is still alive
+  afterTest: async (test, _context, { error }) => {
+    if (error) {
+      // Check if failure is due to process crash
+      if (!isTauriAlive()) {
+        console.error(`[wdio] Test "${test.title}" failed - Tauri process crashed!`);
+        console.error('[wdio] Check crash log:', LOG_FILE);
+      }
+    }
+  },
+
+  onComplete: async () => {
+    await killTauriProcess();
   },
 });

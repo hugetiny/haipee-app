@@ -9,6 +9,7 @@ mod config;
 mod database;
 mod deeplink;
 mod error;
+mod e2e_mode;
 mod gemini_config;
 mod gemini_mcp;
 mod init_status;
@@ -326,6 +327,8 @@ pub fn run() {
                 log::info!("检测到旧版配置文件，验证配置文件...");
 
                 // 循环：支持用户重试加载配置文件
+                let e2e = e2e_mode::is_enabled();
+                let mut e2e_attempt: u8 = 0;
                 loop {
                     match crate::app_config::MultiAppConfig::load() {
                         Ok(config) => {
@@ -334,6 +337,12 @@ pub fn run() {
                         }
                         Err(e) => {
                             log::error!("加载旧配置文件失败: {e}");
+                            if e2e {
+                                if !e2e_mode::handle_config_error(&mut e2e_attempt) {
+                                    break None; // Skip migration
+                                }
+                                continue;
+                            }
                             // 弹出系统对话框让用户选择
                             if !show_migration_error_dialog(app.handle(), &e.to_string()) {
                                 // 用户选择退出（此时数据库还没创建，下次启动可以重试）
@@ -354,11 +363,19 @@ pub fn run() {
             // 说明：从 v3.8.* 升级的用户通常会走到这里的 SQLite schema 迁移，
             // 若迁移失败（数据库损坏/权限不足/user_version 过新等），需要给用户明确提示，
             // 否则表现可能只是“应用打不开/闪退”。
+            let e2e = e2e_mode::is_enabled();
+            let mut db_e2e_attempt: u8 = 0;
             let db = loop {
                 match crate::database::Database::init() {
                     Ok(db) => break Arc::new(db),
                     Err(e) => {
                         log::error!("Failed to init database: {e}");
+
+                        if e2e {
+                            if e2e_mode::handle_db_error(&mut db_e2e_attempt, &db_path) {
+                                continue;
+                            }
+                        }
 
                         if !show_database_init_error_dialog(app.handle(), &db_path, &e.to_string())
                         {
@@ -1103,6 +1120,9 @@ pub fn run() {
             commands::delete_daily_memory_file,
             commands::search_daily_memory_files,
             commands::open_workspace_directory,
+            // E2E testing commands
+            commands::e2e::e2e_get_app_info,
+            commands::e2e::e2e_ping,
         ]);
 
     let app = builder

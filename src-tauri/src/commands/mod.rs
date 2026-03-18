@@ -3,6 +3,7 @@
 mod config;
 mod deeplink;
 mod env;
+pub(crate) mod e2e;
 mod failover;
 mod global_proxy;
 mod import_export;

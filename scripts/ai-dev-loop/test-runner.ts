@@ -166,24 +166,71 @@ export async function runSingleTest(testPath: string, timeout: number = 120000):
 
 async function runTauriE2ELayer(config: TestLayerConfig): Promise<TestLayerResult> {
   const startTime = Date.now();
+
+  // Import process manager for crash detection
+  const { getProcessManager } = await import('./tauri-process-manager.ts');
+  const pm = getProcessManager();
+
+  // Check if process is alive before running tests
+  const wasAlive = pm.isAlive();
+  if (!wasAlive) {
+    log('warn', 'Tauri process not alive, WDIO will start it via onPrepare hook');
+  }
+
   const cmd = 'bunx';
   const args = ['wdio', 'run', 'wdio.conf.ts'];
 
   log('info', `Executing: ${cmd} ${args.join(' ')}`);
   const { stdout, exitCode } = await executeCommand(cmd, args, config.timeout);
 
+  // Check if process crashed during tests
+  const isAliveNow = pm.isAlive();
+  if (wasAlive && !isAliveNow) {
+    log('error', 'Tauri process crashed during E2E tests!');
+
+    // Capture crash info
+    const crashLog = pm.getCrashLog();
+    if (crashLog) {
+      log('info', 'Crash log captured', { crashLog: crashLog.slice(-500) });
+    }
+
+    const binaryLog = pm.getBinaryLog();
+    if (binaryLog) {
+      log('info', 'Binary log (last 500 chars)', { log: binaryLog.slice(-500) });
+    }
+  }
+
   // WebdriverIO spec-reporter output: "X passing", "X failing", "X pending"
   const passedMatch = stdout.match(/(\d+)\s+passing/);
   const failedMatch = stdout.match(/(\d+)\s+failing/);
   const skippedMatch = stdout.match(/(\d+)\s+pending/);
 
-  const passed = parseInt(passedMatch?.[1] || '0', 10);
-  const failed = parseInt(failedMatch?.[1] || '0', 10);
+  let passed = parseInt(passedMatch?.[1] || '0', 10);
+  let failed = parseInt(failedMatch?.[1] || '0', 10);
   const skipped = parseInt(skippedMatch?.[1] || '0', 10);
 
-  const result: TestLayerResult = { passed, failed, skipped, duration: Date.now() - startTime, tests: [], rawOutput: stdout };
+  // If process crashed, mark remaining tests as failed
+  if (!isAliveNow && (passed + failed + skipped === 0)) {
+    log('warn', 'No test results found, process may have crashed before tests ran');
+    failed = 1; // Count as at least one failure for crash detection
+  }
+
+  const result: TestLayerResult = {
+    passed,
+    failed,
+    skipped,
+    duration: Date.now() - startTime,
+    tests: [],
+    rawOutput: stdout + (isAliveNow ? '' : '\n[PROCESS CRASH DETECTED]\n'),
+  };
+
   const total = passed + failed + skipped;
   log('info', `tauri-e2e results: ${passed}/${total} passed (${failed} failed) in ${result.duration}ms`);
+
+  // Reset restart count on successful iteration
+  if (failed === 0) {
+    pm.resetRestartCount();
+  }
 
   return result;
 }
