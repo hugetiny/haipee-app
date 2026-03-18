@@ -12,5 +12,5 @@ fn main() {
         }
     }
 
-    haipee_lib::run();
+    cc_switch_lib::run();
 }

@@ -18,6 +18,7 @@ doctest = false
 [features]
 default = []
 test-hooks = []
+webdriver = ["tauri-plugin-webdriver"]
 
 [build-dependencies]
 tauri-build = { version = "2.4.0", features = [] }
@@ -35,6 +36,7 @@ tauri-plugin-updater = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-store = "2"
 tauri-plugin-deep-link = "2"
+tauri-plugin-webdriver = { version = "0.2", optional = true }
 dirs = "5.0"
 toml = "0.8"
 toml_edit = "0.22"

@@ -553,10 +553,7 @@ function App() {
         });
       } else if (activeApp === "openclaw") {
         await queryClient.invalidateQueries({
-          queryKey: openclawKeys.liveProviderIds,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: openclawKeys.health,
+          queryKey: openclawKeys.all,
         });
       }
       toast.success(
