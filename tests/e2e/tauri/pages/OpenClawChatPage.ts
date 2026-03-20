@@ -12,7 +12,6 @@ export class OpenClawChatPage extends TauriBasePage {
   private readonly stopButton = 'button[aria-label*="停止"], button[aria-label*="Stop"]';
   private readonly messageContainer = '[data-testid="message"], .message, [class*="message"]';
   private readonly newSessionButton = 'button[aria-label*="新建"], button[aria-label*="New"]';
-  private readonly responseIndicator = '[data-testid="response"], .ai-response, [class*="response"]';
 
   /**
    * Navigate to OpenClaw chat
@@ -70,10 +69,11 @@ export class OpenClawChatPage extends TauriBasePage {
    */
   async getLastMessage(): Promise<string> {
     const messages = await $$(this.messageContainer);
-    if (messages.length === 0) {
+    const length = await messages.length;
+    if (length === 0) {
       throw new Error('No messages found');
     }
-    const lastMessage = messages[messages.length - 1];
+    const lastMessage = messages[length - 1];
     return lastMessage.getText();
   }
 
@@ -104,7 +104,7 @@ export class OpenClawChatPage extends TauriBasePage {
    */
   async isReadyForInput(): Promise<boolean> {
     const input = await $(this.chatInput);
-    return input.isExisting() && input.isDisplayed();
+    return (await input.isExisting()) && (await input.isDisplayed());
   }
 
   /**
