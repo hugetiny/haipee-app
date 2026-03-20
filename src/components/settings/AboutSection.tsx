@@ -358,6 +358,19 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            <a
+              href="https://github.com/hugetiny/haipee"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                settingsApi.openExternal("https://github.com/hugetiny/haipee");
+              }}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              GitHub
+            </a>
             <Button
               type="button"
               variant="outline"
