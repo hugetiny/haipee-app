@@ -6,12 +6,12 @@ const ALL_APPS: AppId[] = ['claude', 'codex', 'gemini', 'opencode', 'openclaw'];
 
 const STORAGE_KEY = 'haipee-selected-agent';
 
-type AgentStatus =
+export type AgentStatus =
   | { type: 'loading' }
   | { type: 'success'; exists: boolean }
   | { type: 'error'; message: string };
 
-interface AgentStatusStore {
+export interface AgentStatusStore {
   [agentId: string]: AgentStatus;
 }
 

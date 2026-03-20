@@ -9,19 +9,22 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  ChevronsUpDown,
+  Check,
+  Circle,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ProviderIcon } from "@/components/ProviderIcon";
 import { useSidebarState } from "@/hooks/useSidebarState";
-import { useActiveOpenClawInstance } from "@/hooks/useOpenClaw";
+import { useNavigationState, type AgentStatus, type AgentStatusStore } from "@/hooks/useNavigationState";
 import type { AppId } from "@/lib/api";
 
 export type MainView =
@@ -49,7 +52,6 @@ interface MainLayoutProps {
   openSettings: (tab?: string) => void;
   isMac: boolean;
   className?: string;
-  sessionProviderFilter?: string;
   onSessionProviderFilterChange?: (filter: string) => void;
 }
 
@@ -86,121 +88,6 @@ const APP_DISPLAY_NAME: Record<AppId, string> = {
   gemini: "Gemini",
   opencode: "OpenCode",
   openclaw: "OpenClaw",
-};
-
-interface AppSwitcherButtonProps {
-  activeApp: AppId;
-  onSwitch: (app: AppId) => void;
-  variant: "desktop" | "mobile";
-  onNavigateToProviders?: () => void;
-}
-
-const AppSwitcherButton = ({ activeApp, onSwitch, variant, onNavigateToProviders }: AppSwitcherButtonProps) => {
-  const [open, setOpen] = useState(false);
-
-  const handleSwitch = (app: AppId) => {
-    onSwitch(app);
-    setOpen(false);
-    onNavigateToProviders?.();
-  };
-
-  if (variant === "desktop") {
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            title="切换应用"
-            className={cn(
-              "flex items-center justify-center py-2 px-1 rounded-md transition-colors gap-0.5",
-              open
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted",
-            )}
-          >
-            <ProviderIcon
-              icon={APP_ICON_NAME[activeApp]}
-              name={APP_DISPLAY_NAME[activeApp]}
-              size={18}
-            />
-            <ChevronsUpDown className="w-3 h-3 opacity-50" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-48 p-1" align="start">
-          <div className="flex flex-col gap-0.5">
-            {ALL_APPS.map((app) => (
-              <button
-                key={app}
-                type="button"
-                onClick={() => handleSwitch(app)}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
-                  activeApp === app
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
-                )}
-              >
-                <ProviderIcon
-                  icon={APP_ICON_NAME[app]}
-                  name={APP_DISPLAY_NAME[app]}
-                  size={18}
-                />
-                <span>{APP_DISPLAY_NAME[app]}</span>
-              </button>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
-    );
-  }
-
-  // Mobile variant
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 px-1 text-xs transition-colors",
-            open ? "text-primary" : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <ProviderIcon
-            icon={APP_ICON_NAME[activeApp]}
-            name={APP_DISPLAY_NAME[activeApp]}
-            size={22}
-          />
-          <span className="text-xs leading-none truncate max-w-[56px]">
-            {APP_DISPLAY_NAME[activeApp]}
-          </span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-1" align="start">
-        <div className="flex flex-col gap-0.5">
-          {ALL_APPS.map((app) => (
-            <button
-              key={app}
-              type="button"
-              onClick={() => handleSwitch(app)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
-                activeApp === app
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
-              )}
-            >
-              <ProviderIcon
-                icon={APP_ICON_NAME[app]}
-                name={APP_DISPLAY_NAME[app]}
-                size={18}
-              />
-              <span>{APP_DISPLAY_NAME[app]}</span>
-            </button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
 };
 
 interface MainMenuButtonProps {
@@ -251,31 +138,400 @@ const MainMenuButton = ({ item, isActive, onClick, variant }: MainMenuButtonProp
   );
 };
 
-interface FilterButtonProps {
-  icon: string;
-  name: string;
-  label: string;
+// AgentListButton Props and Component
+interface AgentListButtonProps {
+  agentId: AppId;
   isActive: boolean;
-  isSubItem?: boolean;
+  status: AgentStatus;
   onClick: () => void;
+  collapsed?: boolean;
 }
 
-const FilterButton = ({ icon, name, label, isActive, isSubItem, onClick }: FilterButtonProps) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={cn(
-      "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
-      isActive
-        ? "bg-primary/10 text-primary"
-        : "text-muted-foreground hover:text-foreground hover:bg-muted",
-      isSubItem && "pl-8"
-    )}
-  >
-    <ProviderIcon icon={icon} name={name} size={16} />
-    <span className="truncate">{label}</span>
-  </button>
-);
+const AgentListButton = ({ agentId, isActive, status, onClick, collapsed }: AgentListButtonProps) => {
+  const renderStatusIcon = () => {
+    if (status.type === 'loading') {
+      return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+    }
+    if (status.type === 'error') {
+      return (
+        <Tooltip>
+          <TooltipTrigger>
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          </TooltipTrigger>
+          <TooltipContent>{status.message}</TooltipContent>
+        </Tooltip>
+      );
+    }
+    if (status.type === 'success' && status.exists) {
+      return <Check className="h-4 w-4 text-green-500" />;
+    }
+    return <Circle className="h-4 w-4 text-gray-400" />;
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
+        isActive
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted",
+      )}
+      title={APP_DISPLAY_NAME[agentId]}
+    >
+      <ProviderIcon icon={APP_ICON_NAME[agentId]} name={APP_DISPLAY_NAME[agentId]} size={16} />
+      {!collapsed && (
+        <>
+          <span className="truncate flex-1">{APP_DISPLAY_NAME[agentId]}</span>
+          {renderStatusIcon()}
+        </>
+      )}
+    </button>
+  );
+};
+
+// Props interfaces for extracted components
+interface DesktopSidebarProps {
+  isCollapsed: boolean;
+  isMac: boolean;
+  dragBarHeight: number;
+  openSettings: () => void;
+  statusMap: AgentStatusStore;
+  activeApp: AppId;
+  onAgentClick: (agent: AppId) => void;
+  activeMainMenu: string;
+  onMainMenuClick: (item: MainMenuItem) => void;
+  onToggleCollapse: () => void;
+  onOpenMobileSidebar: () => void;
+}
+
+const DesktopSidebar = ({
+  isCollapsed,
+  isMac,
+  dragBarHeight,
+  openSettings,
+  statusMap,
+  activeApp,
+  onAgentClick,
+  activeMainMenu,
+  onMainMenuClick,
+  onToggleCollapse,
+  onOpenMobileSidebar,
+}: DesktopSidebarProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <aside
+      className={cn(
+        "hidden md:flex flex-col border-r bg-muted/20 shrink-0 h-full transition-all duration-300 relative z-10",
+        isCollapsed ? "w-16" : "w-56 lg:w-64"
+      )}
+    >
+      {/* macOS traffic-light drag area */}
+      {isMac && (
+        <div
+          style={
+            {
+              height: dragBarHeight,
+              WebkitAppRegion: "drag",
+            } as React.CSSProperties
+          }
+          className="w-full shrink-0"
+        />
+      )}
+
+      {/* Header with hamburger, title, collapse toggle, and settings */}
+      <div className="flex items-center h-14 px-2 shrink-0 gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={onOpenMobileSidebar}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        {!isCollapsed && (
+          <span className="font-bold text-lg tracking-tight text-primary select-none flex-1">
+            Haipee
+          </span>
+        )}
+        {!isCollapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={openSettings}
+            title={t("common.settings", "设置")}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleCollapse}
+          className="hidden md:flex"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      <Separator className="opacity-40" />
+
+      {/* Secondary Menu */}
+      <ScrollArea className="flex-1">
+        <nav className="flex flex-col gap-0.5 p-2 py-3">
+          {/* Agent List - always shown */}
+          <div className="px-1 pb-2 space-y-0.5">
+            {!isCollapsed && (
+              <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+                {t('nav.agents', 'Agents')}
+              </div>
+            )}
+            {ALL_APPS.map((app) => (
+              <AgentListButton
+                key={app}
+                agentId={app}
+                isActive={activeApp === app}
+                status={statusMap[app] || { type: 'loading' }}
+                onClick={() => onAgentClick(app)}
+                collapsed={isCollapsed}
+              />
+            ))}
+          </div>
+        </nav>
+      </ScrollArea>
+
+      <Separator className="opacity-40" />
+
+      {/* Bottom: Main Menu Icons (2 buttons) */}
+      <div className="p-2 shrink-0">
+        <div className="grid grid-cols-2 gap-1">
+          {MAIN_MENU_ITEMS.map((item) => (
+            <MainMenuButton
+              key={item.id}
+              item={item}
+              isActive={activeMainMenu === item.id}
+              onClick={() => onMainMenuClick(item)}
+              variant="desktop"
+            />
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+interface MobileSidebarOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+  isMac: boolean;
+  dragBarHeight: number;
+  statusMap: AgentStatusStore;
+  activeApp: AppId;
+  onAgentClick: (agent: AppId) => void;
+  activeMainMenu: string;
+  onMainMenuClick: (item: MainMenuItem) => void;
+}
+
+const MobileSidebarOverlay = ({
+  isOpen,
+  onClose,
+  isMac,
+  dragBarHeight,
+  statusMap,
+  activeApp,
+  onAgentClick,
+  activeMainMenu,
+  onMainMenuClick,
+}: MobileSidebarOverlayProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-72 bg-background border-r transform transition-transform duration-300 md:hidden flex flex-col",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Header */}
+        {isMac && (
+          <div
+            style={{
+              height: dragBarHeight,
+              WebkitAppRegion: "drag",
+            } as React.CSSProperties}
+            className="w-full shrink-0"
+          />
+        )}
+
+        <div className="flex items-center h-14 px-4 shrink-0 justify-between">
+          <span className="font-bold text-lg tracking-tight text-primary select-none">
+            Haipee
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        <Separator className="opacity-40" />
+
+        {/* Secondary Menu */}
+        <ScrollArea className="flex-1">
+          <nav className="flex flex-col gap-0.5 p-2 py-3">
+            {/* Agent List for mobile */}
+            <div className="px-1 pb-2 space-y-0.5">
+              <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+                {t('nav.agents', 'Agents')}
+              </div>
+              {ALL_APPS.map((app) => (
+                <AgentListButton
+                  key={app}
+                  agentId={app}
+                  isActive={activeApp === app}
+                  status={statusMap[app] || { type: 'loading' }}
+                  onClick={() => {
+                    onAgentClick(app);
+                    onClose();
+                  }}
+                />
+              ))}
+            </div>
+          </nav>
+        </ScrollArea>
+
+        <Separator className="opacity-40" />
+
+        {/* Main Menu - 2 columns */}
+        <div className="p-2 shrink-0">
+          <div className="grid grid-cols-2 gap-1">
+            {MAIN_MENU_ITEMS.map((item) => (
+              <MainMenuButton
+                key={item.id}
+                item={item}
+                isActive={activeMainMenu === item.id}
+                onClick={() => onMainMenuClick(item)}
+                variant="desktop"
+              />
+            ))}
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+};
+
+interface MobileBottomNavProps {
+  activeMainMenu: string;
+  onMainMenuClick: (item: MainMenuItem) => void;
+  currentView: MainView;
+  onSettingsClick: () => void;
+}
+
+const MobileBottomNav = ({
+  activeMainMenu,
+  onMainMenuClick,
+  currentView,
+  onSettingsClick,
+}: MobileBottomNavProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur-sm safe-area-bottom shrink-0">
+      <div className="flex items-stretch justify-around h-[56px]">
+        {MAIN_MENU_ITEMS.map((item) => (
+          <MainMenuButton
+            key={item.id}
+            item={item}
+            isActive={activeMainMenu === item.id}
+            onClick={() => onMainMenuClick(item)}
+            variant="mobile"
+          />
+        ))}
+        {/* Settings button replaces AppSwitcher */}
+        <button
+          type="button"
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-0.5 px-1 text-xs transition-colors",
+            currentView === "settings" ? "text-primary" : "text-muted-foreground hover:text-foreground",
+          )}
+          onClick={onSettingsClick}
+        >
+          <Settings className="w-[22px] h-[22px]" />
+          <span className="text-xs leading-none truncate max-w-[56px]">
+            {t('nav.settings', '设置')}
+          </span>
+        </button>
+      </div>
+    </nav>
+  );
+};
+
+interface MobileTopBarProps {
+  activeMainMenu: string;
+  currentView: MainView;
+  dragBarHeight: number;
+  openSettings: () => void;
+}
+
+const MobileTopBar = ({
+  activeMainMenu,
+  currentView,
+  dragBarHeight,
+  openSettings,
+}: MobileTopBarProps) => {
+  const { t } = useTranslation();
+  const mainItem = MAIN_MENU_ITEMS.find((i) => i.id === activeMainMenu);
+  const label = currentView === "settings"
+    ? t("settings.title", "Settings")
+    : (mainItem?.labelFallback ?? t("app.title", "Haipee"));
+
+  return (
+    <header
+      className="md:hidden shrink-0 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between px-4"
+      style={
+        {
+          paddingTop: `${dragBarHeight + 8}px`,
+          paddingBottom: "8px",
+          WebkitAppRegion: "drag",
+        } as React.CSSProperties
+      }
+    >
+      <h1
+        className="font-semibold text-lg leading-none tracking-tight select-none"
+        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+      >
+        {label}
+      </h1>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={openSettings}
+        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+      >
+        <Settings className="h-5 w-5" />
+      </Button>
+    </header>
+  );
+};
 
 export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   (
@@ -288,16 +544,19 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
       openSettings,
       isMac,
       className,
-      sessionProviderFilter,
       onSessionProviderFilterChange,
     },
     ref,
   ) => {
-    const { t } = useTranslation();
     const { isCollapsed, toggle } = useSidebarState();
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const DRAG_BAR_HEIGHT = isMac ? 28 : 0;
-    const { allInstances } = useActiveOpenClawInstance();
+
+    // Navigation state hook - only use for statusMap and agent selection
+    const {
+      statusMap,
+      selectAgent,
+    } = useNavigationState();
 
     // 确定当前选中的主菜单
     const activeMainMenu = useMemo(() => {
@@ -311,369 +570,15 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
       setIsMobileSidebarOpen(false);
     };
 
-    // Desktop Sidebar
-    const DesktopSidebar = () => {
-      const isSessionsView = activeMainMenu === "sessions";
-
-      return (
-        <aside
-          className={cn(
-            "hidden md:flex flex-col border-r bg-muted/20 shrink-0 h-full transition-all duration-300 relative z-10",
-            isCollapsed ? "w-16" : "w-56 lg:w-64"
-          )}
-        >
-          {/* macOS traffic-light drag area */}
-          {isMac && (
-            <div
-              style={
-                {
-                  height: DRAG_BAR_HEIGHT,
-                  WebkitAppRegion: "drag",
-                } as React.CSSProperties
-              }
-              className="w-full shrink-0"
-            />
-          )}
-
-          {/* Header with hamburger, title, collapse toggle, and settings */}
-          <div className="flex items-center h-14 px-2 shrink-0 gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            {!isCollapsed && (
-              <span className="font-bold text-lg tracking-tight text-primary select-none flex-1">
-                Haipee
-              </span>
-            )}
-            {!isCollapsed && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => openSettings()}
-                title={t("common.settings", "设置")}
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggle}
-              className="hidden md:flex"
-            >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-
-          <Separator className="opacity-40" />
-
-          {/* Secondary Menu */}
-          <ScrollArea className="flex-1">
-            <nav className="flex flex-col gap-0.5 p-2 py-3">
-              {/* Sessions Provider Filter */}
-              {isSessionsView && (
-                <div className="px-1 pb-2 space-y-0.5">
-                  <FilterButton
-                    icon="apps"
-                    name="all"
-                    label="全部"
-                    isActive={!sessionProviderFilter || sessionProviderFilter === "all"}
-                    onClick={() => onSessionProviderFilterChange?.("all")}
-                  />
-                  <FilterButton
-                    icon="claude"
-                    name="claude"
-                    label="Claude"
-                    isActive={sessionProviderFilter === "claude" || activeApp === "claude"}
-                    onClick={() => {
-                      setActiveApp("claude");
-                      onSessionProviderFilterChange?.("claude");
-                    }}
-                  />
-                  <FilterButton
-                    icon="openai"
-                    name="codex"
-                    label="Codex"
-                    isActive={sessionProviderFilter === "codex" || activeApp === "codex"}
-                    onClick={() => {
-                      setActiveApp("codex");
-                      onSessionProviderFilterChange?.("codex");
-                    }}
-                  />
-                  <FilterButton
-                    icon="opencode"
-                    name="opencode"
-                    label="OpenCode"
-                    isActive={sessionProviderFilter === "opencode" || activeApp === "opencode"}
-                    onClick={() => {
-                      setActiveApp("opencode");
-                      onSessionProviderFilterChange?.("opencode");
-                    }}
-                  />
-                  <FilterButton
-                    icon="gemini"
-                    name="gemini"
-                    label="Gemini"
-                    isActive={sessionProviderFilter === "gemini" || activeApp === "gemini"}
-                    onClick={() => {
-                      setActiveApp("gemini");
-                      onSessionProviderFilterChange?.("gemini");
-                    }}
-                  />
-
-                  {/* OpenClaw instances */}
-                  <div className="pt-1">
-                    <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
-                      OpenClaw
-                    </div>
-                    <div className="space-y-0.5">
-                      {allInstances.map((inst) => (
-                        <FilterButton
-                          key={inst.id}
-                          icon="openclaw"
-                          name={inst.name}
-                          label={inst.name}
-                          isActive={sessionProviderFilter === "openclaw" || activeApp === "openclaw"}
-                          isSubItem
-                          onClick={() => {
-                            setActiveApp("openclaw");
-                            onSessionProviderFilterChange?.("openclaw");
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </nav>
-          </ScrollArea>
-
-          <Separator className="opacity-40" />
-
-          {/* Bottom: AppSwitcher + Main Menu Icons (3 buttons) */}
-          <div className="p-2 shrink-0">
-            <div className="grid grid-cols-3 gap-1">
-              <AppSwitcherButton
-                activeApp={activeApp}
-                onSwitch={setActiveApp}
-                variant="desktop"
-                onNavigateToProviders={() => setCurrentView("providers")}
-              />
-              {MAIN_MENU_ITEMS.map((item) => (
-                <MainMenuButton
-                  key={item.id}
-                  item={item}
-                  isActive={activeMainMenu === item.id}
-                  onClick={() => handleMainMenuClick(item)}
-                  variant="desktop"
-                />
-              ))}
-            </div>
-          </div>
-        </aside>
-      );
+    const handleAgentClick = (agent: AppId) => {
+      selectAgent(agent);
+      setActiveApp(agent);
+      onSessionProviderFilterChange?.(agent);
     };
 
-    // Mobile Sidebar Overlay
-    const MobileSidebarOverlay = () => (
-      <>
-        {/* Backdrop */}
-        {isMobileSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
-            onClick={() => setIsMobileSidebarOpen(false)}
-          />
-        )}
-
-        {/* Sidebar */}
-        <aside
-          className={cn(
-            "fixed inset-y-0 left-0 z-50 w-72 bg-background border-r transform transition-transform duration-300 md:hidden flex flex-col",
-            isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          {/* Header */}
-          {isMac && (
-            <div
-              style={{
-                height: DRAG_BAR_HEIGHT,
-                WebkitAppRegion: "drag",
-              } as React.CSSProperties}
-              className="w-full shrink-0"
-            />
-          )}
-
-          <div className="flex items-center h-14 px-4 shrink-0 justify-between">
-            <span className="font-bold text-lg tracking-tight text-primary select-none">
-              Haipee
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMobileSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-
-          <Separator className="opacity-40" />
-
-          {/* Secondary Menu */}
-          <ScrollArea className="flex-1">
-            <nav className="flex flex-col gap-0.5 p-2 py-3">
-              {/* Sessions Provider Filter for mobile */}
-              {activeMainMenu === "sessions" && (
-                <div className="px-1 pb-2 space-y-0.5">
-                  <FilterButton
-                    icon="apps"
-                    name="all"
-                    label="全部"
-                    isActive={!sessionProviderFilter || sessionProviderFilter === "all"}
-                    onClick={() => onSessionProviderFilterChange?.("all")}
-                  />
-                  <FilterButton
-                    icon="claude"
-                    name="claude"
-                    label="Claude"
-                    isActive={sessionProviderFilter === "claude" || activeApp === "claude"}
-                    onClick={() => {
-                      setActiveApp("claude");
-                      onSessionProviderFilterChange?.("claude");
-                    }}
-                  />
-                  <FilterButton
-                    icon="openai"
-                    name="codex"
-                    label="Codex"
-                    isActive={sessionProviderFilter === "codex" || activeApp === "codex"}
-                    onClick={() => {
-                      setActiveApp("codex");
-                      onSessionProviderFilterChange?.("codex");
-                    }}
-                  />
-                  <FilterButton
-                    icon="opencode"
-                    name="opencode"
-                    label="OpenCode"
-                    isActive={sessionProviderFilter === "opencode" || activeApp === "opencode"}
-                    onClick={() => {
-                      setActiveApp("opencode");
-                      onSessionProviderFilterChange?.("opencode");
-                    }}
-                  />
-                  <FilterButton
-                    icon="gemini"
-                    name="gemini"
-                    label="Gemini"
-                    isActive={sessionProviderFilter === "gemini" || activeApp === "gemini"}
-                    onClick={() => {
-                      setActiveApp("gemini");
-                      onSessionProviderFilterChange?.("gemini");
-                    }}
-                  />
-                </div>
-              )}
-            </nav>
-          </ScrollArea>
-
-          <Separator className="opacity-40" />
-
-          {/* Main Menu */}
-          <div className="p-2 shrink-0">
-            <div className="grid grid-cols-3 gap-1">
-              <AppSwitcherButton
-                activeApp={activeApp}
-                onSwitch={(app) => {
-                  setActiveApp(app);
-                  setIsMobileSidebarOpen(false);
-                }}
-                variant="desktop"
-                onNavigateToProviders={() => {
-                  setCurrentView("providers");
-                  setIsMobileSidebarOpen(false);
-                }}
-              />
-              {MAIN_MENU_ITEMS.map((item) => (
-                <MainMenuButton
-                  key={item.id}
-                  item={item}
-                  isActive={activeMainMenu === item.id}
-                  onClick={() => handleMainMenuClick(item)}
-                  variant="desktop"
-                />
-              ))}
-            </div>
-          </div>
-        </aside>
-      </>
-    );
-
-    // Mobile Bottom Navigation
-    const MobileBottomNav = () => (
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur-sm safe-area-bottom shrink-0">
-        <div className="flex items-stretch justify-around h-[56px]">
-          <AppSwitcherButton
-            activeApp={activeApp}
-            onSwitch={setActiveApp}
-            variant="mobile"
-            onNavigateToProviders={() => setCurrentView("providers")}
-          />
-          {MAIN_MENU_ITEMS.map((item) => (
-            <MainMenuButton
-              key={item.id}
-              item={item}
-              isActive={activeMainMenu === item.id}
-              onClick={() => handleMainMenuClick(item)}
-              variant="mobile"
-            />
-          ))}
-        </div>
-      </nav>
-    );
-
-    // Mobile Top Bar
-    const MobileTopBar = () => {
-      const mainItem = MAIN_MENU_ITEMS.find((i) => i.id === activeMainMenu);
-      const label = currentView === "settings"
-        ? t("settings.title", "Settings")
-        : (mainItem?.labelFallback ?? t("app.title", "Haipee"));
-
-      return (
-        <header
-          className="md:hidden shrink-0 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between px-4"
-          style={
-            {
-              paddingTop: `${DRAG_BAR_HEIGHT + 8}px`,
-              paddingBottom: "8px",
-              WebkitAppRegion: "drag",
-            } as React.CSSProperties
-          }
-        >
-          <h1
-            className="font-semibold text-lg leading-none tracking-tight select-none"
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          >
-            {label}
-          </h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => openSettings()}
-            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
-        </header>
-      );
+    const handleSettingsClick = () => {
+      setCurrentView("settings");
+      setIsMobileSidebarOpen(false);
     };
 
     return (
@@ -684,19 +589,51 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           className,
         )}
       >
-        <MobileSidebarOverlay />
-        <DesktopSidebar />
+        <MobileSidebarOverlay
+          isOpen={isMobileSidebarOpen}
+          onClose={() => setIsMobileSidebarOpen(false)}
+          isMac={isMac}
+          dragBarHeight={DRAG_BAR_HEIGHT}
+          statusMap={statusMap}
+          activeApp={activeApp}
+          onAgentClick={handleAgentClick}
+          activeMainMenu={activeMainMenu}
+          onMainMenuClick={handleMainMenuClick}
+        />
+        <DesktopSidebar
+          isCollapsed={isCollapsed}
+          isMac={isMac}
+          dragBarHeight={DRAG_BAR_HEIGHT}
+          openSettings={openSettings}
+          statusMap={statusMap}
+          activeApp={activeApp}
+          onAgentClick={handleAgentClick}
+          activeMainMenu={activeMainMenu}
+          onMainMenuClick={handleMainMenuClick}
+          onToggleCollapse={toggle}
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+        />
 
         {/* Main content column */}
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-          <MobileTopBar />
+          <MobileTopBar
+            activeMainMenu={activeMainMenu}
+            currentView={currentView}
+            dragBarHeight={DRAG_BAR_HEIGHT}
+            openSettings={openSettings}
+          />
 
           {/* Scrollable content area */}
           <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative">
             {children}
           </main>
 
-          <MobileBottomNav />
+          <MobileBottomNav
+            activeMainMenu={activeMainMenu}
+            onMainMenuClick={handleMainMenuClick}
+            currentView={currentView}
+            onSettingsClick={handleSettingsClick}
+          />
           {/* Bottom nav spacer */}
           <div className="md:hidden h-[56px] shrink-0 pointer-events-none" />
         </div>
