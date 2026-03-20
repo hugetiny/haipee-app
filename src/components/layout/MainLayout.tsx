@@ -7,8 +7,6 @@ import {
   Settings2,
   Menu,
   X,
-  ChevronLeft,
-  ChevronRight,
   Check,
   Circle,
   AlertTriangle,
@@ -23,7 +21,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ProviderIcon } from "@/components/ProviderIcon";
-import { useSidebarState } from "@/hooks/useSidebarState";
 import { useNavigationState, type AgentStatus, type AgentStatusStore } from "@/hooks/useNavigationState";
 import type { AppId } from "@/lib/api";
 
@@ -168,7 +165,7 @@ const AgentListButton = ({ agentId, isActive, status, onClick, collapsed }: Agen
     return <Circle className="h-4 w-4 text-gray-400" />;
   };
 
-  return (
+  const buttonContent = (
     <button
       type="button"
       onClick={onClick}
@@ -178,7 +175,6 @@ const AgentListButton = ({ agentId, isActive, status, onClick, collapsed }: Agen
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:text-foreground hover:bg-muted",
       )}
-      title={APP_DISPLAY_NAME[agentId]}
     >
       <ProviderIcon icon={APP_ICON_NAME[agentId]} name={APP_DISPLAY_NAME[agentId]} size={16} />
       {!collapsed && (
@@ -189,34 +185,46 @@ const AgentListButton = ({ agentId, isActive, status, onClick, collapsed }: Agen
       )}
     </button>
   );
+
+  // When collapsed, wrap with Tooltip to show agent name on hover
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {buttonContent}
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          {APP_DISPLAY_NAME[agentId]}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return buttonContent;
 };
 
 // Props interfaces for extracted components
 interface DesktopSidebarProps {
-  isCollapsed: boolean;
   isMac: boolean;
   dragBarHeight: number;
-  openSettings: () => void;
   statusMap: AgentStatusStore;
   activeApp: AppId;
   onAgentClick: (agent: AppId) => void;
   activeMainMenu: string;
   onMainMenuClick: (item: MainMenuItem) => void;
-  onToggleCollapse: () => void;
+  onSettingsClick: () => void;
   onOpenMobileSidebar: () => void;
 }
 
 const DesktopSidebar = ({
-  isCollapsed,
   isMac,
   dragBarHeight,
-  openSettings,
   statusMap,
   activeApp,
   onAgentClick,
   activeMainMenu,
   onMainMenuClick,
-  onToggleCollapse,
+  onSettingsClick,
   onOpenMobileSidebar,
 }: DesktopSidebarProps) => {
   const { t } = useTranslation();
@@ -224,8 +232,8 @@ const DesktopSidebar = ({
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col border-r bg-muted/20 shrink-0 h-full transition-all duration-300 relative z-10",
-        isCollapsed ? "w-16" : "w-56 lg:w-64"
+        "hidden md:flex flex-col border-r bg-muted/20 shrink-0 h-full relative z-10",
+        "w-16" // Always collapsed
       )}
     >
       {/* macOS traffic-light drag area */}
@@ -241,7 +249,7 @@ const DesktopSidebar = ({
         />
       )}
 
-      {/* Header with hamburger, title, collapse toggle, and settings */}
+      {/* Header with hamburger and title */}
       <div className="flex items-center h-14 px-2 shrink-0 gap-1">
         <Button
           variant="ghost"
@@ -251,47 +259,17 @@ const DesktopSidebar = ({
         >
           <Menu className="h-5 w-5" />
         </Button>
-        {!isCollapsed && (
-          <span className="font-bold text-lg tracking-tight text-primary select-none flex-1">
-            Haipee
-          </span>
-        )}
-        {!isCollapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={openSettings}
-            title={t("common.settings", "设置")}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleCollapse}
-          className="hidden md:flex"
-        >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
+        <span className="font-bold text-lg tracking-tight text-primary select-none flex-1 text-center">
+          H
+        </span>
       </div>
 
       <Separator className="opacity-40" />
 
-      {/* Secondary Menu */}
+      {/* Agent List - always collapsed */}
       <ScrollArea className="flex-1">
         <nav className="flex flex-col gap-0.5 p-2 py-3">
-          {/* Agent List - always shown */}
           <div className="px-1 pb-2 space-y-0.5">
-            {!isCollapsed && (
-              <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
-                {t('nav.agents', 'Agents')}
-              </div>
-            )}
             {ALL_APPS.map((app) => (
               <AgentListButton
                 key={app}
@@ -299,7 +277,7 @@ const DesktopSidebar = ({
                 isActive={activeApp === app}
                 status={statusMap[app] || { type: 'loading' }}
                 onClick={() => onAgentClick(app)}
-                collapsed={isCollapsed}
+                collapsed={true}
               />
             ))}
           </div>
@@ -308,9 +286,9 @@ const DesktopSidebar = ({
 
       <Separator className="opacity-40" />
 
-      {/* Bottom: Main Menu Icons (2 buttons) */}
+      {/* Bottom: 3 buttons - 会话, 配置, 设置 */}
       <div className="p-2 shrink-0">
-        <div className="grid grid-cols-2 gap-1">
+        <div className="flex flex-col gap-1">
           {MAIN_MENU_ITEMS.map((item) => (
             <MainMenuButton
               key={item.id}
@@ -320,6 +298,19 @@ const DesktopSidebar = ({
               variant="desktop"
             />
           ))}
+          <button
+            type="button"
+            title={t('nav.settings', '设置')}
+            className={cn(
+              "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
+              activeMainMenu === "settings"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted",
+            )}
+            onClick={onSettingsClick}
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </aside>
@@ -489,14 +480,12 @@ interface MobileTopBarProps {
   activeMainMenu: string;
   currentView: MainView;
   dragBarHeight: number;
-  openSettings: () => void;
 }
 
 const MobileTopBar = ({
   activeMainMenu,
   currentView,
   dragBarHeight,
-  openSettings,
 }: MobileTopBarProps) => {
   const { t } = useTranslation();
   const mainItem = MAIN_MENU_ITEMS.find((i) => i.id === activeMainMenu);
@@ -506,7 +495,7 @@ const MobileTopBar = ({
 
   return (
     <header
-      className="md:hidden shrink-0 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between px-4"
+      className="md:hidden shrink-0 border-b bg-background/95 backdrop-blur-sm flex items-center justify-center px-4"
       style={
         {
           paddingTop: `${dragBarHeight + 8}px`,
@@ -521,14 +510,6 @@ const MobileTopBar = ({
       >
         {label}
       </h1>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={openSettings}
-        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-      >
-        <Settings className="h-5 w-5" />
-      </Button>
     </header>
   );
 };
@@ -541,14 +522,13 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
       setCurrentView,
       activeApp,
       setActiveApp,
-      openSettings,
+      openSettings: _openSettings, // Reserved for future use
       isMac,
       className,
       onSessionProviderFilterChange,
     },
     ref,
   ) => {
-    const { isCollapsed, toggle } = useSidebarState();
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const DRAG_BAR_HEIGHT = isMac ? 28 : 0;
 
@@ -570,6 +550,7 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
     const activeMainMenu = useMemo(() => {
       if (currentView === "sessions") return "sessions";
       if (currentView === "agentConfig") return "agentConfig";
+      if (currentView === "settings") return "settings";
       return "sessions";
     }, [currentView]);
 
@@ -609,16 +590,14 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           onMainMenuClick={handleMainMenuClick}
         />
         <DesktopSidebar
-          isCollapsed={isCollapsed}
           isMac={isMac}
           dragBarHeight={DRAG_BAR_HEIGHT}
-          openSettings={openSettings}
           statusMap={statusMap}
           activeApp={activeApp}
           onAgentClick={handleAgentClick}
           activeMainMenu={activeMainMenu}
           onMainMenuClick={handleMainMenuClick}
-          onToggleCollapse={toggle}
+          onSettingsClick={handleSettingsClick}
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
         />
 
@@ -628,7 +607,6 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
             activeMainMenu={activeMainMenu}
             currentView={currentView}
             dragBarHeight={DRAG_BAR_HEIGHT}
-            openSettings={openSettings}
           />
 
           {/* Scrollable content area */}
