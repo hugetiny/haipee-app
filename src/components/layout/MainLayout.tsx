@@ -329,6 +329,8 @@ const DesktopSidebar = ({
             <TooltipTrigger asChild>
               <button
                 type="button"
+                data-testid="settings-nav-btn"
+                aria-label={t('nav.settings', '设置')}
                 className={cn(
                   "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
                   activeMainMenu === "settings"

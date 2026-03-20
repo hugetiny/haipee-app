@@ -192,6 +192,7 @@ export function SettingsPage({
           value={activeTab}
           onValueChange={setActiveTab}
           className="flex flex-col h-full"
+          data-settings-loaded={settings ? "true" : undefined}
         >
           <TabsList className="grid w-full grid-cols-8 mb-6 glass rounded-lg">
             <TabsTrigger value="models">
