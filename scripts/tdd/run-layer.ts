@@ -17,7 +17,7 @@ const layer = process.argv[2];
 
 const layerCommands: Record<string, { cmd: string; desc: string }> = {
   '1': {
-    cmd: 'bun vitest run tests/unit',
+    cmd: 'bun vitest run tests/components tests/hooks tests/utils tests/config',
     desc: 'JS Unit Tests (Vitest)',
   },
   '2': {
