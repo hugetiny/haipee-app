@@ -69,11 +69,8 @@ export const config = defineConfig({
   runner: 'local',
 
   specs: [
-    // Basic WebView smoke tests - verified working
-    './tests/e2e/tauri/app.spec.ts',
-    // Note: Other test files excluded until UI selectors are updated:
-    // - navigation.spec.ts: navigation selectors don't match current UI
-    // - tests/e2e-tauri/**/*.spec.ts: element selectors need updating
+    // Full settings E2E tests - all 8 tabs, real operations, no mocks
+    './tests/e2e/tauri/settings-full.spec.ts',
   ],
   exclude: [],
   maxInstances: 1, // Only one Tauri window at a time
@@ -136,20 +133,34 @@ export const config = defineConfig({
         for (const alt of alternatives) {
           if (alt.includes(':has-text(')) {
             // Handle :has-text() via JavaScript execution
+            // WKWebView returns null when execute() returns a DOM element reference,
+            // so we use a temporary unique attribute marker approach instead.
             try {
               const textMatch = alt.match(/:has-text\("([^"]+)"\)/);
               if (!textMatch) continue;
               const searchText = textMatch[1];
               const tagPart = alt.split(':has-text(')[0].trim() || '*';
 
-              const el = await browser.execute((tag: string, text: string) => {
+              // Use a temp unique attribute to mark the found element
+              const uid = 'wdio-ht-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+              const found = await browser.execute((tag: string, text: string, attrKey: string) => {
                 const elements = Array.from(document.querySelectorAll(tag || '*'));
-                return elements.find((el) => (el as HTMLElement).innerText?.includes(text) || el.textContent?.includes(text)) || null;
-              }, tagPart, searchText);
+                const el = elements.find((el) => (el as HTMLElement).innerText?.includes(text) || el.textContent?.includes(text));
+                if (el) {
+                  el.setAttribute(attrKey, 'true');
+                  return true;
+                }
+                return false;
+              }, tagPart, searchText, uid);
 
-              if (el) {
-                // Wrap the DOM element as a WebdriverIO element
-                return browser.$(el as any);
+              if (found) {
+                // Query by the temp attribute (standard CSS, works in WKWebView)
+                // NOTE: Do NOT remove the temp attribute here — WebdriverIO's isExisting()
+                // re-queries the DOM by selector, so removing the attribute would make
+                // isExisting() return false even though the element is in the DOM.
+                // The temp attribute is harmless and React will clean up the DOM naturally.
+                const el = await originalFn.call(this, `[${uid}]`);
+                return el;
               }
             } catch {
               continue;
@@ -206,22 +217,29 @@ export const config = defineConfig({
 
         for (const alt of alternatives) {
           if (alt.includes(':has-text(')) {
+            // Use temp attribute approach (WKWebView returns null for DOM element refs)
             try {
               const textMatch = alt.match(/:has-text\("([^"]+)"\)/);
               if (!textMatch) continue;
               const searchText = textMatch[1];
               const tagPart = alt.split(':has-text(')[0].trim() || '*';
 
-              const els = await browser.execute((tag: string, text: string) => {
+              // Use temp attributes for each matched element — do NOT remove them
+              // until test is done (WebdriverIO re-queries by selector for isExisting())
+              const uid = 'wdio-ht-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+              const count = await browser.execute((tag: string, text: string, attrKey: string) => {
                 const elements = Array.from(document.querySelectorAll(tag || '*'));
-                return elements.filter((el) => (el as HTMLElement).innerText?.includes(text) || el.textContent?.includes(text));
-              }, tagPart, searchText);
+                const matched = elements.filter((el) => (el as HTMLElement).innerText?.includes(text) || el.textContent?.includes(text));
+                matched.forEach((el, i) => el.setAttribute(attrKey + '-' + i, 'true'));
+                return matched.length;
+              }, tagPart, searchText, uid);
 
-              if (Array.isArray(els) && els.length > 0) {
-                for (const domEl of els) {
+              if (typeof count === 'number' && count > 0) {
+                for (let i = 0; i < count; i++) {
                   try {
-                    const wdioEl = await browser.$(domEl as any);
-                    results.push(wdioEl);
+                    const attrKey = uid + '-' + i;
+                    const arr = await originalFn.call(this, `[${attrKey}]`);
+                    results.push(...(arr as WebdriverIO.Element[]));
                   } catch { /* ignore */ }
                 }
               }
@@ -258,6 +276,33 @@ export const config = defineConfig({
 
       return originalFn.call(this, selector, ...args);
     });
+
+    // ── Patch isDisplayed() for WKWebView ────────────────────────────────────
+    // tauri-plugin-webdriver does not correctly implement the WebDriver
+    // isElementDisplayed command — it always returns false. We override it to
+    // use getCSSProperty() which DOES work with WKWebView WebDriver.
+    browser.overwriteCommand('isDisplayed' as any, async function(
+      this: WebdriverIO.Element,
+      _originalFn: () => Promise<boolean>,
+    ) {
+      try {
+        if (!this.elementId) return false;
+
+        // getCSSProperty works in WKWebView WebDriver
+        const display = await this.getCSSProperty('display');
+        if (!display || display.value === 'none') return false;
+
+        const visibility = await this.getCSSProperty('visibility');
+        if (visibility && visibility.value === 'hidden') return false;
+
+        const opacity = await this.getCSSProperty('opacity');
+        if (opacity && parseFloat(String(opacity.value)) === 0) return false;
+
+        return true;
+      } catch {
+        return false;
+      }
+    }, true); // true = attach to element prototype
 
     // Health check
     const alive = await healthCheck();
