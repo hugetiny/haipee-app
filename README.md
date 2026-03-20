@@ -4,10 +4,10 @@
 
 ### The All-in-One Manager for Claude Code, Codex, Gemini CLI, OpenCode & OpenClaw
 
-[![Version](https://img.shields.io/badge/version-3.12.3-blue.svg)](https://github.com/farion1231/haipee/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/farion1231/haipee/releases)
+[![Version](https://img.shields.io/badge/version-3.12.3-blue.svg)](https://github.com/hugetiny/haipee/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/hugetiny/haipee/releases)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-orange.svg)](https://tauri.app/)
-[![Downloads](https://img.shields.io/endpoint?url=https://api.pinstudios.net/api/badges/downloads/farion1231/haipee/total)](https://github.com/farion1231/haipee/releases/latest)
+[![Downloads](https://img.shields.io/endpoint?url=https://api.pinstudios.net/api/badges/downloads/hugetiny/haipee/total)](https://github.com/hugetiny/haipee/releases/latest)
 
 <a href="https://trendshift.io/repositories/15372" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15372" alt="farion1231%2Fhaipee | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
@@ -256,7 +256,7 @@ Download the latest `CC-Switch-v{version}-Windows.msi` installer or `CC-Switch-v
 **Method 1: Install via Homebrew (Recommended)**
 
 ```bash
-brew tap farion1231/haipee
+brew tap hugetiny/haipee
 brew install --cask haipee
 ```
 
@@ -487,7 +487,7 @@ For new features, please open an issue for discussion before submitting a PR. PR
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=farion1231/haipee&type=Date)](https://www.star-history.com/#farion1231/haipee&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=hugetiny/haipee&type=Date)](https://www.star-history.com/#hugetiny/haipee&Date)
 
 ## License
 

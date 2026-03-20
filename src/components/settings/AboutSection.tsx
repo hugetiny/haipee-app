@@ -241,13 +241,13 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
 
       if (!displayVersion) {
         await settingsApi.openExternal(
-          "https://github.com/farion1231/haipee/releases",
+          "https://github.com/hugetiny/haipee/releases",
         );
         return;
       }
 
       await settingsApi.openExternal(
-        `https://github.com/farion1231/haipee/releases/tag/${displayVersion}`,
+        `https://github.com/hugetiny/haipee/releases/tag/${displayVersion}`,
       );
     } catch (error) {
       console.error("[AboutSection] Failed to open release notes", error);
@@ -589,46 +589,6 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
           </div>
         </motion.div>
       )}
-      {/* haipee attribution */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.35 }}
-        className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3 text-center space-y-1"
-      >
-        <p className="text-xs text-muted-foreground">
-          本项目基于{" "}
-          <a
-            href="https://github.com/farion1231/haipee"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary underline-offset-2 hover:underline"
-            onClick={(e) => {
-              e.preventDefault();
-              settingsApi.openExternal(
-                "https://github.com/farion1231/haipee",
-              );
-            }}
-          >
-            haipee
-          </a>{" "}
-          v3.12.0 二次开发 &middot; 感谢并请支持{" "}
-          <a
-            href="https://github.com/farion1231/haipee"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary underline-offset-2 hover:underline"
-            onClick={(e) => {
-              e.preventDefault();
-              settingsApi.openExternal(
-                "https://github.com/farion1231/haipee",
-              );
-            }}
-          >
-            farion1231/haipee
-          </a>
-        </p>
-      </motion.div>
     </motion.section>
   );
 }
