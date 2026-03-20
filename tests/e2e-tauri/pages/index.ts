@@ -9,3 +9,4 @@ export { navigationPage, NavigationPage } from '../../e2e/tauri/pages/Navigation
 export { settingsPage, SettingsPage } from '../../e2e/tauri/pages/SettingsPage';
 export { openClawChatPage, OpenClawChatPage } from '../../e2e/tauri/pages/OpenClawChatPage';
 export { agentConfigPage, AgentConfigPage } from '../../e2e/tauri/pages/AgentConfigPage';
+export type { AgentId, ConfigTab } from '../../e2e/tauri/pages/AgentConfigPage';
