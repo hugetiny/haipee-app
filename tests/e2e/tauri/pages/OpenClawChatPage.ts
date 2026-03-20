@@ -68,12 +68,11 @@ export class OpenClawChatPage extends TauriBasePage {
    * Get the last message content
    */
   async getLastMessage(): Promise<string> {
-    const messages = await $$(this.messageContainer);
-    const length = await messages.length;
-    if (length === 0) {
+    const messages = (await $$(this.messageContainer)) as unknown as WebdriverIO.Element[];
+    if (messages.length === 0) {
       throw new Error('No messages found');
     }
-    const lastMessage = messages[length - 1];
+    const lastMessage = messages[messages.length - 1];
     return lastMessage.getText();
   }
 
@@ -103,7 +102,7 @@ export class OpenClawChatPage extends TauriBasePage {
    * Check if chat is ready for input
    */
   async isReadyForInput(): Promise<boolean> {
-    const input = await $(this.chatInput);
+    const input = $(this.chatInput);
     return (await input.isExisting()) && (await input.isDisplayed());
   }
 
