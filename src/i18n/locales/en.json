@@ -661,7 +661,9 @@
       "codexConfig": "Codex config file (TOML format)",
       "geminiConfig": "Gemini CLI settings file",
       "opencodeConfig": "OpenCode config file",
-      "openclawConfig": "OpenClaw config file (JSON5 format), including providers, env, tools, mcp, etc."
+      "openclawConfig": "OpenClaw config file (JSON5 format), including providers, env, tools, mcp, etc.",
+      "editConfig": "Edit Config",
+      "openclawConfigLabel": "OpenClaw Configuration"
     },
     "status": {
       "error": "Read failed",

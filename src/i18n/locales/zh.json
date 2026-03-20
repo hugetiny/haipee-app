@@ -661,7 +661,9 @@
       "codexConfig": "Codex 配置文件 (TOML 格式)",
       "geminiConfig": "Gemini CLI 设置文件",
       "opencodeConfig": "OpenCode 配置文件",
-      "openclawConfig": "OpenClaw 配置文件 (JSON5 格式)，包含 providers、env、tools、mcp 等配置"
+      "openclawConfig": "OpenClaw 配置文件 (JSON5 格式)，包含 providers、env、tools、mcp 等配置",
+      "editConfig": "编辑配置",
+      "openclawConfigLabel": "OpenClaw 配置"
     },
     "status": {
       "error": "读取失败",
