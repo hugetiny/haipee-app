@@ -162,3 +162,12 @@ pub fn write_openclaw_json_raw(
 ) -> Result<openclaw_config::OpenClawWriteOutcome, String> {
     openclaw_config::write_json_raw(&content).map_err(|e| e.to_string())
 }
+
+/// Find OpenClaw session key by session ID
+///
+/// OpenClaw TUI requires session key (e.g., "agent:main:main") for --session parameter,
+/// but we only have the sessionId (UUID). This looks up the key from sessions.json.
+#[tauri::command]
+pub fn find_openclaw_session_key(session_id: String) -> Result<Option<String>, String> {
+    openclaw_config::find_session_key_by_id(&session_id).map_err(|e| e.to_string())
+}

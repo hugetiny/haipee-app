@@ -983,6 +983,48 @@ pub fn write_json_raw(content: &str) -> Result<OpenClawWriteOutcome, AppError> {
     })
 }
 
+// ============================================================================
+// Session Key Lookup
+// ============================================================================
+
+/// Find the session key by session ID in OpenClaw's sessions.json
+///
+/// OpenClaw uses session keys (e.g., "agent:main:main") for TUI's --session parameter,
+/// but we only have the sessionId (UUID). This function looks up the key from
+/// ~/.openclaw/agents/main/sessions/sessions.json
+pub fn find_session_key_by_id(session_id: &str) -> Result<Option<String>, AppError> {
+    let sessions_path = get_openclaw_dir()
+        .join("agents")
+        .join("main")
+        .join("sessions")
+        .join("sessions.json");
+
+    if !sessions_path.exists() {
+        return Ok(None);
+    }
+
+    let content = fs::read_to_string(&sessions_path)
+        .map_err(|e| AppError::Config(format!("Failed to read sessions.json: {}", e)))?;
+
+    let sessions: Value = serde_json::from_str(&content)
+        .map_err(|e| AppError::Config(format!("Failed to parse sessions.json: {}", e)))?;
+
+    // sessions.json is an object with session keys as object keys
+    if let Some(sessions_obj) = sessions.as_object() {
+        for (key, entry) in sessions_obj {
+            if let Some(entry_obj) = entry.as_object() {
+                if let Some(id) = entry_obj.get("sessionId").and_then(|v: &Value| v.as_str()) {
+                    if id == session_id {
+                        return Ok(Some(key.clone()));
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(None)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

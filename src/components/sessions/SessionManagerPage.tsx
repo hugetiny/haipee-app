@@ -6,30 +6,28 @@ import {
   Copy,
   RefreshCw,
   Search,
-  Play,
   Trash2,
   MessageSquare,
   Clock,
   FolderOpen,
   X,
+  ChevronLeft,
+  List,
+  Send,
+  ExternalLink,
+  Terminal,
 } from "lucide-react";
 import {
   useDeleteSessionMutation,
   useSessionMessagesQuery,
   useSessionsQuery,
 } from "@/lib/query";
-import { sessionsApi } from "@/lib/api";
+import { sessionsApi, settingsApi, openclawApi } from "@/lib/api";
 import type { SessionMeta } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -38,12 +36,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { extractErrorMessage } from "@/utils/errorUtils";
 import { isMac } from "@/lib/platform";
 import { ProviderIcon } from "@/components/ProviderIcon";
 import { SessionItem } from "./SessionItem";
 import { SessionMessageItem } from "./SessionMessageItem";
-import { SessionTocDialog, SessionTocSidebar } from "./SessionToc";
+import { SessionTocSheet, SessionTocSidebar } from "./SessionToc";
 import {
   formatSessionTitle,
   formatTimestamp,
@@ -72,14 +76,15 @@ export function SessionManagerPage({ appId }: { appId: string }) {
     null,
   );
   const [tocDialogOpen, setTocDialogOpen] = useState(false);
+  const [sessionListOpen, setSessionListOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<SessionMeta | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const [search, setSearch] = useState("");
-  const [providerFilter, setProviderFilter] = useState<ProviderFilter>(
-    appId as ProviderFilter,
-  );
+  const [inputMessage, setInputMessage] = useState("");
+  const [showTuiChoice, setShowTuiChoice] = useState(false);
+  const providerFilter = appId as ProviderFilter;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   // 使用 FlexSearch 全文搜索
@@ -206,15 +211,89 @@ export function SessionManagerPage({ appId }: { appId: string }) {
     });
   };
 
+  const handleOpenTui = async () => {
+    setShowTuiChoice(false);
+
+    // OpenClaw: 查找 session key 并运行 TUI
+    if (isCurrentProviderOpenClaw) {
+      try {
+        const sessionId = selectedSession?.sessionId;
+        let sessionKey: string | null = null;
+
+        if (sessionId) {
+          sessionKey = await openclawApi.findSessionKey(sessionId);
+        }
+
+        // 构建 openclaw tui 命令
+        let command = "openclaw tui";
+        if (sessionKey) {
+          command = `openclaw tui --session "${sessionKey}"`;
+        }
+
+        await sessionsApi.launchTerminal({
+          command,
+        });
+        toast.success(t("sessionManager.terminalLaunched"));
+      } catch (error) {
+        toast.error(extractErrorMessage(error) || t("sessionManager.openFailed"));
+      }
+      return;
+    }
+
+    // 其他 provider 使用 resume command
+    if (selectedSession?.resumeCommand) {
+      await handleResume();
+    }
+  };
+
+  const handleOpenBrowser = async () => {
+    setShowTuiChoice(false);
+    const sessionId = selectedSession?.sessionId;
+    try {
+      // 获取 gateway 配置以获取 auth token
+      const gatewayConfig = await openclawApi.getJsonSection("gateway");
+      const token = gatewayConfig?.auth?.token;
+
+      // 复制 token 到剪切板
+      if (token) {
+        await navigator.clipboard.writeText(token);
+        toast.success(t("sessionManager.tokenCopied", "Token 已复制到剪切板"));
+      }
+
+      // 打开浏览器
+      let gatewayUrl = "http://127.0.0.1:18789/chat";
+      if (sessionId) {
+        gatewayUrl += `?session=${sessionId}`;
+      }
+      await settingsApi.openExternal(gatewayUrl);
+
+      // 提示用户粘贴 token
+      toast.info(
+        t(
+          "sessionManager.pasteTokenHint",
+          "请粘贴 Gateway Token 并点击连接"
+        ),
+        { duration: 5000 }
+      );
+    } catch (error) {
+      toast.error(t("sessionManager.openBrowserFailed", "打开浏览器失败"));
+    }
+  };
+
+  const isCurrentProviderOpenClaw = selectedSession?.providerId === "openclaw";
+
   return (
     <TooltipProvider>
-      <div className="mx-auto px-4 sm:px-6 flex flex-col flex-1 min-h-0">
-        <div className="flex-1 overflow-hidden flex flex-col gap-4">
-          {/* 主内容区域 - 左右分栏 */}
-          <div className="flex-1 overflow-hidden grid gap-4 md:grid-cols-[320px_1fr]">
-            {/* 左侧会话列表 */}
-            <Card className="flex flex-col overflow-hidden">
-              <CardHeader className="py-2 px-3 border-b">
+      <div className="flex flex-col flex-1 min-h-0">
+        {/* 窄屏：会话列表 Sheet */}
+        <Sheet open={sessionListOpen} onOpenChange={setSessionListOpen}>
+          <SheetContent side="left" className="w-[320px] p-0">
+            <SheetHeader className="sr-only">
+              <SheetTitle>{t("sessionManager.sessionList")}</SheetTitle>
+            </SheetHeader>
+            <div className="flex flex-col h-full">
+              {/* 搜索/标题栏 */}
+              <div className="py-2 px-3 border-b">
                 {isSearchOpen ? (
                   <div className="relative flex-1">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -252,138 +331,260 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                 ) : (
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <CardTitle className="text-sm font-medium">
+                      <span className="text-sm font-medium">
                         {t("sessionManager.sessionList")}
-                      </CardTitle>
+                      </span>
                       <Badge variant="secondary" className="text-xs">
                         {filteredSessions.length}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            onClick={() => {
-                              setIsSearchOpen(true);
-                              setTimeout(
-                                () => searchInputRef.current?.focus(),
-                                0,
-                              );
-                            }}
-                          >
-                            <Search className="size-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {t("sessionManager.searchSessions")}
-                        </TooltipContent>
-                      </Tooltip>
-
-                      <Select
-                        value={providerFilter}
-                        onValueChange={(value) =>
-                          setProviderFilter(value as ProviderFilter)
-                        }
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        onClick={() => {
+                          setIsSearchOpen(true);
+                          setTimeout(
+                            () => searchInputRef.current?.focus(),
+                            0,
+                          );
+                        }}
                       >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <SelectTrigger className="size-7 p-0 justify-center border-0 bg-transparent hover:bg-muted">
-                              <ProviderIcon
-                                icon={
-                                  providerFilter === "all"
-                                    ? "apps"
-                                    : getProviderIconName(providerFilter)
-                                }
-                                name={providerFilter}
-                                size={14}
-                              />
-                            </SelectTrigger>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {providerFilter === "all"
-                              ? t("sessionManager.providerFilterAll")
-                              : providerFilter}
-                          </TooltipContent>
-                        </Tooltip>
-                        <SelectContent>
-                          <SelectItem value="all">
-                            <div className="flex items-center gap-2">
-                              <ProviderIcon icon="apps" name="all" size={14} />
-                              <span>
-                                {t("sessionManager.providerFilterAll")}
-                              </span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="codex">
-                            <div className="flex items-center gap-2">
-                              <ProviderIcon
-                                icon="openai"
-                                name="codex"
-                                size={14}
-                              />
-                              <span>Codex</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="claude">
-                            <div className="flex items-center gap-2">
-                              <ProviderIcon
-                                icon="claude"
-                                name="claude"
-                                size={14}
-                              />
-                              <span>Claude Code</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="opencode">
-                            <div className="flex items-center gap-2">
-                              <ProviderIcon
-                                icon="opencode"
-                                name="opencode"
-                                size={14}
-                              />
-                              <span>OpenCode</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="openclaw">
-                            <div className="flex items-center gap-2">
-                              <ProviderIcon
-                                icon="openclaw"
-                                name="openclaw"
-                                size={14}
-                              />
-                              <span>OpenClaw</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="gemini">
-                            <div className="flex items-center gap-2">
-                              <ProviderIcon
-                                icon="gemini"
-                                name="gemini"
-                                size={14}
-                              />
-                              <span>Gemini CLI</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            onClick={() => void refetch()}
-                          >
-                            <RefreshCw className="size-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t("common.refresh")}</TooltipContent>
-                      </Tooltip>
+                        <Search className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        onClick={() => void refetch()}
+                      >
+                        <RefreshCw className="size-3.5" />
+                      </Button>
                     </div>
+                  </div>
+                )}
+              </div>
+              {/* 会话列表内容 */}
+              <ScrollArea className="flex-1">
+                <div className="p-2">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <RefreshCw className="size-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : filteredSessions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <MessageSquare className="size-8 text-muted-foreground/50 mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        {t("sessionManager.noSessions")}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {filteredSessions.map((session) => {
+                        const isSelected =
+                          selectedKey !== null &&
+                          getSessionKey(session) === selectedKey;
+                        return (
+                          <SessionItem
+                            key={getSessionKey(session)}
+                            session={session}
+                            isSelected={isSelected}
+                            onSelect={(key) => {
+                              setSelectedKey(key);
+                              setSessionListOpen(false);
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* 主内容区域 */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {/* 窄屏：顶部工具栏 */}
+          <div className="md:hidden flex items-center gap-2 px-3 py-2 border-b bg-background/95 backdrop-blur-sm shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setSessionListOpen(true)}
+            >
+              <ChevronLeft className="size-4" />
+              <span>{t("sessionManager.sessionList")}</span>
+              <Badge variant="secondary" className="text-xs ml-1">
+                {filteredSessions.length}
+              </Badge>
+            </Button>
+            {selectedSession && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="shrink-0">
+                      <ProviderIcon
+                        icon={getProviderIconName(selectedSession.providerId)}
+                        name={selectedSession.providerId}
+                        size={16}
+                      />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {getProviderLabel(selectedSession.providerId, t)}
+                  </TooltipContent>
+                </Tooltip>
+                <span className="text-sm font-medium truncate flex-1 min-w-0">
+                  {formatSessionTitle(selectedSession)}
+                </span>
+                <div className="flex items-center gap-1 shrink-0">
+                  {isMac() && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 hover:bg-accent"
+                          onClick={() => void handleOpenTui()}
+                          disabled={!isCurrentProviderOpenClaw && !selectedSession.resumeCommand}
+                        >
+                          <Terminal className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {t("sessionManager.openInTui", "在 TUI 中打开")}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {selectedSession.providerId === "openclaw" && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 hover:bg-accent"
+                          onClick={() => void handleOpenBrowser()}
+                        >
+                          <ExternalLink className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {t("sessionManager.openInBrowser", "在浏览器中打开")}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-8 hover:bg-accent hover:text-destructive"
+                        onClick={() => setDeleteTarget(selectedSession)}
+                        disabled={
+                          !selectedSession.sourcePath ||
+                          deleteSessionMutation.isPending
+                        }
+                        aria-label={t("sessionManager.delete")}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t("sessionManager.delete")}
+                    </TooltipContent>
+                  </Tooltip>
+                  {userMessagesToc.length > 2 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8 hover:bg-accent"
+                          onClick={() => setTocDialogOpen(true)}
+                          aria-label={t("sessionManager.tocTitle")}
+                        >
+                          <List className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {t("sessionManager.tocTitle")}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* 左右分栏布局 */}
+          <div className="flex-1 overflow-hidden grid gap-4 md:grid-cols-[minmax(min-content,100px)_1fr]">
+            {/* 宽屏：左侧会话列表 */}
+            <Card className="hidden md:flex flex-col overflow-hidden min-h-0">
+              <CardHeader className="py-2 px-2 border-b">
+                {isSearchOpen ? (
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-muted-foreground" />
+                    <Input
+                      ref={searchInputRef}
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder={t("sessionManager.searchPlaceholder")}
+                      className="h-7 pl-7 pr-6 text-xs w-full"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setIsSearchOpen(false);
+                          setSearch("");
+                        }
+                      }}
+                      onBlur={() => {
+                        if (search.trim() === "") {
+                          setIsSearchOpen(false);
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0.5 top-1/2 -translate-y-1/2 size-5"
+                      onClick={() => {
+                        setIsSearchOpen(false);
+                        setSearch("");
+                      }}
+                    >
+                      <X className="size-2.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-1">
+                    <Badge variant="secondary" className="text-xs px-1.5">
+                      {filteredSessions.length}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6"
+                      onClick={() => {
+                        setIsSearchOpen(true);
+                        setTimeout(
+                          () => searchInputRef.current?.focus(),
+                          0,
+                        );
+                      }}
+                    >
+                      <Search className="size-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6"
+                      onClick={() => void refetch()}
+                    >
+                      <RefreshCw className="size-3" />
+                    </Button>
                   </div>
                 )}
               </CardHeader>
@@ -426,7 +627,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
 
             {/* 右侧会话详情 */}
             <Card
-              className="flex flex-col overflow-hidden min-h-0"
+              className="flex flex-col flex-1 overflow-hidden min-h-0"
               ref={detailRef}
             >
               {!selectedSession ? (
@@ -436,8 +637,8 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                 </div>
               ) : (
                 <>
-                  {/* 详情头部 */}
-                  <CardHeader className="py-3 px-4 border-b shrink-0">
+                  {/* 详情头部 - 宽屏 */}
+                  <CardHeader className="hidden md:flex py-3 px-4 border-b shrink-0">
                     <div className="flex items-start justify-between gap-4">
                       {/* 左侧：会话信息 */}
                       <div className="min-w-0 flex-1">
@@ -510,63 +711,59 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                       </div>
 
                       {/* 右侧：操作按钮组 */}
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
                         {isMac() && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                size="sm"
-                                className="gap-1.5"
-                                onClick={() => void handleResume()}
-                                disabled={!selectedSession.resumeCommand}
+                                size="icon"
+                                variant="ghost"
+                                className="size-8 hover:bg-accent"
+                                onClick={() => void handleOpenTui()}
+                                disabled={!isCurrentProviderOpenClaw && !selectedSession.resumeCommand}
                               >
-                                <Play className="size-3.5" />
-                                <span className="hidden sm:inline">
-                                  {t("sessionManager.resume", {
-                                    defaultValue: "恢复会话",
-                                  })}
-                                </span>
+                                <Terminal className="size-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {selectedSession.resumeCommand
-                                ? t("sessionManager.resumeTooltip", {
-                                    defaultValue: "在终端中恢复此会话",
-                                  })
-                                : t("sessionManager.noResumeCommand", {
-                                    defaultValue: "此会话无法恢复",
-                                  })}
+                              {t("sessionManager.openInTui", "在 TUI 中打开")}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {selectedSession.providerId === "openclaw" && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="size-8 hover:bg-accent"
+                                onClick={() => void handleOpenBrowser()}
+                              >
+                                <ExternalLink className="size-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t("sessionManager.openInBrowser", "在浏览器中打开")}
                             </TooltipContent>
                           </Tooltip>
                         )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              size="sm"
-                              variant="destructive"
-                              className="gap-1.5"
+                              size="icon"
+                              variant="ghost"
+                              className="size-8 hover:bg-accent hover:text-destructive"
                               onClick={() => setDeleteTarget(selectedSession)}
                               disabled={
                                 !selectedSession.sourcePath ||
                                 deleteSessionMutation.isPending
                               }
                             >
-                              <Trash2 className="size-3.5" />
-                              <span className="hidden sm:inline">
-                                {deleteSessionMutation.isPending
-                                  ? t("sessionManager.deleting", {
-                                      defaultValue: "删除中...",
-                                    })
-                                  : t("sessionManager.delete", {
-                                      defaultValue: "删除会话",
-                                    })}
-                              </span>
+                              <Trash2 className="size-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {t("sessionManager.deleteTooltip", {
-                              defaultValue: "永久删除此本地会话记录",
-                            })}
+                            {t("sessionManager.delete")}
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -595,9 +792,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {t("sessionManager.copyCommand", {
-                              defaultValue: "复制命令",
-                            })}
+                            {t("sessionManager.copyCommand")}
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -613,9 +808,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                           <div className="flex items-center gap-2 mb-3">
                             <MessageSquare className="size-4 text-muted-foreground" />
                             <span className="text-sm font-medium">
-                              {t("sessionManager.conversationHistory", {
-                                defaultValue: "对话记录",
-                              })}
+                              {t("sessionManager.conversationHistory")}
                             </span>
                             <Badge variant="secondary" className="text-xs">
                               {messages.length}
@@ -647,9 +840,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                                   onCopy={(content) =>
                                     handleCopy(
                                       content,
-                                      t("sessionManager.messageCopied", {
-                                        defaultValue: "已复制消息内容",
-                                      }),
+                                      t("sessionManager.messageCopied"),
                                     )
                                   }
                                 />
@@ -667,14 +858,39 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                       />
                     </div>
 
-                    {/* 浮动目录按钮 (小屏幕) */}
-                    <SessionTocDialog
+                    {/* 目录 Sheet (小屏幕) */}
+                    <SessionTocSheet
                       items={userMessagesToc}
                       onItemClick={scrollToMessage}
                       open={tocDialogOpen}
                       onOpenChange={setTocDialogOpen}
                     />
                   </CardContent>
+
+                  {/* 底部输入框 */}
+                  <div className="shrink-0 border-t p-3 bg-background">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (inputMessage.trim()) {
+                          // 消息功能开发中，显示选择对话框
+                          setShowTuiChoice(true);
+                          setInputMessage("");
+                        }
+                      }}
+                      className="flex gap-2"
+                    >
+                      <Input
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        placeholder={t("sessionManager.inputPlaceholder", "输入消息...")}
+                        className="flex-1"
+                      />
+                      <Button type="submit" size="icon" disabled={!inputMessage.trim()}>
+                        <Send className="size-4" />
+                      </Button>
+                    </form>
+                  </div>
                 </>
               )}
             </Card>
@@ -708,6 +924,53 @@ export function SessionManagerPage({ appId }: { appId: string }) {
           }
         }}
       />
+
+      {/* TUI 选择对话框（非 OpenClaw） */}
+      {!isCurrentProviderOpenClaw && (
+        <ConfirmDialog
+          isOpen={showTuiChoice}
+          title={t("sessionManager.openTuiTitle", "消息功能开发中")}
+          message={t("sessionManager.openTuiMessage", "是否打开原生 TUI？")}
+          confirmText={t("common.confirm", "确认")}
+          cancelText={t("common.cancel", "取消")}
+          variant="info"
+          onConfirm={() => void handleOpenTui()}
+          onCancel={() => setShowTuiChoice(false)}
+        />
+      )}
+
+      {/* OpenClaw TUI/浏览器选择对话框 */}
+      {isCurrentProviderOpenClaw && showTuiChoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg shadow-lg p-4 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold mb-2">
+              {t("sessionManager.openTuiTitle", "消息功能开发中")}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {t("sessionManager.openTuiMessageOpenClaw", "是否打开？")}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowTuiChoice(false)}
+              >
+                {t("common.cancel", "取消")}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => void handleOpenTui()}
+              >
+                <Terminal className="size-4 mr-2" />
+                TUI
+              </Button>
+              <Button onClick={() => void handleOpenBrowser()}>
+                <ExternalLink className="size-4 mr-2" />
+                {t("sessionManager.openInBrowser", "浏览器")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </TooltipProvider>
   );
 }

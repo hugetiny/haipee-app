@@ -272,6 +272,18 @@ export const openclawApi = {
   },
 
   // ============================================================
+  // Session Key Lookup
+  // ============================================================
+
+  /**
+   * Find OpenClaw session key by session ID.
+   * OpenClaw TUI requires session key (e.g., "agent:main:main") for --session parameter.
+   */
+  async findSessionKey(sessionId: string): Promise<string | null> {
+    return await invoke("find_openclaw_session_key", { sessionId });
+  },
+
+  // ============================================================
   // Connection Testing
   // ============================================================
 

@@ -39,6 +39,12 @@ beforeAll(async () => {
             quotaExceeded: "用量超限",
             checkError: "检查用量时出错",
           },
+          sessionManager: {
+            sessionList: "会话列表",
+            delete: "删除会话",
+            resume: "在终端中打开",
+            tocTitle: "目录",
+          },
         },
       },
       en: {

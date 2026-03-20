@@ -23,7 +23,7 @@ vi.mock("sonner", () => ({
 
 vi.mock("@/components/sessions/SessionToc", () => ({
   SessionTocSidebar: () => null,
-  SessionTocDialog: () => null,
+  SessionTocSheet: () => null,
 }));
 
 vi.mock("@/components/ConfirmDialog", () => ({
@@ -131,7 +131,9 @@ describe("SessionManagerPage", () => {
       ).toBeInTheDocument(),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /删除会话/i }));
+    // Use getAllByRole since both narrow and wide screen buttons are rendered in jsdom
+    const deleteButtons = screen.getAllByRole("button", { name: /删除会话/i });
+    fireEvent.click(deleteButtons[0]);
 
     const dialog = screen.getByTestId("confirm-dialog");
     expect(dialog).toBeInTheDocument();
@@ -161,15 +163,19 @@ describe("SessionManagerPage", () => {
 
     openSearch();
 
-    fireEvent.change(screen.getByRole("textbox"), {
+    // Use getAllByRole since there are multiple textboxes (search + message input)
+    const textboxes = screen.getAllByRole("textbox");
+    fireEvent.change(textboxes[0], {
       target: { value: "Alpha" },
     });
 
     await waitFor(() =>
-      expect(screen.getAllByText("Alpha Session")).toHaveLength(2),
+      expect(screen.getAllByText("Alpha Session")).toHaveLength(3),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /删除会话/i }));
+    // Use getAllByRole since both narrow and wide screen buttons are rendered in jsdom
+    const deleteButtons = screen.getAllByRole("button", { name: /删除会话/i });
+    fireEvent.click(deleteButtons[0]);
 
     const dialog = screen.getByTestId("confirm-dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: /删除会话/i }));

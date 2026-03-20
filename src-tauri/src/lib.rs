@@ -1064,6 +1064,7 @@ pub fn run() {
             commands::set_openclaw_json_section,
             commands::read_openclaw_json_raw,
             commands::write_openclaw_json_raw,
+            commands::find_openclaw_session_key,
             // Global upstream proxy
             commands::get_global_proxy_url,
             commands::set_global_proxy_url,
