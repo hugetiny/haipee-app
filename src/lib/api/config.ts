@@ -75,3 +75,21 @@ export async function extractCommonConfigSnippet(
 
   return invoke<string>("extract_common_config_snippet", args);
 }
+
+// Config Status API
+
+export interface ConfigStatus {
+  exists: boolean;
+  path: string;
+}
+
+export interface AllConfigStatuses {
+  [agentId: string]: ConfigStatus;
+}
+
+/**
+ * Get config status for all supported apps in a single call
+ */
+export async function getAllConfigStatuses(): Promise<AllConfigStatuses> {
+  return invoke<AllConfigStatuses>("get_all_config_statuses");
+}
