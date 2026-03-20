@@ -10,6 +10,8 @@ import {
   HardDriveDownload,
   FlaskConical,
   KeyRound,
+  Terminal,
+  Cpu,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -44,6 +46,8 @@ import { ModelTestConfigPanel } from "@/components/usage/ModelTestConfigPanel";
 import { UsageDashboard } from "@/components/usage/UsageDashboard";
 import { LogConfigPanel } from "@/components/settings/LogConfigPanel";
 import { AuthCenterPanel } from "@/components/settings/AuthCenterPanel";
+import { SystemEnvPanel } from "@/components/settings/SystemEnvPanel";
+import { ModelsPanel } from "@/components/settings/ModelsPanel";
 import { useSettings } from "@/hooks/useSettings";
 import { useImportExport } from "@/hooks/useImportExport";
 import { useTranslation } from "react-i18next";
@@ -191,13 +195,19 @@ export function SettingsPage({
           onValueChange={setActiveTab}
           className="flex flex-col h-full"
         >
-          <TabsList className="grid w-full grid-cols-6 mb-6 glass rounded-lg">
+          <TabsList className="grid w-full grid-cols-8 mb-6 glass rounded-lg">
+            <TabsTrigger value="models">
+              {t("settings.tabModels", { defaultValue: "模型" })}
+            </TabsTrigger>
             <TabsTrigger value="general">
               {t("settings.tabGeneral")}
             </TabsTrigger>
             <TabsTrigger value="proxy">{t("settings.tabProxy")}</TabsTrigger>
             <TabsTrigger value="auth">
               {t("settings.tabAuth", { defaultValue: "认证" })}
+            </TabsTrigger>
+            <TabsTrigger value="env">
+              {t("settings.tabEnv", { defaultValue: "环境变量" })}
             </TabsTrigger>
             <TabsTrigger value="advanced">
               {t("settings.tabAdvanced")}
@@ -208,6 +218,32 @@ export function SettingsPage({
 
           <div className="flex-1 min-h-0 flex flex-col">
             <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2">
+              <TabsContent value="models" className="mt-0">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="flex items-center gap-3 px-1 mb-4">
+                    <Cpu className="h-5 w-5 text-primary" />
+                    <div>
+                      <h2 className="text-base font-semibold">
+                        {t("settings.models.heading", {
+                          defaultValue: "模型管理",
+                        })}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {t("settings.models.headingDescription", {
+                          defaultValue:
+                            "统一管理所有 Agent 的模型配置，按 Agent 切换查看和编辑。",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <ModelsPanel />
+                </motion.div>
+              </TabsContent>
+
               <TabsContent value="general" className="space-y-6 mt-0">
                 {settings ? (
                   <motion.div
@@ -279,6 +315,34 @@ export function SettingsPage({
                   </div>
 
                   <AuthCenterPanel />
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="env" className="space-y-6 mt-0 pb-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="flex items-center gap-3 px-1">
+                    <Terminal className="h-5 w-5 text-primary" />
+                    <div>
+                      <h2 className="text-base font-semibold">
+                        {t("settings.envVar.title", {
+                          defaultValue: "系统环境变量",
+                        })}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {t("settings.envVar.description", {
+                          defaultValue:
+                            "管理 shell 配置文件中的环境变量",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <SystemEnvPanel />
                 </motion.div>
               </TabsContent>
 

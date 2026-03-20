@@ -1,8 +1,8 @@
-/// E2E Test Mode Support
-///
-/// When HAIPEE_E2E_MODE=1 is set, the app runs in E2E test mode:
-/// - Interactive dialogs are skipped (auto-retry or use defaults)
-/// - Database initialization auto-recovers from failures
+//! E2E Test Mode Support
+//!
+//! When HAIPEE_E2E_MODE=1 is set, the app runs in E2E test mode:
+//! - Interactive dialogs are skipped (auto-retry or use defaults)
+//! - Database initialization auto-recovers from failures
 
 /// Check if the app is running in E2E test mode
 pub fn is_enabled() -> bool {

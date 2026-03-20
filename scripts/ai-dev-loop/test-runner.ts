@@ -171,6 +171,10 @@ async function runTauriE2ELayer(config: TestLayerConfig): Promise<TestLayerResul
   const { getProcessManager } = await import('./tauri-process-manager.ts');
   const pm = getProcessManager();
 
+  // Import crash analyzer for enhanced crash detection
+  const { getCrashAnalyzer, formatCrashAnalysisForPrompt } = await import('./crash-analyzer.ts');
+  const crashAnalyzer = getCrashAnalyzer();
+
   // Check if process is alive before running tests
   const wasAlive = pm.isAlive();
   if (!wasAlive) {
@@ -197,6 +201,18 @@ async function runTauriE2ELayer(config: TestLayerConfig): Promise<TestLayerResul
     const binaryLog = pm.getBinaryLog();
     if (binaryLog) {
       log('info', 'Binary log (last 500 chars)', { log: binaryLog.slice(-500) });
+    }
+
+    // Analyze crash with crash analyzer
+    const crashAnalysis = crashAnalyzer.analyze();
+    if (crashAnalysis.hasCrashed) {
+      log('info', `Crash analysis: ${crashAnalysis.crashCount} crash(es) detected`);
+      if (crashAnalysis.suggestedFixes.length > 0) {
+        log('info', 'Suggested fixes:');
+        for (const fix of crashAnalysis.suggestedFixes.slice(0, 3)) {
+          log('info', `  - ${fix.pattern}: ${fix.fix}`);
+        }
+      }
     }
   }
 

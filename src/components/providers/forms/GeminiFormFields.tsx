@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Info } from "lucide-react";
 import EndpointSpeedTest from "./EndpointSpeedTest";
@@ -124,9 +124,9 @@ export function GeminiFormFields({
       {/* Model 输入框 */}
       {shouldShowModelField && (
         <div>
-          <FormLabel htmlFor="gemini-model">
+          <Label htmlFor="gemini-model">
             {t("provider.form.gemini.model", { defaultValue: "模型" })}
-          </FormLabel>
+          </Label>
           <Input
             id="gemini-model"
             value={model}

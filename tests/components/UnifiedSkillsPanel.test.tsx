@@ -1,10 +1,17 @@
 import { createRef } from "react";
 import { render, screen, waitFor, act } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import UnifiedSkillsPanel, {
   type UnifiedSkillsPanelHandle,
 } from "@/components/skills/UnifiedSkillsPanel";
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+}
 
 const scanUnmanagedMock = vi.fn();
 const toggleSkillAppMock = vi.fn();
@@ -20,36 +27,40 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("@/hooks/useSkills", () => ({
-  useInstalledSkills: () => ({
-    data: [],
-    isLoading: false,
-  }),
-  useToggleSkillApp: () => ({
-    mutateAsync: toggleSkillAppMock,
-  }),
-  useUninstallSkill: () => ({
-    mutateAsync: uninstallSkillMock,
-  }),
-  useScanUnmanagedSkills: () => ({
-    data: [
-      {
-        directory: "shared-skill",
-        name: "Shared Skill",
-        description: "Imported from Claude",
-        foundIn: ["claude"],
-        path: "/tmp/shared-skill",
-      },
-    ],
-    refetch: scanUnmanagedMock,
-  }),
-  useImportSkillsFromApps: () => ({
-    mutateAsync: importSkillsMock,
-  }),
-  useInstallSkillsFromZip: () => ({
-    mutateAsync: installFromZipMock,
-  }),
-}));
+vi.mock("@/hooks/useSkills", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/useSkills")>();
+  return {
+    ...actual,
+    useInstalledSkills: () => ({
+      data: [],
+      isLoading: false,
+    }),
+    useToggleSkillApp: () => ({
+      mutateAsync: toggleSkillAppMock,
+    }),
+    useUninstallSkill: () => ({
+      mutateAsync: uninstallSkillMock,
+    }),
+    useScanUnmanagedSkills: () => ({
+      data: [
+        {
+          directory: "shared-skill",
+          name: "Shared Skill",
+          description: "Imported from Claude",
+          foundIn: ["claude"],
+          path: "/tmp/shared-skill",
+        },
+      ],
+      refetch: scanUnmanagedMock,
+    }),
+    useImportSkillsFromApps: () => ({
+      mutateAsync: importSkillsMock,
+    }),
+    useInstallSkillsFromZip: () => ({
+      mutateAsync: installFromZipMock,
+    }),
+  };
+});
 
 describe("UnifiedSkillsPanel", () => {
   beforeEach(() => {
@@ -74,11 +85,13 @@ describe("UnifiedSkillsPanel", () => {
     const ref = createRef<UnifiedSkillsPanelHandle>();
 
     render(
-      <UnifiedSkillsPanel
-        ref={ref}
-        onOpenDiscovery={() => {}}
-        currentApp="claude"
-      />,
+      <QueryClientProvider client={createTestQueryClient()}>
+        <UnifiedSkillsPanel
+          ref={ref}
+          onOpenDiscovery={() => {}}
+          currentApp="claude"
+        />
+      </QueryClientProvider>,
     );
 
     await act(async () => {

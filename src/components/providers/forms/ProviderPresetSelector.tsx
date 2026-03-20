@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { ClaudeIcon, CodexIcon, GeminiIcon } from "@/components/BrandIcons";
 import { Zap, Star, Layers, Settings2 } from "lucide-react";
 import type { ProviderPreset } from "@/config/claudeProviderPresets";
@@ -127,7 +127,7 @@ export function ProviderPresetSelector({
 
   return (
     <div className="space-y-3">
-      <FormLabel>{t("providerPreset.label")}</FormLabel>
+      <Label>{t("providerPreset.label")}</Label>
       <div className="flex flex-wrap gap-2">
         <button
           type="button"

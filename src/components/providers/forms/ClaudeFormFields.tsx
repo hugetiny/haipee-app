@@ -7,7 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -331,18 +331,18 @@ export function ClaudeFormFields({
       {/* 模板变量输入 */}
       {templateValueEntries.length > 0 && (
         <div className="space-y-3">
-          <FormLabel>
+          <Label>
             {t("providerForm.parameterConfig", {
               name: templatePresetName,
               defaultValue: `${templatePresetName} 参数配置`,
             })}
-          </FormLabel>
+          </Label>
           <div className="space-y-4">
             {templateValueEntries.map(([key, config]) => (
               <div key={key} className="space-y-2">
-                <FormLabel htmlFor={`template-${key}`}>
+                <Label htmlFor={`template-${key}`}>
                   {config.label}
-                </FormLabel>
+                </Label>
                 <Input
                   id={`template-${key}`}
                   type="text"
@@ -428,9 +428,9 @@ export function ClaudeFormFields({
             {/* API 格式选择（仅非云服务商显示） */}
             {category !== "cloud_provider" && (
               <div className="space-y-2">
-                <FormLabel htmlFor="apiFormat">
+                <Label htmlFor="apiFormat">
                   {t("providerForm.apiFormat", { defaultValue: "API 格式" })}
-                </FormLabel>
+                </Label>
                 <Select value={apiFormat} onValueChange={onApiFormatChange}>
                   <SelectTrigger id="apiFormat" className="w-full">
                     <SelectValue />
@@ -463,9 +463,9 @@ export function ClaudeFormFields({
 
             {/* 认证字段选择器 */}
             <div className="space-y-2">
-              <FormLabel>
+              <Label>
                 {t("providerForm.authField", { defaultValue: "认证字段" })}
-              </FormLabel>
+              </Label>
               <Select
                 value={apiKeyField}
                 onValueChange={(v) =>
@@ -497,7 +497,7 @@ export function ClaudeFormFields({
 
             {/* 模型映射 */}
             <div className="space-y-1 pt-2 border-t">
-              <FormLabel>{t("providerForm.modelMappingLabel")}</FormLabel>
+              <Label>{t("providerForm.modelMappingLabel")}</Label>
               <p className="text-xs text-muted-foreground">
                 {t("providerForm.modelMappingHint")}
               </p>
@@ -505,11 +505,11 @@ export function ClaudeFormFields({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* 主模型 */}
               <div className="space-y-2">
-                <FormLabel htmlFor="claudeModel">
+                <Label htmlFor="claudeModel">
                   {t("providerForm.anthropicModel", {
                     defaultValue: "主模型",
                   })}
-                </FormLabel>
+                </Label>
                 {renderModelInput(
                   "claudeModel",
                   claudeModel,
@@ -520,9 +520,9 @@ export function ClaudeFormFields({
 
               {/* 推理模型 */}
               <div className="space-y-2">
-                <FormLabel htmlFor="reasoningModel">
+                <Label htmlFor="reasoningModel">
                   {t("providerForm.anthropicReasoningModel")}
-                </FormLabel>
+                </Label>
                 {renderModelInput(
                   "reasoningModel",
                   reasoningModel,
@@ -532,11 +532,11 @@ export function ClaudeFormFields({
 
               {/* 默认 Haiku */}
               <div className="space-y-2">
-                <FormLabel htmlFor="claudeDefaultHaikuModel">
+                <Label htmlFor="claudeDefaultHaikuModel">
                   {t("providerForm.anthropicDefaultHaikuModel", {
                     defaultValue: "Haiku 默认模型",
                   })}
-                </FormLabel>
+                </Label>
                 {renderModelInput(
                   "claudeDefaultHaikuModel",
                   defaultHaikuModel,
@@ -547,11 +547,11 @@ export function ClaudeFormFields({
 
               {/* 默认 Sonnet */}
               <div className="space-y-2">
-                <FormLabel htmlFor="claudeDefaultSonnetModel">
+                <Label htmlFor="claudeDefaultSonnetModel">
                   {t("providerForm.anthropicDefaultSonnetModel", {
                     defaultValue: "Sonnet 默认模型",
                   })}
-                </FormLabel>
+                </Label>
                 {renderModelInput(
                   "claudeDefaultSonnetModel",
                   defaultSonnetModel,
@@ -562,11 +562,11 @@ export function ClaudeFormFields({
 
               {/* 默认 Opus */}
               <div className="space-y-2">
-                <FormLabel htmlFor="claudeDefaultOpusModel">
+                <Label htmlFor="claudeDefaultOpusModel">
                   {t("providerForm.anthropicDefaultOpusModel", {
                     defaultValue: "Opus 默认模型",
                   })}
-                </FormLabel>
+                </Label>
                 {renderModelInput(
                   "claudeDefaultOpusModel",
                   defaultOpusModel,

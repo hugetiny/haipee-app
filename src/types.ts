@@ -21,7 +21,7 @@ export interface Provider {
   notes?: string;
   // 新增：是否为商业合作伙伴
   isPartner?: boolean;
-  // 可选：供应商元数据（仅存于 ~/.cc-switch/config.json，不写入 live 配置）
+  // 可选：供应商元数据（仅存于 ~/.haipee/config.json，不写入 live 配置）
   meta?: ProviderMeta;
   // 图标配置
   icon?: string; // 图标名称（如 "openai", "anthropic"）
@@ -69,7 +69,7 @@ export interface UsageScript {
     url?: string; // 请求 URL
     method?: string; // HTTP 方法
     headers?: Record<string, string>; // 请求头
-    body?: any; // 请求体
+    body?: unknown; // 请求体
   };
 }
 
@@ -231,7 +231,7 @@ export interface RemoteSnapshotInfo {
 }
 
 // 应用设置类型（用于设置对话框与 Tauri API）
-// 存储在本地 ~/.cc-switch/settings.json，不随数据库同步
+// 存储在本地 ~/.haipee/settings.json，不随数据库同步
 export interface Settings {
   // ===== 设备级 UI 设置 =====
   // 是否在系统托盘（macOS 菜单栏）显示图标
@@ -261,7 +261,7 @@ export interface Settings {
   // User has confirmed the auto-sync traffic warning
   autoSyncConfirmed?: boolean;
   // 首选语言（可选，默认中文）
-  language?: "en" | "zh" | "ja";
+  language?: "zh" | "zh-TW" | "en" | "ja" | "fr" | "de" | "es" | "ko" | "ru" | "pt" | "it" | "hi" | "ar" | "bn";
 
   // 主页面显示的应用（默认全部显示）
   visibleApps?: VisibleApps;

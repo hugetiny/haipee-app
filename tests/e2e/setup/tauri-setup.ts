@@ -1,8 +1,8 @@
 /**
  * Tauri WebDriver Setup
  *
- * Builds the Tauri binary with the `webdriver` feature flag and launches it so
- * WebdriverIO can connect on the default port (4445).
+ * Runs `tauri dev` with the webdriver feature flag, which starts both the Vite dev
+ * server AND the Tauri app configured to load from the dev server.
  *
  * Prerequisites on macOS:
  *   safaridriver must be enabled: `sudo safaridriver --enable`
@@ -10,38 +10,20 @@
  * Usage: referenced by wdio.conf.ts → onPrepare hook.
  */
 
-import { execSync, spawn, type ChildProcess } from 'child_process';
-import { existsSync, writeFileSync, mkdirSync, appendFileSync } from 'fs';
+import { spawn, type ChildProcess } from 'child_process';
+import { writeFileSync, mkdirSync, appendFileSync } from 'fs';
 import { join, dirname } from 'path';
 
 const ROOT = process.cwd();
-const BINARY_PATH = join(ROOT, 'src-tauri/target/debug/haipee');
 const PID_FILE = join(ROOT, '.tauri-webdriver.pid');
 const LOG_FILE = join(ROOT, 'wdio-logs/tauri-binary.log');
-const MANIFEST = join(ROOT, 'src-tauri/Cargo.toml');
 const WEBDRIVER_PORT = 4445;
 
 // Track the spawned process for health checks and teardown
 let tauriProcess: ChildProcess | null = null;
 
-/** Returns true when Rust sources are newer than the debug binary. */
-function needsRebuild(): boolean {
-  if (!existsSync(BINARY_PATH)) return true;
-
-  const srcDir = join(ROOT, 'src-tauri/src');
-  try {
-    const newer = execSync(
-      `find "${srcDir}" -name "*.rs" -newer "${BINARY_PATH}" | head -1`,
-      { encoding: 'utf-8' },
-    ).trim();
-    return newer.length > 0;
-  } catch {
-    return true;
-  }
-}
-
 /** Polls the WebDriver /status endpoint until the server responds or timeout. */
-async function waitForWebDriver(port: number, timeoutMs = 60_000): Promise<void> {
+async function waitForWebDriver(port: number, timeoutMs = 120_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   let lastError: Error | null = null;
 
@@ -57,7 +39,7 @@ async function waitForWebDriver(port: number, timeoutMs = 60_000): Promise<void>
     } catch (e) {
       lastError = e as Error;
     }
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 1000));
   }
 
   const exitInfo = tauriProcess?.exitCode !== null
@@ -93,34 +75,24 @@ export async function healthCheck(): Promise<boolean> {
 }
 
 /**
- * Builds (if needed) and launches the Tauri binary with the webdriver feature.
+ * Launches Tauri in dev mode with the webdriver feature.
+ * This starts both the Vite dev server AND the Tauri app configured to load from it.
  * Call this from the wdio.conf.ts `onPrepare` hook.
  */
 export async function launchTauriForWebDriver(): Promise<void> {
   // Ensure log directory exists
   mkdirSync(dirname(LOG_FILE), { recursive: true });
 
-  if (needsRebuild()) {
-    console.log('[tauri-setup] Building with --features webdriver (this may take a few minutes)...');
-    execSync(`cargo build --manifest-path "${MANIFEST}" --features webdriver`, {
-      stdio: 'inherit',
-      timeout: 300_000,
-      cwd: ROOT,
-    });
-    console.log('[tauri-setup] Build complete.');
-  } else {
-    console.log('[tauri-setup] Binary is up-to-date, skipping build.');
-  }
-
-  console.log(`[tauri-setup] Launching ${BINARY_PATH}...`);
-
   // Clear previous log
-  writeFileSync(LOG_FILE, `[${new Date().toISOString()}] Starting Tauri binary\n`);
+  writeFileSync(LOG_FILE, `[${new Date().toISOString()}] Starting Tauri dev with WebDriver\n`);
 
-  tauriProcess = spawn(BINARY_PATH, [], {
-    // Do NOT detach - we need to monitor the process
+  console.log('[tauri-setup] Starting Tauri dev with --features webdriver...');
+
+  // Use tauri dev instead of running binary directly
+  // This ensures the app loads from the Vite dev server
+  tauriProcess = spawn('bun', ['run', 'tauri', 'dev', '--features', 'webdriver'], {
+    cwd: ROOT,
     detached: false,
-    // Capture stdout/stderr for debugging
     stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
@@ -155,11 +127,11 @@ export async function launchTauriForWebDriver(): Promise<void> {
   // Persist PID so teardown can kill it
   mkdirSync(dirname(PID_FILE), { recursive: true });
   writeFileSync(PID_FILE, String(pid), 'utf-8');
-  console.log(`[tauri-setup] Tauri launched (PID ${pid}), waiting for WebDriver on :${WEBDRIVER_PORT}...`);
+  console.log(`[tauri-setup] Tauri dev launched (PID ${pid}), waiting for WebDriver on :${WEBDRIVER_PORT}...`);
 
   await waitForWebDriver(WEBDRIVER_PORT);
   console.log(`[tauri-setup] WebDriver ready on port ${WEBDRIVER_PORT}.`);
   console.log(`[tauri-setup] Binary logs: ${LOG_FILE}`);
 }
 
-export { BINARY_PATH, PID_FILE, WEBDRIVER_PORT, LOG_FILE };
+export { PID_FILE, WEBDRIVER_PORT, LOG_FILE };

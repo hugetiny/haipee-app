@@ -1,4 +1,4 @@
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 use std::collections::HashMap;
 
 /// 供应商图标信息
@@ -11,7 +11,7 @@ pub struct ProviderIcon {
 
 /// 供应商名称到图标的默认映射
 #[allow(dead_code)]
-pub static DEFAULT_PROVIDER_ICONS: Lazy<HashMap<&'static str, ProviderIcon>> = Lazy::new(|| {
+pub static DEFAULT_PROVIDER_ICONS: LazyLock<HashMap<&'static str, ProviderIcon>> = LazyLock::new(|| {
     let mut m = HashMap::new();
 
     // AI 服务商

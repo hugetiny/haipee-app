@@ -173,7 +173,7 @@ export function WebdavSyncSection({
     baseUrl: config?.baseUrl ?? "",
     username: config?.username ?? "",
     password: config?.password ?? "",
-    remoteRoot: config?.remoteRoot ?? "cc-switch-sync",
+    remoteRoot: config?.remoteRoot ?? "haipee-sync",
     profile: config?.profile ?? "default",
     autoSync: config?.autoSync ?? false,
   }));
@@ -209,7 +209,7 @@ export function WebdavSyncSection({
       baseUrl: config.baseUrl ?? "",
       username: config.username ?? "",
       password: config.password ?? "",
-      remoteRoot: config.remoteRoot ?? "cc-switch-sync",
+      remoteRoot: config.remoteRoot ?? "haipee-sync",
       profile: config.profile ?? "default",
       autoSync: config.autoSync ?? false,
     });
@@ -290,7 +290,7 @@ export function WebdavSyncSection({
       baseUrl,
       username: form.username.trim(),
       password: form.password,
-      remoteRoot: form.remoteRoot.trim() || "cc-switch-sync",
+      remoteRoot: form.remoteRoot.trim() || "haipee-sync",
       profile: form.profile.trim() || "default",
       autoSync: form.autoSync,
     };
@@ -485,7 +485,7 @@ export function WebdavSyncSection({
   const lastError = config?.status?.lastError?.trim();
   const showAutoSyncError =
     !!lastError && config?.status?.lastErrorSource === "auto";
-  const currentRemotePath = `/${form.remoteRoot.trim() || "cc-switch-sync"}/v2/db-v6/${form.profile.trim() || "default"}`;
+  const currentRemotePath = `/${form.remoteRoot.trim() || "haipee-sync"}/v2/db-v6/${form.profile.trim() || "default"}`;
   const remoteDbCompatDisplay = formatDbCompatVersion(
     remoteInfo?.dbCompatVersion,
   );
@@ -594,7 +594,7 @@ export function WebdavSyncSection({
             <Input
               value={form.remoteRoot}
               onChange={(e) => updateField("remoteRoot", e.target.value)}
-              placeholder="cc-switch-sync"
+              placeholder="haipee-sync"
               className="text-xs flex-1"
               disabled={isLoading}
             />

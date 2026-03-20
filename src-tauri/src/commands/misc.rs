@@ -3,7 +3,7 @@
 use crate::app_config::AppType;
 use crate::init_status::{InitErrorPayload, SkillsMigrationPayload};
 use crate::services::ProviderService;
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 use regex::Regex;
 use std::collections::HashMap;
 use std::path::Path;
@@ -40,7 +40,7 @@ pub async fn check_for_updates(handle: AppHandle) -> Result<bool, String> {
     handle
         .opener()
         .open_url(
-            "https://github.com/farion1231/cc-switch/releases/latest",
+            "https://github.com/farion1231/haipee/releases/latest",
             None::<String>,
         )
         .map_err(|e| format!("打开更新页面失败: {e}"))?;
@@ -240,7 +240,7 @@ async fn fetch_github_latest_version(client: &reqwest::Client, repo: &str) -> Op
     let url = format!("https://api.github.com/repos/{repo}/releases/latest");
     match client
         .get(&url)
-        .header("User-Agent", "cc-switch")
+        .header("User-Agent", "haipee")
         .header("Accept", "application/vnd.github+json")
         .send()
         .await
@@ -259,8 +259,8 @@ async fn fetch_github_latest_version(client: &reqwest::Client, repo: &str) -> Op
 }
 
 /// 预编译的版本号正则表达式
-static VERSION_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"\d+\.\d+\.\d+(-[\w.]+)?").expect("Invalid version regex"));
+static VERSION_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\d+\.\d+\.\d+(-[\w.]+)?").expect("Invalid version regex"));
 
 /// 从版本输出中提取纯版本号
 fn extract_version(raw: &str) -> String {

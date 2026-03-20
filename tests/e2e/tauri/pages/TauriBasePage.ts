@@ -145,8 +145,16 @@ export abstract class TauriBasePage {
    * Check if current page has specific heading
    */
   async hasHeading(text: string): Promise<boolean> {
-    const heading = await $(`h1*="${text}", h2*="${text}", h3*="${text}"`);
-    return heading.isExisting();
+    // Use JavaScript execution to find heading by text content
+    return browser.execute((searchText) => {
+      const headings = document.querySelectorAll('h1, h2, h3');
+      for (const h of headings) {
+        if (h.textContent?.includes(searchText)) {
+          return true;
+        }
+      }
+      return false;
+    }, text);
   }
 
   /**

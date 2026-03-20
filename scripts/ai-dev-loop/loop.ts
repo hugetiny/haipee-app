@@ -275,7 +275,8 @@ function shouldContinue(state: LoopState, config: LoopConfig): boolean {
     state.testResults.unit.failed === 0 &&
     state.testResults.rust.failed === 0 &&
     state.testResults.integration.failed === 0 &&
-    state.testResults.e2e.failed === 0;
+    state.testResults.e2e.failed === 0 &&
+    state.testResults.tauri_e2e.failed === 0;
 
   const noPendingFailures = state.pendingFailures.length === 0;
 

@@ -307,6 +307,12 @@ fn schema_migration_v4_adds_pricing_model_columns() {
             enabled_gemini INTEGER NOT NULL DEFAULT 0,
             enabled_opencode INTEGER NOT NULL DEFAULT 0
         );
+        CREATE TABLE providers (
+            id TEXT PRIMARY KEY,
+            app_type TEXT NOT NULL,
+            name TEXT NOT NULL,
+            meta TEXT
+        );
         "#,
     )
     .expect("seed v4 schema");

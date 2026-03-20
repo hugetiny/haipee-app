@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Zap } from "lucide-react";
 
@@ -35,7 +35,7 @@ export function EndpointField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <FormLabel htmlFor={id}>{label}</FormLabel>
+        <Label htmlFor={id}>{label}</Label>
         {showManageButton && onManageClick && (
           <button
             type="button"

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to CC Switch will be documented in this file.
+All notable changes to Haipee will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -13,8 +13,8 @@ Post-v3.12.2 work adds a Tool Search domain restriction bypass, skill backup/res
 
 ### Added
 
-- **Tool Search Domain Bypass**: Added setting to bypass Claude CLI Tool Search domain whitelist via equal-length binary patching; backups stored in `~/.cc-switch/toolsearch-backups/` with auto-reapply on startup when enabled
-- **Skill Auto-Backup**: Skill files are automatically backed up to `~/.cc-switch/skill-backups/` before uninstall, with metadata preserved in `meta.json`; old backups pruned to keep at most 20
+- **Tool Search Domain Bypass**: Added setting to bypass Claude CLI Tool Search domain whitelist via equal-length binary patching; backups stored in `~/.haipee/toolsearch-backups/` with auto-reapply on startup when enabled
+- **Skill Auto-Backup**: Skill files are automatically backed up to `~/.haipee/skill-backups/` before uninstall, with metadata preserved in `meta.json`; old backups pruned to keep at most 20
 - **Skill Backup Restore & Delete**: Added list/restore/delete commands for skill backups; restore copies files back to SSOT, saves the DB record, and syncs to the current app with rollback on failure
 
 ### Changed
@@ -280,7 +280,7 @@ This release introduces **OpenClaw** as the fifth supported application, a full 
 
 #### OpenClaw Support (New Application)
 
-- **OpenClaw Integration**: Full management support for OpenClaw as the fifth application in CC Switch, including provider switching, configuration panels (Env / Tools / Agents Defaults), Workspace file management (HEARTBEAT / BOOTSTRAP / BOOT), daily memory files, and additive overlay mode
+- **OpenClaw Integration**: Full management support for OpenClaw as the fifth application in Haipee, including provider switching, configuration panels (Env / Tools / Agents Defaults), Workspace file management (HEARTBEAT / BOOTSTRAP / BOOT), daily memory files, and additive overlay mode
 - **OpenClaw Provider Presets**: 13+ built-in provider presets with brand icon and complete i18n (zh/en/ja)
 - **OpenClaw Form Fields**: Dedicated provider form with providerKey input, model allowlist auto-registration, and default model button
 - **OpenClaw Config Panels**: Env editor, Tools editor, and Agents Defaults editor backed by JSON5 read/write (`openclaw_config.rs`)
@@ -597,7 +597,7 @@ This release focuses on stability improvements and crash prevention.
 
 ### Added
 
-- **Crash Logging** - Panic hook captures crash info to `~/.cc-switch/crash.log` with full stack traces (#562)
+- **Crash Logging** - Panic hook captures crash info to `~/.haipee/crash.log` with full stack traces (#562)
 - **Release Logging** - Enable logging for release builds with automatic rotation (keeps 2 most recent files)
 - **AIGoCode Icon** - Added colored icon for AIGoCode provider preset
 
@@ -606,7 +606,7 @@ This release focuses on stability improvements and crash prevention.
 - **Proxy Panic Prevention** - Graceful degradation when HTTP client initialization fails due to invalid proxy settings; falls back to no_proxy mode (#560)
 - **UTF-8 Safety** - Fix potential panic when masking API keys or truncating logs containing multi-byte characters (Chinese, emoji, etc.) (#560)
 - **Default Proxy Port** - Change default port from 5000 to 15721 to avoid conflict with macOS AirPlay Receiver (#560)
-- **Windows Title** - Display "CC Switch" instead of default "Tauri app" in window title
+- **Windows Title** - Display "Haipee" instead of default "Tauri app" in window title
 - **Windows/Linux Spacing** - Remove extra 28px blank space below native titlebar introduced in v3.9.0
 - **Flatpak Tray Icon** - Bundle libayatana-appindicator for tray icon support on Flatpak (#556)
 - **Provider Preset** - Correct casing from "AiGoCode" to "AIGoCode" to match official branding
@@ -659,7 +659,7 @@ This stable release includes all changes from `3.9.0-1`, `3.9.0-2`, and `3.9.0-3
 - **WebView Compatibility** - Add fallback for crypto.randomUUID() on older WebViews
 - **macOS Autostart** - Use `.app` bundle path to prevent terminal window popups
 - **Database** - Add missing schema migrations; show an error dialog on initialization failure with a retry option
-- **Import/Export** - Restrict SQL import to CC Switch exported backups only; refresh providers immediately after import
+- **Import/Export** - Restrict SQL import to Haipee exported backups only; refresh providers immediately after import
 - **Prompts** - Allow saving prompts with empty content
 - **MCP Sync** - Skip sync when the target CLI app is not installed
 - **Common Config (Codex)** - Preserve MCP server `base_url` during extraction and remove provider-specific `model_providers` blocks
@@ -745,7 +745,7 @@ Second beta release focusing on proxy stability, import safety, and provider pre
 
 ### Fixed
 
-- **Import/Export** - Restrict SQL import to CC Switch exported backups only; refresh providers immediately after import
+- **Import/Export** - Restrict SQL import to Haipee exported backups only; refresh providers immediately after import
 - **Proxy** - Respect existing Claude token when syncing; add fallback recovery for orphaned takeover state; remove global auto-start flag
 - **Windows** - Add minimum window size to Windows platform config
 - **UI** - Improve About section UI (#419) and unify header toolbar styling
@@ -901,7 +901,7 @@ This beta release introduces the **Local API Proxy** feature, along with Skills 
 ### Added
 
 - **Gemini configuration directory support** (#255) - Added custom configuration directory option for Gemini in settings
-- **ArchLinux installation support** (#259) - Added AUR installation via `paru -S cc-switch-bin`
+- **ArchLinux installation support** (#259) - Added AUR installation via `paru -S haipee-bin`
 
 ### Improved
 
@@ -929,7 +929,7 @@ This beta release introduces the **Local API Proxy** feature, along with Skills 
   - Google Official (OAuth authentication)
   - PackyCode (partner integration)
   - Custom endpoint support
-- **Deep link support** - Import Gemini providers via `ccswitch://` protocol
+- **Deep link support** - Import Gemini providers via `haipee://` protocol
 - **System tray integration** - Quick-switch Gemini providers from tray menu
 - **Backend modules** - New `gemini_config.rs` (20KB) and `gemini_mcp.rs`
 
@@ -990,9 +990,9 @@ This beta release introduces the **Local API Proxy** feature, along with Skills 
   - usePromptActions: Business logic hook (152 lines)
 - **Full i18n support** - Complete Chinese/English translations (41+ keys)
 
-#### Deep Link Protocol (ccswitch://)
+#### Deep Link Protocol (haipee://)
 
-- **Protocol registration** - `ccswitch://` URL scheme for one-click imports
+- **Protocol registration** - `haipee://` URL scheme for one-click imports
 - **Provider import** - Import provider configurations from URLs or shared links
 - **Lifecycle integration** - Deep link handling integrated into app startup
 - **Cross-platform support** - Works on Windows, macOS, and Linux
@@ -1462,11 +1462,11 @@ For users upgrading from v2.x (Electron version):
 - The app will automatically migrate your existing provider configurations
 - Window position and size preferences have been reset to defaults
 
-#### Backup on v1→v2 Migration (cc-switch internal config)
+#### Backup on v1→v2 Migration (haipee internal config)
 
-- When the app detects an old v1 config structure at `~/.cc-switch/config.json`, it now creates a timestamped backup before writing the new v2 structure.
-- Backup location: `~/.cc-switch/config.v1.backup.<timestamp>.json`
-- This only concerns cc-switch's own metadata file; your actual provider files under `~/.claude/` and `~/.codex/` are untouched.
+- When the app detects an old v1 config structure at `~/.haipee/config.json`, it now creates a timestamped backup before writing the new v2 structure.
+- Backup location: `~/.haipee/config.v1.backup.<timestamp>.json`
+- This only concerns haipee's own metadata file; your actual provider files under `~/.claude/` and `~/.codex/` are untouched.
 
 ### 🛠️ Development
 

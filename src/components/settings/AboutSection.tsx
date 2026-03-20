@@ -241,13 +241,13 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
 
       if (!displayVersion) {
         await settingsApi.openExternal(
-          "https://github.com/farion1231/cc-switch/releases",
+          "https://github.com/farion1231/haipee/releases",
         );
         return;
       }
 
       await settingsApi.openExternal(
-        `https://github.com/farion1231/cc-switch/releases/tag/${displayVersion}`,
+        `https://github.com/farion1231/haipee/releases/tag/${displayVersion}`,
       );
     } catch (error) {
       console.error("[AboutSection] Failed to open release notes", error);
@@ -589,7 +589,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
           </div>
         </motion.div>
       )}
-      {/* cc-switch attribution */}
+      {/* haipee attribution */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -599,33 +599,33 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
         <p className="text-xs text-muted-foreground">
           本项目基于{" "}
           <a
-            href="https://github.com/farion1231/cc-switch"
+            href="https://github.com/farion1231/haipee"
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-primary underline-offset-2 hover:underline"
             onClick={(e) => {
               e.preventDefault();
               settingsApi.openExternal(
-                "https://github.com/farion1231/cc-switch",
+                "https://github.com/farion1231/haipee",
               );
             }}
           >
-            cc-switch
+            haipee
           </a>{" "}
           v3.12.0 二次开发 &middot; 感谢并请支持{" "}
           <a
-            href="https://github.com/farion1231/cc-switch"
+            href="https://github.com/farion1231/haipee"
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-primary underline-offset-2 hover:underline"
             onClick={(e) => {
               e.preventDefault();
               settingsApi.openExternal(
-                "https://github.com/farion1231/cc-switch",
+                "https://github.com/farion1231/haipee",
               );
             }}
           >
-            farion1231/cc-switch
+            farion1231/haipee
           </a>
         </p>
       </motion.div>

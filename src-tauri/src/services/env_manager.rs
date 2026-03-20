@@ -68,7 +68,7 @@ fn create_backup(conflicts: &[EnvConflict]) -> Result<BackupInfo, String> {
 /// Get backup directory path
 fn get_backup_dir() -> Result<PathBuf, String> {
     let home = dirs::home_dir().ok_or("无法获取用户主目录")?;
-    Ok(home.join(".cc-switch").join("backups"))
+    Ok(home.join(".haipee").join("backups"))
 }
 
 /// Delete a single environment variable
@@ -237,4 +237,107 @@ mod tests {
         let backup_dir = get_backup_dir();
         assert!(backup_dir.is_ok());
     }
+
+    #[test]
+    fn test_get_default_shell_config() {
+        let config = get_default_shell_config();
+        assert!(!config.is_empty());
+    }
+}
+
+/// Get the default shell config file path for the current platform
+///
+/// Returns:
+/// - macOS: ~/.zshrc (or ~/.bashrc if zsh not detected)
+/// - Linux: ~/.bashrc
+/// - Windows: "registry" (special marker)
+pub fn get_default_shell_config() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        "registry".to_string()
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
+
+        // Check if zsh is available (default on macOS)
+        #[cfg(target_os = "macos")]
+        {
+            let zshrc = format!("{}/.zshrc", home);
+            if std::path::Path::new(&zshrc).exists() {
+                return zshrc;
+            }
+        }
+
+        // Fallback to bashrc
+        format!("{}/.bashrc", home)
+    }
+}
+
+/// Set (add or modify) an environment variable in a shell config file
+///
+/// Arguments:
+/// - var_name: The environment variable name
+/// - var_value: The value to set
+/// - target_file: Optional file path (defaults to get_default_shell_config())
+///
+/// Returns the file path that was modified
+#[cfg(target_os = "windows")]
+pub fn set_env_var(var_name: String, var_value: String, _target_file: Option<String>) -> Result<String, String> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    // On Windows, write to HKEY_CURRENT_USER\Environment
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER)
+        .create_subkey("Environment")
+        .map_err(|e| format!("打开注册表失败: {}", e))?;
+
+    hkcu.set_value(&var_name, &var_value)
+        .map_err(|e| format!("写入注册表失败: {}", e))?;
+
+    Ok("HKEY_CURRENT_USER\\Environment".to_string())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn set_env_var(var_name: String, var_value: String, target_file: Option<String>) -> Result<String, String> {
+    let file_path = target_file.unwrap_or_else(get_default_shell_config);
+
+    // Read existing content
+    let mut content = if let Ok(existing) = fs::read_to_string(&file_path) {
+        existing
+    } else {
+        String::new()
+    };
+
+    // Check if variable already exists
+    let var_pattern = format!("export {}=", var_name);
+    let mut found = false;
+    let new_lines: Vec<String> = content
+        .lines()
+        .map(|line| {
+            if line.trim().starts_with(&var_pattern) {
+                found = true;
+                format!("export {}=\"{}\"", var_name, var_value)
+            } else {
+                line.to_string()
+            }
+        })
+        .collect();
+
+    if found {
+        // Variable existed, we updated it
+        content = new_lines.join("\n");
+    } else {
+        // Variable doesn't exist, append it
+        if !content.ends_with('\n') && !content.is_empty() {
+            content.push('\n');
+        }
+        content.push_str(&format!("export {}=\"{}\"\n", var_name, var_value));
+    }
+
+    // Write back to file
+    fs::write(&file_path, content).map_err(|e| format!("写入文件失败 {}: {}", file_path, e))?;
+
+    Ok(file_path)
 }

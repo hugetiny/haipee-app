@@ -7,7 +7,7 @@ import type { EnvConflict, BackupInfo } from "@/types/env";
 
 /**
  * 检查指定应用的环境变量冲突
- * @param appType 应用类型 ("claude" | "codex" | "gemini")
+ * @param appType 应用类型 ("claude" | "codex" | "gemini" | "opencode")
  * @returns 环境变量冲突列表
  */
 export async function checkEnvConflicts(
@@ -36,13 +36,40 @@ export async function restoreEnvBackup(backupPath: string): Promise<void> {
 }
 
 /**
+ * 获取默认的 shell 配置文件路径
+ * @returns 默认配置文件路径（如 ~/.zshrc 或 "registry" on Windows）
+ */
+export async function getDefaultShellConfig(): Promise<string> {
+  return invoke<string>("get_default_shell_config");
+}
+
+/**
+ * 设置环境变量（添加或修改）
+ * @param varName 环境变量名称
+ * @param varValue 环境变量值
+ * @param targetFile 目标文件路径（可选，默认使用 getDefaultShellConfig() 返回的路径）
+ * @returns 实际修改的文件路径
+ */
+export async function setEnvVar(
+  varName: string,
+  varValue: string,
+  targetFile?: string,
+): Promise<string> {
+  return invoke<string>("set_env_var_command", {
+    varName,
+    varValue,
+    targetFile: targetFile ?? null,
+  });
+}
+
+/**
  * 检查所有应用的环境变量冲突
  * @returns 按应用类型分组的环境变量冲突
  */
 export async function checkAllEnvConflicts(): Promise<
   Record<string, EnvConflict[]>
 > {
-  const apps = ["claude", "codex", "gemini", "kimi"];
+  const apps = ["claude", "codex", "gemini", "opencode"];
   const results: Record<string, EnvConflict[]> = {};
 
   await Promise.all(

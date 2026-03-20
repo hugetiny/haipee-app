@@ -82,7 +82,7 @@ pub struct WebDavSyncStatus {
 }
 
 fn default_remote_root() -> String {
-    "cc-switch-sync".to_string()
+    "haipee-sync".to_string()
 }
 fn default_profile() -> String {
     "default".to_string()
@@ -165,7 +165,7 @@ impl WebDavSyncSettings {
 
 /// 应用设置结构
 ///
-/// 存储设备级别设置，保存在本地 `~/.cc-switch/settings.json`，不随数据库同步。
+/// 存储设备级别设置，保存在本地 `~/.haipee/settings.json`，不随数据库同步。
 /// 这确保了云同步场景下多设备可以独立运作。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -366,7 +366,7 @@ impl AppSettings {
             .language
             .as_ref()
             .map(|s| s.trim())
-            .filter(|s| matches!(*s, "en" | "zh" | "ja"))
+            .filter(|s| matches!(*s, "en" | "zh" | "zh-TW" | "ja" | "ar" | "bn" | "de" | "es" | "fr" | "hi" | "it" | "ko" | "pt" | "ru"))
             .map(|s| s.to_string());
 
         if let Some(sync) = &mut self.webdav_sync {

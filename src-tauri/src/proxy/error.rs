@@ -6,7 +6,7 @@ use axum::{
 use serde_json::json;
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone)]
 pub enum ProxyError {
     #[error("服务器已在运行")]
     AlreadyRunning,

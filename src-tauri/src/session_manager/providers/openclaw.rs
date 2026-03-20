@@ -140,7 +140,7 @@ pub fn send_message(path: &Path, message: &str) -> Result<(), String> {
         }
     });
 
-    let line = format!("{}\n", entry.to_string());
+    let line = format!("{entry}\n");
     file.write_all(line.as_bytes())
         .map_err(|e| format!("Failed to write message to session file: {e}"))?;
 

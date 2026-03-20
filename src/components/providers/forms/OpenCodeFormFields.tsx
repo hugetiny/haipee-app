@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -411,11 +411,11 @@ export function OpenCodeFormFields({
     <>
       {/* NPM Package Selector */}
       <div className="space-y-2">
-        <FormLabel htmlFor="opencode-npm">
+        <Label htmlFor="opencode-npm">
           {t("opencode.npmPackage", {
             defaultValue: "接口格式",
           })}
-        </FormLabel>
+        </Label>
         <Select value={npm} onValueChange={onNpmChange}>
           <SelectTrigger id="opencode-npm">
             <SelectValue
@@ -453,9 +453,9 @@ export function OpenCodeFormFields({
 
       {/* Base URL */}
       <div className="space-y-2">
-        <FormLabel htmlFor="opencode-baseurl">
+        <Label htmlFor="opencode-baseurl">
           {t("opencode.baseUrl", { defaultValue: "Base URL" })}
-        </FormLabel>
+        </Label>
         <Input
           id="opencode-baseurl"
           value={baseUrl}
@@ -473,9 +473,9 @@ export function OpenCodeFormFields({
       {/* Extra Options Editor */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <FormLabel>
+          <Label>
             {t("opencode.extraOptions", { defaultValue: "额外选项" })}
-          </FormLabel>
+          </Label>
           <Button
             type="button"
             variant="outline"
@@ -549,9 +549,9 @@ export function OpenCodeFormFields({
       {/* Models Editor */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <FormLabel>
+          <Label>
             {t("opencode.models", { defaultValue: "Models" })}
-          </FormLabel>
+          </Label>
           <Button
             type="button"
             variant="outline"

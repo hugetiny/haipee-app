@@ -54,7 +54,7 @@ const generatePresetTemplates = (
     method: "GET",
     headers: {
       "Authorization": "Bearer {{apiKey}}",
-      "User-Agent": "cc-switch/1.0"
+      "User-Agent": "haipee/1.0"
     }
   },
   extractor: function(response) {
@@ -896,7 +896,7 @@ const UsageScriptModal: React.FC<UsageScriptModalProps> = ({
     method: "POST",
     headers: {
       "Authorization": "Bearer {{apiKey}}",
-      "User-Agent": "cc-switch/1.0"
+      "User-Agent": "haipee/1.0"
     }
   },
   extractor: function(response) {

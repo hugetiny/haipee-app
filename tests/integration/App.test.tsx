@@ -137,8 +137,8 @@ vi.mock("@/components/mcp/McpPanel", () => ({
 
 const renderApp = (AppComponent: ComponentType) => {
   // Set initial app to openclaw for testing (the only valid app in VALID_APPS)
-  localStorage.setItem("cc-switch-last-app", "openclaw");
-  localStorage.setItem("cc-switch-last-view", "providers");
+  localStorage.setItem("haipee-last-app", "openclaw");
+  localStorage.setItem("haipee-last-view", "providers");
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>

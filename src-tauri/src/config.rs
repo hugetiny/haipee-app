@@ -92,7 +92,7 @@ pub fn get_app_config_dir() -> PathBuf {
     }
 
     let new_dir = get_home_dir().join(".haipee");
-    let old_dir = get_home_dir().join(".cc-switch");
+    let old_dir = get_home_dir().join(".haipee");
 
     // 自动迁移：如果新目录不存在但旧目录存在，执行迁移
     if !new_dir.exists() && old_dir.exists() {

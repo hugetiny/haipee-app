@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "CC Switch",
+    "title": "Haipee",
     "description": "All-in-One Assistant for Claude Code, Codex & Gemini CLI"
   },
   "common": {
@@ -186,7 +186,7 @@
     "deleteProvider": "Delete Provider",
     "deleteProviderMessage": "Are you sure you want to delete provider \"{{name}}\"? This action cannot be undone.",
     "removeProvider": "Remove Provider",
-    "removeProviderMessage": "Are you sure you want to remove provider \"{{name}}\" from the configuration?\n\nAfter removal, this provider will no longer be active, but the configuration data will be retained in CC Switch. You can re-add it at any time.",
+    "removeProviderMessage": "Are you sure you want to remove provider \"{{name}}\" from the configuration?\n\nAfter removal, this provider will no longer be active, but the configuration data will be retained in Haipee. You can re-add it at any time.",
     "proxy": {
       "title": "Enable Local Proxy",
       "message": "Local proxy is an advanced feature. Please make sure you understand how it works before enabling.\n\nWe recommend consulting the relevant documentation or your provider for proper configuration.",
@@ -219,6 +219,15 @@
     "tabGeneral": "General",
     "tabAdvanced": "Advanced",
     "tabProxy": "Proxy",
+    "tabEnv": "Env Vars",
+    "tabModels": "Models",
+    "tabAuth": "Auth",
+    "models": {
+      "title": "Model Management",
+      "description": "Manage model configurations for all Agents",
+      "heading": "Model Management",
+      "headingDescription": "Manage model configurations for all Agents. Switch between Agents to view and edit."
+    },
     "advanced": {
       "configDir": {
         "title": "Configuration Directory",
@@ -248,7 +257,7 @@
       },
       "globalProxy": {
         "title": "Global Outbound Proxy",
-        "description": "Configure proxy for CC Switch to access external APIs"
+        "description": "Configure proxy for Haipee to access external APIs"
       },
       "data": {
         "title": "Data Management",
@@ -318,7 +327,7 @@
     "themeDark": "Dark",
     "themeSystem": "System",
     "importExport": "SQL Import/Export",
-    "importExportHint": "Import or export database SQL backups for migration or restore (import supports only backups exported by CC Switch).",
+    "importExportHint": "Import or export database SQL backups for migration or restore (import supports only backups exported by Haipee).",
     "exportConfig": "Export SQL Backup",
     "selectConfigFile": "Select SQL File",
     "noFileSelected": "No configuration file selected.",
@@ -408,7 +417,7 @@
         "synologyHint": "Install and enable the WebDAV Server package in Synology Package Center first.",
         "custom": "Custom"
       },
-      "remoteRootDefault": "Default: cc-switch-sync",
+      "remoteRootDefault": "Default: haipee-sync",
       "profileDefault": "Default: default",
       "saveAndTestSuccess": "Config saved, connection OK",
       "saveAndTestFailed": "Config saved, but connection test failed: {{error}}",
@@ -447,6 +456,32 @@
         "confirm": "Confirm Upload"
       }
     },
+    "envVar": {
+      "title": "System Environment Variables",
+      "description": "Manage environment variables in shell config ({{file}})",
+      "openclawNote": "OpenClaw uses config files for settings and does not support system environment variables, so it is not shown here.",
+      "warning": "Note: After modifying environment variables, you need to restart the terminal or application for changes to take effect. Some apps may require a new terminal session to read updated environment variables.",
+      "varCount": "{{count}} environment variables",
+      "noVars": "No environment variables",
+      "noVarsHint": "No related environment variables detected",
+      "addVar": "Add Environment Variable",
+      "editVar": "Edit Environment Variable",
+      "varName": "Variable Name",
+      "varValue": "Variable Value",
+      "targetFile": "Target File",
+      "emptyValue": "(empty)",
+      "systemEnv": "System Environment Variable",
+      "nameRequired": "Please enter variable name",
+      "addSuccess": "Environment variable added",
+      "addFailed": "Failed to add environment variable",
+      "editSuccess": "Environment variable updated",
+      "editFailed": "Failed to update environment variable",
+      "deleteSuccess": "Environment variable deleted",
+      "deleteFailed": "Failed to delete environment variable",
+      "deleteConfirmTitle": "Delete Environment Variable",
+      "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This will remove the variable from the config file.",
+      "loadFailed": "Failed to load environment variables"
+    },
     "autoReload": "Data refreshed",
     "languageOptionChinese": "中文",
     "languageOptionEnglish": "English",
@@ -454,7 +489,7 @@
     "windowBehavior": "Window Behavior",
     "windowBehaviorHint": "Configure window minimize and Claude plugin integration policies.",
     "launchOnStartup": "Launch on Startup",
-    "launchOnStartupDescription": "Automatically run CC Switch when system starts",
+    "launchOnStartupDescription": "Automatically run Haipee when system starts",
     "silentStartup": "Silent Startup",
     "silentStartupDescription": "Start in background mode without showing main window",
     "autoLaunchFailed": "Failed to set auto-launch",
@@ -509,9 +544,9 @@
     },
     "configDirectoryOverride": "Configuration Directory Override (Advanced)",
     "configDirectoryDescription": "When using Claude Code or Codex in environments like WSL, you can manually specify the configuration directory to the one in WSL to keep provider data consistent with the main environment.",
-    "appConfigDir": "CC Switch Configuration Directory",
-    "appConfigDirDescription": "Customize the storage location for CC Switch configuration (point to cloud sync folder to enable config sync)",
-    "browsePlaceholderApp": "e.g., C:\\Users\\Administrator\\.cc-switch",
+    "appConfigDir": "Haipee Configuration Directory",
+    "appConfigDirDescription": "Customize the storage location for Haipee configuration (point to cloud sync folder to enable config sync)",
+    "browsePlaceholderApp": "e.g., C:\\Users\\Administrator\\.haipee",
     "claudeConfigDir": "Claude Code Configuration Directory",
     "claudeConfigDirDescription": "Override Claude configuration directory (settings.json) and keep claude.json (MCP) alongside it.",
     "codexConfigDir": "Codex Configuration Directory",
@@ -557,7 +592,7 @@
     "importFailedError": "Import config failed: {{message}}",
     "exportFailedError": "Export config failed:",
     "restartRequired": "Restart Required",
-    "restartRequiredMessage": "Modifying the CC Switch configuration directory requires restarting the application to take effect. Restart now?",
+    "restartRequiredMessage": "Modifying the Haipee configuration directory requires restarting the application to take effect. Restart now?",
     "restartNow": "Restart Now",
     "restartLater": "Restart Later",
     "restartFailed": "Application restart failed, please manually close and reopen.",
@@ -599,6 +634,34 @@
     "gemini": "Gemini",
     "opencode": "OpenCode",
     "openclaw": "OpenClaw"
+  },
+  "agent": {
+    "config": {
+      "title": "Agent Config",
+      "basic": "Basic Config",
+      "skills": "Skills",
+      "mcp": "MCP",
+      "prompts": "Prompts",
+      "env": "Environment",
+      "advanced": "Advanced",
+      "selectAgent": "Select Agent",
+      "models": "Model Config",
+      "modelsDescription": "Manage models for this agent and switch the active model",
+      "advancedSettings": "Advanced Settings",
+      "advancedWarning": "Directly editing config files may affect app behavior. Make sure you understand what you're changing. Backup important data before saving.",
+      "viewOnlyHint": "This view is read-only. Use the button above to open the config directory and edit with your preferred editor.",
+      "openDir": "Open Directory",
+      "openDirFailed": "Failed to open config directory",
+      "loadFailed": "Failed to load config file",
+      "saveSuccess": "Config saved",
+      "saveFailed": "Failed to save config: {{error}}",
+      "directEditHint": "Please edit the config file directly. Use the button below to open the config directory.",
+      "claudeConfig": "Claude Code settings file, including MCP, permissions, themes, etc.",
+      "codexConfig": "Codex config file (TOML format)",
+      "geminiConfig": "Gemini CLI settings file",
+      "opencodeConfig": "OpenCode config file",
+      "openclawConfig": "OpenClaw config file (JSON5 format), including providers, env, tools, mcp, etc."
+    }
   },
   "sessionManager": {
     "title": "Session Manager",
@@ -696,21 +759,21 @@
     "officialHint": "💡 Official provider uses browser login, no API Key needed",
     "getApiKey": "Get API Key",
     "partnerPromotion": {
-      "packycode": "PackyCode is an official partner of CC Switch. Register using this link and enter \"cc-switch\" promo code during recharge to get 10% off",
+      "packycode": "PackyCode is an official partner of Haipee. Register using this link and enter \"haipee\" promo code during recharge to get 10% off",
       "minimax_cn": "MiniMax Coding Plan Special Offer, Starter from ¥9.9",
       "minimax_en": "MiniMax Coding Plan Black Friday, Starter is now $2/mo (80% OFF!)",
       "dmxapi": "Claude Code exclusive model 66% OFF now!",
-      "cubence": "Cubence is an official partner of CC Switch. Register using this link and enter \"CCSWITCH\" promo code during recharge to get 10% off every top-up",
-      "aigocode": "AIGoCode is an official partner of CC Switch. Register using this link and get 10% bonus credit on your first top-up!",
-      "rightcode": "RightCode is an official partner of CC Switch. Register using this link and get 5% bonus credit on every top-up!",
-      "aicodemirror": "AICodeMirror is an official partner of CC Switch. Register using this link to get 20% off!",
-      "aicoding": "AI Coding offers an exclusive discount for CC Switch users — 10% off your first top-up!",
-      "crazyrouter": "CrazyRouter offers an exclusive bonus for CC Switch users — 30% extra credit on your first top-up!",
-      "sssaicode": "SSAI Code offers an exclusive bonus for CC Switch users — $10 extra credit on every top-up!",
-      "siliconflow": "SiliconFlow is an official partner of CC Switch",
-      "ucloud": "Compshare offers an exclusive bonus for CC Switch users — register via this link to get ¥5 platform trial credit!",
-      "micu": "Micu is an official partner of CC Switch",
-      "x-code": "XCodeAPI offers a special bonus for CC Switch users — register via this link and get 10% extra credit on your first order (contact admin to claim)",
+      "cubence": "Cubence is an official partner of Haipee. Register using this link and enter \"CCSWITCH\" promo code during recharge to get 10% off every top-up",
+      "aigocode": "AIGoCode is an official partner of Haipee. Register using this link and get 10% bonus credit on your first top-up!",
+      "rightcode": "RightCode is an official partner of Haipee. Register using this link and get 5% bonus credit on every top-up!",
+      "aicodemirror": "AICodeMirror is an official partner of Haipee. Register using this link to get 20% off!",
+      "aicoding": "AI Coding offers an exclusive discount for Haipee users — 10% off your first top-up!",
+      "crazyrouter": "CrazyRouter offers an exclusive bonus for Haipee users — 30% extra credit on your first top-up!",
+      "sssaicode": "SSAI Code offers an exclusive bonus for Haipee users — $10 extra credit on every top-up!",
+      "siliconflow": "SiliconFlow is an official partner of Haipee",
+      "ucloud": "Compshare offers an exclusive bonus for Haipee users — register via this link to get ¥5 platform trial credit!",
+      "micu": "Micu is an official partner of Haipee",
+      "x-code": "XCodeAPI offers a special bonus for Haipee users — register via this link and get 10% extra credit on your first order (contact admin to claim)",
       "ctok": "Join the CTok community on the official website and subscribe to a plan."
     },
     "presets": {
@@ -1141,7 +1204,7 @@
       "deleteConfirm": "Are you sure you want to delete server \"{{id}}\"? This action cannot be undone.",
       "noServers": "No servers yet",
       "enabledApps": "Enabled Apps",
-      "noImportFound": "No MCP servers to import found. All servers are already managed by CC Switch.",
+      "noImportFound": "No MCP servers to import found. All servers are already managed by Haipee.",
       "importSuccess": "Successfully imported {{count}} MCP servers",
       "apps": {
         "claude": "Claude",
@@ -1467,45 +1530,6 @@
     "primaryModel": "Primary Model",
     "fallbackModel": "Fallback Model"
   },
-  "env": {
-    "warning": {
-      "title": "Environment Variable Conflicts Detected",
-      "description": "Found {{count}} environment variables that may override your configuration"
-    },
-    "actions": {
-      "expand": "View Details",
-      "collapse": "Collapse",
-      "selectAll": "Select All",
-      "clearSelection": "Clear Selection",
-      "deleteSelected": "Delete Selected ({{count}})",
-      "deleting": "Deleting..."
-    },
-    "field": {
-      "value": "Value",
-      "source": "Source"
-    },
-    "source": {
-      "userRegistry": "User Environment Variable (Registry)",
-      "systemRegistry": "System Environment Variable (Registry)",
-      "systemEnv": "System Environment Variable"
-    },
-    "delete": {
-      "success": "Environment variables deleted successfully",
-      "error": "Failed to delete environment variables"
-    },
-    "backup": {
-      "location": "Backup location: {{path}}"
-    },
-    "confirm": {
-      "title": "Confirm Delete Environment Variables",
-      "message": "Are you sure you want to delete {{count}} environment variable(s)?",
-      "backupNotice": "A backup will be created automatically before deletion. You can restore it later. Changes take effect after restarting the application or terminal.",
-      "confirm": "Confirm Delete"
-    },
-    "error": {
-      "noSelection": "Please select environment variables to delete"
-    }
-  },
   "skills": {
     "manage": "Skills",
     "title": "Skills Management",
@@ -1596,10 +1620,10 @@
     "noInstalledDescription": "Discover and install skills from repositories, or import existing skills",
     "discover": "Discover Skills",
     "import": "Import Existing",
-    "importDescription": "Select skills to import into CC Switch unified management",
+    "importDescription": "Select skills to import into Haipee unified management",
     "importSuccess": "Successfully imported {{count}} skills",
     "importSelected": "Import Selected ({{count}})",
-    "noUnmanagedFound": "No skills to import found. All skills are already managed by CC Switch.",
+    "noUnmanagedFound": "No skills to import found. All skills are already managed by Haipee.",
     "foundIn": "Found in",
     "local": "Local",
     "uninstallConfirm": "Are you sure you want to uninstall \"{{name}}\"? This will remove the skill from all apps and create a local backup first.",
@@ -1643,7 +1667,7 @@
   },
   "deeplink": {
     "confirmImport": "Confirm Import Provider",
-    "confirmImportDescription": "The following configuration will be imported from deep link into CC Switch",
+    "confirmImportDescription": "The following configuration will be imported from deep link into Haipee",
     "importPrompt": "Import Prompt",
     "importPromptDescription": "Please confirm whether to import this system prompt",
     "importMcp": "Import MCP Servers",

@@ -1,7 +1,7 @@
-/// E2E Testing Commands
-///
-/// These commands are primarily useful for E2E testing with WebDriver.
-/// They use doc(hidden) when the webdriver feature is not enabled.
+//! E2E Testing Commands
+//!
+//! These commands are primarily useful for E2E testing with WebDriver.
+//! They use doc(hidden) when the webdriver feature is not enabled.
 
 use serde::Serialize;
 

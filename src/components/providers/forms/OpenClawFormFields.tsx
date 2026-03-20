@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useCallback } from "react";
-import { FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -155,11 +155,11 @@ export function OpenClawFormFields({
     <>
       {/* API Protocol Selector */}
       <div className="space-y-2">
-        <FormLabel htmlFor="openclaw-api">
+        <Label htmlFor="openclaw-api">
           {t("openclaw.apiProtocol", {
             defaultValue: "API 协议",
           })}
-        </FormLabel>
+        </Label>
         <Select value={api} onValueChange={onApiChange}>
           <SelectTrigger id="openclaw-api">
             <SelectValue
@@ -186,9 +186,9 @@ export function OpenClawFormFields({
 
       {/* Base URL */}
       <div className="space-y-2">
-        <FormLabel htmlFor="openclaw-baseurl">
+        <Label htmlFor="openclaw-baseurl">
           {t("openclaw.baseUrl", { defaultValue: "API 端点" })}
-        </FormLabel>
+        </Label>
         <Input
           id="openclaw-baseurl"
           value={baseUrl}
@@ -216,9 +216,9 @@ export function OpenClawFormFields({
       {/* User-Agent */}
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
-          <FormLabel>
+          <Label>
             {t("openclaw.userAgent", { defaultValue: "发送 User-Agent" })}
-          </FormLabel>
+          </Label>
           <p className="text-xs text-muted-foreground">
             {t("openclaw.userAgentHint", {
               defaultValue: "部分供应商需要浏览器 User-Agent 才能正常访问。",
@@ -231,9 +231,9 @@ export function OpenClawFormFields({
       {/* Models Editor */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <FormLabel>
+          <Label>
             {t("openclaw.models", { defaultValue: "模型列表" })}
-          </FormLabel>
+          </Label>
           <Button
             type="button"
             variant="outline"
