@@ -13,7 +13,9 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setupGlobals.ts", "./tests/setupTests.ts"],
     globals: true,
-    exclude: ["tests/e2e/**/*", "node_modules"],
+    // Note: tests/e2e/**/* (Playwright) and tests/e2e-tauri/**/* (WebdriverIO)
+// are excluded because they use different test runners
+exclude: ["tests/e2e/**/*", "tests/e2e-tauri/**/*", "node_modules"],
     poolOptions: {
       forks: {
         maxWorkers: 1,
