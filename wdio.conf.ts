@@ -68,7 +68,7 @@ async function loadDiagnostics() {
 export const config = defineConfig({
   runner: 'local',
 
-  specs: ['./tests/e2e/tauri/**/*.spec.ts'],
+  specs: ['./tests/e2e/tauri/**/*.spec.ts', './tests/e2e-tauri/**/*.spec.ts'],
   exclude: [],
   maxInstances: 1, // Only one Tauri window at a time
 
