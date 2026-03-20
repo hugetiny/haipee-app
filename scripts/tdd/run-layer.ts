@@ -11,6 +11,8 @@
  *   5 - WebDriver E2E (real Tauri + real API)
  */
 
+import { spawn } from 'child_process';
+
 const layer = process.argv[2];
 
 const layerCommands: Record<string, { cmd: string; desc: string }> = {
@@ -48,13 +50,13 @@ if (!layer || !layerCommands[layer]) {
   process.exit(1);
 }
 
-import { $ } from 'bun';
-
 const { cmd, desc } = layerCommands[layer];
 console.log(`Running Layer ${layer}: ${desc}`);
 console.log(`Command: ${cmd}`);
 console.log('');
 
 // Run the command and preserve exit code
-const result = await $`${{ raw: cmd }}`.nothrow();
-process.exit(result.exitCode);
+const child = spawn(cmd, [], { stdio: 'inherit', shell: true });
+child.on('close', (code) => {
+  process.exit(code ?? 1);
+});
