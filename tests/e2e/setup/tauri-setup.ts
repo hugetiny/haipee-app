@@ -2,7 +2,7 @@
  * Tauri WebDriver Setup
  *
  * Builds the Tauri binary with the `webdriver` feature flag and launches it so
- * WebdriverIO can connect on the default port (4444).
+ * WebdriverIO can connect on the default port (4445).
  *
  * Prerequisites on macOS:
  *   safaridriver must be enabled: `sudo safaridriver --enable`
@@ -19,7 +19,7 @@ const BINARY_PATH = join(ROOT, 'src-tauri/target/debug/haipee');
 const PID_FILE = join(ROOT, '.tauri-webdriver.pid');
 const LOG_FILE = join(ROOT, 'wdio-logs/tauri-binary.log');
 const MANIFEST = join(ROOT, 'src-tauri/Cargo.toml');
-const WEBDRIVER_PORT = 4444;
+const WEBDRIVER_PORT = 4445;
 
 // Track the spawned process for health checks and teardown
 let tauriProcess: ChildProcess | null = null;
