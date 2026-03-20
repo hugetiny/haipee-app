@@ -13,11 +13,10 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setupGlobals.ts", "./tests/setupTests.ts"],
     globals: true,
-    exclude: ["tests/e2e/**/*", "tests/e2e-tauri/**/*", "node_modules"],
-    pool: "forks",
+    exclude: ["tests/e2e/**/*", "node_modules"],
     poolOptions: {
       forks: {
-        singleFork: true,
+        maxWorkers: 1,
       },
     },
     coverage: {
