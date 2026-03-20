@@ -49,6 +49,16 @@ if (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__) {
       if (cmd === "get_config_dir") return "/mock/config";
       if (cmd === "is_portable_mode") return false;
 
+      // Config status commands
+      if (cmd === "get_all_config_statuses")
+        return {
+          claude: { exists: true, path: "/mock/claude" },
+          codex: { exists: true, path: "/mock/codex" },
+          gemini: { exists: false, path: "未登录" },
+          opencode: { exists: true, path: "/mock/opencode" },
+          openclaw: { exists: false, path: "/mock/openclaw" },
+        };
+
       // Migration commands
       if (cmd === "get_migration_result") return false;
       if (cmd === "get_skills_migration_result") return null;

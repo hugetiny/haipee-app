@@ -43,6 +43,16 @@ export const handlers = [
   http.post(`${TAURI_ENDPOINT}/get_skills_migration_result`, () =>
     success(null),
   ),
+  // Mock for navigation redesign - config status for all apps
+  http.post(`${TAURI_ENDPOINT}/get_all_config_statuses`, () =>
+    success({
+      claude: { exists: true, path: "/mock/claude" },
+      codex: { exists: true, path: "/mock/codex" },
+      gemini: { exists: false, path: "未登录" },
+      opencode: { exists: true, path: "/mock/opencode" },
+      openclaw: { exists: true, path: "/mock/openclaw" },
+    }),
+  ),
   http.post(`${TAURI_ENDPOINT}/get_providers`, async ({ request }) => {
     const { app } = await withJson<{ app: AppId }>(request);
     return success(getProviders(app));

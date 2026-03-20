@@ -1,0 +1,89 @@
+<h2>导航布局重构</h2>
+<p class="subtitle">简化菜单结构，优化窄屏体验</p>
+
+<div class="section">
+  <h3>当前问题</h3>
+  <ul>
+    <li>底部有3个按钮：App切换器 + 会话管理 + Agent配置</li>
+    <li>App切换器在底部占用空间且容易误触</li>
+    <li>窄屏没有专门的布局</li>
+  </ul>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">宽屏布局 (新)</div>
+    <div class="mockup-body" style="display:flex;height:300px;">
+      <div class="mock-sidebar" style="width:200px;background:#f0f0f0;padding:10px;">
+        <div style="font-weight:bold;margin-bottom:10px;">Haipee</div>
+        <div style="border-bottom:1px solid #ccc;margin:10px 0;"></div>
+        <div style="margin-bottom:8px;color:#666;font-size:12px;">Agent 选择</div>
+        <div style="padding:8px;background:#e0e0e0;border-radius:4px;margin-bottom:4px;">Claude</div>
+        <div style="padding:8px;margin-bottom:4px;">Codex</div>
+        <div style="padding:8px;margin-bottom:4px;">Gemini</div>
+        <div style="padding:8px;margin-bottom:4px;">OpenCode</div>
+        <div style="padding:8px;margin-bottom:4px;">OpenClaw</div>
+        <div style="flex:1;"></div>
+        <div style="border-top:1px solid #ccc;padding-top:10px;display:flex;gap:8px;">
+          <button class="mock-button" style="flex:1;background:#4a90d9;color:white;">会话</button>
+          <button class="mock-button" style="flex:1;">配置</button>
+        </div>
+      </div>
+      <div class="mock-content" style="flex:1;padding:20px;background:#fafafa;">
+        <div style="color:#999;">主内容区域</div>
+        <div style="margin-top:10px;padding:20px;background:white;border-radius:8px;">
+          根据左侧选择的 Agent 显示对应内容
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">窄屏布局 (新)</div>
+    <div class="mockup-body" style="display:flex;flex-direction:column;height:300px;">
+      <div style="flex:1;display:flex;">
+        <div class="mock-sidebar" style="width:160px;background:#f0f0f0;padding:10px;">
+          <div style="margin-bottom:8px;color:#666;font-size:11px;">Agent</div>
+          <div style="padding:6px;background:#e0e0e0;border-radius:4px;margin-bottom:4px;font-size:13px;">Claude</div>
+          <div style="padding:6px;margin-bottom:4px;font-size:13px;">Codex</div>
+          <div style="padding:6px;margin-bottom:4px;font-size:13px;">Gemini</div>
+          <div style="padding:6px;margin-bottom:4px;font-size:13px;">OpenCode</div>
+          <div style="padding:6px;margin-bottom:4px;font-size:13px;">OpenClaw</div>
+        </div>
+        <div class="mock-content" style="flex:1;padding:15px;background:#fafafa;">
+          <div style="color:#999;font-size:12px;">主内容</div>
+        </div>
+      </div>
+      <div style="background:#fff;border-top:1px solid #ddd;padding:8px;display:flex;justify-content:space-around;">
+        <div style="text-align:center;font-size:11px;"><div>📜</div><div>会话</div></div>
+        <div style="text-align:center;font-size:11px;"><div>⚙️</div><div>配置</div></div>
+        <div style="text-align:center;font-size:11px;"><div>🔧</div><div>设置</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <h3>主要改动</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>移除</h4>
+      <ul>
+        <li>底部 App 切换器按钮</li>
+        <li>"导入当前配置" 页面（改为自动读取）</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>新增</h4>
+      <ul>
+        <li>左侧固定 5 个 Agent 列表</li>
+        <li>窄屏底部 3 个按钮：会话/配置/设置</li>
+        <li>配置自动读取，无需手动导入</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:20px;padding:15px;background:#fff3cd;border-radius:8px;">
+  <strong>确认问题：</strong>宽屏底部的2个按钮（会话管理、Agent配置）是否正确理解？
+</div>

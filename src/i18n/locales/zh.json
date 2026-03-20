@@ -661,6 +661,11 @@
       "geminiConfig": "Gemini CLI 设置文件",
       "opencodeConfig": "OpenCode 配置文件",
       "openclawConfig": "OpenClaw 配置文件 (JSON5 格式)，包含 providers、env、tools、mcp 等配置"
+    },
+    "status": {
+      "error": "读取失败",
+      "noConfig": "未配置",
+      "hasConfig": "已配置"
     }
   },
   "sessionManager": {
@@ -1342,6 +1347,11 @@
         "description": "Context7 文档搜索工具，提供最新的库文档和代码示例，配置 key 会有更高限额"
       }
     }
+  },
+  "nav": {
+    "sessions": "会话",
+    "config": "配置",
+    "settings": "设置"
   },
   "prompts": {
     "manage": "提示词",

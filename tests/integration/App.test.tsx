@@ -2,6 +2,7 @@ import { Suspense, type ComponentType } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { resetProviderState } from "../msw/state";
 import { emitTauriEvent } from "../msw/tauriMocks";
 
@@ -136,21 +137,24 @@ vi.mock("@/components/mcp/McpPanel", () => ({
 }));
 
 const renderApp = (AppComponent: ComponentType) => {
-  // Set initial app to openclaw for testing (the only valid app in VALID_APPS)
-  localStorage.setItem("haipee-last-app", "openclaw");
+  // Set initial view to providers
   localStorage.setItem("haipee-last-view", "providers");
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
-      <Suspense fallback={<div data-testid="loading">loading</div>}>
-        <AppComponent />
-      </Suspense>
+      <TooltipProvider>
+        <Suspense fallback={<div data-testid="loading">loading</div>}>
+          <AppComponent />
+        </Suspense>
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 };
 
 describe("App integration with MSW", () => {
   beforeEach(() => {
+    // Clear localStorage before each test to ensure clean state
+    localStorage.clear();
     resetProviderState();
     toastSuccessMock.mockReset();
     toastErrorMock.mockReset();
@@ -160,10 +164,13 @@ describe("App integration with MSW", () => {
     const { default: App } = await import("@/App");
     renderApp(App);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("provider-list").textContent).toContain(
-        "openclaw-1",
-      ),
+    // Wait for providers to load (defaults to claude app)
+    await waitFor(
+      () =>
+        expect(screen.getByTestId("provider-list").textContent).toContain(
+          "claude-1",
+        ),
+      { timeout: 5000 }
     );
 
     fireEvent.click(screen.getByText("usage"));
@@ -176,7 +183,7 @@ describe("App integration with MSW", () => {
     fireEvent.click(screen.getByText("confirm-add"));
     await waitFor(() =>
       expect(screen.getByTestId("provider-list").textContent).toMatch(
-        /New openclaw Provider/,
+        /New claude Provider/,
       ),
     );
 
@@ -198,8 +205,8 @@ describe("App integration with MSW", () => {
     fireEvent.click(screen.getByText("open-website"));
 
     emitTauriEvent("provider-switched", {
-      appType: "openclaw",
-      providerId: "openclaw-2",
+      appType: "claude",
+      providerId: "claude-2",
     });
 
     expect(toastErrorMock).not.toHaveBeenCalled();
@@ -210,10 +217,12 @@ describe("App integration with MSW", () => {
     const { default: App } = await import("@/App");
     renderApp(App);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("provider-list").textContent).toContain(
-        "openclaw-1",
-      ),
+    await waitFor(
+      () =>
+        expect(screen.getByTestId("provider-list").textContent).toContain(
+          "claude-1",
+        ),
+      { timeout: 5000 }
     );
 
     emitTauriEvent("webdav-sync-status-updated", {

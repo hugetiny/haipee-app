@@ -661,6 +661,11 @@
       "geminiConfig": "Gemini CLI settings file",
       "opencodeConfig": "OpenCode config file",
       "openclawConfig": "OpenClaw config file (JSON5 format), including providers, env, tools, mcp, etc."
+    },
+    "status": {
+      "error": "Read failed",
+      "noConfig": "Not configured",
+      "hasConfig": "Configured"
     }
   },
   "sessionManager": {
@@ -1342,6 +1347,11 @@
         "description": "Context7 documentation search tool providing latest library docs and code examples, with higher limits when configured with a key"
       }
     }
+  },
+  "nav": {
+    "sessions": "Sessions",
+    "config": "Config",
+    "settings": "Settings"
   },
   "prompts": {
     "manage": "Prompts",

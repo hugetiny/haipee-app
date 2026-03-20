@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, useState } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import {
@@ -552,11 +552,19 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const DRAG_BAR_HEIGHT = isMac ? 28 : 0;
 
-    // Navigation state hook - only use for statusMap and agent selection
+    // Navigation state hook - use for statusMap and agent selection
     const {
+      selectedAgent,
       statusMap,
       selectAgent,
     } = useNavigationState();
+
+    // Sync selectedAgent from navigation state to activeApp prop on mount
+    useEffect(() => {
+      if (selectedAgent && selectedAgent !== activeApp) {
+        setActiveApp(selectedAgent);
+      }
+    }, [selectedAgent]);
 
     // 确定当前选中的主菜单
     const activeMainMenu = useMemo(() => {

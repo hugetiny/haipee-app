@@ -62,20 +62,7 @@ interface WebDavSyncStatusUpdatedPayload {
   error?: string;
 }
 
-const STORAGE_KEY = "haipee-last-app";
-const VALID_APPS: AppId[] = [
-  "claude",
-  "codex",
-  "gemini",
-  "opencode",
-  "openclaw",
-];
-
 const getInitialApp = (): AppId => {
-  const saved = localStorage.getItem(STORAGE_KEY) as AppId | null;
-  if (saved && VALID_APPS.includes(saved)) {
-    return saved;
-  }
   return "claude";
 };
 
