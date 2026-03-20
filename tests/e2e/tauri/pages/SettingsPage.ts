@@ -11,26 +11,29 @@ export class SettingsPage extends TauriBasePage {
   async open(): Promise<void> {
     await this.waitForReactReady();
 
-    // Navigate to settings via data-testid or aria-label
-    const navigated = await browser.execute(() => {
-      // Try data-testid first (most reliable)
-      const testIdBtn = document.querySelector('[data-testid="settings-nav-btn"]') as HTMLElement;
-      if (testIdBtn) {
-        testIdBtn.click();
-        return true;
+    // Try native WebDriver click first (most reliable in WKWebView)
+    let navigated = false;
+    try {
+      const btn = await $('[data-testid="settings-nav-btn"]');
+      if (await btn.isExisting()) {
+        await btn.click();
+        navigated = true;
       }
+    } catch { /* fall through */ }
 
-      // Fallback: aria-label containing "设置" or "Setting"
-      const allButtons = Array.from(document.querySelectorAll('button[type="button"]'));
-      for (const btn of allButtons) {
-        const ariaLabel = btn.getAttribute('aria-label') || '';
-        if (ariaLabel.includes('设置') || ariaLabel.toLowerCase().includes('setting')) {
-          (btn as HTMLElement).click();
-          return true;
+    if (!navigated) {
+      navigated = await browser.execute(() => {
+        const allButtons = Array.from(document.querySelectorAll('button[type="button"]'));
+        for (const btn of allButtons) {
+          const ariaLabel = btn.getAttribute('aria-label') || '';
+          if (ariaLabel.includes('设置') || ariaLabel.toLowerCase().includes('setting')) {
+            (btn as HTMLElement).click();
+            return true;
+          }
         }
-      }
-      return false;
-    });
+        return false;
+      });
+    }
 
     if (!navigated) {
       console.log('[SettingsPage] Could not find settings button, may already be on settings view');
@@ -55,44 +58,128 @@ export class SettingsPage extends TauriBasePage {
 
   /**
    * Open a specific settings tab by value (e.g. 'general', 'proxy', 'auth', etc.)
-   * Uses JavaScript execution to avoid WKWebView CSS selector issues with commas.
+   * Uses native WebDriver click for WKWebView reliability, then verifies the tab actually switched.
    */
   async openTab(tabKey: string): Promise<void> {
-    // Radix Tabs does not set data-value on the DOM element.
-    // The tab ID is ${baseId}-trigger-${value}. We find the tab by checking
-    // if the id ENDS WITH "-trigger-${tabKey}".
-    const clicked = await browser.execute((key) => {
-      const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
-      for (const tab of tabs) {
-        const id = tab.getAttribute('id') || '';
-        if (id.endsWith('-trigger-' + key)) {
-          (tab as HTMLElement).click();
+    // Strategy 1: Native WebDriver click (most reliable in WKWebView)
+    let clicked = false;
+    try {
+      const tab = await $(`[role="tab"][id$="-trigger-${tabKey}"]`);
+      if (await tab.isExisting()) {
+        await tab.click();
+        clicked = true;
+      }
+    } catch { /* fall through */ }
+
+    // Strategy 2: JavaScript click fallback
+    if (!clicked) {
+      clicked = await browser.execute((key) => {
+        const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+        for (const tab of tabs) {
+          const id = tab.getAttribute('id') || '';
+          if (id.endsWith('-trigger-' + key)) {
+            (tab as HTMLElement).click();
+            return true;
+          }
+          const val = tab.getAttribute('data-value') || tab.getAttribute('value') || '';
+          if (val === key) {
+            (tab as HTMLElement).click();
+            return true;
+          }
+        }
+        return false;
+      }, tabKey);
+    }
+
+    if (!clicked) {
+      console.log(`[SettingsPage] Tab "${tabKey}" not found`);
+      return;
+    }
+
+    // Wait for the SPECIFIC tab to actually become active (not just any tab)
+    try {
+      await browser.waitUntil(
+        async () => {
+          const isActive = await browser.execute((key) => {
+            const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+            for (const tab of tabs) {
+              const id = tab.getAttribute('id') || '';
+              const val = tab.getAttribute('data-value') || tab.getAttribute('value') || '';
+              if (id.endsWith('-trigger-' + key) || val === key) {
+                return (
+                  tab.getAttribute('data-state') === 'active' ||
+                  tab.getAttribute('aria-selected') === 'true'
+                );
+              }
+            }
+            return false;
+          }, tabKey);
+          return !!isActive;
+        },
+        { timeout: 8_000, timeoutMsg: `Tab "${tabKey}" did not become active within 8s` }
+      );
+    } catch (e) {
+      console.log(`[SettingsPage] Tab "${tabKey}" state check timed out: ${e}`);
+    }
+
+    // Extra wait for framer-motion animation + React render
+    await browser.pause(400);
+  }
+
+  /**
+   * Click an accordion trigger by text content using native WebDriver click.
+   * Returns true if the accordion was found and clicked.
+   */
+  async openAccordion(textHints: string[]): Promise<boolean> {
+    // Try native WebDriver click via attribute-based approach
+    for (const hint of textHints) {
+      // Find the element via JS, mark it with a temp attribute, then native-click it
+      const uid = `wdio-acc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const found = await browser.execute((text, attrKey) => {
+        const triggers = Array.from(document.querySelectorAll('[data-radix-accordion-trigger], button[data-state]'));
+        const allClickable = Array.from(document.querySelectorAll('[role="button"], button'));
+        const combined = [...new Set([...triggers, ...allClickable])];
+        const el = combined.find(
+          (el) => (el as HTMLElement).innerText?.includes(text) || el.textContent?.includes(text)
+        );
+        if (el) {
+          el.setAttribute(attrKey, 'true');
           return true;
         }
-        // Also check data-value and value as fallbacks
-        const val = tab.getAttribute('data-value') || tab.getAttribute('value') || '';
-        if (val === key) {
-          (tab as HTMLElement).click();
+        return false;
+      }, hint, uid);
+
+      if (found) {
+        try {
+          const el = await $(`[${uid}]`);
+          if (await el.isExisting()) {
+            await el.click();
+            await browser.pause(600);
+            return true;
+          }
+        } catch { /* fall through */ }
+      }
+    }
+
+    // Fallback: JavaScript click
+    const clicked = await browser.execute((hints) => {
+      const triggers = Array.from(document.querySelectorAll('[role="button"], button'));
+      for (const hint of hints) {
+        const el = triggers.find(
+          (b) => (b as HTMLElement).innerText?.includes(hint) || b.textContent?.includes(hint)
+        );
+        if (el) {
+          (el as HTMLElement).click();
           return true;
         }
       }
       return false;
-    }, tabKey);
+    }, textHints);
 
-    if (!clicked) {
-      console.log(`[SettingsPage] Tab "${tabKey}" not found via JS, trying CSS...`);
-      try {
-        const tab = await $(`[role="tab"][id$="-trigger-${tabKey}"]`);
-        if (await tab.isExisting()) {
-          await tab.waitForClickable({ timeout: 5000 });
-          await tab.click();
-        }
-      } catch {
-        console.log(`[SettingsPage] Tab "${tabKey}" not found`);
-      }
+    if (clicked) {
+      await browser.pause(600);
     }
-
-    await browser.pause(500);
+    return !!clicked;
   }
 
   /**
