@@ -26,7 +26,7 @@ const ThemeProviderContext = createContext<ThemeContextValue | undefined>(
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "dark",
   storageKey = "haipee-theme",
 }: ThemeProviderProps) {
   const getInitialTheme = () => {
