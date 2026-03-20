@@ -1,14 +1,13 @@
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings2, Code2, Plug, FileText, Terminal, FileJson } from "lucide-react";
+import { Settings2, Code2, Plug, FileText, Terminal } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProviderIcon } from "@/components/ProviderIcon";
 import type { AppId } from "@/lib/api";
 
 import { AgentBasicConfig } from "./AgentBasicConfig";
 import { AgentEnvConfig } from "./AgentEnvConfig";
-import { AgentAdvancedConfig } from "./AgentAdvancedConfig";
 import UnifiedSkillsPanel from "@/components/skills/UnifiedSkillsPanel";
 import UnifiedMcpPanel from "@/components/mcp/UnifiedMcpPanel";
 import PromptPanel from "@/components/prompts/PromptPanel";
@@ -19,7 +18,6 @@ const AGENT_TABS = [
   { id: "mcp", labelKey: "agent.config.mcp", labelFallback: "MCP", icon: Plug },
   { id: "prompts", labelKey: "agent.config.prompts", labelFallback: "提示词", icon: FileText },
   { id: "env", labelKey: "agent.config.env", labelFallback: "环境变量", icon: Terminal },
-  { id: "advanced", labelKey: "agent.config.advanced", labelFallback: "高级设置", icon: FileJson },
 ] as const;
 
 const AGENT_OPTIONS: { id: AppId; label: string; icon: string }[] = [
@@ -115,9 +113,6 @@ export function AgentConfigView() {
                 )}
                 {activeTab === "env" && (
                   <AgentEnvConfig appId={activeApp} />
-                )}
-                {activeTab === "advanced" && (
-                  <AgentAdvancedConfig appId={activeApp} />
                 )}
               </motion.div>
             </AnimatePresence>
