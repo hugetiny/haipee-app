@@ -104,6 +104,25 @@ pub async fn get_config_status(app: String) -> Result<ConfigStatus, String> {
     }
 }
 
+/// Get config status for all supported apps in a single call
+#[tauri::command]
+pub async fn get_all_config_statuses() -> Result<std::collections::HashMap<String, ConfigStatus>, String> {
+    let mut results = std::collections::HashMap::new();
+
+    for app in ["claude", "codex", "gemini", "opencode", "openclaw"] {
+        let status = match get_config_status(app.to_string()).await {
+            Ok(s) => s,
+            Err(e) => ConfigStatus {
+                exists: false,
+                path: e,
+            },
+        };
+        results.insert(app.to_string(), status);
+    }
+
+    Ok(results)
+}
+
 #[tauri::command]
 pub async fn get_claude_code_config_path() -> Result<String, String> {
     Ok(get_claude_settings_path().to_string_lossy().to_string())
