@@ -11,24 +11,20 @@ export class SettingsPage extends TauriBasePage {
   async open(): Promise<void> {
     await this.waitForReactReady();
 
-    // Navigate to settings via JavaScript — avoids complex CSS selector issues on WKWebView
+    // Navigate to settings via data-testid or aria-label
     const navigated = await browser.execute(() => {
-      // Try clicking the settings gear icon button in the sidebar
+      // Try data-testid first (most reliable)
+      const testIdBtn = document.querySelector('[data-testid="settings-nav-btn"]') as HTMLElement;
+      if (testIdBtn) {
+        testIdBtn.click();
+        return true;
+      }
+
+      // Fallback: aria-label containing "设置" or "Setting"
       const allButtons = Array.from(document.querySelectorAll('button[type="button"]'));
       for (const btn of allButtons) {
-        const svg = btn.querySelector('svg');
-        if (!svg) continue;
-        // Settings/gear icon uses "Settings" lucide icon
-        const use = svg.querySelector('use');
-        const title = svg.querySelector('title');
-        const btnTitle = (btn as HTMLElement).title || '';
-        const btnTitleLower = btnTitle.toLowerCase();
-        if (btnTitleLower.includes('设置') || btnTitleLower.includes('setting')) {
-          (btn as HTMLElement).click();
-          return true;
-        }
-        // Check title element inside SVG
-        if (title && (title.textContent || '').toLowerCase().includes('setting')) {
+        const ariaLabel = btn.getAttribute('aria-label') || '';
+        if (ariaLabel.includes('设置') || ariaLabel.toLowerCase().includes('setting')) {
           (btn as HTMLElement).click();
           return true;
         }
@@ -37,33 +33,24 @@ export class SettingsPage extends TauriBasePage {
     });
 
     if (!navigated) {
-      // Fallback: try CSS selectors one at a time
-      const selectors = [
-        'button[title*="设置"]',
-        'button[title*="Setting"]',
-        'button[aria-label*="设置"]',
-        'button[aria-label*="Setting"]',
-      ];
-
-      for (const sel of selectors) {
-        try {
-          const btn = await $(sel);
-          if (await btn.isExisting()) {
-            await btn.waitForClickable({ timeout: 3000 });
-            await btn.click();
-            await browser.pause(500);
-            return;
-          }
-        } catch {
-          // Try next
-        }
-      }
-
       console.log('[SettingsPage] Could not find settings button, may already be on settings view');
     }
 
     await browser.pause(800);
     await this.waitForReactReady();
+
+    // Wait for settings to be loaded (data-settings-loaded attribute)
+    try {
+      await browser.waitUntil(
+        async () => {
+          const loaded = await browser.execute(() => !!document.querySelector('[data-settings-loaded]'));
+          return !!loaded;
+        },
+        { timeout: 10_000, timeoutMsg: 'Settings did not load within 10s' }
+      );
+    } catch {
+      console.log('[SettingsPage] Settings load wait timed out, continuing...');
+    }
   }
 
   /**
@@ -71,11 +58,18 @@ export class SettingsPage extends TauriBasePage {
    * Uses JavaScript execution to avoid WKWebView CSS selector issues with commas.
    */
   async openTab(tabKey: string): Promise<void> {
-    // Use JS to find and click the tab with matching data-value or value
+    // Radix Tabs does not set data-value on the DOM element.
+    // The tab ID is ${baseId}-trigger-${value}. We find the tab by checking
+    // if the id ENDS WITH "-trigger-${tabKey}".
     const clicked = await browser.execute((key) => {
-      // Shadcn Tabs renders [role="tab"] with data-value attribute
       const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
       for (const tab of tabs) {
+        const id = tab.getAttribute('id') || '';
+        if (id.endsWith('-trigger-' + key)) {
+          (tab as HTMLElement).click();
+          return true;
+        }
+        // Also check data-value and value as fallbacks
         const val = tab.getAttribute('data-value') || tab.getAttribute('value') || '';
         if (val === key) {
           (tab as HTMLElement).click();
@@ -86,9 +80,9 @@ export class SettingsPage extends TauriBasePage {
     }, tabKey);
 
     if (!clicked) {
-      // Fallback: try CSS selector directly (no comma, no complex pattern)
+      console.log(`[SettingsPage] Tab "${tabKey}" not found via JS, trying CSS...`);
       try {
-        const tab = await $(`[role="tab"][data-value="${tabKey}"]`);
+        const tab = await $(`[role="tab"][id$="-trigger-${tabKey}"]`);
         if (await tab.isExisting()) {
           await tab.waitForClickable({ timeout: 5000 });
           await tab.click();
@@ -98,7 +92,7 @@ export class SettingsPage extends TauriBasePage {
       }
     }
 
-    await browser.pause(300);
+    await browser.pause(500);
   }
 
   /**
