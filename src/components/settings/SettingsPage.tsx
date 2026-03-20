@@ -11,7 +11,6 @@ import {
   FlaskConical,
   KeyRound,
   Terminal,
-  Cpu,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -47,7 +46,7 @@ import { UsageDashboard } from "@/components/usage/UsageDashboard";
 import { LogConfigPanel } from "@/components/settings/LogConfigPanel";
 import { AuthCenterPanel } from "@/components/settings/AuthCenterPanel";
 import { SystemEnvPanel } from "@/components/settings/SystemEnvPanel";
-import { ModelsPanel } from "@/components/settings/ModelsPanel";
+import { AgentConfigView } from "@/components/agents/AgentConfigView";
 import { useSettings } from "@/hooks/useSettings";
 import { useImportExport } from "@/hooks/useImportExport";
 import { useTranslation } from "react-i18next";
@@ -197,7 +196,7 @@ export function SettingsPage({
         >
           <TabsList className="grid w-full grid-cols-8 mb-6 glass rounded-lg">
             <TabsTrigger value="models">
-              {t("settings.tabModels", { defaultValue: "模型" })}
+              {t("settings.tabAgentSettings", { defaultValue: "Agent设置" })}
             </TabsTrigger>
             <TabsTrigger value="general">
               {t("settings.tabGeneral")}
@@ -218,30 +217,8 @@ export function SettingsPage({
 
           <div className="flex-1 min-h-0 flex flex-col">
             <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2">
-              <TabsContent value="models" className="mt-0">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="flex items-center gap-3 px-1 mb-4">
-                    <Cpu className="h-5 w-5 text-primary" />
-                    <div>
-                      <h2 className="text-base font-semibold">
-                        {t("settings.models.heading", {
-                          defaultValue: "模型管理",
-                        })}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {t("settings.models.headingDescription", {
-                          defaultValue:
-                            "统一管理所有 Agent 的模型配置，按 Agent 切换查看和编辑。",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <ModelsPanel />
-                </motion.div>
+              <TabsContent value="models" className="mt-0 h-full">
+                <AgentConfigView />
               </TabsContent>
 
               <TabsContent value="general" className="space-y-6 mt-0">
