@@ -1,15 +1,15 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, FileJson } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProviderList } from "@/components/providers/ProviderList";
 import { AddProviderDialog } from "@/components/providers/AddProviderDialog";
-import { EditProviderDialog } from "@/components/providers/EditProviderDialog";
+import { ProviderEditView } from "@/components/agents/ProviderEditView";
+import { OpenClawConfigEditor } from "@/components/agents/OpenClawConfigEditor";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useProvidersQuery } from "@/lib/query";
 import { useProviderActions } from "@/hooks/useProviderActions";
 import { useProxyStatus } from "@/hooks/useProxyStatus";
-import { useLastValidValue } from "@/hooks/useLastValidValue";
 import { providersApi, settingsApi, type AppId } from "@/lib/api";
 import type { Provider } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,12 +26,11 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
+  const [showConfigEditor, setShowConfigEditor] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     provider: Provider;
     action: "remove" | "delete";
   } | null>(null);
-
-  const effectiveEditingProvider = useLastValidValue(editingProvider);
 
   const {
     isRunning: isProxyRunning,
@@ -60,6 +59,14 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
   const handleEditProvider = async (provider: Provider) => {
     await updateProvider(provider);
     setEditingProvider(null);
+  };
+
+  const handleBackFromEdit = () => {
+    setEditingProvider(null);
+  };
+
+  const handleBackFromConfigEditor = () => {
+    setShowConfigEditor(false);
   };
 
   const handleConfirmAction = async () => {
@@ -105,10 +112,28 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
     await addProvider(duplicatedProvider);
   };
 
+  // Show OpenClaw config editor when showConfigEditor is true
+  if (showConfigEditor && appId === "openclaw") {
+    return <OpenClawConfigEditor onBack={handleBackFromConfigEditor} />;
+  }
+
+  // Show provider edit view when editing a provider
+  if (editingProvider) {
+    return (
+      <ProviderEditView
+        provider={editingProvider}
+        appId={appId}
+        isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+        onBack={handleBackFromEdit}
+        onSave={handleEditProvider}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full">
       {/* Header with Add button */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-1 shrink-0">
         <div>
           <h3 className="text-sm font-semibold">
             {t("agent.config.models", { defaultValue: "模型配置" })}
@@ -119,50 +144,65 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
             })}
           </p>
         </div>
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          size="sm"
-          variant="outline"
-          className="gap-1"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          {t("common.add", { defaultValue: "添加" })}
-        </Button>
+        <div className="flex items-center gap-2">
+          {appId === "openclaw" && (
+            <Button
+              onClick={() => setShowConfigEditor(true)}
+              size="sm"
+              variant="outline"
+              className="gap-1"
+            >
+              <FileJson className="w-3.5 h-3.5" />
+              {t("openclaw.config.editConfig", { defaultValue: "编辑配置" })}
+            </Button>
+          )}
+          <Button
+            onClick={() => setIsAddOpen(true)}
+            size="sm"
+            variant="outline"
+            className="gap-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {t("common.add", { defaultValue: "添加" })}
+          </Button>
+        </div>
       </div>
 
       {/* Provider List */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <ProviderList
-          providers={providers}
-          currentProviderId={currentProviderId}
-          appId={appId}
-          isLoading={isLoading}
-          isProxyRunning={isProxyRunning}
-          isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
-          activeProviderId={activeProviderId}
-          onSwitch={switchProvider}
-          onEdit={setEditingProvider}
-          onDelete={(provider) =>
-            setConfirmAction({ provider, action: "delete" })
-          }
-          onRemoveFromConfig={
-            appId === "opencode" || appId === "openclaw"
-              ? (provider) =>
-                  setConfirmAction({ provider, action: "remove" })
-              : undefined
-          }
-          onDuplicate={handleDuplicateProvider}
-          onOpenWebsite={handleOpenWebsite}
-          onCreate={() => setIsAddOpen(true)}
-          onSetAsDefault={
-            appId === "openclaw" ? setAsDefaultModel : undefined
-          }
-        />
-      )}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <ProviderList
+            providers={providers}
+            currentProviderId={currentProviderId}
+            appId={appId}
+            isLoading={isLoading}
+            isProxyRunning={isProxyRunning}
+            isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+            activeProviderId={activeProviderId}
+            onSwitch={switchProvider}
+            onEdit={setEditingProvider}
+            onDelete={(provider) =>
+              setConfirmAction({ provider, action: "delete" })
+            }
+            onRemoveFromConfig={
+              appId === "opencode" || appId === "openclaw"
+                ? (provider) =>
+                    setConfirmAction({ provider, action: "remove" })
+                : undefined
+            }
+            onDuplicate={handleDuplicateProvider}
+            onOpenWebsite={handleOpenWebsite}
+            onCreate={() => setIsAddOpen(true)}
+            onSetAsDefault={
+              appId === "openclaw" ? setAsDefaultModel : undefined
+            }
+          />
+        )}
+      </div>
 
       {/* Add Provider Dialog */}
       <AddProviderDialog
@@ -170,18 +210,6 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
         onOpenChange={setIsAddOpen}
         appId={appId}
         onSubmit={addProvider}
-      />
-
-      {/* Edit Provider Dialog */}
-      <EditProviderDialog
-        open={Boolean(editingProvider)}
-        provider={effectiveEditingProvider}
-        onOpenChange={(open) => {
-          if (!open) setEditingProvider(null);
-        }}
-        onSubmit={handleEditProvider}
-        appId={appId}
-        isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
       />
 
       {/* Confirm Dialog */}
