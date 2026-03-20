@@ -34,7 +34,6 @@ import { SkillsPage } from "@/components/skills/SkillsPage";
 import UnifiedSkillsPanel from "@/components/skills/UnifiedSkillsPanel";
 import { DeepLinkImportDialog } from "@/components/DeepLinkImportDialog";
 import { AgentsPanel } from "@/components/agents/AgentsPanel";
-import { AgentConfigView } from "@/components/agents/AgentConfigView";
 import { UniversalProviderPanel } from "@/components/universal";
 import { SessionManagerPage } from "@/components/sessions/SessionManagerPage";
 import {
@@ -43,6 +42,7 @@ import {
 } from "@/lib/query/omo";
 import OpenClawHealthBanner from "@/components/openclaw/OpenClawHealthBanner";
 import { MainLayout, type MainView } from "@/components/layout/MainLayout";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 type View =
   | "providers"
@@ -53,8 +53,7 @@ type View =
   | "mcp"
   | "agents"
   | "universal"
-  | "sessions"
-  | "agentConfig";
+  | "sessions";
 
 interface WebDavSyncStatusUpdatedPayload {
   source?: string;
@@ -77,7 +76,6 @@ const VALID_VIEWS: View[] = [
   "agents",
   "universal",
   "sessions",
-  "agentConfig",
 ];
 
 const getInitialView = (): View => {
@@ -174,7 +172,7 @@ function App() {
   const currentProviderId = data?.currentProviderId ?? "";
   const isOpenClawView =
     activeApp === "openclaw" &&
-    (currentView === "providers" || currentView === "sessions" || currentView === "agentConfig");
+    (currentView === "providers" || currentView === "sessions");
   const { data: openclawHealthWarnings = [] } =
     useOpenClawHealth(isOpenClawView);
 
@@ -623,8 +621,6 @@ function App() {
 
         case "sessions":
           return <SessionManagerPage key={activeApp} appId={activeApp} />;
-        case "agentConfig":
-          return <AgentConfigView />;
         default:
           return (
             <div className="flex flex-col flex-1 min-h-0">
@@ -718,14 +714,15 @@ function App() {
   };
 
   return (
-    <MainLayout
-      currentView={currentView}
-      setCurrentView={setCurrentView as (view: MainView) => void}
-      activeApp={activeApp}
-      setActiveApp={setActiveApp}
-      openSettings={openSettings}
-      isMac={!isWindows() && !isLinux()}
-    >
+    <TooltipProvider>
+      <MainLayout
+        currentView={currentView}
+        setCurrentView={setCurrentView as (view: MainView) => void}
+        activeApp={activeApp}
+        setActiveApp={setActiveApp}
+        openSettings={openSettings}
+        isMac={!isWindows() && !isLinux()}
+      >
       {/* OpenClaw Health Banner */}
       {isOpenClawView && openclawHealthWarnings.length > 0 && (
         <OpenClawHealthBanner warnings={openclawHealthWarnings} />
@@ -791,7 +788,8 @@ function App() {
       />
 
       <DeepLinkImportDialog />
-    </MainLayout>
+      </MainLayout>
+    </TooltipProvider>
   );
 }
 
