@@ -227,6 +227,7 @@ export function SettingsPage({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                     className="space-y-6"
+                    data-settings-loaded="true"
                   >
                     <LanguageSettings
                       value={settings.language}

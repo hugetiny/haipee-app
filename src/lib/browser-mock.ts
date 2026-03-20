@@ -80,6 +80,16 @@ if (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__) {
       if (cmd === "open_file_dialog") return "/mock/file.json";
       if (cmd === "save_file_dialog") return "/mock/output.json";
 
+      // Chat commands
+      if (cmd === "get_chat_provider_info") return {
+        providerId: "mock-provider",
+        providerName: "Mock Provider",
+        baseUrl: "https://api.anthropic.com",
+        defaultModel: "claude-opus-4-6",
+        appType: args?.appType ?? "claude",
+      };
+      if (cmd === "chat_with_provider") return null;
+
       console.warn(`[Tauri Mock] Unhandled command: ${cmd}`);
       return {};
     },

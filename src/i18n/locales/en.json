@@ -2283,5 +2283,22 @@
     },
     "suggestedDefaults": "Apply Suggested Defaults",
     "suggestedDefaultsHint": "Use this preset's recommended default model configuration"
+  },
+  "chat": {
+    "title": "Chat",
+    "sessions": "Sessions",
+    "newSession": "New",
+    "noMessages": "No messages",
+    "noSessions": "No sessions",
+    "welcome": "Start a new conversation",
+    "welcomeDescription": "Send a message to start chatting with the AI assistant. You can ask questions, request code help, or collaborate creatively.",
+    "providerRequired": "Please configure and activate a provider on the Providers page first.",
+    "noProvider": "No provider configured",
+    "inputPlaceholder": "Type a message...",
+    "keyboardHint": "Enter to send, Shift+Enter for newline",
+    "sendError": "Failed to send message",
+    "thinking": "Thinking",
+    "you": "You",
+    "demoResponse": "This is a demo response."
   }
 }

@@ -36,6 +36,7 @@ import { DeepLinkImportDialog } from "@/components/DeepLinkImportDialog";
 import { AgentsPanel } from "@/components/agents/AgentsPanel";
 import { UniversalProviderPanel } from "@/components/universal";
 import { SessionManagerPage } from "@/components/sessions/SessionManagerPage";
+import { ChatContainer } from "@/components/chat";
 import {
   useDisableCurrentOmo,
   useDisableCurrentOmoSlim,
@@ -53,7 +54,8 @@ type View =
   | "mcp"
   | "agents"
   | "universal"
-  | "sessions";
+  | "sessions"
+  | "chat";
 
 interface WebDavSyncStatusUpdatedPayload {
   source?: string;
@@ -76,6 +78,7 @@ const VALID_VIEWS: View[] = [
   "agents",
   "universal",
   "sessions",
+  "chat",
 ];
 
 const getInitialView = (): View => {
@@ -632,6 +635,15 @@ function App() {
             </div>
           );
 
+        case "chat":
+          return (
+            <ChatContainer
+              key={activeApp}
+              providerId={currentProviderId}
+              appId={activeApp}
+              className="h-full"
+            />
+          );
         case "sessions":
           return <SessionManagerPage key={activeApp} appId={activeApp} />;
         default:

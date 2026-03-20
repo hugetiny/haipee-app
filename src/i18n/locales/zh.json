@@ -2283,5 +2283,22 @@
     },
     "suggestedDefaults": "应用建议默认配置",
     "suggestedDefaultsHint": "使用此预设推荐的默认模型配置"
+  },
+  "chat": {
+    "title": "对话",
+    "sessions": "会话",
+    "newSession": "新建",
+    "noMessages": "暂无消息",
+    "noSessions": "没有会话",
+    "welcome": "开始新的对话",
+    "welcomeDescription": "发送消息开始与AI助手对话。您可以询问问题、请求代码帮助或进行创意协作。",
+    "providerRequired": "请先在供应商页面配置并激活一个供应商。",
+    "noProvider": "未配置供应商",
+    "inputPlaceholder": "输入消息...",
+    "keyboardHint": "Enter 发送，Shift+Enter 换行",
+    "sendError": "发送消息失败",
+    "thinking": "思考中",
+    "you": "你",
+    "demoResponse": "这是一个演示响应。"
   }
 }

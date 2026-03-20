@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 
 mod auth;
+mod chat;
 mod config;
 mod copilot;
 mod deeplink;
@@ -28,6 +29,7 @@ mod webdav_sync;
 mod workspace;
 
 pub use auth::*;
+pub use chat::*;
 pub use config::*;
 pub use copilot::*;
 pub use deeplink::*;

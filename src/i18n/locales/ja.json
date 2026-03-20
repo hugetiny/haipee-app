@@ -2237,5 +2237,22 @@
     },
     "suggestedDefaults": "推奨デフォルト設定を適用",
     "suggestedDefaultsHint": "このプリセットの推奨デフォルトモデル設定を使用します"
+  },
+  "chat": {
+    "title": "チャット",
+    "sessions": "セッション",
+    "newSession": "新規",
+    "noMessages": "メッセージなし",
+    "noSessions": "セッションなし",
+    "welcome": "新しい会話を始める",
+    "welcomeDescription": "メッセージを送信してAIアシスタントとのチャットを開始します。",
+    "providerRequired": "先にプロバイダーページでプロバイダーを設定してください。",
+    "noProvider": "プロバイダー未設定",
+    "inputPlaceholder": "メッセージを入力...",
+    "keyboardHint": "Enterで送信、Shift+Enterで改行",
+    "sendError": "メッセージの送信に失敗しました",
+    "thinking": "考え中",
+    "you": "あなた",
+    "demoResponse": "これはデモレスポンスです。"
   }
 }

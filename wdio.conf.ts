@@ -118,6 +118,147 @@ export const config = defineConfig({
 
   // ── Before test suite ────────────────────────────────────────────────────
   before: async () => {
+    // ── Patch $() to handle :has-text() pseudo-selector for WKWebView ────────
+    // WKWebView does not support the non-standard :has-text() pseudo-selector.
+    // We intercept selectors containing :has-text() and translate them to
+    // JavaScript-based text search before passing to the browser.
+    browser.overwriteCommand('$' as any, async function(
+      this: WebdriverIO.Browser,
+      originalFn: (...args: any[]) => Promise<WebdriverIO.Element>,
+      selector: string | any,
+      ...args: any[]
+    ) {
+      if (typeof selector === 'string' && selector.includes(':has-text(')) {
+        // Parse all alternative selectors (split on comma, handling quoted strings)
+        const alternatives = selector.split(/,(?![^"']*(?:["'][^"']*["'])*[^"']*$)/).map((s: string) => s.trim());
+
+        // Try each alternative selector in order
+        for (const alt of alternatives) {
+          if (alt.includes(':has-text(')) {
+            // Handle :has-text() via JavaScript execution
+            try {
+              const textMatch = alt.match(/:has-text\("([^"]+)"\)/);
+              if (!textMatch) continue;
+              const searchText = textMatch[1];
+              const tagPart = alt.split(':has-text(')[0].trim() || '*';
+
+              const el = await browser.execute((tag: string, text: string) => {
+                const elements = Array.from(document.querySelectorAll(tag || '*'));
+                return elements.find((el) => (el as HTMLElement).innerText?.includes(text) || el.textContent?.includes(text)) || null;
+              }, tagPart, searchText);
+
+              if (el) {
+                // Wrap the DOM element as a WebdriverIO element
+                return browser.$(el as any);
+              }
+            } catch {
+              continue;
+            }
+          } else if (alt) {
+            // Try as normal CSS selector
+            try {
+              const el = await originalFn.call(this, alt);
+              if (await el.isExisting()) {
+                return el;
+              }
+            } catch {
+              continue;
+            }
+          }
+        }
+
+        // Nothing found - return a "not found" element wrapper by using a selector
+        // that definitely won't match anything, so .isExisting() returns false
+        return originalFn.call(this, '[data-wdio-not-found-sentinel="true"]');
+      }
+
+      // For comma-separated selectors without :has-text(), try each part separately
+      // to avoid WKWebView throwing on invalid pseudo-selectors
+      if (typeof selector === 'string' && selector.includes(',')) {
+        const parts = selector.split(',').map((s: string) => s.trim());
+        for (const part of parts) {
+          try {
+            const el = await originalFn.call(this, part);
+            if (await el.isExisting()) {
+              return el;
+            }
+          } catch {
+            continue;
+          }
+        }
+        // Return last part's result (will be not-found element)
+        return originalFn.call(this, parts[parts.length - 1]);
+      }
+
+      return originalFn.call(this, selector, ...args);
+    });
+
+    // ── Patch $$() similarly for :has-text() ─────────────────────────────────
+    browser.overwriteCommand('$$' as any, async function(
+      this: WebdriverIO.Browser,
+      originalFn: (...args: any[]) => Promise<WebdriverIO.ElementArray>,
+      selector: string | any,
+      ...args: any[]
+    ) {
+      if (typeof selector === 'string' && selector.includes(':has-text(')) {
+        const alternatives = selector.split(/,(?![^"']*(?:["'][^"']*["'])*[^"']*$)/).map((s: string) => s.trim());
+        const results: WebdriverIO.Element[] = [];
+
+        for (const alt of alternatives) {
+          if (alt.includes(':has-text(')) {
+            try {
+              const textMatch = alt.match(/:has-text\("([^"]+)"\)/);
+              if (!textMatch) continue;
+              const searchText = textMatch[1];
+              const tagPart = alt.split(':has-text(')[0].trim() || '*';
+
+              const els = await browser.execute((tag: string, text: string) => {
+                const elements = Array.from(document.querySelectorAll(tag || '*'));
+                return elements.filter((el) => (el as HTMLElement).innerText?.includes(text) || el.textContent?.includes(text));
+              }, tagPart, searchText);
+
+              if (Array.isArray(els) && els.length > 0) {
+                for (const domEl of els) {
+                  try {
+                    const wdioEl = await browser.$(domEl as any);
+                    results.push(wdioEl);
+                  } catch { /* ignore */ }
+                }
+              }
+            } catch {
+              continue;
+            }
+          } else if (alt) {
+            try {
+              const els = await originalFn.call(this, alt);
+              results.push(...(els as WebdriverIO.Element[]));
+            } catch {
+              continue;
+            }
+          }
+        }
+
+        return results as any;
+      }
+
+      // For comma-separated selectors without :has-text(), collect from all parts
+      if (typeof selector === 'string' && selector.includes(',')) {
+        const parts = selector.split(',').map((s: string) => s.trim());
+        const results: WebdriverIO.Element[] = [];
+        for (const part of parts) {
+          try {
+            const els = await originalFn.call(this, part);
+            results.push(...(els as WebdriverIO.Element[]));
+          } catch {
+            continue;
+          }
+        }
+        return results as any;
+      }
+
+      return originalFn.call(this, selector, ...args);
+    });
+
     // Health check
     const alive = await healthCheck();
     if (!alive) {

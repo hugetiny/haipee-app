@@ -13,7 +13,7 @@ export function LanguageSettings({ value, onChange }: LanguageSettingsProps) {
   const { t } = useTranslation();
 
   return (
-    <section className="space-y-2">
+    <section className="space-y-2" data-testid="language-selector">
       <header className="space-y-1">
         <h3 className="text-sm font-medium">{t("settings.language")}</h3>
         <p className="text-xs text-muted-foreground">

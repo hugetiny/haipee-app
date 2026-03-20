@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import {
   History,
+  MessageSquare,
   Settings,
   Menu,
   X,
@@ -54,6 +55,12 @@ interface MainLayoutProps {
 
 // 主菜单项 (底部功能按钮 + Agent切换器)
 const MAIN_MENU_ITEMS = [
+  {
+    id: "chat",
+    icon: MessageSquare,
+    labelKey: "chat.title",
+    labelFallback: "对话",
+  },
   {
     id: "sessions",
     icon: History,

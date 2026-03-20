@@ -62,6 +62,7 @@ function ThemeButton({
       onClick={onClick}
       size="sm"
       variant={active ? "default" : "ghost"}
+      aria-pressed={active}
       className={cn(
         "min-w-[96px] gap-1.5",
         active

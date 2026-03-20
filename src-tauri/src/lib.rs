@@ -1117,6 +1117,9 @@ pub fn run() {
             // E2E testing commands
             commands::e2e::e2e_get_app_info,
             commands::e2e::e2e_ping,
+            // Chat commands
+            commands::chat_with_provider,
+            commands::get_chat_provider_info,
         ]);
 
     let app = builder
