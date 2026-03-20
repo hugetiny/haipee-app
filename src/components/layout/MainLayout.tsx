@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import {
   History,
   Settings,
-  Settings2,
   Menu,
   X,
   Check,
@@ -23,12 +22,12 @@ import {
 import { ProviderIcon } from "@/components/ProviderIcon";
 import { useNavigationState, type AgentStatus, type AgentStatusStore } from "@/hooks/useNavigationState";
 import type { AppId } from "@/lib/api";
+import logoSvg from "@/assets/logo.svg";
 
 export type MainView =
   | "providers"
   | "settings"
   | "sessions"
-  | "agentConfig"
   | "prompts"
   | "skills"
   | "skillsDiscovery"
@@ -52,19 +51,13 @@ interface MainLayoutProps {
   onSessionProviderFilterChange?: (filter: string) => void;
 }
 
-// 主菜单项 (底部2个功能按钮 + Agent切换器)
+// 主菜单项 (底部功能按钮 + Agent切换器)
 const MAIN_MENU_ITEMS = [
   {
     id: "sessions",
     icon: History,
     labelKey: "sessionManager.title",
     labelFallback: "会话管理",
-  },
-  {
-    id: "agentConfig",
-    icon: Settings2,
-    labelKey: "agent.config.title",
-    labelFallback: "Agent配置",
   },
 ] as const;
 
@@ -259,9 +252,13 @@ const DesktopSidebar = ({
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="font-bold text-lg tracking-tight text-primary select-none flex-1 text-center">
-          H
-        </span>
+        <div className="flex-1 flex justify-center">
+          <img
+            src={logoSvg}
+            alt="Haipee"
+            className="h-8 w-8 select-none"
+          />
+        </div>
       </div>
 
       <Separator className="opacity-40" />
@@ -290,27 +287,45 @@ const DesktopSidebar = ({
       <div className="p-2 shrink-0">
         <div className="flex flex-col gap-1">
           {MAIN_MENU_ITEMS.map((item) => (
-            <MainMenuButton
-              key={item.id}
-              item={item}
-              isActive={activeMainMenu === item.id}
-              onClick={() => onMainMenuClick(item)}
-              variant="desktop"
-            />
+            <Tooltip key={item.id}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
+                    activeMainMenu === item.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  )}
+                  onClick={() => onMainMenuClick(item)}
+                >
+                  <item.icon className="w-5 h-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {t(item.labelKey, item.labelFallback)}
+              </TooltipContent>
+            </Tooltip>
           ))}
-          <button
-            type="button"
-            title={t('nav.settings', '设置')}
-            className={cn(
-              "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
-              activeMainMenu === "settings"
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted",
-            )}
-            onClick={onSettingsClick}
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
+                  activeMainMenu === "settings"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                )}
+                onClick={onSettingsClick}
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {t('nav.settings', '设置')}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </aside>
@@ -371,9 +386,11 @@ const MobileSidebarOverlay = ({
         )}
 
         <div className="flex items-center h-14 px-4 shrink-0 justify-between">
-          <span className="font-bold text-lg tracking-tight text-primary select-none">
-            Haipee
-          </span>
+          <img
+            src={logoSvg}
+            alt="Haipee"
+            className="h-7 w-7 select-none"
+          />
           <Button
             variant="ghost"
             size="icon"
@@ -549,7 +566,6 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
     // 确定当前选中的主菜单
     const activeMainMenu = useMemo(() => {
       if (currentView === "sessions") return "sessions";
-      if (currentView === "agentConfig") return "agentConfig";
       if (currentView === "settings") return "settings";
       return "sessions";
     }, [currentView]);
@@ -609,8 +625,8 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
             dragBarHeight={DRAG_BAR_HEIGHT}
           />
 
-          {/* Scrollable content area */}
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative">
+          {/* Content area - overflow-hidden lets children manage their own scrolling */}
+          <main className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
             {children}
           </main>
 
