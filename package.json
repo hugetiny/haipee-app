@@ -23,6 +23,7 @@
     "ai:dev:dry": "bun scripts/ai-dev-loop/index.ts --dry",
     "ai:dev:checkpoints": "bun scripts/ai-dev-loop/index.ts --checkpoints",
     "test:layer": "bun scripts/tdd/run-layer.ts",
+    "gen:test": "bun scripts/tdd/generate-test.ts",
     "dev:devtools": "bunx tauri dev --features devtools",
     "build:devtools": "bunx tauri build --features devtools"
   },
