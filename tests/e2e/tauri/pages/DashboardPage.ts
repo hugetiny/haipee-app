@@ -166,6 +166,43 @@ export class DashboardPage extends TauriBasePage {
     }
     return names;
   }
+
+  /**
+   * Switch to a provider by name
+   */
+  async switchProvider(name: string): Promise<boolean> {
+    const cards = await this.getProviderCards();
+    for (const card of cards) {
+      const text = await card.getText();
+      if (text.includes(name)) {
+        // Click on the provider card to select it
+        await card.click();
+        await browser.pause(300);
+
+        // Look for switch/activate button
+        const switchBtn = await card.$(
+          'button[aria-label*="切换"], button[aria-label*="Switch"], button[aria-label*="激活"], button[aria-label*="Activate"]'
+        );
+        if (await switchBtn.isExisting()) {
+          await switchBtn.click();
+          await browser.pause(500);
+          return true;
+        }
+
+        // Alternative: check for a direct "use" or "select" action
+        const useBtn = await card.$('button*="使用"], button*="Use"], button*="选择"], button*="Select"]');
+        if (await useBtn.isExisting()) {
+          await useBtn.click();
+          await browser.pause(500);
+          return true;
+        }
+
+        // If card click already activates it
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 export const dashboardPage = new DashboardPage();
