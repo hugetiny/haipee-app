@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Provider, VisibleApps } from "@/types";
-import { useProvidersQuery, useSettingsQuery } from "@/lib/query";
+import type { Provider } from "@/types";
+import { useProvidersQuery } from "@/lib/query";
 import {
   providersApi,
   settingsApi,
@@ -94,34 +94,47 @@ function App() {
   const [currentView, setCurrentView] = useState<View>(getInitialView);
   const [settingsDefaultTab, setSettingsDefaultTab] = useState("general");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [installedApps, setInstalledApps] = useState<Partial<Record<AppId, boolean>>>({});
 
   useEffect(() => {
     localStorage.setItem(VIEW_STORAGE_KEY, currentView);
   }, [currentView]);
 
-  const { data: settingsData } = useSettingsQuery();
-  const visibleApps: VisibleApps = settingsData?.visibleApps ?? {
-    claude: true,
-    codex: true,
-    gemini: true,
-    opencode: true,
-    openclaw: true,
-  };
-
-  const getFirstVisibleApp = (): AppId => {
-    if (visibleApps.claude) return "claude";
-    if (visibleApps.codex) return "codex";
-    if (visibleApps.gemini) return "gemini";
-    if (visibleApps.opencode) return "opencode";
-    if (visibleApps.openclaw) return "openclaw";
-    return "claude"; // fallback
-  };
-
+  // Detect installed CLI tools
   useEffect(() => {
-    if (!visibleApps[activeApp]) {
-      setActiveApp(getFirstVisibleApp());
-    }
-  }, [visibleApps, activeApp]);
+    let active = true;
+    const detectInstalled = async () => {
+      try {
+        // Use same API as AboutSection - getToolVersions
+        const tools = ["claude", "codex", "gemini", "opencode"] as const;
+        const versions = await settingsApi.getToolVersions([...tools]);
+        if (active) {
+          const installed: Partial<Record<AppId, boolean>> = {};
+          for (const tool of tools) {
+            const toolInfo = versions.find(v => v.name === tool);
+            installed[tool] = toolInfo?.version != null;
+          }
+          // OpenClaw is always considered installed (config-based, no CLI binary)
+          installed.openclaw = true;
+          setInstalledApps(installed);
+        }
+      } catch (error) {
+        console.error("[App] Failed to detect installed tools", error);
+        // Default: all installed except those that might fail
+        if (active) {
+          setInstalledApps({
+            claude: true,
+            codex: true,
+            gemini: true,
+            opencode: true,
+            openclaw: true,
+          });
+        }
+      }
+    };
+    void detectInstalled();
+    return () => { active = false; };
+  }, []);
 
   // Fallback from sessions view when switching to an app without session support
   useEffect(() => {
@@ -627,12 +640,8 @@ function App() {
               {/* Top toolbar for providers view */}
               <div className="flex items-center justify-between px-4 py-2 border-b bg-background/80 backdrop-blur-sm shrink-0">
                 <div className="flex items-center gap-1">
-                  {settingsData?.enableLocalProxy && (
-                    <ProxyToggle activeApp={activeApp} />
-                  )}
-                  {settingsData?.enableFailoverToggle && (
-                    <FailoverToggle activeApp={activeApp} />
-                  )}
+                  <ProxyToggle activeApp={activeApp} />
+                  <FailoverToggle activeApp={activeApp} />
                 </div>
               </div>
 
@@ -722,6 +731,7 @@ function App() {
         setActiveApp={setActiveApp}
         openSettings={openSettings}
         isMac={!isWindows() && !isLinux()}
+        installedApps={installedApps}
       >
       {/* OpenClaw Health Banner */}
       {isOpenClawView && openclawHealthWarnings.length > 0 && (

@@ -49,6 +49,7 @@ interface MainLayoutProps {
   isMac: boolean;
   className?: string;
   onSessionProviderFilterChange?: (filter: string) => void;
+  installedApps?: Partial<Record<AppId, boolean>>;
 }
 
 // 主菜单项 (底部功能按钮 + Agent切换器)
@@ -135,10 +136,14 @@ interface AgentListButtonProps {
   status: AgentStatus;
   onClick: () => void;
   collapsed?: boolean;
+  isInstalled?: boolean;
 }
 
-const AgentListButton = ({ agentId, isActive, status, onClick, collapsed }: AgentListButtonProps) => {
+const AgentListButton = ({ agentId, isActive, status, onClick, collapsed, isInstalled = true }: AgentListButtonProps) => {
   const renderStatusIcon = () => {
+    if (!isInstalled) {
+      return null;
+    }
     if (status.type === 'loading') {
       return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
     }
@@ -161,12 +166,15 @@ const AgentListButton = ({ agentId, isActive, status, onClick, collapsed }: Agen
   const buttonContent = (
     <button
       type="button"
-      onClick={onClick}
+      onClick={isInstalled ? onClick : undefined}
+      disabled={!isInstalled}
       className={cn(
         "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
-        isActive
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted",
+        !isInstalled
+          ? "cursor-not-allowed opacity-40"
+          : isActive
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted",
       )}
     >
       <ProviderIcon icon={APP_ICON_NAME[agentId]} name={APP_DISPLAY_NAME[agentId]} size={16} />
@@ -207,6 +215,7 @@ interface DesktopSidebarProps {
   onMainMenuClick: (item: MainMenuItem) => void;
   onSettingsClick: () => void;
   onOpenMobileSidebar: () => void;
+  installedApps?: Partial<Record<AppId, boolean>>;
 }
 
 const DesktopSidebar = ({
@@ -219,6 +228,7 @@ const DesktopSidebar = ({
   onMainMenuClick,
   onSettingsClick,
   onOpenMobileSidebar,
+  installedApps,
 }: DesktopSidebarProps) => {
   const { t } = useTranslation();
 
@@ -275,6 +285,7 @@ const DesktopSidebar = ({
                 status={statusMap[app] || { type: 'loading' }}
                 onClick={() => onAgentClick(app)}
                 collapsed={true}
+                isInstalled={installedApps?.[app] !== false}
               />
             ))}
           </div>
@@ -342,6 +353,7 @@ interface MobileSidebarOverlayProps {
   onAgentClick: (agent: AppId) => void;
   activeMainMenu: string;
   onMainMenuClick: (item: MainMenuItem) => void;
+  installedApps?: Partial<Record<AppId, boolean>>;
 }
 
 const MobileSidebarOverlay = ({
@@ -354,6 +366,7 @@ const MobileSidebarOverlay = ({
   onAgentClick,
   activeMainMenu,
   onMainMenuClick,
+  installedApps,
 }: MobileSidebarOverlayProps) => {
   const { t } = useTranslation();
 
@@ -420,6 +433,7 @@ const MobileSidebarOverlay = ({
                     onAgentClick(app);
                     onClose();
                   }}
+                  isInstalled={installedApps?.[app] !== false}
                 />
               ))}
             </div>
@@ -543,6 +557,7 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
       isMac,
       className,
       onSessionProviderFilterChange,
+      installedApps,
     },
     ref,
   ) => {
@@ -604,6 +619,7 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           onAgentClick={handleAgentClick}
           activeMainMenu={activeMainMenu}
           onMainMenuClick={handleMainMenuClick}
+          installedApps={installedApps}
         />
         <DesktopSidebar
           isMac={isMac}
@@ -615,6 +631,7 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           onMainMenuClick={handleMainMenuClick}
           onSettingsClick={handleSettingsClick}
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          installedApps={installedApps}
         />
 
         {/* Main content column */}

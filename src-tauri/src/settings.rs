@@ -18,51 +18,6 @@ pub struct CustomEndpoint {
     pub last_used: Option<i64>,
 }
 
-fn default_true() -> bool {
-    true
-}
-
-/// 主页面显示的应用配置
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct VisibleApps {
-    #[serde(default = "default_true")]
-    pub claude: bool,
-    #[serde(default = "default_true")]
-    pub codex: bool,
-    #[serde(default = "default_true")]
-    pub gemini: bool,
-    #[serde(default = "default_true")]
-    pub opencode: bool,
-    #[serde(default = "default_true")]
-    pub openclaw: bool,
-}
-
-impl Default for VisibleApps {
-    fn default() -> Self {
-        Self {
-            claude: true,
-            codex: true,
-            gemini: true,
-            opencode: true,
-            openclaw: true,
-        }
-    }
-}
-
-impl VisibleApps {
-    /// Check if the specified app is visible
-    pub fn is_visible(&self, app: &AppType) -> bool {
-        match app {
-            AppType::Claude => self.claude,
-            AppType::Codex => self.codex,
-            AppType::Gemini => self.gemini,
-            AppType::OpenCode => self.opencode,
-            AppType::OpenClaw => self.openclaw,
-        }
-    }
-}
-
 /// WebDAV 同步状态（持久化同步进度信息）
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -208,10 +163,6 @@ pub struct AppSettings {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub language: Option<String>,
 
-    // ===== 主页面显示的应用 =====
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub visible_apps: Option<VisibleApps>,
-
     // ===== 设备级目录覆盖 =====
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub claude_config_dir: Option<String>,
@@ -295,7 +246,6 @@ impl Default for AppSettings {
             enable_failover_toggle: false,
             failover_confirmed: None,
             language: None,
-            visible_apps: None,
             claude_config_dir: None,
             codex_config_dir: None,
             gemini_config_dir: None,

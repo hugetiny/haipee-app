@@ -183,15 +183,6 @@ export type ClaudeApiFormat = "anthropic" | "openai_chat" | "openai_responses";
 // Claude 认证字段类型
 export type ClaudeApiKeyField = "ANTHROPIC_AUTH_TOKEN" | "ANTHROPIC_API_KEY";
 
-// 主页面显示的应用配置
-export interface VisibleApps {
-  claude: boolean;
-  codex: boolean;
-  gemini: boolean;
-  opencode: boolean;
-  openclaw: boolean;
-}
-
 // WebDAV 同步状态
 export interface WebDavSyncStatus {
   lastSyncAt?: number | null;
@@ -262,9 +253,6 @@ export interface Settings {
   autoSyncConfirmed?: boolean;
   // 首选语言（可选，默认中文）
   language?: "zh" | "zh-TW" | "en" | "ja" | "fr" | "de" | "es" | "ko" | "ru" | "pt" | "it" | "hi" | "ar" | "bn";
-
-  // 主页面显示的应用（默认全部显示）
-  visibleApps?: VisibleApps;
 
   // ===== 设备级目录覆盖 =====
   // 覆盖 Claude Code 配置目录（可选）
