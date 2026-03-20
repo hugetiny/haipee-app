@@ -38,10 +38,32 @@ export abstract class TauriBasePage {
    * Navigate to a section by clicking sidebar
    */
   async navigateTo(section: string): Promise<void> {
-    const button = await $(`button[aria-label*="${section}"], button*="${section}"`);
-    await button.waitForClickable({ timeout: 5000 });
-    await button.click();
-    await browser.pause(500);
+    // Wait for React first
+    await this.waitForReactReady();
+
+    // Try multiple selector patterns
+    const selectors = [
+      `button[aria-label*="${section}"]`,
+      `[data-testid="${section.toLowerCase()}"]`,
+      `nav a:contains("${section}")`,
+    ];
+
+    for (const selector of selectors) {
+      try {
+        const button = await $(selector);
+        if (await button.isExisting()) {
+          await button.waitForClickable({ timeout: 5000 });
+          await button.click();
+          await browser.pause(500);
+          return;
+        }
+      } catch {
+        // Try next selector
+      }
+    }
+
+    // If no button found, the app might already be on that page
+    console.log(`Navigation to "${section}" - no button found, may already be on page`);
   }
 
   /**

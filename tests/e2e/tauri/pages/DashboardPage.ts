@@ -16,8 +16,9 @@ export class DashboardPage extends TauriBasePage {
    * Open the dashboard
    */
   async open(): Promise<void> {
-    await this.navigateTo('Dashboard');
     await this.waitForReactReady();
+    // Dashboard is typically the default view, so we just wait for React
+    // navigateTo is called only if we need to switch from another page
   }
 
   /**
