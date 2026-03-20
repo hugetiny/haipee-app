@@ -62,13 +62,15 @@ describe('OpenClaw Chat - New Session', () => {
 
     // Response should indicate lack of context
     const lowerResponse = response.toLowerCase();
+    // Check for context indicators (soft assertion - AI responses vary)
     const hasNoContext = lowerResponse.includes("don't know") ||
                          lowerResponse.includes("didn't mention") ||
                          lowerResponse.includes("no context") ||
                          lowerResponse.includes("no previous") ||
                          lowerResponse.includes("haven't told");
 
-    // This test is soft - AI might respond various ways
+    // Log result for debugging - this is a soft test
     console.log('Context test response:', response.substring(0, 200));
+    console.log('Has no context indicator:', hasNoContext);
   });
 });
