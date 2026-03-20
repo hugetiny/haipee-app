@@ -222,6 +222,7 @@
     "tabEnv": "环境变量",
     "tabModels": "模型",
     "tabAuth": "认证",
+    "tabAgentSettings": "Agent设置",
     "models": {
       "title": "模型管理",
       "description": "管理所有 Agent 的模型配置",
@@ -714,13 +715,22 @@
     "roleUser": "用户",
     "roleSystem": "系统",
     "roleTool": "工具",
-    "resume": "恢复会话",
-    "resumeTooltip": "在终端中恢复此会话",
+    "resume": "在终端中打开",
+    "resumeTooltip": "在终端中打开此会话",
     "noResumeCommand": "此会话无法恢复",
     "copyCommand": "复制命令",
     "copyMessage": "复制消息",
     "messageCopied": "已复制消息内容",
-    "conversationHistory": "对话记录"
+    "conversationHistory": "对话记录",
+    "inputPlaceholder": "输入消息...",
+    "openInTui": "在 TUI 中打开",
+    "openInBrowser": "在浏览器中打开",
+    "openBrowserFailed": "打开浏览器失败",
+    "openTuiTitle": "消息功能开发中",
+    "openTuiMessage": "是否打开原生 TUI？",
+    "openTuiMessageOpenClaw": "是否打开？",
+    "tokenCopied": "Token 已复制到剪切板",
+    "pasteTokenHint": "请粘贴 Gateway Token 并点击连接"
   },
   "console": {
     "providerSwitchReceived": "收到供应商切换事件:",

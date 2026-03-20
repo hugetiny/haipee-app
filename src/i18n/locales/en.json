@@ -222,6 +222,7 @@
     "tabEnv": "Env Vars",
     "tabModels": "Models",
     "tabAuth": "Auth",
+    "tabAgentSettings": "Agent Settings",
     "models": {
       "title": "Model Management",
       "description": "Manage model configurations for all Agents",
@@ -714,13 +715,22 @@
     "roleUser": "User",
     "roleSystem": "System",
     "roleTool": "Tool",
-    "resume": "Resume Session",
-    "resumeTooltip": "Resume this session in terminal",
+    "resume": "Open in Terminal",
+    "resumeTooltip": "Open this session in terminal",
     "noResumeCommand": "This session cannot be resumed",
     "copyCommand": "Copy Command",
     "copyMessage": "Copy Message",
     "messageCopied": "Message copied",
-    "conversationHistory": "Conversation History"
+    "conversationHistory": "Conversation History",
+    "inputPlaceholder": "Type a message...",
+    "openInTui": "Open in TUI",
+    "openInBrowser": "Open in Browser",
+    "openBrowserFailed": "Failed to open browser",
+    "openTuiTitle": "Message feature in development",
+    "openTuiMessage": "Open native TUI?",
+    "openTuiMessageOpenClaw": "Open?",
+    "tokenCopied": "Token copied to clipboard",
+    "pasteTokenHint": "Please paste the Gateway Token and click Connect"
   },
   "console": {
     "providerSwitchReceived": "Received provider switch event:",
