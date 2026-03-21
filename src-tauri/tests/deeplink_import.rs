@@ -3,6 +3,7 @@ use std::sync::Arc;
 use haipee_lib::{
     import_provider_from_deeplink, parse_deeplink_url, AppState, Database, ProxyService,
 };
+use parking_lot::RwLock;
 
 #[path = "support.rs"]
 mod support;
@@ -22,6 +23,8 @@ fn deeplink_import_claude_provider_persists_to_db() {
     let state = AppState {
         db: db.clone(),
         proxy_service,
+        openclaw_gateway: Arc::new(RwLock::new(None)),
+        openclaw_events: Arc::new(RwLock::new(None)),
     };
 
     let provider_id = import_provider_from_deeplink(&state, request.clone())
@@ -62,6 +65,8 @@ fn deeplink_import_codex_provider_builds_auth_and_config() {
     let state = AppState {
         db: db.clone(),
         proxy_service,
+        openclaw_gateway: Arc::new(RwLock::new(None)),
+        openclaw_events: Arc::new(RwLock::new(None)),
     };
 
     let provider_id = import_provider_from_deeplink(&state, request.clone())

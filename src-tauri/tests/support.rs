@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use haipee_lib::{
     update_settings, AppSettings, AppState, Database, MultiAppConfig, ProxyService,
 };
+use parking_lot::RwLock;
 
 /// 为测试设置隔离的 HOME 目录，避免污染真实用户数据。
 pub fn ensure_test_home() -> &'static Path {
@@ -63,7 +64,12 @@ pub fn test_mutex() -> &'static Mutex<()> {
 pub fn create_test_state() -> Result<AppState, Box<dyn std::error::Error>> {
     let db = Arc::new(Database::init()?);
     let proxy_service = ProxyService::new(db.clone());
-    Ok(AppState { db, proxy_service })
+    Ok(AppState {
+        db,
+        proxy_service,
+        openclaw_gateway: Arc::new(RwLock::new(None)),
+        openclaw_events: Arc::new(RwLock::new(None)),
+    })
 }
 
 /// 创建测试用的 AppState，并从 MultiAppConfig 迁移数据
@@ -74,5 +80,10 @@ pub fn create_test_state_with_config(
     let db = Arc::new(Database::init()?);
     db.migrate_from_json(config)?;
     let proxy_service = ProxyService::new(db.clone());
-    Ok(AppState { db, proxy_service })
+    Ok(AppState {
+        db,
+        proxy_service,
+        openclaw_gateway: Arc::new(RwLock::new(None)),
+        openclaw_events: Arc::new(RwLock::new(None)),
+    })
 }
