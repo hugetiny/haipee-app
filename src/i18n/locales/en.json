@@ -732,7 +732,8 @@
     "openTuiMessage": "Open native TUI?",
     "openTuiMessageOpenClaw": "Open?",
     "tokenCopied": "Token copied to clipboard",
-    "pasteTokenHint": "Please paste the Gateway Token and click Connect"
+    "pasteTokenHint": "Please paste the Gateway Token and click Connect",
+    "channelUnderDevelopment": "{{agent}} messaging is under development"
   },
   "console": {
     "providerSwitchReceived": "Received provider switch event:",

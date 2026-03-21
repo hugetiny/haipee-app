@@ -732,7 +732,8 @@
     "openTuiMessage": "是否打开原生 TUI？",
     "openTuiMessageOpenClaw": "是否打开？",
     "tokenCopied": "Token 已复制到剪切板",
-    "pasteTokenHint": "请粘贴 Gateway Token 并点击连接"
+    "pasteTokenHint": "请粘贴 Gateway Token 并点击连接",
+    "channelUnderDevelopment": "{{agent}} 的消息功能正在开发中"
   },
   "console": {
     "providerSwitchReceived": "收到供应商切换事件:",
