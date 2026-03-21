@@ -36,7 +36,8 @@ import { DeepLinkImportDialog } from "@/components/DeepLinkImportDialog";
 import { AgentsPanel } from "@/components/agents/AgentsPanel";
 import { UniversalProviderPanel } from "@/components/universal";
 import { SessionManagerPage } from "@/components/sessions/SessionManagerPage";
-import { ChatContainer } from "@/components/chat";
+import { ChannelTestPage } from "@/components/channels/ChannelTestPage";
+import { initHaipeeChannel } from "@/mcp-channel";
 import {
   useDisableCurrentOmo,
   useDisableCurrentOmoSlim,
@@ -55,7 +56,7 @@ type View =
   | "agents"
   | "universal"
   | "sessions"
-  | "chat";
+  | "channels";
 
 interface WebDavSyncStatusUpdatedPayload {
   source?: string;
@@ -78,7 +79,7 @@ const VALID_VIEWS: View[] = [
   "agents",
   "universal",
   "sessions",
-  "chat",
+  "channels",
 ];
 
 const getInitialView = (): View => {
@@ -376,6 +377,29 @@ function App() {
     checkSkillsMigration();
   }, [t, queryClient]);
 
+  // Initialize MCP channel for Claude Code communication
+  useEffect(() => {
+    let active = true;
+
+    const initChannels = async () => {
+      try {
+        await initHaipeeChannel();
+        if (active) {
+          console.log("[App] MCP channel initialized");
+        }
+      } catch (error) {
+        console.error("[App] Failed to initialize MCP channel:", error);
+        // Continue without MCP - will show error when trying to send
+      }
+    };
+
+    void initChannels();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const currentViewRef = useRef(currentView);
 
   useEffect(() => {
@@ -635,17 +659,10 @@ function App() {
             </div>
           );
 
-        case "chat":
-          return (
-            <ChatContainer
-              key={activeApp}
-              providerId={currentProviderId}
-              appId={activeApp}
-              className="h-full"
-            />
-          );
         case "sessions":
           return <SessionManagerPage key={activeApp} appId={activeApp} />;
+        case "channels":
+          return <ChannelTestPage />;
         default:
           return (
             <div className="flex flex-col flex-1 min-h-0">
