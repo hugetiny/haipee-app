@@ -309,14 +309,19 @@ useEffect(() => {
 
 ### Phase 5: Update Browser Mock
 
-Modify `src/lib/browser-mock.ts` to add channel command mocks for Playwright tests:
+Modify `src/lib/browser-mock.ts` to add gateway config mock for Playwright tests:
 
 ```typescript
-// Add to mockCommandHandlers object:
-'send_to_openclaw': async () => {
-  return { success: true, messageId: crypto.randomUUID() };
-},
+// Add inside the if-else chain after read_openclaw_json_raw:
+if (cmd === "get_openclaw_json_section") {
+  if (args?.section === "gateway") {
+    return { url: "http://127.0.0.1:18789" };
+  }
+  return {};
+}
 ```
+
+Note: `sendToOpenClaw` is a direct HTTP fetch function (not a Tauri IPC command), so it doesn't need mocking. Only the gateway config retrieval needs to be mocked.
 
 ### Phase 6: Tauri E2E Tests
 
