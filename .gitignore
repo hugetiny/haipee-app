@@ -64,6 +64,5 @@ wdio-logs/
 # Lock files (project uses bun, not npm)
 package-lock.json
 
-# Docs: ignore brainstorm/superpowers outputs; keep docs/release-notes
-docs/superpowers/
+# Docs: ignore generated test reports only; keep design specs/plans
 docs/CRABNEBULA-*.md
