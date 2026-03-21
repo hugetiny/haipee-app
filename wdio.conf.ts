@@ -69,8 +69,14 @@ export const config = defineConfig({
   runner: 'local',
 
   specs: [
+    // Flow tests - core user journeys
+    './tests/e2e/tauri/flows/*.spec.ts',
+    // View tests - UI detail tests
+    './tests/e2e/tauri/views/*.spec.ts',
     // Full settings E2E tests - all 8 tabs, real operations, no mocks
     './tests/e2e/tauri/settings-full.spec.ts',
+    // Channel communication E2E tests
+    './tests/e2e/tauri/channel-communication.spec.ts',
   ],
   exclude: [],
   maxInstances: 1, // Only one Tauri window at a time
