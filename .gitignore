@@ -34,6 +34,7 @@ CODEBUDDY.md
 
 # AI Development Loop logs
 ai-loop-logs/
+ai-loop-*.log
 
 # Test artifacts
 test-results/
@@ -44,10 +45,25 @@ vitest-report.json
 playwright-api-report/
 tsc_errors.txt
 
-# Root-level screenshots (keep assets/screenshots/ for app)
+# WebdriverIO Tauri E2E logs
+wdio-logs/
+
+# Playwright MCP debug captures (screenshots + console logs)
+.playwright-mcp/
+
+# Superpowers brainstorm local server artifacts
+.superpowers/
+
+# Root-level debug artifacts
 /*.png
 /*.jpg
 /*.jpeg
+/*.html
+/run/
 
-# Docs with sensitive info
-docs/
+# Lock files (project uses bun, not npm)
+package-lock.json
+
+# Docs: ignore brainstorm/superpowers outputs; keep docs/release-notes
+docs/superpowers/
+docs/CRABNEBULA-*.md
