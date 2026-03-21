@@ -23,6 +23,8 @@ import {
   useSessionsQuery,
 } from "@/lib/query";
 import { sessionsApi, settingsApi, openclawApi } from "@/lib/api";
+import { sendToClaudeCode, onMessage } from "@/mcp-channel";
+import { sendToOpenClaw } from "@/lib/api/openclawChannel";
 import type { SessionMeta } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +85,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
 
   const [search, setSearch] = useState("");
   const [inputMessage, setInputMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const [showTuiChoice, setShowTuiChoice] = useState(false);
   const providerFilter = appId as ProviderFilter;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -161,6 +164,27 @@ export function SessionManagerPage({ appId }: { appId: string }) {
       // 为了代码规范，我们在组件卸载时将 activeMessageIndex 重置 (虽然 React 会处理)
     };
   }, []);
+
+  // Subscribe to channel messages when session changes
+  useEffect(() => {
+    if (!selectedSession) return;
+
+    const providerId = selectedSession.providerId;
+    const sessionId = selectedSession.sessionId;
+
+    if (providerId === 'claude') {
+      const unsubscribe = onMessage((msg) => {
+        if (msg.chatId === sessionId) {
+          void refetch();
+        }
+      });
+      return unsubscribe;
+    }
+
+    // OpenClaw polling is handled by onOpenClawMessage, but for now we rely on refetch after send
+    // Future: subscribe to SSE or polling when available
+
+  }, [selectedSession, refetch]);
 
   const handleCopy = async (text: string, successMessage: string) => {
     try {
@@ -281,6 +305,43 @@ export function SessionManagerPage({ appId }: { appId: string }) {
   };
 
   const isCurrentProviderOpenClaw = selectedSession?.providerId === "openclaw";
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputMessage.trim() || !selectedSession || isSending) return;
+
+    const providerId = selectedSession.providerId;
+    const sessionId = selectedSession.sessionId;
+    const content = inputMessage.trim();
+
+    setInputMessage('');
+    setIsSending(true);
+
+    try {
+      if (providerId === 'claude') {
+        // Use MCP Channel
+        await sendToClaudeCode(content, sessionId);
+      } else if (providerId === 'openclaw') {
+        // Use Gateway HTTP API
+        await sendToOpenClaw(sessionId, content);
+      } else {
+        // Show "under development" toast
+        toast.info(t('sessionManager.channelUnderDevelopment', {
+          defaultValue: '{{agent}} 的消息功能正在开发中',
+          agent: getProviderLabel(providerId, t)
+        }));
+        setIsSending(false);
+        return;
+      }
+
+      // Refetch messages after sending
+      await refetch();
+    } catch (error) {
+      toast.error(extractErrorMessage(error));
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -870,14 +931,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                   {/* 底部输入框 */}
                   <div className="shrink-0 border-t p-3 bg-background">
                     <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (inputMessage.trim()) {
-                          // 消息功能开发中，显示选择对话框
-                          setShowTuiChoice(true);
-                          setInputMessage("");
-                        }
-                      }}
+                      onSubmit={handleSendMessage}
                       className="flex gap-2"
                     >
                       <Input
@@ -886,8 +940,12 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                         placeholder={t("sessionManager.inputPlaceholder", "输入消息...")}
                         className="flex-1"
                       />
-                      <Button type="submit" size="icon" disabled={!inputMessage.trim()}>
-                        <Send className="size-4" />
+                      <Button type="submit" size="icon" disabled={!inputMessage.trim() || isSending}>
+                        {isSending ? (
+                          <RefreshCw className="size-4 animate-spin" />
+                        ) : (
+                          <Send className="size-4" />
+                        )}
                       </Button>
                     </form>
                   </div>
