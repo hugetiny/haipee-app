@@ -29,6 +29,7 @@ export function SessionItem({
     <button
       type="button"
       onClick={() => onSelect(sessionKey)}
+      data-session-provider={session.providerId}
       className={cn(
         "w-full text-left rounded-md px-2 py-1.5 transition-colors flex items-center gap-2",
         isSelected
