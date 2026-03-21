@@ -25,6 +25,12 @@ if (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__) {
       if (cmd === "scan_openclaw_config_health") return [];
       if (cmd === "read_openclaw_json_raw")
         return '{\n  "agents": {},\n  "env": {},\n  "tools": {}\n}';
+      if (cmd === "get_openclaw_json_section") {
+        if (args?.section === "gateway") {
+          return { url: "http://127.0.0.1:18789" };
+        }
+        return {};
+      }
 
       // Proxy & Failover commands
       if (cmd === "get_proxy_status")
