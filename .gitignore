@@ -51,8 +51,7 @@ wdio-logs/
 # Playwright MCP debug captures (screenshots + console logs)
 .playwright-mcp/
 
-# Superpowers brainstorm local server artifacts
-.superpowers/
+
 
 # Root-level debug artifacts
 /*.png
@@ -63,6 +62,3 @@ wdio-logs/
 
 # Lock files (project uses bun, not npm)
 package-lock.json
-
-# Docs: ignore generated test reports only; keep design specs/plans
-docs/CRABNEBULA-*.md

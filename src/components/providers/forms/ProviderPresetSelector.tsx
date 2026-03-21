@@ -105,7 +105,7 @@ export function ProviderPresetSelector({
       if (preset.theme?.backgroundColor) {
         return `${baseClass} text-white`;
       }
-      return `${baseClass} bg-blue-500 text-white dark:bg-blue-600`;
+      return `${baseClass} bg-green-500 text-white dark:bg-green-600`;
     }
 
     return `${baseClass} bg-accent text-muted-foreground hover:bg-accent/80`;
@@ -134,7 +134,7 @@ export function ProviderPresetSelector({
           onClick={() => onPresetChange("custom")}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             selectedPresetId === "custom"
-              ? "bg-blue-500 text-white dark:bg-blue-600"
+              ? "bg-green-500 text-white dark:bg-green-600"
               : "bg-accent text-muted-foreground hover:bg-accent/80"
           }`}
         >

@@ -224,7 +224,7 @@ export const CodexConfigSection: React.FC<CodexConfigSectionProps> = ({
             type="checkbox"
             checked={useCommonConfig}
             onChange={(e) => onCommonConfigToggle(e.target.checked)}
-            className="w-4 h-4 text-blue-500 bg-white dark:bg-gray-800 border-border-default  rounded focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-2"
+            className="w-4 h-4 text-green-500 bg-white dark:bg-gray-800 border-border-default  rounded focus:ring-green-500 dark:focus:ring-green-400 focus:ring-2"
           />
           {t("codexConfig.writeCommonConfig")}
         </label>
@@ -234,7 +234,7 @@ export const CodexConfigSection: React.FC<CodexConfigSectionProps> = ({
         <button
           type="button"
           onClick={onEditCommonConfig}
-          className="text-xs text-blue-500 dark:text-blue-400 hover:underline"
+          className="text-xs text-green-500 dark:text-green-400 hover:underline"
         >
           {t("codexConfig.editCommonConfig")}
         </button>
@@ -252,7 +252,7 @@ export const CodexConfigSection: React.FC<CodexConfigSectionProps> = ({
             type="checkbox"
             checked={toggleStates.contextWindow1M}
             onChange={(e) => handleContextWindowToggle(e.target.checked)}
-            className="w-4 h-4 text-blue-500 bg-white dark:bg-gray-800 border-border-default rounded focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-2"
+            className="w-4 h-4 text-green-500 bg-white dark:bg-gray-800 border-border-default rounded focus:ring-green-500 dark:focus:ring-green-400 focus:ring-2"
           />
           <span>{t("codexConfig.contextWindow1M")}</span>
         </label>

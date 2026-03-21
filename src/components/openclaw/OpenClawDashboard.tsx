@@ -486,7 +486,7 @@ export function OpenClawDashboard({
         <div className="max-w-7xl mx-auto p-6">
           {/* Remote instance info banner */}
           {isRemote && activeInstance?.baseUrl && activeTab !== "models" && (
-            <div className="mb-4 flex items-center gap-2 px-4 py-2.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg text-sm text-blue-700 dark:text-blue-400">
+            <div className="mb-4 flex items-center gap-2 px-4 py-2.5 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-lg text-sm text-green-700 dark:text-green-400">
               <Globe className="w-4 h-4 shrink-0" />
               <span>
                 {t(
@@ -494,7 +494,7 @@ export function OpenClawDashboard({
                   "Editing remote instance:",
                 )}
               </span>
-              <code className="font-mono text-xs bg-blue-100 dark:bg-blue-900/50 px-1.5 py-0.5 rounded">
+              <code className="font-mono text-xs bg-green-100 dark:bg-green-900/50 px-1.5 py-0.5 rounded">
                 {activeInstance.baseUrl}
               </code>
             </div>

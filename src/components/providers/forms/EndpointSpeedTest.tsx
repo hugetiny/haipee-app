@@ -575,7 +575,7 @@ const EndpointSpeedTest: React.FC<EndpointSpeedTestProps> = ({
                     {/* 选择指示器 */}
                     <div
                       className={`h-1.5 w-1.5 flex-shrink-0 rounded-full transition ${isSelected
-                          ? "bg-blue-500 dark:bg-blue-400"
+                          ? "bg-green-500 dark:bg-green-400"
                           : "bg-gray-300 dark:bg-gray-700"
                         }`}
                     />

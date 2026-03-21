@@ -66,7 +66,7 @@ export const GeminiEnvSection: React.FC<GeminiEnvSectionProps> = ({
             type="checkbox"
             checked={useCommonConfig}
             onChange={(e) => onCommonConfigToggle(e.target.checked)}
-            className="w-4 h-4 text-blue-500 bg-white dark:bg-gray-800 border-border-default rounded focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-2"
+            className="w-4 h-4 text-green-500 bg-white dark:bg-gray-800 border-border-default rounded focus:ring-green-500 dark:focus:ring-green-400 focus:ring-2"
           />
           {t("geminiConfig.writeCommonConfig", {
             defaultValue: "写入通用配置",
@@ -78,7 +78,7 @@ export const GeminiEnvSection: React.FC<GeminiEnvSectionProps> = ({
         <button
           type="button"
           onClick={onEditCommonConfig}
-          className="text-xs text-blue-500 dark:text-blue-400 hover:underline"
+          className="text-xs text-green-500 dark:text-green-400 hover:underline"
         >
           {t("geminiConfig.editCommonConfig", {
             defaultValue: "编辑通用配置",

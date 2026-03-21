@@ -151,7 +151,7 @@ export function ProviderActions({
           disabled: false,
           variant: "secondary" as const,
           className:
-            "bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/70",
+            "bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/50 dark:text-green-400 dark:hover:bg-green-900/70",
           icon: <Check className="h-4 w-4" />,
           text: t("failover.inQueue", { defaultValue: "已加入" }),
         };
@@ -160,7 +160,7 @@ export function ProviderActions({
         disabled: false,
         variant: "default" as const,
         className:
-          "bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700",
+          "bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700",
         icon: <Plus className="h-4 w-4" />,
         text: t("failover.addQueue", { defaultValue: "加入" }),
       };
@@ -204,7 +204,7 @@ export function ProviderActions({
             "w-fit px-2.5",
             isDefaultModel
               ? "bg-gray-200 text-muted-foreground dark:bg-gray-700 opacity-60 cursor-not-allowed"
-              : "bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700",
+              : "bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700",
           )}
         >
           <Zap className="h-4 w-4" />

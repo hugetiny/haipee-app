@@ -263,7 +263,7 @@ export function OpenClawFormFields({
                 <div className="flex items-center">
                   <span
                     className={`text-xs font-medium px-1.5 py-0.5 rounded ${index === 0
-                        ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                        ? "bg-green-500/15 text-green-600 dark:text-green-400"
                         : "bg-muted text-muted-foreground"
                       }`}
                   >

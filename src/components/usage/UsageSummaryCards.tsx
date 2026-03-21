@@ -38,8 +38,8 @@ export function UsageSummaryCards({
         title: t("usage.totalRequests"),
         value: totalRequests.toLocaleString(),
         icon: Activity,
-        color: "text-blue-500",
-        bg: "bg-blue-500/10",
+        color: "text-green-500",
+        bg: "bg-green-500/10",
         subValue: null,
       },
       {
