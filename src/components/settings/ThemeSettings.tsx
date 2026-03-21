@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -30,13 +30,6 @@ export function ThemeSettings() {
           icon={Moon}
         >
           {t("settings.themeDark")}
-        </ThemeButton>
-        <ThemeButton
-          active={theme === "system"}
-          onClick={(e) => setTheme("system", e)}
-          icon={Monitor}
-        >
-          {t("settings.themeSystem")}
         </ThemeButton>
       </div>
     </section>

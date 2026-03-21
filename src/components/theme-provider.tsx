@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
-type Theme = "light" | "dark" | "system";
+type Theme = "light" | "dark";
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -29,13 +29,13 @@ export function ThemeProvider({
   defaultTheme = "dark",
   storageKey = "haipee-theme",
 }: ThemeProviderProps) {
-  const getInitialTheme = () => {
+  const getInitialTheme = (): Theme => {
     if (typeof window === "undefined") {
       return defaultTheme;
     }
 
     const stored = window.localStorage.getItem(storageKey) as Theme | null;
-    if (stored === "light" || stored === "dark" || stored === "system") {
+    if (stored === "light" || stored === "dark") {
       return stored;
     }
 
@@ -59,40 +59,7 @@ export function ThemeProvider({
 
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const isDark =
-        window.matchMedia &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches;
-      root.classList.add(isDark ? "dark" : "light");
-      return;
-    }
-
     root.classList.add(theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      if (theme !== "system") {
-        return;
-      }
-
-      const root = window.document.documentElement;
-      root.classList.toggle("dark", mediaQuery.matches);
-      root.classList.toggle("light", !mediaQuery.matches);
-    };
-
-    if (theme === "system") {
-      handleChange();
-    }
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
   }, [theme]);
 
   // Sync native window theme (Windows/macOS title bar)
@@ -113,14 +80,7 @@ export function ThemeProvider({
       }
     };
 
-    // When "system", pass "system" so Tauri uses None (follows OS theme natively).
-    // This keeps the WebView's prefers-color-scheme in sync with the real OS theme,
-    // allowing effect #3's media query listener to fire on system theme changes.
-    if (theme === "system") {
-      updateNativeTheme("system");
-    } else {
-      updateNativeTheme(theme);
-    }
+    updateNativeTheme(theme);
 
     return () => {
       isCancelled = true;

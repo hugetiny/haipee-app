@@ -100,7 +100,7 @@ async function bootstrap() {
   ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="system" storageKey="haipee-theme">
+        <ThemeProvider defaultTheme="dark" storageKey="haipee-theme">
           <UpdateProvider>
             <App />
             <Toaster />
