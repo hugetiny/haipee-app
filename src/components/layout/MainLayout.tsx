@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import {
   History,
-  MessageSquare,
   Settings,
   Menu,
   X,
@@ -11,6 +10,7 @@ import {
   Circle,
   AlertTriangle,
   Loader2,
+  Radio,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -56,16 +56,16 @@ interface MainLayoutProps {
 // 主菜单项 (底部功能按钮 + Agent切换器)
 const MAIN_MENU_ITEMS = [
   {
-    id: "chat",
-    icon: MessageSquare,
-    labelKey: "chat.title",
-    labelFallback: "对话",
-  },
-  {
     id: "sessions",
     icon: History,
     labelKey: "sessionManager.title",
     labelFallback: "会话管理",
+  },
+  {
+    id: "channels",
+    icon: Radio,
+    labelKey: "channels.title",
+    labelFallback: "Channel",
   },
 ] as const;
 
