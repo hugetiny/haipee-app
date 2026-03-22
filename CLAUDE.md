@@ -153,7 +153,7 @@ tests/                      # JS/TS 测试
   config/                   # 配置预设测试
   msw/                      # Mock Service Worker 配置
   integration/              # 集成测试
-  e2e/tauri/                # Tauri WebView E2E（WebdriverIO，活跃使用）
+  e2e/tauri/                # Tauri WebView E2E（WebdriverIO）
     providers/              # 供应商测试（5 个 spec 文件，50 个测试）
     settings/               # 设置测试（6 个 spec 文件，78 个测试）
     agents/                 # 代理测试
@@ -169,13 +169,12 @@ tests/                      # JS/TS 测试
     pages/                  # Page Object Models（13 个页面对象）
     fixtures/               # 测试数据生成器
     setup/                  # 测试启动/清理
-  e2e-tauri/                # 遗留测试（未使用，可在清理时删除）
   setupGlobals.ts           # 全局测试设置
   setupTests.ts             # 测试环境初始化
 
 scripts/ai-dev-loop/        # AI 自主开发循环
   index.ts                  # CLI 入口
-  loop.ts                   # 主循环逻辑（5 层测试迭代）
+  loop.ts                   # 主循环逻辑（4 层测试迭代）
   test-runner.ts            # 各层测试执行器
   failure-parser.ts         # 错误解析（Vitest/Cargo/WebdriverIO）
   fix-orchestrator.ts       # 调用 claude CLI 自动修复
@@ -302,7 +301,6 @@ cargo build --manifest-path src-tauri/Cargo.toml --features webdriver
 | `tailwind.config.cjs` | Tailwind CSS 配置 |
 | `postcss.config.cjs` | PostCSS 配置 |
 | `src-tauri/capabilities/` | Tauri IPC 权限声明（新命令需在此添加） |
-| `playwright.api.config.ts` | **遗留**（指向已删除的 tests/e2e/providers/，可清理） |
 
 ---
 
