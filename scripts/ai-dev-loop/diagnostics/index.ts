@@ -26,20 +26,10 @@ export {
   type NetworkSummary,
 } from './network-capture.ts';
 
-// TRIAL: CrabNebula DevTools exports (remove after 2026-04-01)
-export {
-  getCrabNebulaCapture,
-  formatCrabNebulaDataForPrompt,
-  checkCrabNebulaAvailability,
-  type CrabNebulaCapture,
-  type CrabNebulaCaptureData,
-} from './crabnebula-capture.ts';
-
-import type { DiagnosticData, ScreenshotData, ConsoleEntry, NetworkRequest, IpcCall } from '../types.ts';
+import type { DiagnosticData, IpcCall } from '../types.ts';
 import { getScreenshotCapture } from './screenshot-capture.ts';
 import { getConsoleCapture } from './console-capture.ts';
 import { getNetworkCapture } from './network-capture.ts';
-import { getCrabNebulaCapture, formatCrabNebulaDataForPrompt } from './crabnebula-capture.ts';  // TRIAL: remove after 2026-04-01
 import { log } from '../logger.ts';
 
 const IPC_TRACE_URL = 'http://127.0.0.1:3000';  // Tauri app port
@@ -55,7 +45,6 @@ export async function collectDiagnostics(
     captureNetwork?: boolean;
     captureIpc?: boolean;
     captureAppState?: boolean;
-    captureCrabNebula?: boolean;  // TRIAL: CrabNebula DevTools - remove after 2026-04-01
   } = {}
 ): Promise<DiagnosticData> {
   const {
@@ -64,7 +53,6 @@ export async function collectDiagnostics(
     captureNetwork = true,
     captureIpc = true,
     captureAppState = true,
-    captureCrabNebula = true,  // TRIAL: remove after 2026-04-01
   } = options;
 
   log('info', `Collecting diagnostics for: ${testName}`);
@@ -141,25 +129,6 @@ export async function collectDiagnostics(
       }
     } catch (error) {
       log('warn', 'Failed to capture app state', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  // TRIAL: Capture CrabNebula DevTools data (remove after 2026-04-01)
-  if (captureCrabNebula) {
-    try {
-      const crabNebulaCapture = getCrabNebulaCapture();
-      const connected = await crabNebulaCapture.connect();
-      if (connected) {
-        const crabData = await crabNebulaCapture.captureAll();
-        diagnostics.crabnebulaData = crabData;
-        log('info', 'CrabNebula DevTools data captured');
-      } else {
-        log('debug', 'CrabNebula DevTools not available, skipping');
-      }
-    } catch (error) {
-      log('debug', 'CrabNebula DevTools capture skipped', {
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -324,43 +293,6 @@ export function formatDiagnosticsForPrompt(diagnostics: DiagnosticData): string 
     output += '### App State\n';
     output += `- URL: ${diagnostics.appState.url}\n`;
     output += `- Title: ${diagnostics.appState.title}\n`;
-    output += '\n';
-  }
-
-  // TRIAL: CrabNebula DevTools data (remove after 2026-04-01)
-  if (diagnostics.crabnebulaData?.connected) {
-    output += '### CrabNebula DevTools Data\n';
-
-    // Performance snapshot
-    if (diagnostics.crabnebulaData.performanceSnapshots.length > 0) {
-      const latest = diagnostics.crabnebulaData.performanceSnapshots[diagnostics.crabnebulaData.performanceSnapshots.length - 1];
-      output += '**Performance at failure:**\n';
-      output += `- CPU: ${latest.cpuUsage.toFixed(1)}%\n`;
-      output += `- Memory: ${latest.memoryUsageMB.toFixed(0)}MB / ${latest.memoryTotalMB.toFixed(0)}MB\n`;
-    }
-
-    // Rust errors
-    const rustErrors = diagnostics.crabnebulaData.rustLogs.filter(l => l.level === 'ERROR');
-    if (rustErrors.length > 0) {
-      output += '**Rust errors:**\n';
-      for (const err of rustErrors.slice(0, 5)) {
-        output += `- [${err.target}] ${err.message}\n`;
-      }
-      if (rustErrors.length > 5) {
-        output += `... and ${rustErrors.length - 5} more errors\n`;
-      }
-    }
-
-    // Timeline events
-    if (diagnostics.crabnebulaData.timeline.length > 0) {
-      output += '**Recent timeline events:**\n';
-      for (const event of diagnostics.crabnebulaData.timeline.slice(-5)) {
-        output += `- ${event.type}: ${event.name}`;
-        if (event.duration) output += ` (${event.duration}ms)`;
-        output += '\n';
-      }
-    }
-
     output += '\n';
   }
 

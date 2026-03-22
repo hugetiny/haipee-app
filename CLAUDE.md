@@ -35,8 +35,7 @@ bun run typecheck
 bun run format
 bun run format:check          # 检查格式化（CI 用）
 
-# 开发工具
-bun run dev:devtools          # 带 DevTools 的开发模式（试用功能）
+# 其他工具
 bun run gen:test              # 生成测试文件模板
 ```
 
@@ -280,7 +279,6 @@ const isVisible = await browser.execute((sel) => {
 ```toml
 webdriver = ["tauri-plugin-webdriver"]   # 启用 WebDriver E2E 端点（port 4445）
 test-hooks = []                          # 测试专用 hook（集成测试用）
-devtools = ["tauri-plugin-devtools"]     # CrabNebula DevTools（试用，2026-04-01 后移除）
 ```
 
 构建带 WebDriver 支持的二进制：

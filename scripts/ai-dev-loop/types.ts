@@ -54,43 +54,6 @@ export interface AppState {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CrabNebula DevTools Types (TRIAL - remove after 2026-04-01)
-// ═══════════════════════════════════════════════════════════════════
-
-export interface CrabNebulaTimelineEvent {
-  timestamp: number;
-  type: 'ipc' | 'log' | 'performance' | 'window';
-  name: string;
-  data: Record<string, unknown>;
-  duration?: number;
-}
-
-export interface CrabNebulaPerformanceSnapshot {
-  timestamp: number;
-  cpuUsage: number;
-  memoryUsageMB: number;
-  memoryTotalMB: number;
-}
-
-export interface CrabNebulaRustLog {
-  timestamp: number;
-  level: 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-  target: string;
-  message: string;
-  modulePath?: string;
-  file?: string;
-  line?: number;
-}
-
-export interface CrabNebulaDevToolsData {
-  timeline: CrabNebulaTimelineEvent[];
-  performanceSnapshots: CrabNebulaPerformanceSnapshot[];
-  rustLogs: CrabNebulaRustLog[];
-  capturedAt: number;
-  connected: boolean;
-}
-
-// ═══════════════════════════════════════════════════════════════════
 // Fix Strategy Types
 // ═══════════════════════════════════════════════════════════════════
 
@@ -145,7 +108,6 @@ export interface DiagnosticData {
   crashLog?: string;
   binaryLog?: string;
   collectedAt: number;
-  crabnebulaData?: CrabNebulaDevToolsData;  // TRIAL: CrabNebula DevTools - remove after 2026-04-01
 }
 
 export interface FixContext {
