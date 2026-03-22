@@ -109,7 +109,7 @@ fn copy_dir_contents(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
     Ok(())
 }
 
-/// Recursively copy a directory
+/// Recursively copy a directory, preserving symlinks
 fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
     fs::create_dir_all(dst)
         .map_err(|e| format!("Failed to create directory {:?}: {}", dst, e))?;
@@ -118,12 +118,43 @@ fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
         .map_err(|e| format!("Failed to read directory {:?}: {}", src, e))?
     {
         let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
-        let ty = entry.file_type()
-            .map_err(|e| format!("Failed to get file type: {}", e))?;
+        let file_name = entry.file_name();
         let src_path = entry.path();
-        let dst_path = dst.join(entry.file_name());
+        let dst_path = dst.join(&file_name);
 
-        if ty.is_dir() {
+        // Check if it's a symlink
+        let metadata = fs::symlink_metadata(&src_path)
+            .map_err(|e| format!("Failed to get metadata for {:?}: {}", src_path, e))?;
+
+        if metadata.file_type().is_symlink() {
+            // Copy symlink itself (preserve the link structure)
+            let link_target = fs::read_link(&src_path)
+                .map_err(|e| format!("Failed to read symlink {:?}: {}", src_path, e))?;
+
+            // Remove existing file/link if present
+            if dst_path.exists() || dst_path.symlink_metadata().is_ok() {
+                fs::remove_file(&dst_path)
+                    .map_err(|e| format!("Failed to remove existing {:?}: {}", dst_path, e))?;
+            }
+
+            #[cfg(unix)]
+            {
+                std::os::unix::fs::symlink(&link_target, &dst_path)
+                    .map_err(|e| format!("Failed to create symlink {:?} -> {:?}: {}", dst_path, link_target, e))?;
+            }
+            #[cfg(windows)]
+            {
+                // On Windows, need to check if target is a directory
+                let is_dir = link_target.is_absolute() && fs::metadata(&link_target).map(|m| m.is_dir()).unwrap_or(false);
+                if is_dir {
+                    std::os::windows::fs::symlink_dir(&link_target, &dst_path)
+                        .map_err(|e| format!("Failed to create symlink {:?} -> {:?}: {}", dst_path, link_target, e))?;
+                } else {
+                    std::os::windows::fs::symlink_file(&link_target, &dst_path)
+                        .map_err(|e| format!("Failed to create symlink {:?} -> {:?}: {}", dst_path, link_target, e))?;
+                }
+            }
+        } else if metadata.is_dir() {
             copy_dir_all(&src_path, &dst_path)?;
         } else {
             fs::copy(&src_path, &dst_path)
