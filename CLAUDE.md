@@ -288,6 +288,23 @@ devtools = ["tauri-plugin-devtools"]     # CrabNebula DevTools（试用，2026-0
 cargo build --manifest-path src-tauri/Cargo.toml --features webdriver
 ```
 
+### tauri-plugin-webdriver 说明
+
+**作用**：在 Tauri 应用内启动一个 WebDriver 兼容的 HTTP 服务器（默认端口 4445），允许 WebdriverIO 等测试框架直接控制 WebView。
+
+**为什么需要它**：
+- macOS 使用 WKWebView（WebKit），没有独立的 WebDriver 可执行文件
+- Linux 使用 WRY WebView（基于 WebKitGTK），同样需要内置 WebDriver
+- tauri-plugin-webdriver 让 Tauri 应用自己暴露 WebDriver 协议
+
+**工作原理**：
+1. 编译时启用 `--features webdriver`
+2. 应用启动后，插件在内部启动 WebDriver 服务器（port 4445）
+3. WebdriverIO 连接 `127.0.0.1:4445`，发送标准 WebDriver 命令
+4. 插件将命令转发给 WebView，执行 DOM 操作、截图等
+
+**注意**：`bun run test:e2e:tauri:build` 会自动编译带 webdriver feature 的二进制。
+
 ---
 
 ## 关键配置文件
