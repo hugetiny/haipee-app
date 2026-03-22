@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings2, Code2, Plug, FileText, Terminal } from "lucide-react";
@@ -11,6 +11,7 @@ import { AgentEnvConfig } from "./AgentEnvConfig";
 import UnifiedSkillsPanel from "@/components/skills/UnifiedSkillsPanel";
 import UnifiedMcpPanel from "@/components/mcp/UnifiedMcpPanel";
 import PromptPanel from "@/components/prompts/PromptPanel";
+import { OpenClawSkillsMcpPanel } from "@/components/openclaw/OpenClawSkillsMcpPanel";
 
 const AGENT_TABS = [
   { id: "basic", labelKey: "agent.config.basic", labelFallback: "基础配置", icon: Settings2 },
@@ -33,11 +34,6 @@ export function AgentConfigView() {
   const [activeApp, setActiveApp] = useState<AppId>("claude");
   const [activeTab, setActiveTab] = useState<string>("basic");
 
-  // Get the skills/mcp apps - all agents now support skills and mcp
-  const skillsApps = useMemo(() => {
-    return activeApp === "openclaw" ? "claude" : activeApp;
-  }, [activeApp]);
-
   return (
     <div className="flex flex-col h-full">
       {/* Agent Selector Header */}
@@ -51,6 +47,7 @@ export function AgentConfigView() {
               key={agent.id}
               type="button"
               onClick={() => setActiveApp(agent.id)}
+              data-testid={`agent-selector-${agent.id}`}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
                 activeApp === agent.id
                   ? "bg-primary/10 text-primary"
@@ -72,9 +69,9 @@ export function AgentConfigView() {
           className="flex flex-col h-full"
         >
           <div className="px-4 pt-3 shrink-0">
-            <TabsList className="w-full justify-start">
+            <TabsList className="w-full justify-start" data-testid="agent-tabs">
               {AGENT_TABS.map((tab) => (
-                <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5">
+                <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5" data-testid={`agent-tab-${tab.id}`}>
                   <tab.icon className="w-3.5 h-3.5" />
                   {t(tab.labelKey, tab.labelFallback)}
                 </TabsTrigger>
@@ -96,13 +93,21 @@ export function AgentConfigView() {
                   <AgentBasicConfig appId={activeApp} />
                 )}
                 {activeTab === "skills" && (
-                  <UnifiedSkillsPanel
-                    currentApp={skillsApps as AppId}
-                    onOpenDiscovery={() => {}}
-                  />
+                  activeApp === "openclaw" ? (
+                    <OpenClawSkillsMcpPanel type="skills" />
+                  ) : (
+                    <UnifiedSkillsPanel
+                      currentApp={activeApp}
+                      onOpenDiscovery={() => {}}
+                    />
+                  )
                 )}
                 {activeTab === "mcp" && (
-                  <UnifiedMcpPanel onOpenChange={() => {}} />
+                  activeApp === "openclaw" ? (
+                    <OpenClawSkillsMcpPanel type="mcp" />
+                  ) : (
+                    <UnifiedMcpPanel onOpenChange={() => {}} />
+                  )
                 )}
                 {activeTab === "prompts" && (
                   <PromptPanel

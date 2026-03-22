@@ -441,7 +441,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-1" data-testid="sessions-list">
                       {filteredSessions.map((session) => {
                         const isSelected =
                           selectedKey !== null &&

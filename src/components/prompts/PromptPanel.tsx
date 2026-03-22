@@ -124,7 +124,7 @@ const PromptPanel = React.forwardRef<PromptPanelHandle, PromptPanelProps>(
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3" data-testid="prompts-list">
               {promptEntries.map(([id, prompt]) => (
                 <PromptListItem
                   key={id}
