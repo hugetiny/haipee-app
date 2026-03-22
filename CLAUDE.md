@@ -316,16 +316,3 @@ cargo build --manifest-path src-tauri/Cargo.toml --features webdriver
 6. **新 Tauri 命令**需要同时：① `#[tauri::command]` + `generate_handler!` 注册，② 在 `capabilities/` 添加权限
 7. **browser-mock.ts**：浏览器调试时自动 mock IPC，添加新命令的 mock 在此文件里维护
 8. **E2E 测试**使用 `data-testid` 属性定位元素，新增 UI 组件需添加 testid
-
----
-
-## 待清理项（TODO）
-
-以下遗留文件/目录可在适当时机清理：
-
-| 文件/目录 | 问题 | 操作 |
-|-----------|------|------|
-| `playwright.api.config.ts` | 指向已删除的 `tests/e2e/providers/` | 删除 |
-| `tests/e2e-tauri/` | 10个遗留 spec 文件，未使用 | 删除 |
-| `src/mcp-channel/bridge.test.ts` | 3个未使用变量警告 | 修复或删除 |
-| `tests/hooks/useSettingsForm.test.tsx` | Mock 类型错误 | 修复 |

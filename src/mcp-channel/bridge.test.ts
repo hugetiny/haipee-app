@@ -12,10 +12,6 @@ vi.mock("./server.js", () => ({
   setReplyCallback: vi.fn(),
 }));
 
-// Mock window to simulate Tauri environment (not browser)
-const originalWindow = globalThis.window;
-const originalProcess = globalThis.process;
-
 describe("Haipee Channel Bridge", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -79,7 +75,7 @@ describe("Haipee Channel Bridge", () => {
     });
 
     it("should use default chat ID 'main'", async () => {
-      const { initHaipeeChannel, sendToClaudeCode, getActiveChatId } = await import("./bridge.js");
+      const { initHaipeeChannel, getActiveChatId } = await import("./bridge.js");
       await initHaipeeChannel();
 
       expect(getActiveChatId()).toBe("main");

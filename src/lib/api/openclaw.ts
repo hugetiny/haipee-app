@@ -357,4 +357,24 @@ export const openclawApi = {
   }>> {
     return await invoke("list_openclaw_providers");
   },
+
+  /**
+   * List all MCP servers from openclaw.json mcp.servers
+   */
+  async listMcpServers(): Promise<Array<{
+    id: string;
+    command: string | null;
+    args: string[] | null;
+    env: Record<string, string> | null;
+    url: string | null;
+  }>> {
+    return await invoke("list_openclaw_mcp_servers");
+  },
+
+  /**
+   * Check if MCP is enabled in OpenClaw config (commands.mcp: true)
+   */
+  async isMcpEnabled(): Promise<boolean> {
+    return await invoke("is_openclaw_mcp_enabled");
+  },
 };

@@ -1204,6 +1204,158 @@ pub async fn set_window_theme(window: tauri::Window, theme: String) -> Result<()
     window.set_theme(tauri_theme).map_err(|e| e.to_string())
 }
 
+/// Installed terminal info
+#[derive(serde::Serialize, Clone)]
+pub struct InstalledTerminal {
+    pub id: String,
+    pub name: String,
+    pub path: Option<String>,
+}
+
+/// Scan for installed terminal applications
+#[tauri::command]
+pub fn scan_installed_terminals() -> Result<Vec<InstalledTerminal>, String> {
+    let mut terminals = Vec::new();
+
+    #[cfg(target_os = "macos")]
+    {
+        // Common macOS terminal locations
+        let terminal_apps = [
+            ("terminal", "Terminal.app", "/System/Applications/Utilities/Terminal.app"),
+            ("iterm2", "iTerm.app", "/Applications/iTerm.app"),
+            ("alacritty", "Alacritty.app", "/Applications/Alacritty.app"),
+            ("kitty", "kitty.app", "/Applications/kitty.app"),
+            ("ghostty", "Ghostty.app", "/Applications/Ghostty.app"),
+            ("wezterm", "WezTerm.app", "/Applications/WezTerm.app"),
+            ("hyper", "Hyper.app", "/Applications/Hyper.app"),
+            ("warp", "Warp.app", "/Applications/Warp.app"),
+            ("tabby", "Tabby.app", "/Applications/Tabby.app"),
+            ("terminalator", "Terminalator.app", "/Applications/Terminalator.app"),
+        ];
+
+        for (id, name, default_path) in terminal_apps {
+            // Check default location first
+            let path = std::path::Path::new(default_path);
+            if path.exists() {
+                terminals.push(InstalledTerminal {
+                    id: id.to_string(),
+                    name: name.replace(".app", ""),
+                    path: Some(default_path.to_string()),
+                });
+                continue;
+            }
+
+            // Check /Applications
+            let app_path = std::path::Path::new("/Applications").join(name);
+            if app_path.exists() {
+                terminals.push(InstalledTerminal {
+                    id: id.to_string(),
+                    name: name.replace(".app", ""),
+                    path: Some(app_path.to_string_lossy().to_string()),
+                });
+                continue;
+            }
+
+            // Check ~/Applications
+            if let Some(home) = std::env::var_os("HOME") {
+                let user_apps = std::path::Path::new(&home).join("Applications").join(name);
+                if user_apps.exists() {
+                    terminals.push(InstalledTerminal {
+                        id: id.to_string(),
+                        name: name.replace(".app", ""),
+                        path: Some(user_apps.to_string_lossy().to_string()),
+                    });
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+
+        // Check for Windows Terminal
+        if let Ok(output) = Command::new("where").arg("wt.exe").output() {
+            if output.status.success() {
+                terminals.push(InstalledTerminal {
+                    id: "wt".to_string(),
+                    name: "Windows Terminal".to_string(),
+                    path: Some(String::from_utf8_lossy(&output.stdout).trim().to_string()),
+                });
+            }
+        }
+
+        // PowerShell is always available on modern Windows
+        terminals.push(InstalledTerminal {
+            id: "powershell".to_string(),
+            name: "PowerShell".to_string(),
+            path: None,
+        });
+
+        // CMD is always available
+        terminals.push(InstalledTerminal {
+            id: "cmd".to_string(),
+            name: "Command Prompt".to_string(),
+            path: None,
+        });
+
+        // Check for Alacritty
+        if let Ok(output) = Command::new("where").arg("alacritty.exe").output() {
+            if output.status.success() {
+                terminals.push(InstalledTerminal {
+                    id: "alacritty".to_string(),
+                    name: "Alacritty".to_string(),
+                    path: Some(String::from_utf8_lossy(&output.stdout).trim().to_string()),
+                });
+            }
+        }
+
+        // Check for WezTerm
+        if let Ok(output) = Command::new("where").arg("wezterm.exe").output() {
+            if output.status.success() {
+                terminals.push(InstalledTerminal {
+                    id: "wezterm".to_string(),
+                    name: "WezTerm".to_string(),
+                    path: Some(String::from_utf8_lossy(&output.stdout).trim().to_string()),
+                });
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        use std::process::Command;
+
+        let terminal_commands = [
+            ("gnome-terminal", "GNOME Terminal"),
+            ("konsole", "Konsole"),
+            ("xfce4-terminal", "XFCE Terminal"),
+            ("alacritty", "Alacritty"),
+            ("kitty", "Kitty"),
+            ("ghostty", "Ghostty"),
+            ("wezterm", "WezTerm"),
+            ("terminator", "Terminator"),
+            ("tilix", "Tilix"),
+            ("urxvt", "URxvt"),
+            ("xterm", "XTerm"),
+        ];
+
+        for (cmd, name) in terminal_commands {
+            if let Ok(output) = Command::new("which").arg(cmd).output() {
+                if output.status.success() {
+                    terminals.push(InstalledTerminal {
+                        id: cmd.to_string(),
+                        name: name.to_string(),
+                        path: Some(String::from_utf8_lossy(&output.stdout).trim().to_string()),
+                    });
+                }
+            }
+        }
+    }
+
+    Ok(terminals)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

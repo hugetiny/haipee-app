@@ -1089,6 +1089,8 @@ pub fn run() {
             commands::get_openclaw_gateway_service_status,
             commands::list_openclaw_skills,
             commands::list_openclaw_providers,
+            commands::list_openclaw_mcp_servers,
+            commands::is_openclaw_mcp_enabled,
             // Global upstream proxy
             commands::get_global_proxy_url,
             commands::set_global_proxy_url,
@@ -1097,6 +1099,7 @@ pub fn run() {
             commands::scan_local_proxies,
             // Window theme control
             commands::set_window_theme,
+            commands::scan_installed_terminals,
             // Generic managed auth commands
             commands::auth_start_login,
             commands::auth_poll_for_account,

@@ -490,3 +490,77 @@ pub fn list_openclaw_providers() -> Result<Vec<OpenClawProviderInfo>, String> {
 
     Ok(result)
 }
+
+/// MCP server entry from openclaw.json mcp.servers
+#[derive(serde::Serialize)]
+pub struct OpenClawMcpServer {
+    pub id: String,
+    pub command: Option<String>,
+    pub args: Option<Vec<String>>,
+    pub env: Option<std::collections::HashMap<String, String>>,
+    pub url: Option<String>,
+}
+
+/// List all MCP servers from openclaw.json mcp.servers
+#[tauri::command]
+pub fn list_openclaw_mcp_servers() -> Result<Vec<OpenClawMcpServer>, String> {
+    let config = openclaw_config::read_openclaw_config()
+        .map_err(|e| e.to_string())?;
+
+    let mcp_servers = config
+        .get("mcp")
+        .and_then(|m| m.get("servers"))
+        .and_then(|s| s.as_object())
+        .cloned()
+        .unwrap_or_default();
+
+    let mut result = Vec::new();
+
+    for (id, value) in mcp_servers {
+        let obj = value.as_object().cloned().unwrap_or_default();
+
+        let command = obj.get("command")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+
+        let args = obj.get("args")
+            .and_then(|v| v.as_array())
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect());
+
+        let env = obj.get("env")
+            .and_then(|v| v.as_object())
+            .map(|map| {
+                map.iter()
+                    .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+                    .collect()
+            });
+
+        let url = obj.get("url")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string());
+
+        result.push(OpenClawMcpServer {
+            id,
+            command,
+            args,
+            env,
+            url,
+        });
+    }
+
+    // Sort by id
+    result.sort_by(|a, b| a.id.cmp(&b.id));
+
+    Ok(result)
+}
+
+/// Check if MCP is enabled in OpenClaw config (commands.mcp: true)
+#[tauri::command]
+pub fn is_openclaw_mcp_enabled() -> bool {
+    openclaw_config::read_openclaw_config()
+        .ok()
+        .and_then(|config| config.get("commands").cloned())
+        .and_then(|commands| commands.get("mcp").cloned())
+        .and_then(|mcp| mcp.as_bool())
+        .unwrap_or(false)
+}
