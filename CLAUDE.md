@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-**Haipee** 是一个 Tauri v2 + React + TypeScript 桌面应用，用于统一管理和切换多个 AI CLI 工具（Claude Code、Codex、Gemini CLI 等）的供应商配置。
+**Haipee**（v3.12.3）是一个 Tauri v2 + React + TypeScript 桌面应用，用于统一管理和切换多个 AI CLI 工具（Claude Code、Codex、Gemini CLI 等）的供应商配置。
 
 - 前端：React 18 + TypeScript + Tailwind CSS，通过 Vite 构建
 - 后端：Rust（Tauri v2.8.2），管理配置文件、数据库（SQLite）、代理、MCP 服务
@@ -33,6 +33,11 @@ bun run typecheck
 
 # 格式化代码
 bun run format
+bun run format:check          # 检查格式化（CI 用）
+
+# 开发工具
+bun run dev:devtools          # 带 DevTools 的开发模式（试用功能）
+bun run gen:test              # 生成测试文件模板
 ```
 
 ---
@@ -51,7 +56,10 @@ cargo test --manifest-path src-tauri/Cargo.toml
 bun run test:e2e:tauri:build   # 首次需要编译（约 2-3 分钟）
 bun run test:e2e:tauri         # 运行 WebdriverIO 测试
 
-# AI 自主开发循环（5层测试 + Claude 自动修复）
+# 运行特定测试层
+bun run test:layer <layer>     # layer: unit, rust, integration, tauri-e2e
+
+# AI 自主开发循环（4层测试 + Claude 自动修复）
 bun run ai:dev                 # 启动循环
 bun run ai:dev:resume          # 从最新检查点恢复
 bun run ai:dev:dry             # 演练（不提交修复）
@@ -142,6 +150,8 @@ tests/                      # JS/TS 测试
   components/               # React 组件单元测试（Vitest）
   hooks/                    # Hook 单元测试
   utils/                    # 工具函数测试
+  config/                   # 配置预设测试
+  msw/                      # Mock Service Worker 配置
   integration/              # 集成测试
   e2e/tauri/                # Tauri WebView E2E（WebdriverIO，活跃使用）
     providers/              # 供应商测试（5 个 spec 文件，50 个测试）
@@ -160,6 +170,8 @@ tests/                      # JS/TS 测试
     fixtures/               # 测试数据生成器
     setup/                  # 测试启动/清理
   e2e-tauri/                # 遗留测试（未使用，可在清理时删除）
+  setupGlobals.ts           # 全局测试设置
+  setupTests.ts             # 测试环境初始化
 
 scripts/ai-dev-loop/        # AI 自主开发循环
   index.ts                  # CLI 入口
@@ -288,7 +300,9 @@ cargo build --manifest-path src-tauri/Cargo.toml --features webdriver
 | `wdio.conf.ts` | WebdriverIO Tauri E2E（连接 localhost:4445，测试真实 WebView） |
 | `vitest.config.ts` | Vitest 单元/集成测试配置 |
 | `tailwind.config.cjs` | Tailwind CSS 配置 |
+| `postcss.config.cjs` | PostCSS 配置 |
 | `src-tauri/capabilities/` | Tauri IPC 权限声明（新命令需在此添加） |
+| `playwright.api.config.ts` | **遗留**（指向已删除的 tests/e2e/providers/，可清理） |
 
 ---
 
@@ -302,3 +316,16 @@ cargo build --manifest-path src-tauri/Cargo.toml --features webdriver
 6. **新 Tauri 命令**需要同时：① `#[tauri::command]` + `generate_handler!` 注册，② 在 `capabilities/` 添加权限
 7. **browser-mock.ts**：浏览器调试时自动 mock IPC，添加新命令的 mock 在此文件里维护
 8. **E2E 测试**使用 `data-testid` 属性定位元素，新增 UI 组件需添加 testid
+
+---
+
+## 待清理项（TODO）
+
+以下遗留文件/目录可在适当时机清理：
+
+| 文件/目录 | 问题 | 操作 |
+|-----------|------|------|
+| `playwright.api.config.ts` | 指向已删除的 `tests/e2e/providers/` | 删除 |
+| `tests/e2e-tauri/` | 10个遗留 spec 文件，未使用 | 删除 |
+| `src/mcp-channel/bridge.test.ts` | 3个未使用变量警告 | 修复或删除 |
+| `tests/hooks/useSettingsForm.test.tsx` | Mock 类型错误 | 修复 |
