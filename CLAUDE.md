@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Haipee** 是一个 Tauri v2 + React + TypeScript 桌面应用，用于统一管理和切换多个 AI CLI 工具（Claude Code、Codex、Gemini CLI 等）的供应商配置。
 
 - 前端：React 18 + TypeScript + Tailwind CSS，通过 Vite 构建
-- 后端：Rust（Tauri v2.10），管理配置文件、数据库（SQLite）、代理、MCP 服务
+- 后端：Rust（Tauri v2.8.2），管理配置文件、数据库（SQLite）、代理、MCP 服务
 - 包管理：**bun**（不用 npm/pnpm/yarn）
 - 平台：macOS、Windows、Linux
 
@@ -143,7 +143,7 @@ tests/                      # JS/TS 测试
   hooks/                    # Hook 单元测试
   utils/                    # 工具函数测试
   integration/              # 集成测试
-  e2e/tauri/                # Tauri WebView E2E（WebdriverIO）
+  e2e/tauri/                # Tauri WebView E2E（WebdriverIO，活跃使用）
     providers/              # 供应商测试（5 个 spec 文件，50 个测试）
     settings/               # 设置测试（6 个 spec 文件，78 个测试）
     agents/                 # 代理测试
@@ -159,6 +159,7 @@ tests/                      # JS/TS 测试
     pages/                  # Page Object Models（13 个页面对象）
     fixtures/               # 测试数据生成器
     setup/                  # 测试启动/清理
+  e2e-tauri/                # 遗留测试（未使用，可在清理时删除）
 
 scripts/ai-dev-loop/        # AI 自主开发循环
   index.ts                  # CLI 入口
@@ -246,19 +247,17 @@ const isVisible = await browser.execute((sel) => {
 
 ## AI 自主开发循环
 
-`scripts/ai-dev-loop/` 实现了一个 10 小时无人值守的自修复开发循环，按优先级依次运行 5 个测试层：
+`scripts/ai-dev-loop/` 实现了一个 10 小时无人值守的自修复开发循环，按优先级依次运行 4 个测试层：
 
 | 优先级 | 层名 | 命令 | 超时 |
 |--------|------|------|------|
 | 1 | `unit` | `bun vitest run` | 2 分钟 |
 | 2 | `rust` | `cargo test --manifest-path src-tauri/Cargo.toml` | 5 分钟 |
 | 3 | `integration` | `bun vitest run tests/integration` | 5 分钟 |
-| 4 | `e2e` | `bun playwright test` | 15 分钟 |
-| 5 | `tauri-e2e` | `bunx wdio run wdio.conf.ts` | **30 分钟** |
+| 4 | `tauri-e2e` | `bunx wdio run wdio.conf.ts` | 30 分钟 |
 
 **跳过规则：**
 - `integration` 在 unit 失败时跳过
-- `e2e` 在 unit 或 integration 失败时跳过
 - `tauri-e2e` 在 rust 或 integration 失败时跳过（二进制不可信）
 
 **修复流程：** 解析失败 → 构建上下文（源文件 + 错误）→ 调用 `claude -p <prompt>` → 应用 XML 文件块 → 重跑测试 → 失败则回滚
@@ -270,6 +269,7 @@ const isVisible = await browser.execute((sel) => {
 ```toml
 webdriver = ["tauri-plugin-webdriver"]   # 启用 WebDriver E2E 端点（port 4445）
 test-hooks = []                          # 测试专用 hook（集成测试用）
+devtools = ["tauri-plugin-devtools"]     # CrabNebula DevTools（试用，2026-04-01 后移除）
 ```
 
 构建带 WebDriver 支持的二进制：
