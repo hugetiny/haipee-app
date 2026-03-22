@@ -25,7 +25,7 @@ const DEFAULT_CONFIG: LoopConfig = {
     // 4. Tauri WebView E2E — tests the REAL Tauri binary via tauri-plugin-webdriver.
     //    Build: cargo build --features webdriver (cached; only rebuilds on Rust source change).
     //    skipped when rust OR integration failures are present.
-    { name: 'tauri-e2e', command: 'bunx wdio run wdio.conf.ts', timeout: 1200000, priority: 4 },
+    { name: 'tauri-e2e', command: 'bunx wdio run wdio.conf.ts', timeout: 1800000, priority: 4 },
   ],
 };
 

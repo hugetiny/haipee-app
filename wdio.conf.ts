@@ -69,22 +69,22 @@ export const config = defineConfig({
   runner: 'local',
 
   specs: [
-    // Flow tests - core user journeys
+    // Feature-based test directories
+    './tests/e2e/tauri/providers/*.spec.ts',
+    './tests/e2e/tauri/settings/*.spec.ts',
+    './tests/e2e/tauri/agents/*.spec.ts',
+    './tests/e2e/tauri/skills/*.spec.ts',
+    './tests/e2e/tauri/mcp/*.spec.ts',
+    './tests/e2e/tauri/prompts/*.spec.ts',
+    './tests/e2e/tauri/sessions/*.spec.ts',
+    './tests/e2e/tauri/navigation/*.spec.ts',
+    './tests/e2e/tauri/openclaw/*.spec.ts',
+    './tests/e2e/tauri/universal/*.spec.ts',
+    // Legacy tests (kept for backwards compatibility)
     './tests/e2e/tauri/flows/*.spec.ts',
-    // View tests - UI detail tests
     './tests/e2e/tauri/views/*.spec.ts',
-    // Full settings E2E tests - all 8 tabs, real operations, no mocks
-    './tests/e2e/tauri/settings-full.spec.ts',
-    // Settings operations tests
-    './tests/e2e/tauri/settings-operations.spec.ts',
     // Channel communication E2E tests
     './tests/e2e/tauri/channel-communication.spec.ts',
-    // Comprehensive navigation tests
-    './tests/e2e/tauri/navigation-comprehensive.spec.ts',
-    // Comprehensive provider CRUD tests
-    './tests/e2e/tauri/providers-crud.spec.ts',
-    // Comprehensive session management tests
-    './tests/e2e/tauri/sessions-comprehensive.spec.ts',
   ],
   exclude: [],
   maxInstances: 1, // Only one Tauri window at a time
