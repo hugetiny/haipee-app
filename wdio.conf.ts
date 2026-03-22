@@ -75,8 +75,16 @@ export const config = defineConfig({
     './tests/e2e/tauri/views/*.spec.ts',
     // Full settings E2E tests - all 8 tabs, real operations, no mocks
     './tests/e2e/tauri/settings-full.spec.ts',
+    // Settings operations tests
+    './tests/e2e/tauri/settings-operations.spec.ts',
     // Channel communication E2E tests
     './tests/e2e/tauri/channel-communication.spec.ts',
+    // Comprehensive navigation tests
+    './tests/e2e/tauri/navigation-comprehensive.spec.ts',
+    // Comprehensive provider CRUD tests
+    './tests/e2e/tauri/providers-crud.spec.ts',
+    // Comprehensive session management tests
+    './tests/e2e/tauri/sessions-comprehensive.spec.ts',
   ],
   exclude: [],
   maxInstances: 1, // Only one Tauri window at a time
