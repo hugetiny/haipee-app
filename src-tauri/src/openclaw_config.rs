@@ -1,11 +1,13 @@
 //! OpenClaw 配置文件读写模块
 //!
-//! 处理 `~/.openclaw/openclaw.json` 配置文件的读写操作（JSON5 格式）。
-//! OpenClaw 使用累加式供应商管理，所有供应商配置共存于同一配置文件中。
+//! 处理 OpenClaw 配置文件的读写操作（JSON5 格式）。
+//! Haipee 使用独立的 profile: `~/.openclaw-haipee/openclaw.json`
+//! 可通过 settings.openclaw_config_dir 覆盖
 
 use crate::config::{atomic_write, get_app_config_dir};
 use crate::error::AppError;
 use crate::settings::{effective_backup_retain_count, get_openclaw_override_dir};
+use crate::services::openclaw_profile;
 use chrono::Local;
 use indexmap::IndexMap;
 use json_five::parser::{FormatConfiguration, TrailingComma};
@@ -31,21 +33,21 @@ const OPENCLAW_TOOLS_PROFILES: &[&str] = &["minimal", "coding", "messaging", "fu
 
 /// 获取 OpenClaw 配置目录
 ///
-/// 默认路径: `~/.openclaw/`
+/// Haipee 使用独立的 profile 目录: `~/.openclaw-haipee/`
 /// 可通过 settings.openclaw_config_dir 覆盖
 pub fn get_openclaw_dir() -> PathBuf {
+    // 1. 检查是否有用户覆盖设置
     if let Some(override_dir) = get_openclaw_override_dir() {
         return override_dir;
     }
 
-    dirs::home_dir()
-        .map(|h| h.join(".openclaw"))
-        .unwrap_or_else(|| PathBuf::from(".openclaw"))
+    // 2. 使用 Haipee 专用的 profile 目录
+    openclaw_profile::get_profile_dir()
 }
 
 /// 获取 OpenClaw 配置文件路径
 ///
-/// 返回 `~/.openclaw/openclaw.json`
+/// 返回 `~/.openclaw-haipee/openclaw.json`
 pub fn get_openclaw_config_path() -> PathBuf {
     get_openclaw_dir().join("openclaw.json")
 }
