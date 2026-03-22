@@ -10,7 +10,6 @@ import {
   Circle,
   AlertTriangle,
   Loader2,
-  Radio,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -53,7 +52,7 @@ interface MainLayoutProps {
   installedApps?: Partial<Record<AppId, boolean>>;
 }
 
-// 主菜单项 (底部功能按钮 + Agent切换器)
+// 主菜单项 (底部功能按钮)
 const MAIN_MENU_ITEMS = [
   {
     id: "sessions",
@@ -62,10 +61,10 @@ const MAIN_MENU_ITEMS = [
     labelFallback: "会话管理",
   },
   {
-    id: "channels",
-    icon: Radio,
-    labelKey: "channels.title",
-    labelFallback: "Channel",
+    id: "settings",
+    icon: Settings,
+    labelKey: "settings.title",
+    labelFallback: "设置",
   },
 ] as const;
 
@@ -220,9 +219,9 @@ interface DesktopSidebarProps {
   onAgentClick: (agent: AppId) => void;
   activeMainMenu: string;
   onMainMenuClick: (item: MainMenuItem) => void;
-  onSettingsClick: () => void;
   onOpenMobileSidebar: () => void;
   installedApps?: Partial<Record<AppId, boolean>>;
+  currentView: MainView;
 }
 
 const DesktopSidebar = ({
@@ -233,11 +232,14 @@ const DesktopSidebar = ({
   onAgentClick,
   activeMainMenu,
   onMainMenuClick,
-  onSettingsClick,
   onOpenMobileSidebar,
   installedApps,
+  currentView,
 }: DesktopSidebarProps) => {
   const { t } = useTranslation();
+
+  // Hide agent list when in settings view to avoid user confusion
+  const showAgentList = currentView !== "settings";
 
   return (
     <aside
@@ -280,28 +282,32 @@ const DesktopSidebar = ({
 
       <Separator className="opacity-40" />
 
-      {/* Agent List - always collapsed */}
-      <ScrollArea className="flex-1">
-        <nav className="flex flex-col gap-0.5 p-2 py-3">
-          <div className="px-1 pb-2 space-y-0.5">
-            {ALL_APPS.map((app) => (
-              <AgentListButton
-                key={app}
-                agentId={app}
-                isActive={activeApp === app}
-                status={statusMap[app] || { type: 'loading' }}
-                onClick={() => onAgentClick(app)}
-                collapsed={true}
-                isInstalled={installedApps?.[app] !== false}
-              />
-            ))}
-          </div>
-        </nav>
-      </ScrollArea>
+      {/* Agent List - always collapsed, hidden in settings view */}
+      {showAgentList && (
+        <>
+          <ScrollArea className="flex-1">
+            <nav className="flex flex-col gap-0.5 p-2 py-3">
+              <div className="px-1 pb-2 space-y-0.5">
+                {ALL_APPS.map((app) => (
+                  <AgentListButton
+                    key={app}
+                    agentId={app}
+                    isActive={activeApp === app}
+                    status={statusMap[app] || { type: 'loading' }}
+                    onClick={() => onAgentClick(app)}
+                    collapsed={true}
+                    isInstalled={installedApps?.[app] !== false}
+                  />
+                ))}
+              </div>
+            </nav>
+          </ScrollArea>
 
-      <Separator className="opacity-40" />
+          <Separator className="opacity-40" />
+        </>
+      )}
 
-      {/* Bottom: 3 buttons - 会话, 配置, 设置 */}
+      {/* Bottom: 2 buttons - 会话, 设置 */}
       <div className="p-2 shrink-0">
         <div className="flex flex-col gap-1">
           {MAIN_MENU_ITEMS.map((item) => (
@@ -325,27 +331,6 @@ const DesktopSidebar = ({
               </TooltipContent>
             </Tooltip>
           ))}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                data-testid="settings-nav-btn"
-                aria-label={t('nav.settings', '设置')}
-                className={cn(
-                  "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
-                  activeMainMenu === "settings"
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
-                )}
-                onClick={onSettingsClick}
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {t('nav.settings', '设置')}
-            </TooltipContent>
-          </Tooltip>
         </div>
       </div>
     </aside>
@@ -473,18 +458,12 @@ const MobileSidebarOverlay = ({
 interface MobileBottomNavProps {
   activeMainMenu: string;
   onMainMenuClick: (item: MainMenuItem) => void;
-  currentView: MainView;
-  onSettingsClick: () => void;
 }
 
 const MobileBottomNav = ({
   activeMainMenu,
   onMainMenuClick,
-  currentView,
-  onSettingsClick,
 }: MobileBottomNavProps) => {
-  const { t } = useTranslation();
-
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t bg-background/95 backdrop-blur-sm safe-area-bottom shrink-0">
       <div className="flex items-stretch justify-around h-[56px]">
@@ -497,20 +476,6 @@ const MobileBottomNav = ({
             variant="mobile"
           />
         ))}
-        {/* Settings button replaces AppSwitcher */}
-        <button
-          type="button"
-          className={cn(
-            "flex-1 flex flex-col items-center justify-center gap-0.5 px-1 text-xs transition-colors",
-            currentView === "settings" ? "text-primary" : "text-muted-foreground hover:text-foreground",
-          )}
-          onClick={onSettingsClick}
-        >
-          <Settings className="w-[22px] h-[22px]" />
-          <span className="text-xs leading-none truncate max-w-[56px]">
-            {t('nav.settings', '设置')}
-          </span>
-        </button>
       </div>
     </nav>
   );
@@ -605,11 +570,6 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
       onSessionProviderFilterChange?.(agent);
     };
 
-    const handleSettingsClick = () => {
-      setCurrentView("settings");
-      setIsMobileSidebarOpen(false);
-    };
-
     return (
       <div
         ref={ref}
@@ -638,9 +598,9 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           onAgentClick={handleAgentClick}
           activeMainMenu={activeMainMenu}
           onMainMenuClick={handleMainMenuClick}
-          onSettingsClick={handleSettingsClick}
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
           installedApps={installedApps}
+          currentView={currentView}
         />
 
         {/* Main content column */}
@@ -659,8 +619,6 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           <MobileBottomNav
             activeMainMenu={activeMainMenu}
             onMainMenuClick={handleMainMenuClick}
-            currentView={currentView}
-            onSettingsClick={handleSettingsClick}
           />
           {/* Bottom nav spacer */}
           <div className="md:hidden h-[56px] shrink-0 pointer-events-none" />
