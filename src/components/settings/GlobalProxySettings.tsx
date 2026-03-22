@@ -148,7 +148,7 @@ export function GlobalProxySettings() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="proxy-settings">
       {/* 描述 */}
       <p className="text-sm text-muted-foreground">
         {t("settings.globalProxy.hint")}
@@ -165,6 +165,7 @@ export function GlobalProxySettings() {
           }}
           onKeyDown={handleKeyDown}
           className="font-mono text-sm flex-1"
+          data-testid="proxy-url-input"
         />
         <Button
           variant="outline"

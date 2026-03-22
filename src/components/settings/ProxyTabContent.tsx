@@ -166,6 +166,7 @@ export function ProxyTabContent({
                 )}
                 checked={settings?.enableFailoverToggle ?? false}
                 onCheckedChange={handleFailoverToggleChange}
+                testId="failover-toggle"
               />
 
               {!isRunning && (

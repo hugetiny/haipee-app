@@ -7,6 +7,7 @@ export interface ToggleRowProps {
   checked: boolean;
   onCheckedChange: (value: boolean) => void;
   disabled?: boolean;
+  testId?: string;
 }
 
 export function ToggleRow({
@@ -16,9 +17,10 @@ export function ToggleRow({
   checked,
   onCheckedChange,
   disabled,
+  testId,
 }: ToggleRowProps) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card/50 p-4 transition-colors hover:bg-muted/50">
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card/50 p-4 transition-colors hover:bg-muted/50" data-testid={testId}>
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background ring-1 ring-border">
           {icon}

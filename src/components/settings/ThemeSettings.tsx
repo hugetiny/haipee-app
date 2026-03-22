@@ -9,7 +9,7 @@ export function ThemeSettings() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <section className="space-y-2">
+    <section className="space-y-2" data-testid="theme-selector">
       <header className="space-y-1">
         <h3 className="text-sm font-medium">{t("settings.theme")}</h3>
         <p className="text-xs text-muted-foreground">
@@ -21,6 +21,7 @@ export function ThemeSettings() {
           active={theme === "light"}
           onClick={(e) => setTheme("light", e)}
           icon={Sun}
+          testId="theme-btn-light"
         >
           {t("settings.themeLight")}
         </ThemeButton>
@@ -28,6 +29,7 @@ export function ThemeSettings() {
           active={theme === "dark"}
           onClick={(e) => setTheme("dark", e)}
           icon={Moon}
+          testId="theme-btn-dark"
         >
           {t("settings.themeDark")}
         </ThemeButton>
@@ -41,6 +43,7 @@ interface ThemeButtonProps {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
+  testId?: string;
 }
 
 function ThemeButton({
@@ -48,6 +51,7 @@ function ThemeButton({
   onClick,
   icon: Icon,
   children,
+  testId,
 }: ThemeButtonProps) {
   return (
     <Button
@@ -56,6 +60,7 @@ function ThemeButton({
       size="sm"
       variant={active ? "default" : "ghost"}
       aria-pressed={active}
+      data-testid={testId}
       className={cn(
         "min-w-[96px] gap-1.5",
         active

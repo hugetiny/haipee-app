@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -11,7 +11,6 @@ import {
   HardDriveDownload,
   FlaskConical,
   KeyRound,
-  Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -46,7 +45,6 @@ import { ModelTestConfigPanel } from "@/components/usage/ModelTestConfigPanel";
 import { UsageDashboard } from "@/components/usage/UsageDashboard";
 import { LogConfigPanel } from "@/components/settings/LogConfigPanel";
 import { AuthCenterPanel } from "@/components/settings/AuthCenterPanel";
-import { SystemEnvPanel } from "@/components/settings/SystemEnvPanel";
 import { AgentConfigView } from "@/components/agents/AgentConfigView";
 import { useSettings } from "@/hooks/useSettings";
 import { useImportExport } from "@/hooks/useImportExport";
@@ -103,11 +101,20 @@ export function SettingsPage({
 
   const [activeTab, setActiveTab] = useState<string>("general");
   const [showRestartPrompt, setShowRestartPrompt] = useState(false);
+  const activeTabRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (open) {
       setActiveTab(defaultTab);
       resetStatus();
+      // Scroll selected tab into view
+      setTimeout(() => {
+        activeTabRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "start",
+        });
+      }, 50);
     }
   }, [open, resetStatus, defaultTab]);
 
@@ -210,25 +217,22 @@ export function SettingsPage({
           className="flex flex-col h-full"
           data-settings-loaded={settings ? "true" : undefined}
         >
-          <TabsList className="grid w-full grid-cols-8 mb-6 glass rounded-lg">
-            <TabsTrigger value="models">
-              {t("settings.tabAgentSettings", { defaultValue: "Agent设置" })}
-            </TabsTrigger>
-            <TabsTrigger value="general">
+          <TabsList className="flex w-full gap-1 mb-6 glass rounded-lg overflow-x-auto" data-testid="settings-tabs">
+            <TabsTrigger value="general" className="shrink-0" ref={activeTab === "general" ? activeTabRef : null} data-testid="settings-tab-general">
               {t("settings.tabGeneral")}
             </TabsTrigger>
-            <TabsTrigger value="proxy">{t("settings.tabProxy")}</TabsTrigger>
-            <TabsTrigger value="auth">
+            <TabsTrigger value="models" className="shrink-0" ref={activeTab === "models" ? activeTabRef : null} data-testid="settings-tab-models">
+              {t("settings.tabAgentSettings", { defaultValue: "Agent设置" })}
+            </TabsTrigger>
+            <TabsTrigger value="proxy" className="shrink-0" ref={activeTab === "proxy" ? activeTabRef : null} data-testid="settings-tab-proxy">{t("settings.tabProxy")}</TabsTrigger>
+            <TabsTrigger value="auth" className="shrink-0" ref={activeTab === "auth" ? activeTabRef : null} data-testid="settings-tab-auth">
               {t("settings.tabAuth", { defaultValue: "认证" })}
             </TabsTrigger>
-            <TabsTrigger value="env">
-              {t("settings.tabEnv", { defaultValue: "环境变量" })}
-            </TabsTrigger>
-            <TabsTrigger value="advanced">
+            <TabsTrigger value="advanced" className="shrink-0" ref={activeTab === "advanced" ? activeTabRef : null} data-testid="settings-tab-advanced">
               {t("settings.tabAdvanced")}
             </TabsTrigger>
-            <TabsTrigger value="usage">{t("usage.title")}</TabsTrigger>
-            <TabsTrigger value="about">{t("common.about")}</TabsTrigger>
+            <TabsTrigger value="usage" className="shrink-0" ref={activeTab === "usage" ? activeTabRef : null} data-testid="settings-tab-usage">{t("usage.title")}</TabsTrigger>
+            <TabsTrigger value="about" className="shrink-0" ref={activeTab === "about" ? activeTabRef : null} data-testid="settings-tab-about">{t("common.about")}</TabsTrigger>
           </TabsList>
 
           <div className="flex-1 min-h-0 flex flex-col">
@@ -305,34 +309,6 @@ export function SettingsPage({
                   </div>
 
                   <AuthCenterPanel />
-                </motion.div>
-              </TabsContent>
-
-              <TabsContent value="env" className="space-y-6 mt-0 pb-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-6"
-                >
-                  <div className="flex items-center gap-3 px-1">
-                    <Terminal className="h-5 w-5 text-primary" />
-                    <div>
-                      <h2 className="text-base font-semibold">
-                        {t("settings.envVar.title", {
-                          defaultValue: "系统环境变量",
-                        })}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {t("settings.envVar.description", {
-                          defaultValue:
-                            "管理 shell 配置文件中的环境变量",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-
-                  <SystemEnvPanel />
                 </motion.div>
               </TabsContent>
 
