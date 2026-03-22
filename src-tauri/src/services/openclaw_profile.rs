@@ -1,10 +1,10 @@
 //! OpenClaw Profile Management
 //!
 //! Manages Haipee's OpenClaw profile directory (~/.openclaw-haipee/).
-//! Follows AutoClaw's approach: copies device identity from main OpenClaw.
 //!
-//! On first startup, copies the entire .openclaw folder structure to ensure
-//! the Haipee profile has all necessary folders (skills, memory, workspace, etc.)
+//! On first startup, copies the entire .openclaw folder to .openclaw-haipee
+//! to ensure the profile has all necessary folders (skills, memory, workspace, etc.)
+//! After that, Haipee uses its own profile independently.
 
 use std::fs;
 use std::path::PathBuf;
@@ -16,26 +16,8 @@ pub const PROFILE_NAME: &str = "haipee";
 /// Default gateway port for Haipee (different from main OpenClaw's 18789)
 pub const DEFAULT_GATEWAY_PORT: u16 = 18770;
 
-/// Folders to copy from main OpenClaw (everything except logs and temp files)
-const FOLDERS_TO_COPY: &[&str] = &[
-    "agents",
-    "browser",
-    "canvas",
-    "cron",
-    "devices",
-    "extensions",
-    "identity",
-    "media",
-    "memory",
-    "skills",
-    "workspace",
-];
-
-/// Files to copy from main OpenClaw
-const FILES_TO_COPY: &[&str] = &[
-    "openclaw.json",
-    "request-headers.json",
-];
+/// Directories to skip when copying (logs, temp files, etc.)
+const SKIP_DIRS: &[&str] = &["logs"];
 
 // ============================================================================
 // Profile Management
@@ -62,15 +44,16 @@ pub fn profile_exists() -> bool {
 
 /// Initialize the Haipee OpenClaw profile
 ///
-/// This copies the entire folder structure from main OpenClaw (~/.openclaw/)
-/// to ensure Haipee has all necessary folders (skills, memory, workspace, etc.)
-/// Matching AutoClaw's approach for a complete profile.
+/// One-time operation: copies the entire .openclaw folder to .openclaw-haipee.
+/// If .openclaw-haipee already exists, skips copying (profile is already initialized).
+/// After initialization, Haipee uses its own profile independently.
 pub fn init_profile() -> Result<PathBuf, String> {
     let profile_dir = get_profile_dir();
     let main_dir = get_main_openclaw_dir();
 
+    // One-time check: if profile already exists, don't copy again
     if profile_dir.exists() {
-        log::info!("[OpenClawProfile] Profile already exists at {:?}", profile_dir);
+        log::info!("[OpenClawProfile] Profile already exists at {:?}, skipping copy", profile_dir);
         return Ok(profile_dir);
     }
 
@@ -78,50 +61,48 @@ pub fn init_profile() -> Result<PathBuf, String> {
 
     // Check if main OpenClaw exists
     if main_dir.exists() {
-        log::info!("[OpenClawProfile] Copying from main OpenClaw at {:?}", main_dir);
-        copy_from_main_openclaw(&main_dir, &profile_dir)?;
+        log::info!("[OpenClawProfile] Copying entire .openclaw folder from {:?}", main_dir);
+        copy_dir_contents(&main_dir, &profile_dir)?;
     } else {
         log::info!("[OpenClawProfile] Main OpenClaw not found, creating minimal profile");
         create_minimal_profile(&profile_dir)?;
     }
 
-    // Ensure gateway port is set correctly for Haipee
+    // Update gateway port to avoid conflict with main OpenClaw
     update_gateway_port(&profile_dir)?;
 
     log::info!("[OpenClawProfile] Profile initialized successfully");
     Ok(profile_dir)
 }
 
-/// Copy the entire folder structure from main OpenClaw
-fn copy_from_main_openclaw(main_dir: &PathBuf, profile_dir: &PathBuf) -> Result<(), String> {
-    // Create the profile directory
-    fs::create_dir_all(profile_dir)
-        .map_err(|e| format!("Failed to create profile directory: {}", e))?;
+/// Copy all contents from source directory to destination
+fn copy_dir_contents(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
+    fs::create_dir_all(dst)
+        .map_err(|e| format!("Failed to create directory {:?}: {}", dst, e))?;
 
-    // Copy folders
-    for folder in FOLDERS_TO_COPY {
-        let src = main_dir.join(folder);
-        let dst = profile_dir.join(folder);
+    for entry in fs::read_dir(src)
+        .map_err(|e| format!("Failed to read directory {:?}: {}", src, e))?
+    {
+        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
+        let name = entry.file_name().to_string_lossy().to_string();
+        let src_path = entry.path();
+        let dst_path = dst.join(&name);
 
-        if src.exists() {
-            log::info!("[OpenClawProfile] Copying {}...", folder);
-            copy_dir_all(&src, &dst)?;
-        } else {
-            // Create empty folder if source doesn't exist
-            fs::create_dir_all(&dst)
-                .map_err(|e| format!("Failed to create {}: {}", folder, e))?;
+        // Skip logs and other temp directories
+        if SKIP_DIRS.contains(&name.as_str()) {
+            continue;
         }
-    }
 
-    // Copy files
-    for file in FILES_TO_COPY {
-        let src = main_dir.join(file);
-        let dst = profile_dir.join(file);
+        let ty = entry.file_type()
+            .map_err(|e| format!("Failed to get file type: {}", e))?;
 
-        if src.exists() {
-            log::info!("[OpenClawProfile] Copying {}...", file);
-            fs::copy(&src, &dst)
-                .map_err(|e| format!("Failed to copy {}: {}", file, e))?;
+        if ty.is_dir() {
+            log::info!("[OpenClawProfile] Copying directory: {}", name);
+            copy_dir_all(&src_path, &dst_path)?;
+        } else {
+            log::info!("[OpenClawProfile] Copying file: {}", name);
+            fs::copy(&src_path, &dst_path)
+                .map_err(|e| format!("Failed to copy {:?}: {}", src_path, e))?;
         }
     }
 
@@ -155,24 +136,12 @@ fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
 
 /// Create a minimal profile when main OpenClaw doesn't exist
 fn create_minimal_profile(profile_dir: &PathBuf) -> Result<(), String> {
-    // Create directory structure
-    fs::create_dir_all(profile_dir.join("identity"))
-        .map_err(|e| format!("Failed to create identity directory: {}", e))?;
-
-    fs::create_dir_all(profile_dir.join("agents/main/sessions"))
-        .map_err(|e| format!("Failed to create sessions directory: {}", e))?;
-
-    fs::create_dir_all(profile_dir.join("devices"))
-        .map_err(|e| format!("Failed to create devices directory: {}", e))?;
-
-    fs::create_dir_all(profile_dir.join("skills"))
-        .map_err(|e| format!("Failed to create skills directory: {}", e))?;
-
-    fs::create_dir_all(profile_dir.join("memory"))
-        .map_err(|e| format!("Failed to create memory directory: {}", e))?;
-
-    fs::create_dir_all(profile_dir.join("workspace"))
-        .map_err(|e| format!("Failed to create workspace directory: {}", e))?;
+    // Create essential directory structure
+    let dirs = ["identity", "agents/main/sessions", "devices", "skills", "memory", "workspace"];
+    for dir in dirs {
+        fs::create_dir_all(profile_dir.join(dir))
+            .map_err(|e| format!("Failed to create {} directory: {}", dir, e))?;
+    }
 
     // Create minimal openclaw.json config
     create_profile_config(profile_dir)?;
