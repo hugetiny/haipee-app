@@ -226,4 +226,123 @@ export abstract class TauriBasePage {
   async getElements(selector: string) {
     return $$(selector);
   }
+
+  /**
+   * Find element by data-testid attribute
+   */
+  async findByTestId(testId: string) {
+    return $(`[data-testid="${testId}"]`);
+  }
+
+  /**
+   * Wait for element to be visible (using CSS properties)
+   * Note: WKWebView WebDriver isDisplayed() always returns false
+   */
+  async waitForVisible(selector: string, timeout = 10_000) {
+    const el = await $(selector);
+    await browser.waitUntil(
+      async () => {
+        const exists = await el.isExisting();
+        if (!exists) return false;
+        // Check CSS properties for visibility
+        return browser.execute(
+          (sel) => {
+            const element = document.querySelector(sel);
+            if (!element) return false;
+            const style = window.getComputedStyle(element);
+            return style.display !== 'none' &&
+                   style.visibility !== 'hidden' &&
+                   style.opacity !== '0';
+          },
+          selector
+        );
+      },
+      { timeout, timeoutMsg: `Element "${selector}" did not become visible` }
+    );
+    return el;
+  }
+
+  /**
+   * Get text content via JavaScript execution
+   * More reliable than getText() for WKWebView
+   */
+  async getTextContent(selector: string): Promise<string> {
+    return browser.execute((sel) => {
+      const el = document.querySelector(sel);
+      return el?.textContent?.trim() ?? '';
+    }, selector);
+  }
+
+  /**
+   * Check if page contains any of the given texts
+   */
+  async pageContainsAnyText(texts: string[]): Promise<boolean> {
+    return browser.execute((t) => {
+      const body = document.body;
+      const inner = (body as HTMLElement)?.innerText ?? '';
+      const content = body?.textContent ?? '';
+      return t.some(text => inner.includes(text) || content.includes(text));
+    }, texts);
+  }
+
+  /**
+   * Check if element is visible using CSS properties
+   * Note: WKWebView WebDriver isDisplayed() always returns false
+   */
+  async isElementVisible(selector: string): Promise<boolean> {
+    const el = await $(selector);
+    const exists = await el.isExisting();
+    if (!exists) return false;
+
+    return browser.execute(
+      (sel) => {
+        const element = document.querySelector(sel);
+        if (!element) return false;
+        const style = window.getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== 'none' &&
+               style.visibility !== 'hidden' &&
+               style.opacity !== '0' &&
+               rect.width > 0 &&
+               rect.height > 0;
+      },
+      selector
+    );
+  }
+
+  /**
+   * Click element by tag and text content
+   * Works around WKWebView's lack of :has-text() support
+   */
+  async clickByText(tag: string, text: string): Promise<void> {
+    const element = await browser.execute(
+      (t, txt) => {
+        const elements = document.querySelectorAll(t);
+        for (const el of elements) {
+          if (el.textContent?.includes(txt)) {
+            return el;
+          }
+        }
+        return null;
+      },
+      tag,
+      text
+    );
+
+    if (!element) {
+      throw new Error(`Element <${tag}> containing "${text}" not found`);
+    }
+
+    // Find the element in WDIO's cache and click it
+    const elements = await $$(tag);
+    for (const el of elements) {
+      const elText = await el.getText();
+      if (elText.includes(text)) {
+        await el.click();
+        return;
+      }
+    }
+
+    throw new Error(`Could not click <${tag}> containing "${text}"`);
+  }
 }
