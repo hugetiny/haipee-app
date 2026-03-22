@@ -11,6 +11,43 @@ This document specifies a comprehensive E2E test suite for Haipee, a Tauri v2 de
 3. **AI-Ready**: Replace existing tauri-e2e layer in ai-dev-loop for autonomous development
 4. **Maintainability**: Use Page Object Model pattern for easy updates when UI changes
 
+## WKWebView Constraints
+
+**CRITICAL**: The app runs in WKWebView on macOS, which has significant WebDriver limitations:
+
+| Limitation | Workaround |
+|------------|------------|
+| `:has-text()` pseudo-selector not supported | Use `browser.execute()` with JavaScript text search |
+| `:contains()` selector not standard | Use `browser.execute()` to find elements by text |
+| `isDisplayed()` always returns false | Check CSS properties: `display`, `visibility`, `opacity` |
+| Element references from `execute()` return null | Use temp attribute marking pattern |
+
+**Example pattern for text-based element finding:**
+```typescript
+// Instead of: await $('button:has-text("Add Provider")')
+const uid = `wdio-${Date.now()}`;
+await browser.execute((attrKey) => {
+  const btn = Array.from(document.querySelectorAll('button'))
+    .find(b => b.textContent?.includes('Add Provider'));
+  if (btn) btn.setAttribute(attrKey, 'true');
+}, uid);
+const element = await $(`[${uid}]`);
+```
+
+**Example pattern for visibility check:**
+```typescript
+// Instead of: await element.isDisplayed()
+async function isElementVisible(element: WebdriverIO.Element): Promise<boolean> {
+  const display = await element.getCSSProperty('display');
+  if (display.value === 'none') return false;
+  const visibility = await element.getCSSProperty('visibility');
+  if (visibility.value === 'hidden') return false;
+  const opacity = await element.getCSSProperty('opacity');
+  if (parseFloat(String(opacity.value)) === 0) return false;
+  return true;
+}
+```
+
 ## Test Stack
 
 | Component | Technology | Purpose |
@@ -21,6 +58,8 @@ This document specifies a comprehensive E2E test suite for Haipee, a Tauri v2 de
 | Organization | Feature-based | One spec per major feature |
 
 ## File Structure
+
+**Migration Note**: Existing tests in `tests/e2e/tauri/flows/` and `tests/e2e/tauri/views/` will be migrated to the new feature-based structure. The `tests/e2e-tauri/` directory is a separate test suite and remains unchanged.
 
 ```
 tests/e2e/tauri/
@@ -76,6 +115,199 @@ tests/e2e/tauri/
     ├── data-manager.ts            # Test data management
     └── assertions.ts              # Custom assertions
 ```
+
+## Prerequisite: data-testid Infrastructure
+
+**CRITICAL**: The current UI components do not have `data-testid` attributes. These must be added before tests can be written reliably.
+
+### Phase 0: Add data-testid Attributes
+
+Add `data-testid` attributes to all key UI elements:
+
+| Component | data-testid | File |
+|-----------|-------------|------|
+| Provider grid | `provider-grid` | ProviderList.tsx |
+| Provider card | `provider-card` | ProviderCard.tsx |
+| Add provider button | `add-provider-btn` | ProviderList.tsx |
+| Edit provider button | `edit-provider-btn` | ProviderCard.tsx |
+| Delete provider button | `delete-provider-btn` | ProviderCard.tsx |
+| Provider search input | `provider-search` | ProviderList.tsx |
+| Settings tab | `settings-tab-{name}` | SettingsPage.tsx |
+| Language selector | `language-selector` | LanguageSettings.tsx |
+| Theme buttons | `theme-btn-{light\|dark\|system}` | ThemeSettings.tsx |
+| Proxy toggle | `proxy-toggle` | ProxyToggle.tsx |
+| Failover toggle | `failover-toggle` | FailoverToggle.tsx |
+| ... | ... | ... |
+
+**Implementation approach:**
+1. Create a PR adding all `data-testid` attributes
+2. Run existing tests to verify no breakage
+3. Merge before starting test implementation
+
+### Alternative: Text-Based Selectors (Fallback)
+
+If `data-testid` cannot be added immediately, use text-based selectors via `browser.execute()`:
+
+```typescript
+// Find button by text content
+const btn = await browser.execute(() => {
+  const buttons = Array.from(document.querySelectorAll('button'));
+  return buttons.find(b => b.textContent?.includes('Add Provider'));
+});
+```
+
+## Async State Handling
+
+All tests must handle async UI updates properly:
+
+### Wait Strategies
+
+```typescript
+// 1. Wait for element to exist
+await browser.waitUntil(
+  async () => await element.isExisting(),
+  { timeout: 5000, timeoutMsg: 'Element not found' }
+);
+
+// 2. Wait for loading to complete
+await browser.waitUntil(
+  async () => !(await loadingSpinner.isExisting()),
+  { timeout: 10000, timeoutMsg: 'Loading did not complete' }
+);
+
+// 3. Wait for toast notification
+await browser.waitUntil(
+  async () => {
+    const toast = await $('[role="alert"]');
+    return await toast.isExisting();
+  },
+  { timeout: 5000, timeoutMsg: 'Toast did not appear' }
+);
+
+// 4. Wait for React Query data
+await browser.waitUntil(
+  async () => {
+    const count = await browser.execute(() =>
+      document.querySelectorAll('[data-provider-id]').length
+    );
+    return count > 0;
+  },
+  { timeout: 10000, timeoutMsg: 'Providers did not load' }
+);
+```
+
+### Animation Handling
+
+```typescript
+// Wait for Framer Motion animation
+await browser.pause(300); // 300ms for most animations
+
+// Or wait for specific animation state
+await browser.waitUntil(
+  async () => {
+    const opacity = await element.getCSSProperty('opacity');
+    return opacity.value === '1';
+  },
+  { timeout: 1000 }
+);
+```
+
+## External Services & Mocking
+
+### Tests Requiring External Services
+
+| Test | Service | Strategy |
+|------|---------|----------|
+| OAuth login | GitHub API | Skip in CI, manual test only |
+| WebDAV sync | Remote server | Mock responses, skip real sync |
+| Usage stats | Internal DB | Use test fixtures |
+| Gateway health | OpenClaw process | Mock health check |
+
+### CI-Safe Test Markers
+
+```typescript
+// Mark tests that require external services
+describe('@integration Auth Tests', () => {
+  before(function() {
+    // Skip in CI environment
+    if (process.env.CI) {
+      this.skip();
+    }
+  });
+
+  it('should complete OAuth flow', async () => {
+    // ...
+  });
+});
+```
+
+### Mock Data Fixtures
+
+```typescript
+// tests/e2e/tauri/fixtures/mock-providers.ts
+export const mockProviders = [
+  { id: 'test-1', name: 'Test Provider 1', apiKey: 'sk-test-1' },
+  { id: 'test-2', name: 'Test Provider 2', apiKey: 'sk-test-2' },
+];
+
+// Use in tests
+before(async () => {
+  await invokeIPC('test_seed_providers', mockProviders);
+});
+```
+
+## Error Scenarios & Recovery Tests
+
+### Network Failure Tests
+
+| Scenario | Test |
+|----------|------|
+| Offline mode | Provider switch fails gracefully |
+| API timeout | Show error toast, allow retry |
+| Invalid response | Parse error handled |
+| Connection refused | Proxy start failure message |
+
+### IPC Failure Tests
+
+| Scenario | Test |
+|----------|------|
+| Command timeout | Settings save timeout |
+| Unknown command | Error message displayed |
+| Permission denied | File access error |
+| Database locked | Retry mechanism works |
+
+### Config Corruption Tests
+
+| Scenario | Test |
+|----------|------|
+| Invalid JSON | Import shows parse error |
+| Missing fields | Config migration handles |
+| Wrong version | Migration prompt shown |
+
+### App Crash Recovery
+
+| Scenario | Test |
+|----------|------|
+| Unexpected exit | Session restored |
+| Memory limit | Graceful shutdown |
+| Render error | Error boundary catches |
+
+## Additional Test Coverage
+
+### Missing from Original Design
+
+| Area | Tests |
+|------|-------|
+| Deep Link Import | `deeplink-import.spec.ts` - Handle `haipee://` URLs |
+| Migration Notifications | Verify config/skills migration toasts |
+| MCP Channel Init | Channel initialization status |
+| Provider Reorder | Drag-and-drop sortIndex updates |
+| Failover Priority | Queue management, priority badges |
+| OMO Disable | OpenCode-specific disable flow |
+| WebDAV Events | Sync status event handling |
+| Health Badges | Provider health status display |
+| Rectifier Config | RectifierConfigPanel tests |
+| Remote Connect | RemoteConnectPanel tests |
 
 ## Test Coverage Details
 
@@ -500,30 +732,38 @@ Each test should handle:
 
 ## Success Criteria
 
-- [ ] 150+ test cases passing
-- [ ] All 26 spec files created
-- [ ] All Page Objects implemented
+- [ ] All `data-testid` attributes added to UI components
+- [ ] ~200 test cases passing
+- [ ] All spec files created with WKWebView-compatible selectors
+- [ ] All Page Objects implemented with proper async handling
 - [ ] Integration with ai-dev-loop verified
 - [ ] No flaky tests (3 consecutive runs pass)
+- [ ] Error scenario tests included
 - [ ] Test coverage documented
 
 ## Migration Plan
 
-1. **Phase 1**: Create new Page Objects
-2. **Phase 2**: Write providers/ and settings/ tests
-3. **Phase 3**: Write agents/ and skills/ tests
-4. **Phase 4**: Write remaining tests
-5. **Phase 5**: Remove old tests, update wdio.conf.ts
-6. **Phase 6**: Verify ai-dev-loop integration
+1. **Phase 0**: Add `data-testid` attributes to all UI components (PR #1)
+2. **Phase 1**: Create new Page Objects with WKWebView-compatible selectors
+3. **Phase 2**: Write providers/ and settings/ tests
+4. **Phase 3**: Write agents/ and skills/ tests
+5. **Phase 4**: Write remaining tests (mcp, prompts, sessions, navigation, openclaw, universal)
+6. **Phase 5**: Migrate tests from flows/ and views/ to new structure
+7. **Phase 6**: Remove old tests, update wdio.conf.ts
+8. **Phase 7**: Verify ai-dev-loop integration
 
 ## Estimated Effort
 
 | Phase | Tests | Time |
 |-------|-------|------|
-| Phase 1 | Page Objects | 1h |
-| Phase 2 | 90 tests | 3h |
-| Phase 3 | 45 tests | 2h |
-| Phase 4 | 15 tests | 1h |
-| Phase 5 | Migration | 0.5h |
-| Phase 6 | Verification | 0.5h |
-| **Total** | **150 tests** | **8h** |
+| Phase 0 | data-testid PR | 1h |
+| Phase 1 | Page Objects | 2h |
+| Phase 2 | 90 tests | 4h |
+| Phase 3 | 45 tests | 2.5h |
+| Phase 4 | 50 tests | 2.5h |
+| Phase 5 | Migration | 1h |
+| Phase 6 | Cleanup | 0.5h |
+| Phase 7 | Verification | 0.5h |
+| **Total** | **~200 tests** | **14h** |
+
+**Note**: Original estimate of 8h was optimistic. Realistic estimate with proper WKWebView workarounds, async handling, and error scenario tests is ~14 hours.
