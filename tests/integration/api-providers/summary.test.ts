@@ -1,36 +1,30 @@
-import { test, expect } from '@playwright/test';
-import { API_PROVIDERS, hasValidToken, getActiveProviders } from './utils/apiProviders';
-
 /**
- * E2E Test Summary Report
- * Generates a comprehensive report of all provider configurations
+ * API Provider Configuration Summary Test
  */
-test.describe('E2E Test Summary', () => {
-  test('generate provider configuration report', async () => {
+
+import { describe, test, expect } from 'vitest';
+import { API_PROVIDERS, hasValidToken, getActiveProviders } from './utils';
+
+describe('API Provider Configuration', () => {
+  test('generate provider configuration report', () => {
     const report = {
       timestamp: new Date().toISOString(),
-      environment: {
-        nodeVersion: process.version,
-        platform: process.platform,
-      },
       summary: {
         total: API_PROVIDERS.length,
         configured: 0,
         missing: 0,
       },
-      providers: [] as any[],
+      providers: [] as { name: string; configured: boolean; tokenVar: string; testModel: string }[],
     };
 
     for (const provider of API_PROVIDERS) {
       const isConfigured = hasValidToken(provider);
-      const providerReport = {
+      report.providers.push({
         name: provider.name,
         configured: isConfigured,
         tokenVar: provider.tokenEnvVar,
         testModel: provider.testModel,
-      };
-
-      report.providers.push(providerReport);
+      });
 
       if (isConfigured) {
         report.summary.configured++;
@@ -39,9 +33,8 @@ test.describe('E2E Test Summary', () => {
       }
     }
 
-    // Output report
     console.log('\n' + '='.repeat(60));
-    console.log('📊 E2E API Provider Configuration Report');
+    console.log('📊 API Provider Configuration Report');
     console.log('='.repeat(60));
     console.log(`\nTotal Providers: ${report.summary.total}`);
     console.log(`✅ Configured: ${report.summary.configured}`);
@@ -55,27 +48,10 @@ test.describe('E2E Test Summary', () => {
 
     console.log('\n' + '='.repeat(60));
 
-    // Save report to file
-    const fs = await import('fs');
-    const path = await import('path');
-
-    const reportDir = path.join(process.cwd(), 'playwright-report');
-    if (!fs.existsSync(reportDir)) {
-      fs.mkdirSync(reportDir, { recursive: true });
-    }
-
-    fs.writeFileSync(
-      path.join(reportDir, 'provider-report.json'),
-      JSON.stringify(report, null, 2)
-    );
-
-    console.log(`📄 Report saved to: ${path.join(reportDir, 'provider-report.json')}`);
-
-    // Assertions
     expect(report.summary.total).toBeGreaterThan(0);
   });
 
-  test('list active providers', async () => {
+  test('list active providers', () => {
     const activeProviders = getActiveProviders();
 
     console.log('\n' + '='.repeat(60));
@@ -96,8 +72,6 @@ test.describe('E2E Test Summary', () => {
 
     console.log('='.repeat(60) + '\n');
 
-    // We don't fail if no providers are configured
-    // This allows the test suite to run in CI without secrets
     expect(activeProviders.length).toBeGreaterThanOrEqual(0);
   });
 });

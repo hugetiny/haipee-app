@@ -16,7 +16,8 @@ export default defineConfig({
     // Note: tests/e2e/**/* (Playwright) and tests/e2e-tauri/**/* (WebdriverIO)
     // are excluded because they use different test runners
     exclude: ["tests/e2e/**/*", "tests/e2e-tauri/**/*", "node_modules"],
-    // poolOptions: { threads: { singleThread: true } }, // Memory optimization
+    // Memory optimization for 16GB RAM - limit workers to prevent OOM
+    maxWorkers: 2,
     coverage: {
       reporter: ["text", "lcov"],
     },

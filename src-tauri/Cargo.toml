@@ -43,8 +43,10 @@ dirs = "5.0"
 toml = "0.8"
 toml_edit = "0.22"
 reqwest = { version = "0.12", features = ["rustls-tls", "json", "stream", "socks", "gzip"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "sync"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "sync", "net"] }
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
 futures = "0.3"
+futures-util = "0.3"
 async-stream = "0.3"
 bytes = "1.5"
 axum = "0.7"
@@ -64,8 +66,10 @@ base64 = "0.22"
 rusqlite = { version = "0.31", features = ["bundled", "backup", "hooks"] }
 indexmap = { version = "2", features = ["serde"] }
 rust_decimal = "1.33"
-uuid = { version = "1.11", features = ["v4"] }
+uuid = { version = "1.11", features = ["v4", "serde"] }
 sha2 = "0.10"
+dashmap = "6.1"
+parking_lot = "0.12"
 json5 = "0.4"
 json-five = "0.3.1"
 

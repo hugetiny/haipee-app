@@ -3,6 +3,8 @@ pub mod env_checker;
 pub mod env_manager;
 pub mod mcp;
 pub mod omo;
+pub mod openclaw_gateway;
+pub mod openclaw_profile;
 pub mod prompt;
 pub mod provider;
 pub mod proxy;

@@ -1,57 +1,56 @@
-import { test, expect } from '@playwright/test';
-import { API_PROVIDERS, hasValidToken, getToken } from '../utils/apiProviders';
-
 /**
  * NVIDIA NIM API Provider Tests
- * Tests direct API connectivity and response validation
+ * Tests direct API connectivity and response validation via HTTP fetch
  */
+
+import { describe, test, expect } from 'vitest';
+import { API_PROVIDERS, getToken, skipIfNoToken } from './utils';
+
 const provider = API_PROVIDERS.find(p => p.name === 'NVIDIA NIM')!;
 
-test.describe('NVIDIA NIM Provider', () => {
-  test.beforeEach(async () => {
-    test.skip(!hasValidToken(provider), `Skipping: ${provider.tokenEnvVar} not configured`);
-  });
-
-  test('API token is configured', async () => {
+describe.skipIf(skipIfNoToken(provider))('NVIDIA NIM Provider', () => {
+  test('API token is configured', () => {
     const token = getToken(provider);
     expect(token).toBeDefined();
     expect(token!.length).toBeGreaterThan(10);
   });
 
-  test('can fetch available models', async ({ request }) => {
+  test('can fetch available models', async () => {
     const token = getToken(provider);
+    const url = `${provider.baseUrl}${provider.modelsEndpoint}`;
 
-    const response = await request.get(`${provider.baseUrl}${provider.modelsEndpoint}`, {
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    expect(response.ok()).toBeTruthy();
+    expect(response.ok).toBe(true);
     const data = await response.json();
     expect(data.data).toBeDefined();
     expect(data.data.length).toBeGreaterThan(0);
   });
 
-  test('can send chat completion request', async ({ request }) => {
+  test('can send chat completion request', async () => {
     const token = getToken(provider);
+    const url = `${provider.baseUrl}${provider.chatEndpoint}`;
 
-    const response = await request.post(`${provider.baseUrl}${provider.chatEndpoint}`, {
+    const response = await fetch(url, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      data: {
+      body: JSON.stringify({
         model: provider.testModel,
-        messages: [
-          { role: 'user', content: provider.testMessage },
-        ],
+        messages: [{ role: 'user', content: provider.testMessage }],
         max_tokens: 50,
         stream: false,
-      },
+      }),
     });
 
-    expect(response.ok()).toBeTruthy();
+    expect(response.ok).toBe(true);
     const data = await response.json();
     expect(data.choices).toBeDefined();
     expect(data.choices.length).toBeGreaterThan(0);
@@ -60,22 +59,24 @@ test.describe('NVIDIA NIM Provider', () => {
     console.log(`✅ NVIDIA NIM response: ${data.choices[0].message.content.substring(0, 100)}...`);
   });
 
-  test('handles invalid model gracefully', async ({ request }) => {
+  test('handles invalid model gracefully', async () => {
     const token = getToken(provider);
+    const url = `${provider.baseUrl}${provider.chatEndpoint}`;
 
-    const response = await request.post(`${provider.baseUrl}${provider.chatEndpoint}`, {
+    const response = await fetch(url, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      data: {
+      body: JSON.stringify({
         model: 'invalid-model-name',
         messages: [{ role: 'user', content: 'test' }],
         max_tokens: 50,
-      },
+      }),
     });
 
     // Should return 404 or 400 for invalid model
-    expect([400, 404].includes(response.status())).toBeTruthy();
+    expect([400, 404].includes(response.status)).toBe(true);
   });
 });

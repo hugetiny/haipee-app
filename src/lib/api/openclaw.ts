@@ -328,4 +328,33 @@ export const openclawApi = {
       return { ok: false, latencyMs: Math.round(performance.now() - start) };
     }
   },
+
+  // ============================================================
+  // Skills & Providers
+  // ============================================================
+
+  /**
+   * List all skills from ~/.openclaw-haipee/skills/
+   */
+  async listSkills(): Promise<Array<{
+    name: string;
+    path: string;
+    isSymlink: boolean;
+    isDirectory: boolean;
+  }>> {
+    return await invoke("list_openclaw_skills");
+  },
+
+  /**
+   * List all providers from openclaw.json models.providers
+   */
+  async listProviders(): Promise<Array<{
+    id: string;
+    name: string;
+    baseUrl: string | null;
+    apiType: string | null;
+    modelsCount: number;
+  }>> {
+    return await invoke("list_openclaw_providers");
+  },
 };

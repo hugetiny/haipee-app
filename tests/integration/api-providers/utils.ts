@@ -1,6 +1,13 @@
 /**
- * API Provider configurations and utilities for E2E testing
+ * API Provider Test Utilities
+ *
+ * Shared utilities for testing API providers via HTTP fetch.
  */
+
+import { config } from 'dotenv';
+
+// Load environment variables from .env file
+config();
 
 export interface ProviderConfig {
   name: string;
@@ -26,8 +33,7 @@ export const API_PROVIDERS: ProviderConfig[] = [
     modelsEndpoint: '/v1/models',
     chatEndpoint: '/v1/chat/completions',
     testModel: 'meta/llama-3.1-8b-instruct',
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -39,8 +45,7 @@ export const API_PROVIDERS: ProviderConfig[] = [
     modelsEndpoint: '/v1/models',
     chatEndpoint: '/v1/chat/completions',
     testModel: 'gpt-4o-mini',
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -48,13 +53,11 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'Google Gemini',
     tokenEnvVar: 'GEMINI_TOKEN',
-    // Gemini OpenAI-compatible endpoint: https://ai.google.dev/gemini-api/docs/openai
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     modelsEndpoint: '/models',
     chatEndpoint: '/chat/completions',
     testModel: 'gemini-2.0-flash',
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -63,28 +66,22 @@ export const API_PROVIDERS: ProviderConfig[] = [
     name: 'OpenCode Zen',
     tokenEnvVar: 'OPENCODE_TOKEN',
     baseUrl: 'https://opencode.ai',
-    modelsEndpoint: '', // Zen uses model-specific endpoints, no models list
+    modelsEndpoint: '',
     chatEndpoint: '/zen/v1/chat/completions',
-    testModel: 'minimax-m2.5-free', // Free model via Zen
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
+    testModel: 'minimax-m2.5-free',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ${token}', // OpenAI-compatible format
     },
   },
   {
     name: 'Kilo Code',
     tokenEnvVar: 'KILO_TOKEN',
-    // Kilo.ai Gateway - OpenAI-compatible API
-    // https://kilo.ai/docs/gateway
-    // Base URL: https://api.kilo.ai/api/gateway (no /v1)
     baseUrl: 'https://api.kilo.ai/api/gateway',
-    modelsEndpoint: '', // Gateway doesn't have standard models endpoint
+    modelsEndpoint: '',
     chatEndpoint: '/chat/completions',
-    testModel: 'openai/gpt-4o-mini', // Kilo uses provider/model format
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
+    testModel: 'openai/gpt-4o-mini',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -92,15 +89,11 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'XiaoMi MiNo',
     tokenEnvVar: 'XIAOMIMINO_TOKEN',
-    // XiaoMi MiNo API endpoint
-    // Supports both OpenAI format: /v1/chat/completions
-    // and Anthropic format: /anthropic/v1/messages
     baseUrl: 'https://api.xiaomimimo.com/v1',
     modelsEndpoint: '/models',
     chatEndpoint: '/chat/completions',
     testModel: 'mimo-v2-flash',
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -108,15 +101,11 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'Cloudflare',
     tokenEnvVar: 'CLOUDFLARE_API_TOKEN',
-    // Cloudflare Workers AI OpenAI-compatible endpoint
-    // Requires CLOUDFLARE_ACCOUNT_ID env var for the account ID
-    // https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/
     baseUrl: 'https://api.cloudflare.com/client/v4/accounts',
-    modelsEndpoint: '', // No standard models endpoint in OpenAI-compatible mode
+    modelsEndpoint: '',
     chatEndpoint: '/ai/v1/chat/completions',
     testModel: '@cf/meta/llama-3.1-8b-instruct',
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -124,15 +113,23 @@ export const API_PROVIDERS: ProviderConfig[] = [
   {
     name: 'Poe',
     tokenEnvVar: 'POE_TOKEN',
-    // Poe API - OpenAI-compatible endpoint
-    // Documentation: https://creator.poe.com/docs/external-applications/openai-compatible-api
-    // Get API key: https://poe.com/api/keys
     baseUrl: 'https://api.poe.com/v1',
     modelsEndpoint: '/models',
     chatEndpoint: '/chat/completions',
     testModel: 'Claude-Sonnet-4',
-    testMessage: 'Hello, this is a test message from Haipee E2E tests.',
-    expectedResponseContains: '',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  },
+  {
+    name: 'Kimi Coding',
+    tokenEnvVar: 'KIMI_TOKEN',
+    baseUrl: 'https://api.kimi.com/coding',
+    modelsEndpoint: '/v1/models',
+    chatEndpoint: '/v1/chat/completions',
+    testModel: 'kimi-for-coding',
+    testMessage: 'Hello, this is a test message from Haipee tests.',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -162,20 +159,6 @@ export function getActiveProviders(): ProviderConfig[] {
 }
 
 /**
- * Create chat completion request body
- */
-export function createChatRequest(provider: ProviderConfig): Record<string, unknown> {
-  return {
-    model: provider.testModel,
-    messages: [
-      { role: 'user', content: provider.testMessage },
-    ],
-    max_tokens: 50,
-    temperature: 0.7,
-  };
-}
-
-/**
  * Get request headers for a provider
  */
 export function getRequestHeaders(provider: ProviderConfig): Record<string, string> {
@@ -184,4 +167,11 @@ export function getRequestHeaders(provider: ProviderConfig): Record<string, stri
     ...provider.headers,
     Authorization: `Bearer ${token}`,
   };
+}
+
+/**
+ * Skip test if token not configured
+ */
+export function skipIfNoToken(provider: ProviderConfig): boolean {
+  return !hasValidToken(provider);
 }

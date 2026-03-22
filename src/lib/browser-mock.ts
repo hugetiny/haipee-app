@@ -49,6 +49,31 @@ if (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__) {
       // Session commands
       if (cmd === "list_sessions") return [];
       if (cmd === "get_session_messages") return [];
+      if (cmd === "send_openclaw_message")
+        return {
+          runId: "mock-run-id",
+          status: "ok",
+          summary: "completed",
+          result: {
+            payloads: [{ text: "[Browser Mock] Message sent", mediaUrl: null }],
+          },
+        };
+
+      // OpenClaw Gateway commands
+      if (cmd === "init_openclaw_profile") return "/mock/.openclaw-haipee";
+      if (cmd === "openclaw_profile_exists") return false;
+      if (cmd === "get_openclaw_gateway_status")
+        return { connected: false, status: "disconnected", error: null };
+      if (cmd === "connect_openclaw_gateway")
+        return { connected: true, status: "connected" };
+      if (cmd === "disconnect_openclaw_gateway") return null;
+      if (cmd === "inject_openclaw_system_prompt") return null;
+      if (cmd === "list_openclaw_sessions")
+        return { sessions: [], count: 0 };
+      if (cmd === "start_openclaw_gateway") return null;
+      if (cmd === "stop_openclaw_gateway") return null;
+      if (cmd === "get_openclaw_gateway_service_status")
+        return { running: false, port: 18770 };
 
       // Settings commands
       if (cmd === "get_app_config_dir_override") return null;

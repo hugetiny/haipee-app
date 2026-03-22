@@ -1,102 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
-import { Save } from "lucide-react";
-import { toast } from "sonner";
-import {
-  useOpenClawJsonSection,
-  useSaveOpenClawJsonSection,
-} from "@/hooks/useOpenClaw";
-import { extractErrorMessage } from "@/utils/errorUtils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-
-interface SkillsSettings {
-  installEnabled?: boolean;
-  installDir?: string;
-  codeExecEnabled?: boolean;
-}
-
-interface PluginsSettings {
-  enabled?: boolean;
-  directories?: string[];
-}
+import { useQuery } from "@tanstack/react-query";
+import { Folder, Link, Server, Box } from "lucide-react";
+import { openclawApi } from "@/lib/api/openclaw";
 
 export const SkillsPluginsPanel: React.FC = () => {
   const { t } = useTranslation();
 
-  const { data: skillsData, isLoading: isLoadingSkills } =
-    useOpenClawJsonSection<SkillsSettings>("skills", {});
-  const { data: pluginsData, isLoading: isLoadingPlugins } =
-    useOpenClawJsonSection<PluginsSettings>("plugins", {});
+  // Fetch skills
+  const { data: skills, isLoading: loadingSkills } = useQuery({
+    queryKey: ["openclaw", "skills"],
+    queryFn: () => openclawApi.listSkills(),
+  });
 
-  const saveSkillsMutation = useSaveOpenClawJsonSection("skills");
-  const savePluginsMutation = useSaveOpenClawJsonSection("plugins");
+  // Fetch providers
+  const { data: providers, isLoading: loadingProviders } = useQuery({
+    queryKey: ["openclaw", "providers"],
+    queryFn: () => openclawApi.listProviders(),
+  });
 
-  // Skills State
-  const [skillsInstallEnabled, setSkillsInstallEnabled] = useState(false);
-  const [skillsInstallDir, setSkillsInstallDir] = useState("");
-  const [skillsCodeExecEnabled, setSkillsCodeExecEnabled] = useState(true);
-
-  // Plugins State
-  const [pluginsEnabled, setPluginsEnabled] = useState(false);
-  const [pluginsDirectories, setPluginsDirectories] = useState("[]");
-
-  useEffect(() => {
-    if (isLoadingSkills || !skillsData) return;
-    setSkillsInstallEnabled(skillsData.installEnabled ?? true);
-    setSkillsInstallDir(skillsData.installDir || "");
-    setSkillsCodeExecEnabled(skillsData.codeExecEnabled ?? true);
-  }, [skillsData, isLoadingSkills]);
-
-  useEffect(() => {
-    if (isLoadingPlugins || !pluginsData) return;
-    setPluginsEnabled(pluginsData.enabled ?? false);
-    setPluginsDirectories(
-      JSON.stringify(pluginsData.directories || [], null, 2),
-    );
-  }, [pluginsData, isLoadingPlugins]);
-
-  const handleSave = async () => {
-    try {
-      // Validate Plugin Directories JSON
-      let parsedDirs: string[] = [];
-      try {
-        parsedDirs = JSON.parse(pluginsDirectories || "[]");
-        if (!Array.isArray(parsedDirs)) throw new Error("Not an array");
-      } catch (e) {
-        throw new Error(
-          "Plugin Directories must be a valid JSON array of strings.",
-        );
-      }
-
-      const updatedSkills: SkillsSettings = {
-        installEnabled: skillsInstallEnabled,
-        installDir: skillsInstallDir.trim() || undefined,
-        codeExecEnabled: skillsCodeExecEnabled,
-      };
-
-      const updatedPlugins: PluginsSettings = {
-        enabled: pluginsEnabled,
-        directories: parsedDirs.length > 0 ? parsedDirs : undefined,
-      };
-
-      await Promise.all([
-        saveSkillsMutation.mutateAsync(updatedSkills),
-        savePluginsMutation.mutateAsync(updatedPlugins),
-      ]);
-
-      toast.success(t("common.success"));
-    } catch (e) {
-      toast.error(t("common.saveFailed", { error: extractErrorMessage(e) }));
-    }
-  };
-
-  const isLoading = isLoadingSkills || isLoadingPlugins;
-  const isSaving =
-    saveSkillsMutation.isPending || savePluginsMutation.isPending;
+  const isLoading = loadingSkills || loadingProviders;
 
   if (isLoading) {
     return (
@@ -117,108 +40,104 @@ export const SkillsPluginsPanel: React.FC = () => {
             {t("openclaw.skillsPlugins.description")}
           </p>
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
-          <Save className="w-4 h-4 mr-2" />
-          {isSaving ? t("common.saving") : t("common.save")}
-        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Skills Config */}
-        <div className="space-y-4 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
-            <h3 className="text-md font-medium">
-              {t("openclaw.skillsPlugins.skills.title")}
-            </h3>
-          </div>
-
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5 max-w-[80%]">
-                <Label>
-                  {t("openclaw.skillsPlugins.skills.installEnabled")}
-                </Label>
-                <p className="text-xs text-zinc-500">
-                  {t("openclaw.skillsPlugins.skills.installEnabledHint")}
-                </p>
-              </div>
-              <Switch
-                checked={skillsInstallEnabled}
-                onCheckedChange={setSkillsInstallEnabled}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="skillsInstallDir">
-                {t("openclaw.skillsPlugins.skills.installDir")}
-              </Label>
-              <Input
-                id="skillsInstallDir"
-                value={skillsInstallDir}
-                onChange={(e) => setSkillsInstallDir(e.target.value)}
-                placeholder="/path/to/downloaded/skills"
-              />
-              <p className="text-xs text-zinc-500">
-                {t("openclaw.skillsPlugins.skills.installDirHint")}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <div className="space-y-0.5 max-w-[80%]">
-                <Label>
-                  {t("openclaw.skillsPlugins.skills.codeExecEnabled")}
-                </Label>
-                <p className="text-xs text-zinc-500">
-                  {t("openclaw.skillsPlugins.skills.codeExecEnabledHint")}
-                </p>
-              </div>
-              <Switch
-                checked={skillsCodeExecEnabled}
-                onCheckedChange={setSkillsCodeExecEnabled}
-              />
-            </div>
-          </div>
+      {/* Skills Section */}
+      <div className="space-y-4 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
+          <h3 className="text-md font-medium flex items-center gap-2">
+            <Box className="w-4 h-4" />
+            Skills ({skills?.length || 0})
+          </h3>
         </div>
 
-        {/* Plugins Config */}
-        <div className="space-y-4 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
-            <h3 className="text-md font-medium">
-              {t("openclaw.skillsPlugins.plugins.title")}
-            </h3>
-            <Switch
-              checked={pluginsEnabled}
-              onCheckedChange={setPluginsEnabled}
-            />
+        {skills && skills.length > 0 ? (
+          <div className="grid gap-2 max-h-[400px] overflow-y-auto">
+            {skills.map((skill) => (
+              <div
+                key={skill.name}
+                className="flex items-center justify-between p-3 rounded-md bg-zinc-100 dark:bg-zinc-800/50"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Folder className="w-4 h-4 text-zinc-500 shrink-0" />
+                  <span className="truncate font-mono text-sm">{skill.name}</span>
+                  {skill.isSymlink && (
+                    <span title="Symlink">
+                      <Link className="w-3 h-3 text-blue-500 shrink-0" />
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="pluginsEnabledText">
-                {t("openclaw.skillsPlugins.plugins.enabled")}
-              </Label>
-              <p className="text-xs text-zinc-500">
-                {t("openclaw.skillsPlugins.plugins.enabledHint")}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="pluginsDirectories">
-                {t("openclaw.skillsPlugins.plugins.directories")}
-              </Label>
-              <Textarea
-                id="pluginsDirectories"
-                value={pluginsDirectories}
-                onChange={(e) => setPluginsDirectories(e.target.value)}
-                placeholder='["/path/to/local/plugins"]'
-                className="font-mono text-xs min-h-[150px]"
-              />
-              <p className="text-xs text-zinc-500">
-                {t("openclaw.skillsPlugins.plugins.directoriesHint")}
-              </p>
-            </div>
+        ) : (
+          <div className="text-sm text-zinc-500 italic p-4 text-center">
+            No skills found
           </div>
+        )}
+      </div>
+
+      {/* Providers Section */}
+      <div className="space-y-4 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
+          <h3 className="text-md font-medium flex items-center gap-2">
+            <Server className="w-4 h-4" />
+            Providers ({providers?.length || 0})
+          </h3>
         </div>
+
+        {providers && providers.length > 0 ? (
+          <div className="grid gap-2 max-h-[400px] overflow-y-auto">
+            {providers.map((provider) => (
+              <div
+                key={provider.id}
+                className="flex items-center justify-between p-3 rounded-md bg-zinc-100 dark:bg-zinc-800/50"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium truncate">{provider.name}</span>
+                    <span className="text-xs text-zinc-500 font-mono">({provider.id})</span>
+                  </div>
+                  {provider.baseUrl && (
+                    <div className="text-xs text-zinc-500 truncate mt-1">
+                      {provider.baseUrl}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {provider.apiType && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                      {provider.apiType}
+                    </span>
+                  )}
+                  {provider.modelsCount > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                      {provider.modelsCount} models
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-zinc-500 italic p-4 text-center">
+            No providers configured
+          </div>
+        )}
+      </div>
+
+      {/* Profile Info */}
+      <div className="text-xs text-zinc-500 p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800/30">
+        <p>
+          <strong>Profile:</strong> ~/.openclaw-haipee/
+        </p>
+        <p className="mt-1">
+          Skills and providers are managed by OpenClaw. Use{" "}
+          <code className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded">
+            openclaw --profile haipee skill install &lt;skill&gt;
+          </code>{" "}
+          to add new skills.
+        </p>
       </div>
     </div>
   );

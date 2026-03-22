@@ -1,120 +1,233 @@
 /**
  * OpenClaw Gateway Channel API
  *
- * Provides HTTP-based communication with OpenClaw Gateway
- * for sending and receiving messages in sessions.
+ * 1:1 copy of AutoClaw's Gateway WebSocket implementation.
+ * Uses WebSocket to connect to OpenClaw Gateway and send messages via `chat.send` RPC.
  */
 
-import { openclawApi } from './openclaw';
-import type { OpenClawInstance } from '@/types';
+import { invoke } from '@tauri-apps/api/core';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 export interface OpenClawMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  sessionKey: string;
+}
+
+export interface OpenClawAgentResponse {
+  runId: string;
+  status: string;
+  summary: string;
+  result?: {
+    payloads?: Array<{
+      text: string;
+      mediaUrl: string | null;
+    }>;
+    meta?: {
+      durationMs: number;
+      agentMeta?: {
+        sessionId: string;
+        provider: string;
+        model: string;
+      };
+    };
+  };
+}
+
+export interface OpenClawSession {
+  key: string;
   sessionId: string;
+  displayName?: string;
+  channel?: string;
+  updatedAt: number;
+  model?: string;
+  contextTokens?: number;
+  totalTokens?: number;
 }
 
-export interface OpenClawGatewayConfig {
-  url: string;
-  authToken?: string;
+export interface OpenClawGatewayStatus {
+  connected: boolean;
+  status: 'connected' | 'connecting' | 'disconnected' | 'error';
+  error?: string;
 }
 
-// Cache for gateway config
-let gatewayConfig: OpenClawGatewayConfig | null = null;
+export interface AgentStreamEvent {
+  sessionKey: string;
+  runId: string;
+  eventType: string;
+  content?: string;
+  isComplete: boolean;
+}
+
+// ============================================================================
+// Profile Management
+// ============================================================================
 
 /**
- * Get Gateway config from OpenClaw config file
- * Uses existing openclawApi.getJsonSection("gateway")
+ * Initialize Haipee's OpenClaw profile
+ * Creates ~/.openclaw-haipee/ directory with proper structure
  */
-export async function getOpenClawGatewayConfig(): Promise<OpenClawGatewayConfig | null> {
-  if (gatewayConfig) return gatewayConfig;
+export async function initProfile(): Promise<string> {
+  return invoke<string>('init_openclaw_profile');
+}
 
+/**
+ * Check if OpenClaw profile exists
+ */
+export async function profileExists(): Promise<boolean> {
+  return invoke<boolean>('openclaw_profile_exists');
+}
+
+// ============================================================================
+// Gateway Connection Management
+// ============================================================================
+
+/**
+ * Connect to OpenClaw Gateway via WebSocket
+ * Initializes the profile if needed, then connects
+ */
+export async function connectGateway(): Promise<OpenClawGatewayStatus> {
+  return invoke<OpenClawGatewayStatus>('connect_openclaw_gateway');
+}
+
+/**
+ * Disconnect from OpenClaw Gateway
+ */
+export async function disconnectGateway(): Promise<void> {
+  return invoke<void>('disconnect_openclaw_gateway');
+}
+
+/**
+ * Get current gateway connection status
+ */
+export async function getGatewayStatus(): Promise<OpenClawGatewayStatus> {
+  return invoke<OpenClawGatewayStatus>('get_openclaw_gateway_status');
+}
+
+/**
+ * Start the OpenClaw Gateway service for Haipee profile
+ */
+export async function startGateway(): Promise<void> {
+  return invoke<void>('start_openclaw_gateway');
+}
+
+/**
+ * Stop the OpenClaw Gateway service for Haipee profile
+ */
+export async function stopGateway(): Promise<void> {
+  return invoke<void>('stop_openclaw_gateway');
+}
+
+// ============================================================================
+// Message Sending (1:1 AutoClaw implementation)
+// ============================================================================
+
+/**
+ * Send a message to an OpenClaw session via WebSocket
+ *
+ * Uses the `chat.send` RPC method - exact same as AutoClaw's sendAgentMessage.
+ *
+ * @param sessionKey - Session key (e.g., "agent:main:main")
+ * @param message - Message content
+ * @param thinkingLevel - Optional thinking level (off, minimal, low, medium, high, xhigh)
+ */
+export async function sendMessage(
+  sessionKey: string,
+  message: string,
+  thinkingLevel?: 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh',
+): Promise<OpenClawAgentResponse> {
   try {
-    const config = await openclawApi.getJsonSection('gateway');
-    if (config?.url) {
-      gatewayConfig = {
-        url: config.url,
-        authToken: config.auth?.token,
-      };
-    }
-    return gatewayConfig;
-  } catch {
-    return null;
+    return await invoke<OpenClawAgentResponse>('send_openclaw_message', {
+      sessionKey,
+      message,
+      thinkingLevel,
+    });
+  } catch (error) {
+    throw new Error(`Failed to send message to OpenClaw: ${error}`);
   }
 }
 
 /**
- * Clear the cached gateway config (useful when config changes)
+ * Inject a system prompt into an OpenClaw session
  */
-export function clearGatewayConfigCache(): void {
-  gatewayConfig = null;
+export async function injectSystemPrompt(
+  sessionKey: string,
+  content: string,
+): Promise<void> {
+  return invoke<void>('inject_openclaw_system_prompt', {
+    sessionKey,
+    content,
+  });
 }
 
+// ============================================================================
+// Session Management
+// ============================================================================
+
 /**
- * Send message to OpenClaw Gateway HTTP API
- * Gateway endpoint: POST /api/v1/chat/{sessionId}/message
+ * List OpenClaw sessions for the Haipee profile
+ */
+export async function listSessions(): Promise<{ sessions: OpenClawSession[]; count: number }> {
+  return invoke<{ sessions: OpenClawSession[]; count: number }>('list_openclaw_sessions');
+}
+
+// ============================================================================
+// Legacy API (backwards compatibility)
+// ============================================================================
+
+/**
+ * @deprecated Use sendMessage instead
+ * Send a message to an OpenClaw session via CLI
  */
 export async function sendToOpenClaw(
-  sessionId: string,
+  _sessionId: string,
   content: string,
-  _instance?: OpenClawInstance,
-): Promise<string> {
-  const config = await getOpenClawGatewayConfig();
-  if (!config?.url) {
-    throw new Error('OpenClaw Gateway not configured');
+): Promise<OpenClawAgentResponse> {
+  // Try to use the new WebSocket API first
+  try {
+    const status = await getGatewayStatus();
+    if (!status.connected) {
+      await connectGateway();
+    }
+    // Use the default session key
+    const sessionKey = `agent:main:main`;
+    return await sendMessage(sessionKey, content);
+  } catch {
+    // Fallback: the old implementation is no longer available
+    throw new Error('OpenClaw Gateway not available. Please start the gateway first.');
   }
-
-  const messageId = crypto.randomUUID();
-  const url = `${config.url}/api/v1/chat/${sessionId}/message`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(config.authToken ? { Authorization: `Bearer ${config.authToken}` } : {}),
-    },
-    body: JSON.stringify({
-      message_id: messageId,
-      content,
-      role: 'user',
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Gateway error: ${response.statusText}`);
-  }
-
-  return messageId;
 }
+
+// ============================================================================
+// Event Handling
+// ============================================================================
 
 // Message listeners for polling-based updates
 const messageListeners = new Set<(msg: OpenClawMessage) => void>();
-let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 /**
  * Subscribe to OpenClaw messages (polling-based)
- * Polls the Gateway for new messages every 2 seconds
  */
 export function onOpenClawMessage(
   callback: (msg: OpenClawMessage) => void,
 ): () => void {
   messageListeners.add(callback);
 
-  // Start polling if not already
-  if (!pollInterval) {
-    pollInterval = setInterval(async () => {
-      // TODO: Implement polling endpoint check when Gateway supports it
-      // For now, rely on manual refresh or SSE if supported
-    }, 2000);
-  }
-
   return () => {
     messageListeners.delete(callback);
-    if (messageListeners.size === 0 && pollInterval) {
-      clearInterval(pollInterval);
-      pollInterval = null;
-    }
   };
+}
+
+/**
+ * Notify all listeners of a new message (used internally)
+ */
+export function notifyOpenClawMessage(msg: OpenClawMessage): void {
+  for (const listener of messageListeners) {
+    listener(msg);
+  }
 }

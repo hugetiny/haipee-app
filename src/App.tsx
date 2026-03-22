@@ -36,7 +36,6 @@ import { DeepLinkImportDialog } from "@/components/DeepLinkImportDialog";
 import { AgentsPanel } from "@/components/agents/AgentsPanel";
 import { UniversalProviderPanel } from "@/components/universal";
 import { SessionManagerPage } from "@/components/sessions/SessionManagerPage";
-import { ChannelTestPage } from "@/components/channels/ChannelTestPage";
 import { initHaipeeChannel } from "@/mcp-channel";
 import {
   useDisableCurrentOmo,
@@ -55,8 +54,7 @@ type View =
   | "mcp"
   | "agents"
   | "universal"
-  | "sessions"
-  | "channels";
+  | "sessions";
 
 interface WebDavSyncStatusUpdatedPayload {
   source?: string;
@@ -79,7 +77,6 @@ const VALID_VIEWS: View[] = [
   "agents",
   "universal",
   "sessions",
-  "channels",
 ];
 
 const getInitialView = (): View => {
@@ -661,8 +658,6 @@ function App() {
 
         case "sessions":
           return <SessionManagerPage key={activeApp} appId={activeApp} />;
-        case "channels":
-          return <ChannelTestPage />;
         default:
           return (
             <div className="flex flex-col flex-1 min-h-0">

@@ -1087,6 +1087,8 @@ pub fn run() {
             commands::start_openclaw_gateway,
             commands::stop_openclaw_gateway,
             commands::get_openclaw_gateway_service_status,
+            commands::list_openclaw_skills,
+            commands::list_openclaw_providers,
             // Global upstream proxy
             commands::get_global_proxy_url,
             commands::set_global_proxy_url,

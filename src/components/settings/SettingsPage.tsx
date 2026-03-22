@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Loader2,
@@ -29,6 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { settingsApi } from "@/lib/api";
+import type { AppId } from "@/lib/api";
 import { LanguageSettings } from "@/components/settings/LanguageSettings";
 import { ThemeSettings } from "@/components/settings/ThemeSettings";
 import { WindowSettings } from "@/components/settings/WindowSettings";
@@ -65,6 +67,7 @@ export function SettingsPage({
   defaultTab = "general",
 }: SettingsDialogProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const {
     settings,
     isLoading,
@@ -113,6 +116,19 @@ export function SettingsPage({
       setShowRestartPrompt(true);
     }
   }, [requiresRestart]);
+
+  // 切换到 Agent 设置 tab 时刷新 providers 数据
+  useEffect(() => {
+    if (activeTab === "models") {
+      // 刷新所有 agent 的 providers 数据
+      const appIds: AppId[] = ["claude", "codex", "gemini", "opencode", "openclaw"];
+      for (const appId of appIds) {
+        queryClient.invalidateQueries({ queryKey: ["providers", appId] });
+      }
+      // 同时刷新 settings 以确保配置是最新的
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+    }
+  }, [activeTab, queryClient]);
 
   const closeAfterSave = useCallback(() => {
     // 保存成功后关闭：不再重置语言，避免需要“保存两次”才生效
