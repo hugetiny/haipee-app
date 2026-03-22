@@ -143,9 +143,10 @@ interface AgentListButtonProps {
   onClick: () => void;
   collapsed?: boolean;
   isInstalled?: boolean;
+  testId?: string;
 }
 
-const AgentListButton = ({ agentId, isActive, status, onClick, collapsed, isInstalled = true }: AgentListButtonProps) => {
+const AgentListButton = ({ agentId, isActive, status, onClick, collapsed, isInstalled = true, testId }: AgentListButtonProps) => {
   const renderStatusIcon = () => {
     if (!isInstalled) {
       return null;
@@ -174,6 +175,7 @@ const AgentListButton = ({ agentId, isActive, status, onClick, collapsed, isInst
       type="button"
       onClick={isInstalled ? onClick : undefined}
       disabled={!isInstalled}
+      data-testid={testId}
       className={cn(
         "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
         !isInstalled
@@ -247,6 +249,7 @@ const DesktopSidebar = ({
         "hidden md:flex flex-col border-r bg-muted/20 shrink-0 h-full relative z-10",
         "w-16" // Always collapsed
       )}
+      data-testid="sidebar"
     >
       {/* macOS traffic-light drag area */}
       {isMac && (
@@ -297,6 +300,7 @@ const DesktopSidebar = ({
                     onClick={() => onAgentClick(app)}
                     collapsed={true}
                     isInstalled={installedApps?.[app] !== false}
+                    testId={`app-btn-${app}`}
                   />
                 ))}
               </div>
@@ -315,6 +319,7 @@ const DesktopSidebar = ({
               <TooltipTrigger asChild>
                 <button
                   type="button"
+                  data-testid={`nav-btn-${item.id}`}
                   className={cn(
                     "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
                     activeMainMenu === item.id
@@ -428,6 +433,7 @@ const MobileSidebarOverlay = ({
                     onClose();
                   }}
                   isInstalled={installedApps?.[app] !== false}
+                  testId={`app-btn-${app}`}
                 />
               ))}
             </div>
@@ -610,6 +616,17 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
             currentView={currentView}
             dragBarHeight={DRAG_BAR_HEIGHT}
           />
+
+          {/* Desktop drag bar for macOS traffic lights */}
+          {isMac && (
+            <div
+              className="hidden md:block shrink-0 bg-transparent"
+              style={{
+                height: DRAG_BAR_HEIGHT,
+                WebkitAppRegion: "drag",
+              } as React.CSSProperties}
+            />
+          )}
 
           {/* Content area - overflow-hidden lets children manage their own scrolling */}
           <main className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
