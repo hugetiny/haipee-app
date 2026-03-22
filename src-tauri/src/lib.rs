@@ -314,6 +314,16 @@ pub fn run() {
                 )?;
             }
 
+            // 初始化 OpenClaw profile（一次性复制 ~/.openclaw 到 ~/.openclaw-haipee）
+            match crate::services::openclaw_profile::init_profile() {
+                Ok(path) => {
+                    log::info!("✓ OpenClaw profile initialized at {:?}", path);
+                }
+                Err(e) => {
+                    log::warn!("○ OpenClaw profile init skipped: {}", e);
+                }
+            }
+
             // 初始化数据库
             let app_config_dir = crate::config::get_app_config_dir();
             let db_path = app_config_dir.join("haipee.db");
@@ -1065,6 +1075,18 @@ pub fn run() {
             commands::read_openclaw_json_raw,
             commands::write_openclaw_json_raw,
             commands::find_openclaw_session_key,
+            commands::send_openclaw_message,
+            // OpenClaw Gateway WebSocket commands (1:1 AutoClaw implementation)
+            commands::init_openclaw_profile,
+            commands::openclaw_profile_exists,
+            commands::get_openclaw_gateway_status,
+            commands::connect_openclaw_gateway,
+            commands::disconnect_openclaw_gateway,
+            commands::inject_openclaw_system_prompt,
+            commands::list_openclaw_sessions,
+            commands::start_openclaw_gateway,
+            commands::stop_openclaw_gateway,
+            commands::get_openclaw_gateway_service_status,
             // Global upstream proxy
             commands::get_global_proxy_url,
             commands::set_global_proxy_url,
