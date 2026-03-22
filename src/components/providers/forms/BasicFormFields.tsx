@@ -130,7 +130,7 @@ export function BasicFormFields({
             <FormItem>
               <FormLabel>{t("provider.name")}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder={t("provider.namePlaceholder")} />
+                <Input {...field} placeholder={t("provider.namePlaceholder")} data-testid="provider-name-input" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -147,6 +147,7 @@ export function BasicFormFields({
                 <Input
                   {...field}
                   placeholder={t("provider.notesPlaceholder")}
+                  data-testid="provider-notes-input"
                 />
               </FormControl>
               <FormMessage />
@@ -165,6 +166,7 @@ export function BasicFormFields({
               <Input
                 {...field}
                 placeholder={t("providerForm.websiteUrlPlaceholder")}
+                data-testid="provider-website-url-input"
               />
             </FormControl>
             <FormMessage />

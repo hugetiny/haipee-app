@@ -49,6 +49,7 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({
           required={required}
           autoComplete="off"
           className={inputClass}
+          data-testid="provider-api-key-input"
         />
         {!disabled && value && (
           <button

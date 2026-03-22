@@ -215,6 +215,8 @@ export function ProviderCard({
 
   return (
     <div
+      data-testid="provider-card"
+      data-provider-id={provider.id}
       className={cn(
         "relative overflow-hidden rounded-xl border border-border p-4 transition-all duration-300",
         "bg-card text-card-foreground group",
@@ -265,7 +267,7 @@ export function ProviderCard({
 
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 min-h-7">
-              <h3 className="text-base font-semibold leading-none">
+              <h3 className="text-base font-semibold leading-none" data-testid="provider-name">
                 {provider.name}
               </h3>
 

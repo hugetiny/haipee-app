@@ -315,7 +315,7 @@ export function ProviderList({
         items={filteredProviders.map((provider) => provider.id)}
         strategy={rectSortingStrategy}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="provider-grid">
           {filteredProviders.map((provider) => {
             const isOmo = provider.category === "omo";
             const isOmoSlim = provider.category === "omo-slim";
@@ -401,6 +401,7 @@ export function ProviderList({
                     defaultValue: "Search providers",
                   })}
                   className="pr-16 pl-9"
+                  data-testid="provider-search"
                 />
                 {searchTerm && (
                   <Button

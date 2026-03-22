@@ -243,6 +243,7 @@ export function AddProviderDialog({
           variant="outline"
           onClick={() => onOpenChange(false)}
           className="border-border/20 hover:bg-accent hover:text-accent-foreground"
+          data-testid="provider-cancel-btn"
         >
           {t("common.cancel")}
         </Button>
@@ -251,6 +252,7 @@ export function AddProviderDialog({
           form="provider-form"
           disabled={isFormSubmitting}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
+          data-testid="provider-save-btn"
         >
           <Plus className="h-4 w-4 mr-2" />
           {t("common.add")}
@@ -261,6 +263,7 @@ export function AddProviderDialog({
         variant="outline"
         onClick={() => onOpenChange(false)}
         className="border-border/20 hover:bg-accent hover:text-accent-foreground"
+        data-testid="provider-cancel-btn"
       >
         {t("common.close", { defaultValue: "关闭" })}
       </Button>
@@ -270,12 +273,14 @@ export function AddProviderDialog({
           variant="outline"
           onClick={() => onOpenChange(false)}
           className="border-border/20 hover:bg-accent hover:text-accent-foreground"
+          data-testid="provider-cancel-btn"
         >
           {t("common.cancel")}
         </Button>
         <Button
           onClick={() => setUniversalFormOpen(true)}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
+          data-testid="provider-save-btn"
         >
           <Plus className="h-4 w-4 mr-2" />
           {t("universalProvider.add")}

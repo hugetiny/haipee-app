@@ -200,6 +200,7 @@ export function EditProviderDialog({
           form="provider-form"
           disabled={isFormSubmitting}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
+          data-testid="provider-save-btn"
         >
           <Save className="h-4 w-4 mr-2" />
           {t("common.save")}
