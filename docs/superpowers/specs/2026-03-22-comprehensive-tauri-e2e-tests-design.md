@@ -92,7 +92,8 @@ tests/e2e/tauri/
 ├── sessions/                      # Session manager tests
 │   └── sessions-management.spec.ts
 ├── navigation/                    # Navigation tests
-│   └── navigation.spec.ts         # App/view switching
+│   ├── navigation.spec.ts         # App/view switching
+│   └── deeplink-import.spec.ts    # Deep link import tests
 ├── openclaw/                      # OpenClaw-specific tests
 │   ├── openclaw-gateway.spec.ts   # Gateway panel
 │   ├── openclaw-channels.spec.ts  # Channels panel
