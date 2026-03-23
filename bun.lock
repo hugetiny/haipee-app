@@ -62,6 +62,9 @@
         "zod": "^4.1.12",
       },
       "devDependencies": {
+        "@crabnebula/tauri-driver": "^2.0.9",
+        "@crabnebula/test-runner-backend": "^0.2.6",
+        "@crabnebula/webdriverio-cloud-reporter": "^0.1.3",
         "@tauri-apps/cli": "^2.8.0",
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/react": "^16.0.1",
@@ -174,6 +177,28 @@
     "@codemirror/theme-one-dark": ["@codemirror/theme-one-dark@6.1.3", "https://registry.npmmirror.com/@codemirror/theme-one-dark/-/theme-one-dark-6.1.3.tgz", { "dependencies": { "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0", "@lezer/highlight": "^1.0.0" } }, "sha512-NzBdIvEJmx6fjeremiGp3t/okrLPYT0d9orIc7AFun8oZcRk58aejkqhv6spnz4MLAevrKNPMQYXEWMg4s+sKA=="],
 
     "@codemirror/view": ["@codemirror/view@6.39.17", "https://registry.npmmirror.com/@codemirror/view/-/view-6.39.17.tgz", { "dependencies": { "@codemirror/state": "^6.5.0", "crelt": "^1.0.6", "style-mod": "^4.1.0", "w3c-keyname": "^2.2.4" } }, "sha512-Aim4lFqhbijnchl83RLfABWueSGs1oUCSv0mru91QdhpXQeNKprIdRO9LWA4cYkJvuYTKGJN7++9MXx8XW43ag=="],
+
+    "@crabnebula/tauri-driver": ["@crabnebula/tauri-driver@2.0.9", "https://registry.npmmirror.com/@crabnebula/tauri-driver/-/tauri-driver-2.0.9.tgz", { "optionalDependencies": { "@crabnebula/tauri-driver-darwin-arm64": "2.0.9", "@crabnebula/tauri-driver-darwin-x64": "2.0.9", "@crabnebula/tauri-driver-linux-x64-gnu": "2.0.9", "@crabnebula/tauri-driver-win32-x64-msvc": "2.0.9" }, "bin": { "tauri-driver": "cli.js" } }, "sha512-W+fOUkQnP0MOSu9jMykG7HSstYysTQLMnL2+b3IpenbyqPfBiBI/9uSoNC1nXjh0aYm46nPgwKC6RbiWsWa0XQ=="],
+
+    "@crabnebula/tauri-driver-darwin-arm64": ["@crabnebula/tauri-driver-darwin-arm64@2.0.9", "https://registry.npmmirror.com/@crabnebula/tauri-driver-darwin-arm64/-/tauri-driver-darwin-arm64-2.0.9.tgz", { "os": "darwin", "cpu": "arm64" }, "sha512-VvO7OC6UkuEP3eU3klyl+Ka/jgWFc3yIUeCw6e8BtibQWDXSwQ/r2tzqvC0d+5psF/mWYiCqNAKMlg4v5+muvg=="],
+
+    "@crabnebula/tauri-driver-darwin-x64": ["@crabnebula/tauri-driver-darwin-x64@2.0.9", "https://registry.npmmirror.com/@crabnebula/tauri-driver-darwin-x64/-/tauri-driver-darwin-x64-2.0.9.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-AWm3CY+YjKRLxaaucYdBG9cA7sTPviBpuVjJW6rNsPHGIFlxiA3C7fOv0Eekf2L7ps6v9HRCgldjPjTLH0DvNQ=="],
+
+    "@crabnebula/tauri-driver-linux-x64-gnu": ["@crabnebula/tauri-driver-linux-x64-gnu@2.0.9", "https://registry.npmmirror.com/@crabnebula/tauri-driver-linux-x64-gnu/-/tauri-driver-linux-x64-gnu-2.0.9.tgz", { "os": "linux", "cpu": "x64" }, "sha512-+H2HQtjKQrVJ+A9C5x4LaTl/6oX1QpEBlfRJxA4WqCdbJEE2NsmLgODGSQNueav+9QV7MOgjppRMl9fiW7IIqg=="],
+
+    "@crabnebula/tauri-driver-win32-x64-msvc": ["@crabnebula/tauri-driver-win32-x64-msvc@2.0.9", "https://registry.npmmirror.com/@crabnebula/tauri-driver-win32-x64-msvc/-/tauri-driver-win32-x64-msvc-2.0.9.tgz", { "os": "win32", "cpu": "x64" }, "sha512-/xqSl8dmGy7u9FXXjtuxAe38PJuQ4g1yT6Txgft5SwRwicAVkcEvmtdLkHJ6wUqEcg64UBEsoja8Z0EbNqTIcg=="],
+
+    "@crabnebula/test-runner-backend": ["@crabnebula/test-runner-backend@0.2.6", "https://registry.npmmirror.com/@crabnebula/test-runner-backend/-/test-runner-backend-0.2.6.tgz", { "optionalDependencies": { "@crabnebula/test-runner-backend-darwin-arm64": "0.2.6", "@crabnebula/test-runner-backend-darwin-x64": "0.2.6", "@crabnebula/test-runner-backend-linux-x64-gnu": "0.2.6", "@crabnebula/test-runner-backend-win32-x64-msvc": "0.2.6" }, "bin": { "test-runner-backend": "cli.js" } }, "sha512-Sy+V7u/+dKw0hCb140P146GgBAr3bZBXhKod9l7mj4YaQ6Cm5B8VegOh2d1494xCGFPkJDpr9pcrZPb1LBsfAQ=="],
+
+    "@crabnebula/test-runner-backend-darwin-arm64": ["@crabnebula/test-runner-backend-darwin-arm64@0.2.6", "https://registry.npmmirror.com/@crabnebula/test-runner-backend-darwin-arm64/-/test-runner-backend-darwin-arm64-0.2.6.tgz", { "os": "darwin", "cpu": "arm64" }, "sha512-r1O0ws1Uq/RQAvNgPEtp/fKRa4+ro2brt4dn6eU0TC9p0QRj2Izhh5I96/8bOhsyZKiXQDpflzpY/RNKjSE1UQ=="],
+
+    "@crabnebula/test-runner-backend-darwin-x64": ["@crabnebula/test-runner-backend-darwin-x64@0.2.6", "https://registry.npmmirror.com/@crabnebula/test-runner-backend-darwin-x64/-/test-runner-backend-darwin-x64-0.2.6.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-DEuzNAGC2q4CwofaXjuLlB8QWP06Y4NhECh66P6+sAcvf5lLlNU89kFPrNzGqrHSeDaQplBT8CtZciT43OHeGg=="],
+
+    "@crabnebula/test-runner-backend-linux-x64-gnu": ["@crabnebula/test-runner-backend-linux-x64-gnu@0.2.6", "https://registry.npmmirror.com/@crabnebula/test-runner-backend-linux-x64-gnu/-/test-runner-backend-linux-x64-gnu-0.2.6.tgz", { "os": "linux", "cpu": "x64" }, "sha512-C7vAzNBMVTvFFVNk+ZjfS9OyL4HDEtj373ebpA8MbCY3MCmwm5avlnKoU1qtVaaAPa5n0BCMrxniay2RMVlMsw=="],
+
+    "@crabnebula/test-runner-backend-win32-x64-msvc": ["@crabnebula/test-runner-backend-win32-x64-msvc@0.2.6", "https://registry.npmmirror.com/@crabnebula/test-runner-backend-win32-x64-msvc/-/test-runner-backend-win32-x64-msvc-0.2.6.tgz", { "os": "win32", "cpu": "x64" }, "sha512-92gZBTXjb6pu5Di6P6FJvbQHH6Nl/AAqt6edDPaz8S0T53NOQ8+faU7jDzLvj+7yDfZrDg8I1x0WrGmDTZkHsQ=="],
+
+    "@crabnebula/webdriverio-cloud-reporter": ["@crabnebula/webdriverio-cloud-reporter@0.1.3", "https://registry.npmmirror.com/@crabnebula/webdriverio-cloud-reporter/-/webdriverio-cloud-reporter-0.1.3.tgz", { "dependencies": { "@wdio/reporter": "^9.15.0" } }, "sha512-tRfDOeMs+KHniPMgsM5tIJ84RsULeg9DhrbxmXj7/3NC/rvVIBW3tfAW8s/1hZAanmZCuIyjzW09YRGG023Teg=="],
 
     "@csstools/color-helpers": ["@csstools/color-helpers@5.1.0", "https://registry.npmmirror.com/@csstools/color-helpers/-/color-helpers-5.1.0.tgz", {}, "sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA=="],
 
@@ -925,7 +950,7 @@
 
     "didyoumean": ["didyoumean@1.2.2", "https://registry.npmmirror.com/didyoumean/-/didyoumean-1.2.2.tgz", {}, "sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw=="],
 
-    "diff": ["diff@5.2.2", "https://registry.npmmirror.com/diff/-/diff-5.2.2.tgz", {}, "sha512-vtcDfH3TOjP8UekytvnHH1o1P4FcUdt4eQ1Y+Abap1tk/OB2MWQvcwS2ClCd1zuIhc3JKOx6p3kod8Vfys3E+A=="],
+    "diff": ["diff@8.0.3", "https://registry.npmmirror.com/diff/-/diff-8.0.3.tgz", {}, "sha512-qejHi7bcSD4hQAZE0tNAawRK1ZtafHDmMTMkrrIGgSLl7hTnQHmKCeB45xAcbfTqK2zowkM3j3bHt/4b/ARbYQ=="],
 
     "dlv": ["dlv@1.1.3", "https://registry.npmmirror.com/dlv/-/dlv-1.1.3.tgz", {}, "sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA=="],
 
@@ -1885,8 +1910,6 @@
 
     "@wdio/config/jiti": ["jiti@2.6.1", "https://registry.npmmirror.com/jiti/-/jiti-2.6.1.tgz", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ=="],
 
-    "@wdio/reporter/diff": ["diff@8.0.3", "https://registry.npmmirror.com/diff/-/diff-8.0.3.tgz", {}, "sha512-qejHi7bcSD4hQAZE0tNAawRK1ZtafHDmMTMkrrIGgSLl7hTnQHmKCeB45xAcbfTqK2zowkM3j3bHt/4b/ARbYQ=="],
-
     "accepts/mime-types": ["mime-types@3.0.2", "https://registry.npmmirror.com/mime-types/-/mime-types-3.0.2.tgz", { "dependencies": { "mime-db": "^1.54.0" } }, "sha512-Lbgzdk0h4juoQ9fCKXW4by0UJqj+nOOrI9MJ1sSj4nI8aI2eo1qmvQEie4VD1glsS250n15LsWsYtCugiStS5A=="],
 
     "anymatch/picomatch": ["picomatch@2.3.1", "https://registry.npmmirror.com/picomatch/-/picomatch-2.3.1.tgz", {}, "sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA=="],
@@ -1960,6 +1983,8 @@
     "micromatch/picomatch": ["picomatch@2.3.1", "https://registry.npmmirror.com/picomatch/-/picomatch-2.3.1.tgz", {}, "sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA=="],
 
     "mocha/chokidar": ["chokidar@3.6.0", "https://registry.npmmirror.com/chokidar/-/chokidar-3.6.0.tgz", { "dependencies": { "anymatch": "~3.1.2", "braces": "~3.0.2", "glob-parent": "~5.1.2", "is-binary-path": "~2.1.0", "is-glob": "~4.0.1", "normalize-path": "~3.0.0", "readdirp": "~3.6.0" }, "optionalDependencies": { "fsevents": "~2.3.2" } }, "sha512-7VT13fmjotKpGipCW9JEQAusEPE+Ei8nl6/g4FBAmIm0GOOLMua9NDDo/DWp0ZAxCr3cPq5ZpBqmPAQgDda2Pw=="],
+
+    "mocha/diff": ["diff@5.2.2", "https://registry.npmmirror.com/diff/-/diff-5.2.2.tgz", {}, "sha512-vtcDfH3TOjP8UekytvnHH1o1P4FcUdt4eQ1Y+Abap1tk/OB2MWQvcwS2ClCd1zuIhc3JKOx6p3kod8Vfys3E+A=="],
 
     "mocha/find-up": ["find-up@5.0.0", "https://registry.npmmirror.com/find-up/-/find-up-5.0.0.tgz", { "dependencies": { "locate-path": "^6.0.0", "path-exists": "^4.0.0" } }, "sha512-78/PXT1wlLLDgTzDs7sjq9hzz0vXD+zn+7wypEe4fXQxCmdmqfGsEPQxmiCSQI3ajFV91bVSsvNtrJRiW6nGng=="],
 
