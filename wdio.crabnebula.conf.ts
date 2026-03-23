@@ -14,9 +14,9 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Platform-specific application path
+// Platform-specific application path (using --no-bundle, binary is in target/debug/)
 const applicationPath = process.platform === 'darwin'
-  ? path.resolve(__dirname, 'src-tauri/target/debug/bundle/macos/haipee.app')
+  ? path.resolve(__dirname, 'src-tauri/target/debug/haipee')
   : process.platform === 'win32'
     ? path.resolve(__dirname, 'src-tauri/target/debug/haipee.exe')
     : path.resolve(__dirname, 'src-tauri/target/debug/haipee');

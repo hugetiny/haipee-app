@@ -17,7 +17,7 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e:tauri:build": "bunx cargo build --manifest-path src-tauri/Cargo.toml --features webdriver",
     "test:e2e:tauri": "bunx wdio run wdio.conf.ts",
-    "test:e2e:crabnebula:build": "bun run build:renderer && bunx cargo build --manifest-path src-tauri/Cargo.toml --features automation",
+    "test:e2e:crabnebula:build": "bunx tauri build --debug --no-bundle -- --features automation",
     "test:e2e:crabnebula": "bunx wdio run wdio.crabnebula.conf.ts",
     "ai:dev": "bun scripts/ai-dev-loop/index.ts",
     "ai:dev:resume": "bun scripts/ai-dev-loop/index.ts --resume",
