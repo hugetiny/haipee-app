@@ -104,6 +104,67 @@ export class OpenClawGatewayPage extends TauriBasePage {
     await this.toggle();
     await browser.pause(500);
   }
+
+  /**
+   * Connect to OpenClaw Gateway via HTTP
+   */
+  async connect(): Promise<boolean> {
+    try {
+      const result = await this.invokeIPC<{ connected: boolean; status: string }>(
+        'connect_openclaw_gateway'
+      );
+      return result.connected;
+    } catch (error) {
+      console.error('[OpenClawGateway] Connect failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send a message to OpenClaw agent
+   */
+  async sendMessage(message: string, sessionKey = 'agent:main:main'): Promise<string | null> {
+    try {
+      const result = await this.invokeIPC<{ content: string }>(
+        'send_openclaw_message',
+        { sessionKey, message }
+      );
+      return result.content;
+    } catch (error) {
+      console.error('[OpenClawGateway] Send message failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get gateway connection status
+   */
+  async getConnectionStatus(): Promise<{ connected: boolean; status: string; error?: string }> {
+    return this.invokeIPC<{ connected: boolean; status: string; error?: string }>(
+      'get_openclaw_gateway_status'
+    );
+  }
+
+  /**
+   * Disconnect from gateway
+   */
+  async disconnect(): Promise<void> {
+    await this.invokeIPC('disconnect_openclaw_gateway');
+  }
+
+  /**
+   * Check if gateway service is running
+   */
+  async isServiceRunning(): Promise<boolean> {
+    try {
+      const result = await this.invokeIPC<{ running: boolean }>(
+        'get_openclaw_gateway_service_status'
+      );
+      return result.running ?? false;
+    } catch {
+      return false;
+    }
+  }
 }
 
 /**
