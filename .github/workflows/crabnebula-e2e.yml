@@ -52,16 +52,17 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf webkit2gtk-driver
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf webkit2gtk-driver xvfb
 
       - name: Build Tauri app with automation feature
         run: bun run test:e2e:crabnebula:build
 
       - name: Run E2E tests (Linux)
         if: runner.os == 'Linux'
-        run: bun run test:e2e:crabnebula
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" bun run test:e2e:crabnebula
         env:
           CN_SKIP_MACOS_CHECK: "true"
+          DISPLAY: ":99"
 
       - name: Run E2E tests (Windows)
         if: runner.os == 'Windows'
