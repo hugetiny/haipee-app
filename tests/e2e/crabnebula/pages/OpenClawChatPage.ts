@@ -17,10 +17,17 @@ export class OpenClawChatPage extends CrabNebulaBasePage {
    * Navigate to OpenClaw chat
    */
   async openChat(): Promise<void> {
-    // Switch to openclaw agent
-    const agentButton = await $('button:has-text("OpenClaw")');
-    if (await agentButton.isExisting()) {
-      await agentButton.click();
+    // Switch to openclaw agent using browser.execute for WebKit compatibility
+    const clicked = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const openClawBtn = buttons.find(btn => btn.textContent?.includes('OpenClaw'));
+      if (openClawBtn) {
+        (openClawBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+    if (clicked) {
       await browser.pause(500);
     }
     await this.waitForReactReady();

@@ -9,14 +9,14 @@ export type AgentId = 'claude' | 'codex' | 'gemini' | 'opencode' | 'openclaw';
 export type ConfigTab = 'basic' | 'skills' | 'mcp' | 'prompts' | 'env' | 'advanced';
 
 export class AgentConfigPage extends CrabNebulaBasePage {
-  // Tab selectors
-  private readonly tabButtons: Record<ConfigTab, string> = {
-    basic: '[data-value="basic"], button:has-text("基础")',
-    skills: '[data-value="skills"], button:has-text("Skills")',
-    mcp: '[data-value="mcp"], button:has-text("MCP")',
-    prompts: '[data-value="prompts"], button:has-text("提示词")',
-    env: '[data-value="env"], button:has-text("环境变量")',
-    advanced: '[data-value="advanced"], button:has-text("高级")',
+  // Tab selectors - using data-value attributes
+  private readonly tabValues: Record<ConfigTab, string> = {
+    basic: 'basic',
+    skills: 'skills',
+    mcp: 'mcp',
+    prompts: 'prompts',
+    env: 'env',
+    advanced: 'advanced',
   };
 
   private readonly agentSwitcher = '[data-testid="agent-switcher"], button[aria-label*="Agent"]';
@@ -33,9 +33,20 @@ export class AgentConfigPage extends CrabNebulaBasePage {
    * Navigate to Agent Config view
    */
   async open(): Promise<void> {
-    const configButton = $('button[aria-label*="Agent配置"], button:has-text("Agent配置")');
-    if (await configButton.isExisting()) {
-      await configButton.click();
+    // Find Agent config button using browser.execute for WebKit compatibility
+    const clicked = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const configBtn = buttons.find(btn =>
+        btn.getAttribute('aria-label')?.includes('Agent配置') ||
+        btn.textContent?.includes('Agent配置')
+      );
+      if (configBtn) {
+        (configBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+    if (clicked) {
       await browser.pause(500);
     }
     await this.waitForReactReady();
@@ -45,17 +56,24 @@ export class AgentConfigPage extends CrabNebulaBasePage {
    * Switch to a specific agent
    */
   async switchAgent(agent: AgentId): Promise<void> {
-    const agentButtons: Record<AgentId, string> = {
-      claude: 'button:has-text("Claude")',
-      codex: 'button:has-text("Codex")',
-      gemini: 'button:has-text("Gemini")',
-      opencode: 'button:has-text("OpenCode")',
-      openclaw: 'button:has-text("OpenClaw")',
+    const agentNames: Record<AgentId, string> = {
+      claude: 'Claude',
+      codex: 'Codex',
+      gemini: 'Gemini',
+      opencode: 'OpenCode',
+      openclaw: 'OpenClaw',
     };
 
-    const button = $(agentButtons[agent]);
-    if (await button.isExisting()) {
-      await button.click();
+    const clicked = await browser.execute((agentName) => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const agentBtn = buttons.find(btn => btn.textContent?.includes(agentName));
+      if (agentBtn) {
+        (agentBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    }, agentNames[agent]);
+    if (clicked) {
       await browser.pause(500);
     }
   }
@@ -64,9 +82,9 @@ export class AgentConfigPage extends CrabNebulaBasePage {
    * Switch to a config tab
    */
   async switchTab(tab: ConfigTab): Promise<void> {
-    const tabButton = $(this.tabButtons[tab]);
-    if (await tabButton.isExisting()) {
-      await tabButton.click();
+    const tabBtn = await $(`[data-value="${this.tabValues[tab]}"], [data-testid="agent-tab-${tab}"]`);
+    if (await tabBtn.isExisting()) {
+      await tabBtn.click();
       await browser.pause(300);
     }
   }
@@ -86,8 +104,11 @@ export class AgentConfigPage extends CrabNebulaBasePage {
    * Check if agent is selected
    */
   async isAgentSelected(agent: AgentId): Promise<boolean> {
-    const button = $(`button[aria-pressed="true"]:has-text("${agent}")`);
-    return button.isExisting();
+    const isSelected = await browser.execute((agentName) => {
+      const buttons = Array.from(document.querySelectorAll('button[aria-pressed="true"]'));
+      return buttons.some(btn => btn.textContent?.toLowerCase().includes(agentName.toLowerCase()));
+    }, agent);
+    return isSelected;
   }
 }
 

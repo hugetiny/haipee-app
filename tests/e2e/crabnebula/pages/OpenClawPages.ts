@@ -249,10 +249,20 @@ export class OpenClawChannelsPage extends CrabNebulaBasePage {
           await deleteBtn.click();
           await browser.pause(300);
 
-          // Confirm deletion
-          const confirmBtn = await $('button:has-text("确认"), button:has-text("Confirm")');
-          if (await confirmBtn.isExisting()) {
-            await confirmBtn.click();
+          // Confirm deletion using browser.execute for WebKit compatibility
+          const confirmed = await browser.execute(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const confirmBtn = buttons.find(btn =>
+              btn.textContent?.includes('确认') ||
+              btn.textContent?.includes('Confirm')
+            );
+            if (confirmBtn) {
+              (confirmBtn as HTMLElement).click();
+              return true;
+            }
+            return false;
+          });
+          if (confirmed) {
             await browser.pause(500);
           }
           return true;

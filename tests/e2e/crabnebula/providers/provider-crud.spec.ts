@@ -249,14 +249,23 @@ describe('Provider CRUD – Delete', () => {
         await deleteBtn.click();
         await browser.pause(300);
 
-        // Cancel confirmation
-        const cancelBtn = await $('button:has-text("取消"), button:has-text("Cancel")');
-        if (await cancelBtn.isExisting()) {
-          await cancelBtn.click();
-          await browser.pause(300);
-        } else {
+        // Cancel confirmation using browser.execute for WebKit compatibility
+        const cancelled = await browser.execute(() => {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const cancelBtn = buttons.find(btn =>
+            btn.textContent?.includes('取消') ||
+            btn.textContent?.includes('Cancel')
+          );
+          if (cancelBtn) {
+            (cancelBtn as HTMLElement).click();
+            return true;
+          }
+          return false;
+        });
+        if (!cancelled) {
           await browser.keys(['Escape']);
         }
+        await browser.pause(300);
 
         // Provider should still exist
         const exists = await dashboardPage.providerExists(provider.name);

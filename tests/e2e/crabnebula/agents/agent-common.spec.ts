@@ -14,8 +14,13 @@ describe('Agent Config – Common', () => {
 
   describe('Agent Selector', () => {
     it('should display agent selector', async () => {
-      const selector = await $('[data-testid="agent-selector-claude"], button:has-text("Claude")');
-      const hasSelector = await selector.isExisting();
+      // Find agent selector using browser.execute for WebKit compatibility
+      const hasSelector = await browser.execute(() => {
+        const selector = document.querySelector('[data-testid="agent-selector-claude"]');
+        if (selector) return true;
+        const buttons = Array.from(document.querySelectorAll('button'));
+        return buttons.some(btn => btn.textContent?.includes('Claude'));
+      });
       expect(hasSelector).toBe(true);
     });
 

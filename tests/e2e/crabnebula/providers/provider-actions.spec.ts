@@ -130,8 +130,14 @@ describe('Provider Actions – Menu', () => {
     await dashboardPage.openProviderActions(testProvider.name);
     await browser.pause(300);
 
-    const editBtn = await $('button:has-text("编辑"), button:has-text("Edit")');
-    const hasEdit = await editBtn.isExisting();
+    // Find edit button using browser.execute for WebKit compatibility
+    const hasEdit = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      return buttons.some(btn =>
+        btn.textContent?.includes('编辑') ||
+        btn.textContent?.includes('Edit')
+      );
+    });
     expect(typeof hasEdit).toBe('boolean');
 
     await browser.keys(['Escape']);
@@ -142,8 +148,14 @@ describe('Provider Actions – Menu', () => {
     await dashboardPage.openProviderActions(testProvider.name);
     await browser.pause(300);
 
-    const deleteBtn = await $('button:has-text("删除"), button:has-text("Delete")');
-    const hasDelete = await deleteBtn.isExisting();
+    // Find delete button using browser.execute for WebKit compatibility
+    const hasDelete = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      return buttons.some(btn =>
+        btn.textContent?.includes('删除') ||
+        btn.textContent?.includes('Delete')
+      );
+    });
     expect(typeof hasDelete).toBe('boolean');
 
     await browser.keys(['Escape']);

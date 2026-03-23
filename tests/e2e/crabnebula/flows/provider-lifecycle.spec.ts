@@ -80,14 +80,30 @@ describe('Provider Lifecycle Flow', () => {
 
     it('should open provider form when clicking add', async () => {
       try {
-        // Try to find and click the add button
-        const addButton = await $(
-          'button[aria-label*="添加"], button:has-text("添加"), button:has-text("Add"), [data-testid="add-provider-btn"]'
-        );
-        if (await addButton.isExisting()) {
-          await addButton.click();
-          await browser.pause(500);
+        // Try to find and click the add button using browser.execute for WebKit compatibility
+        const clicked = await browser.execute(() => {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const addBtn = buttons.find(btn =>
+            btn.getAttribute('aria-label')?.includes('添加') ||
+            btn.getAttribute('aria-label')?.includes('Add') ||
+            btn.textContent?.includes('添加') ||
+            btn.textContent?.includes('Add')
+          );
+          if (addBtn) {
+            (addBtn as HTMLElement).click();
+            return true;
+          }
+          return false;
+        });
+
+        // Also try testid selector
+        if (!clicked) {
+          const addButton = await $('[data-testid="add-provider-btn"]');
+          if (await addButton.isExisting()) {
+            await addButton.click();
+          }
         }
+        await browser.pause(500);
 
         // Check if form appeared
         const formExists = await browser.execute(() => {
@@ -98,13 +114,24 @@ describe('Provider Lifecycle Flow', () => {
           );
         });
 
-        // Close form if open
+        // Close form if open using browser.execute for WebKit compatibility
         if (formExists) {
-          const cancelBtn = await $('button:has-text("取消"), button:has-text("Cancel")');
-          if (await cancelBtn.isExisting()) {
-            await cancelBtn.click();
-            await browser.pause(300);
+          const cancelled = await browser.execute(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const cancelBtn = buttons.find(btn =>
+              btn.textContent?.includes('取消') ||
+              btn.textContent?.includes('Cancel')
+            );
+            if (cancelBtn) {
+              (cancelBtn as HTMLElement).click();
+              return true;
+            }
+            return false;
+          });
+          if (!cancelled) {
+            await browser.keys(['Escape']);
           }
+          await browser.pause(300);
         }
 
         expect(typeof formExists).toBe('boolean');
