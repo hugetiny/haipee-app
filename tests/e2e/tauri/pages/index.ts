@@ -21,6 +21,7 @@ export { SessionManagerPage } from './SessionManagerPage.ts';
 export { McpPage, mcpPage } from './McpPage.ts';
 export { PromptsPage, promptsPage } from './PromptsPage.ts';
 export { SkillsPage, skillsPage } from './SkillsPage.ts';
+export { WebDavPage, webDavPage } from './WebDavPage.ts';
 
 // Type exports
 export type { ProviderFormData } from './DashboardPage.ts';
