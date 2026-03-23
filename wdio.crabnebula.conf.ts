@@ -170,10 +170,8 @@ export const config = {
       process.env.REMOTE_WEBDRIVER_URL = 'http://127.0.0.1:3000';
       console.log('[crabnebula] test-runner-backend ready');
     }
-  },
 
-  // Start tauri-driver proxy
-  beforeSession: async () => {
+    // Start tauri-driver proxy (only once for all workers)
     console.log('[crabnebula] Starting tauri-driver...');
 
     tauriDriver = spawn('bunx', ['tauri-driver'], {
@@ -198,6 +196,9 @@ export const config = {
     console.log('[crabnebula] tauri-driver ready');
   },
 
+  // Start tauri-driver proxy once for all workers (in onPrepare)
+  // beforeSession runs per worker, causing port conflicts
+
   // Wait for React to render
   before: async () => {
     console.log('[crabnebula] Waiting for React to render...');
@@ -213,13 +214,8 @@ export const config = {
     console.log('[crabnebula] React rendered successfully');
   },
 
-  afterSession: () => {
-    closeTauriDriver();
-  },
-
   onComplete: () => {
-    killedTestRunnerBackend = true;
-    testRunnerBackend?.kill();
+    closeTauriDriver();
     console.log('[crabnebula] Test run complete');
   },
 };
