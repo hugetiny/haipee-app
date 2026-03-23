@@ -1,52 +1,20 @@
 /**
  * CrabNebula Tauri Driver E2E Configuration
  *
- * Fully decoupled from wdio.conf.ts - no imports, no shared code.
- * Delete this file and tests/e2e/crabnebula/ when trial ends.
- *
- * Running tests:
- * - macOS: Requires CN_API_KEY with subscription (or use remote WebDriver)
- * - Windows/Linux: Uses webkit2gtk-driver or msedgedriver locally
- * - Remote: Set CN_REMOTE_WEBDRIVER_URL to use CrabNebula Cloud runners
+ * Following official pattern from: https://docs.crabnebula.dev/plugins/tauri-e2e-tests/
  */
 
 import path from 'path';
-import { spawn, spawnSync } from 'child_process';
+import { spawn } from 'child_process';
 import { CrabNebulaCloudReporter } from '@crabnebula/webdriverio-cloud-reporter';
 import { waitTauriDriverReady } from '@crabnebula/tauri-driver';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { readFileSync, existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env file if it exists
-const envPath = path.resolve(__dirname, '.env');
-if (existsSync(envPath)) {
-  const envContent = readFileSync(envPath, 'utf-8');
-  for (const line of envContent.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#')) {
-      const [key, ...valueParts] = trimmed.split('=');
-      const value = valueParts.join('=');
-      if (key && value && !process.env[key]) {
-        process.env[key] = value;
-      }
-    }
-  }
-  console.log('[crabnebula] Loaded .env file');
-}
-
-// Check for remote WebDriver URL (CrabNebula Cloud)
-const remoteWebDriverUrl = process.env.CN_REMOTE_WEBDRIVER_URL;
-const useRemoteDriver = !!remoteWebDriverUrl;
-
-if (useRemoteDriver) {
-  console.log('[crabnebula] Using remote WebDriver:', remoteWebDriverUrl);
-}
-
-// Platform-specific application path (only used for local tests)
+// Platform-specific application path
 const applicationPath = process.platform === 'darwin'
   ? path.resolve(__dirname, 'src-tauri/target/debug/bundle/macos/haipee.app')
   : process.platform === 'win32'
@@ -60,8 +28,7 @@ let testRunnerBackend: ReturnType<typeof spawn> | null = null;
 let killedTestRunnerBackend = false;
 
 export const config = {
-  runner: 'local',
-  hostname: '127.0.0.1',
+  host: '127.0.0.1',
   port: 4444,
 
   specs: [
@@ -91,99 +58,39 @@ export const config = {
     },
   }],
 
-  logLevel: 'warn',
-  bail: 0,
-  waitforTimeout: 15_000,
-  connectionRetryTimeout: 180_000,
-  connectionRetryCount: 5,
-
-  framework: 'mocha',
   reporters: [CrabNebulaCloudReporter],
+  framework: 'mocha',
 
   mochaOpts: {
     ui: 'bdd',
-    timeout: 90_000,
+    timeout: 60000,
   },
 
-  // Build app and configure WebDriver
+  connectionRetryCount: 0,
+
   onPrepare: async () => {
-    console.log('[crabnebula] Building Tauri app with automation feature...');
-
-    // Build with automation feature
-    spawnSync('bunx', ['cargo', 'build', '--manifest-path', 'src-tauri/Cargo.toml', '--features', 'automation'], {
-      cwd: path.resolve(__dirname),
-      stdio: 'inherit',
-      shell: true,
-    });
-
-    // Configure remote WebDriver if specified
-    if (useRemoteDriver) {
-      console.log('[crabnebula] Configuring remote WebDriver for Cloud testing...');
-      process.env.REMOTE_WEBDRIVER_URL = remoteWebDriverUrl;
-      return;
-    }
-
-    // Start tauri-driver proxy for local testing (all platforms)
-    console.log('[crabnebula] Starting tauri-driver...');
-
-    tauriDriver = spawn('bunx', ['tauri-driver'], {
-      stdio: [null, process.stdout, process.stderr],
-      shell: true,
-    });
-
-    tauriDriver.on('error', (error) => {
-      console.error('[crabnebula] tauri-driver error:', error);
-      process.exit(1);
-    });
-
-    tauriDriver.on('exit', (code) => {
-      if (!killedTauriDriver) {
-        console.error('[crabnebula] tauri-driver exited with code:', code);
-        process.exit(1);
-      }
-    });
-
-    // Wait for tauri-driver to initialize its proxy server
-    await waitTauriDriverReady();
-    console.log('[crabnebula] tauri-driver ready');
-
-    // Skip macOS-specific setup if requested (for CI on Linux/Windows)
-    if (process.env.CN_SKIP_MACOS_CHECK === 'true') {
-      console.log('[crabnebula] Skipping macOS checks (CN_SKIP_MACOS_CHECK=true)');
-      return;
-    }
-
-    // macOS local testing requires test-runner-backend with CN_API_KEY
-    if (process.platform === 'darwin') {
-      console.log('[crabnebula] macOS detected - checking for local WebDriver support...');
-
+    // macOS requires test-runner-backend with CN_API_KEY
+    if (process.platform === 'darwin' && process.env.CN_SKIP_MACOS_CHECK !== 'true') {
       if (!process.env.CN_API_KEY) {
-        console.error('[crabnebula] CN_API_KEY is not set, required for macOS local tests');
-        console.error('[crabnebula] Options:');
-        console.error('[crabnebula]   1. Set CN_API_KEY in .env for local macOS testing');
-        console.error('[crabnebula]   2. Set CN_REMOTE_WEBDRIVER_URL to use remote Windows/Linux runners');
-        console.error('[crabnebula]   3. Set CN_SKIP_MACOS_CHECK=true to skip this check');
-        console.error('[crabnebula]   4. Run tests on actual Windows/Linux machine');
+        console.error('CN_API_KEY is not set, required for CrabNebula Webdriver');
         process.exit(1);
       }
 
-      // Dynamically import waitTestRunnerBackendReady only when needed
       const { waitTestRunnerBackendReady } = await import('@crabnebula/test-runner-backend');
 
-      console.log('[crabnebula] Starting test-runner-backend...');
       testRunnerBackend = spawn('bunx', ['test-runner-backend'], {
         stdio: 'inherit',
         shell: true,
       });
 
       testRunnerBackend.on('error', (error) => {
-        console.error('[crabnebula] test-runner-backend error:', error);
+        console.error('test-runner-backend error:', error);
         process.exit(1);
       });
 
       testRunnerBackend.on('exit', (code) => {
         if (!killedTestRunnerBackend) {
-          console.error('[crabnebula] test-runner-backend exited with code:', code);
+          console.error('test-runner-backend exited with code:', code);
           process.exit(1);
         }
       });
@@ -192,31 +99,40 @@ export const config = {
 
       // Instruct tauri-driver to connect to test-runner-backend
       process.env.REMOTE_WEBDRIVER_URL = 'http://127.0.0.1:3000';
-      console.log('[crabnebula] test-runner-backend ready');
     }
   },
 
-  // Start tauri-driver proxy once for all workers (in onPrepare)
-  // beforeSession runs per worker, causing port conflicts
+  // Start tauri-driver before session
+  beforeSession: async () => {
+    tauriDriver = spawn('bunx', ['tauri-driver'], {
+      stdio: [null, process.stdout, process.stderr],
+      shell: true,
+    });
 
-  // Wait for React to render
-  before: async () => {
-    console.log('[crabnebula] Waiting for React to render...');
-    await browser.waitUntil(
-      async () => {
-        const count = await browser.execute(() =>
-          document.getElementById('root')?.childElementCount ?? 0,
-        );
-        return count > 0;
-      },
-      { timeout: 30_000, timeoutMsg: 'React did not render within 30s' }
-    );
-    console.log('[crabnebula] React rendered successfully');
+    tauriDriver.on('error', (error) => {
+      console.error('tauri-driver error:', error);
+      process.exit(1);
+    });
+
+    tauriDriver.on('exit', (code) => {
+      if (!killedTauriDriver) {
+        console.error('tauri-driver exited with code:', code);
+        process.exit(1);
+      }
+    });
+
+    // Wait for tauri-driver to initialize its proxy server
+    await waitTauriDriverReady();
+  },
+
+  // Clean up tauri-driver after session
+  afterSession: () => {
+    closeTauriDriver();
   },
 
   onComplete: () => {
-    closeTauriDriver();
-    console.log('[crabnebula] Test run complete');
+    killedTestRunnerBackend = true;
+    testRunnerBackend?.kill();
   },
 };
 
