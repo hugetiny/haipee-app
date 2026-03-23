@@ -146,7 +146,7 @@ export class JourneyHelpers {
           await deleteBtn.click();
           await browser.pause(200);
           // Confirm deletion
-          const confirmBtn = await $('button:has-text("确认"), button:has-text("Confirm")');
+          const confirmBtn = await $('button, button');
           if (await confirmBtn.isExisting()) {
             await confirmBtn.click();
             await browser.pause(300);

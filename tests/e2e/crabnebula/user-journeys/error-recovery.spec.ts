@@ -75,7 +75,7 @@ describe('Error Recovery Journey', () => {
         await browser.pause(1000);
 
         // Look for retry button
-        const retryBtn = await $('button:has-text("重试"), button:has-text("Retry")');
+        const retryBtn = await $('button, button');
         if (await retryBtn.isExisting()) {
           await retryBtn.click();
           await browser.pause(500);

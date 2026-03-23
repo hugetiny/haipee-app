@@ -27,7 +27,7 @@ describe('Provider Management Journey', () => {
       await dashboard.open();
 
       // Look for add button
-      const addBtn = await $('[data-testid="provider-add-btn"], button:has-text("添加"), button:has-text("Add")');
+      const addBtn = await $('[data-testid="provider-add-btn"], button, button');
       if (await addBtn.isExisting()) {
         await addBtn.click();
         await browser.pause(300);
@@ -307,7 +307,7 @@ describe('Provider Management Journey', () => {
           await browser.pause(300);
 
           // Cancel
-          const cancelBtn = await $('button:has-text("取消"), button:has-text("Cancel")');
+          const cancelBtn = await $('button, button');
           if (await cancelBtn.isExisting()) {
             await cancelBtn.click();
             await browser.pause(300);

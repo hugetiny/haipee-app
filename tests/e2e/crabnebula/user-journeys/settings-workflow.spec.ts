@@ -31,7 +31,7 @@ describe('Settings Workflow Journey', () => {
       await browser.pause(500);
 
       // Look for theme toggle
-      const themeToggle = await $('[data-testid="theme-toggle"], button:has-text("主题"), button:has-text("Theme"), [role="switch"]');
+      const themeToggle = await $('[data-testid="theme-toggle"], [role="switch"]');
       if (await themeToggle.isExisting()) {
         await themeToggle.click();
         await browser.pause(300);
@@ -49,13 +49,13 @@ describe('Settings Workflow Journey', () => {
       await browser.pause(500);
 
       // Look for language selector
-      const langSelect = await $('[data-testid="language-select"], select, button:has-text("语言"), button:has-text("Language")');
+      const langSelect = await $('[data-testid="language-select"], select');
       if (await langSelect.isExisting()) {
         await langSelect.click();
         await browser.pause(300);
 
         // Select option
-        const option = await $('li, option, [role="option"]');
+        const option = await $('option, [role="option"]');
         if (await option.isExisting()) {
           await option.click();
           await browser.pause(300);
@@ -96,15 +96,11 @@ describe('Settings Workflow Journey', () => {
       await settings.navigateTo('Settings');
       await browser.pause(500);
 
-      // Look for proxy section
-      const proxySection = await $('[data-testid="proxy-settings"], section:has-text("代理"), section:has-text("Proxy")');
-      if (await proxySection.isExisting()) {
-        // Find proxy input
-        const proxyInput = await proxySection.$('input[name*="proxy"], input[placeholder*="proxy"], input[placeholder*="代理"]');
-        if (await proxyInput.isExisting()) {
-          await proxyInput.clearValue();
-          await proxyInput.addValue('http://127.0.0.1:7890');
-        }
+      // Look for proxy input
+      const proxyInput = await $('[data-testid="proxy-input"], input[name*="proxy"]');
+      if (await proxyInput.isExisting()) {
+        await proxyInput.clearValue();
+        await proxyInput.addValue('http://127.0.0.1:7890');
       }
 
       expect(true).toBe(true);
@@ -115,7 +111,7 @@ describe('Settings Workflow Journey', () => {
       await browser.pause(500);
 
       // Look for test button
-      const testBtn = await $('[data-testid="test-proxy"], button:has-text("测试"), button:has-text("Test")');
+      const testBtn = await $('[data-testid="test-proxy"]');
       if (await testBtn.isExisting()) {
         await testBtn.click();
         await browser.pause(1000);
@@ -132,13 +128,10 @@ describe('Settings Workflow Journey', () => {
       await settings.navigateTo('Settings');
       await browser.pause(500);
 
-      const proxySection = await $('[data-testid="proxy-settings"], section:has-text("代理"), section:has-text("Proxy")');
-      if (await proxySection.isExisting()) {
-        const proxyInput = await proxySection.$('input[name*="proxy"], input[placeholder*="proxy"]');
-        if (await proxyInput.isExisting()) {
-          await proxyInput.clearValue();
-          await proxyInput.addValue('invalid-proxy');
-        }
+      const proxyInput = await $('[data-testid="proxy-input"], input[name*="proxy"]');
+      if (await proxyInput.isExisting()) {
+        await proxyInput.clearValue();
+        await proxyInput.addValue('invalid-proxy');
       }
 
       expect(true).toBe(true);
@@ -151,10 +144,10 @@ describe('Settings Workflow Journey', () => {
       await browser.pause(500);
 
       // Look for env vars section
-      const envSection = await $('[data-testid="env-settings"], section:has-text("环境"), section:has-text("Environment")');
+      const envSection = await $('[data-testid="env-settings"]');
       if (await envSection.isExisting()) {
         // Add env var
-        const addBtn = await envSection.$('button:has-text("添加"), button:has-text("Add")');
+        const addBtn = await envSection.$('button');
         if (await addBtn.isExisting()) {
           await addBtn.click();
           await browser.pause(300);
@@ -168,16 +161,25 @@ describe('Settings Workflow Journey', () => {
       await settings.navigateTo('Settings');
       await browser.pause(500);
 
-      // Look for reset button
-      const resetBtn = await $('[data-testid="reset-settings"], button:has-text("重置"), button:has-text("Reset")');
+      // Look for reset button by data-testid
+      const resetBtn = await $('[data-testid="reset-settings"]');
       if (await resetBtn.isExisting()) {
         await resetBtn.click();
         await browser.pause(300);
 
-        // Confirm reset
-        const confirmBtn = await $('button:has-text("确认"), button:has-text("Confirm")');
-        if (await confirmBtn.isExisting()) {
-          await confirmBtn.click();
+        // Confirm reset - find confirm button via browser.execute
+        const clicked = await browser.execute(() => {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const confirmBtn = buttons.find(b =>
+            b.textContent?.includes('确认') || b.textContent?.includes('Confirm')
+          );
+          if (confirmBtn) {
+            (confirmBtn as HTMLElement).click();
+            return true;
+          }
+          return false;
+        });
+        if (clicked) {
           await browser.pause(500);
         }
       }
@@ -191,8 +193,8 @@ describe('Settings Workflow Journey', () => {
       await settings.navigateTo('Settings');
       await browser.pause(500);
 
-      // Look for WebDAV section
-      const webdavSection = await $('[data-testid="webdav-settings"], section:has-text("WebDAV")');
+      // Look for WebDAV section by data-testid
+      const webdavSection = await $('[data-testid="webdav-settings"]');
       if (await webdavSection.isExisting()) {
         const urlInput = await webdavSection.$('input[name*="url"], input[placeholder*="URL"]');
         if (await urlInput.isExisting()) {
@@ -208,7 +210,7 @@ describe('Settings Workflow Journey', () => {
       await settings.navigateTo('Settings');
       await browser.pause(500);
 
-      const testBtn = await $('[data-testid="test-webdav"], button:has-text("测试连接"), button:has-text("Test")');
+      const testBtn = await $('[data-testid="test-webdav"]');
       if (await testBtn.isExisting()) {
         await testBtn.click();
         await browser.pause(2000);
@@ -224,7 +226,7 @@ describe('Settings Workflow Journey', () => {
       await settings.navigateTo('Settings');
       await browser.pause(500);
 
-      const syncBtn = await $('[data-testid="sync-now"], button:has-text("同步"), button:has-text("Sync")');
+      const syncBtn = await $('[data-testid="sync-now"]');
       if (await syncBtn.isExisting()) {
         await syncBtn.click();
         await browser.pause(1000);

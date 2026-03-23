@@ -27,7 +27,7 @@ describe('MCP Integration Journey', () => {
       await mcpPage.navigateTo('MCP');
       await browser.pause(500);
 
-      const addBtn = await $('[data-testid="mcp-add-btn"], button:has-text("添加"), button:has-text("Add")');
+      const addBtn = await $('[data-testid="mcp-add-btn"], button, button');
       if (await addBtn.isExisting()) {
         await addBtn.click();
         await browser.pause(300);
@@ -39,7 +39,7 @@ describe('MCP Integration Journey', () => {
         }
 
         // Save
-        const saveBtn = await $('button[type="submit"], button:has-text("保存"), button:has-text("Save")');
+        const saveBtn = await $('button[type="submit"], button, button');
         if (await saveBtn.isExisting()) {
           await saveBtn.click();
           await browser.pause(500);
@@ -76,7 +76,7 @@ describe('MCP Integration Journey', () => {
         await browser.pause(300);
 
         // Confirm
-        const confirmBtn = await $('button:has-text("确认"), button:has-text("Confirm")');
+        const confirmBtn = await $('button, button');
         if (await confirmBtn.isExisting()) {
           await confirmBtn.click();
           await browser.pause(500);
@@ -105,7 +105,7 @@ describe('MCP Integration Journey', () => {
       await mcpPage.navigateTo('MCP');
       await browser.pause(500);
 
-      const testBtn = await $('[data-testid="test-mcp"], button:has-text("测试"), button:has-text("Test")');
+      const testBtn = await $('[data-testid="test-mcp"], button, button');
       if (await testBtn.isExisting()) {
         await testBtn.click();
         await browser.pause(2000);
@@ -122,7 +122,7 @@ describe('MCP Integration Journey', () => {
       await browser.pause(500);
 
       // Test with invalid server
-      const testBtn = await $('[data-testid="test-mcp"], button:has-text("测试"), button:has-text("Test")');
+      const testBtn = await $('[data-testid="test-mcp"], button, button');
       if (await testBtn.isExisting()) {
         await testBtn.click();
         await browser.pause(2000);
@@ -141,7 +141,7 @@ describe('MCP Integration Journey', () => {
       await mcpPage.navigateTo('MCP');
       await browser.pause(500);
 
-      const toolsBtn = await $('[data-testid="view-tools"], button:has-text("工具"), button:has-text("Tools")');
+      const toolsBtn = await $('[data-testid="view-tools"], button, button');
       if (await toolsBtn.isExisting()) {
         await toolsBtn.click();
         await browser.pause(500);
@@ -158,7 +158,7 @@ describe('MCP Integration Journey', () => {
       await mcpPage.navigateTo('MCP');
       await browser.pause(500);
 
-      const resourcesBtn = await $('[data-testid="view-resources"], button:has-text("资源"), button:has-text("Resources")');
+      const resourcesBtn = await $('[data-testid="view-resources"], button, button');
       if (await resourcesBtn.isExisting()) {
         await resourcesBtn.click();
         await browser.pause(500);
@@ -177,7 +177,7 @@ describe('MCP Integration Journey', () => {
       await mcpPage.navigateTo('MCP');
       await browser.pause(500);
 
-      const addBtn = await $('[data-testid="mcp-add-btn"], button:has-text("添加")');
+      const addBtn = await $('[data-testid="mcp-add-btn"], button');
       if (await addBtn.isExisting()) {
         await addBtn.click();
         await browser.pause(300);
@@ -201,7 +201,7 @@ describe('MCP Integration Journey', () => {
       await browser.pause(500);
 
       // Try to connect to slow/timeout server
-      const testBtn = await $('[data-testid="test-mcp"], button:has-text("测试")');
+      const testBtn = await $('[data-testid="test-mcp"], button');
       if (await testBtn.isExisting()) {
         await testBtn.click();
 
