@@ -43,14 +43,13 @@ tests/e2e/crabnebula/
 ├── pages/                    # Copied & adapted page objects
 │   ├── CrabNebulaBasePage.ts # Adapted for CrabNebula WebDriver
 │   ├── NavigationPage.ts
-│   ├── ProviderPage.ts
+│   ├── DashboardPage.ts
 │   ├── SettingsPage.ts
 │   ├── AgentConfigPage.ts
 │   ├── SessionManagerPage.ts
 │   ├── PromptsPage.ts
 │   ├── SkillsPage.ts
 │   ├── McpPage.ts
-│   ├── DashboardPage.ts
 │   ├── UniversalProviderPage.ts
 │   ├── OpenClawChatPage.ts
 │   ├── OpenClawPages.ts
@@ -121,7 +120,7 @@ tests/e2e/crabnebula/
 wdio.crabnebula.conf.ts       # Standalone config, NO imports from wdio.conf.ts
 ```
 
-**Total:** ~30 spec files, ~343 tests (full mirror of existing)
+**Total:** ~38 spec files, ~343 tests (full mirror of existing)
 
 ---
 

@@ -56,8 +56,8 @@ tests/e2e/crabnebula/channel-communication.spec.ts
 ### Modified Files
 ```
 src-tauri/Cargo.toml:18-22                        # Add automation feature
-src-tauri/src/lib.rs:199-203                      # Add automation plugin registration
-package.json:6-26                                 # Add npm scripts
+src-tauri/src/lib.rs:199-207                      # Add automation plugin registration
+package.json:18-19                                # Add npm scripts (after test:e2e:tauri)
 ```
 
 ---
@@ -717,7 +717,7 @@ Copy `tests/e2e/tauri/pages/NavigationPage.ts` to `tests/e2e/crabnebula/pages/Na
 
 - [ ] **Step 3: Copy and adapt remaining page objects**
 
-Repeat for each file:
+For each file listed below, copy from `tests/e2e/tauri/pages/` to `tests/e2e/crabnebula/pages/`:
 - SettingsPage.ts
 - AgentConfigPage.ts
 - SessionManagerPage.ts
@@ -729,7 +729,9 @@ Repeat for each file:
 - OpenClawPages.ts
 - WebDavPage.ts
 
-Each file: copy from tauri/, change `TauriBasePage` to `CrabNebulaBasePage`.
+For each copied file:
+1. Update import: `import { TauriBasePage } from './TauriBasePage'` → `import { CrabNebulaBasePage } from './CrabNebulaBasePage'`
+2. Change all `extends TauriBasePage` to `extends CrabNebulaBasePage`
 
 - [ ] **Step 4: Create pages/index.ts**
 
@@ -897,11 +899,9 @@ cp tests/e2e/tauri/providers/provider-advanced.spec.ts tests/e2e/crabnebula/prov
 cp tests/e2e/tauri/providers/provider-failover.spec.ts tests/e2e/crabnebula/providers/
 ```
 
-- [ ] **Step 2: Update imports in each spec file**
+- [ ] **Step 2: Verify imports resolve correctly**
 
-For each spec file, update imports:
-- Change `'../pages'` to `'../pages'` (same, but now points to crabnebula pages)
-- No other changes needed if page objects have same API
+Since spec files are copied to the same relative location within `tests/e2e/crabnebula/`, import paths like `'../pages'` will correctly resolve to the crabnebula pages directory. No import changes needed.
 
 - [ ] **Step 3: Commit providers specs**
 
@@ -1021,10 +1021,10 @@ git commit -m "feat(e2e): add remaining CrabNebula test specs"
 Run: `find tests/e2e/crabnebula -name "*.spec.ts" | wc -l`
 Expected: 30+ spec files
 
-- [ ] **Step 2: Verify WDIO can find specs**
+- [ ] **Step 2: Verify WDIO config is valid**
 
-Run: `bunx wdio run wdio.crabnebula.conf.ts --spec nonexistent`
-Expected: Error about spec not found (confirms config works)
+Run: `bun -e "import('./wdio.crabnebula.conf.ts').then(c => console.log('Config valid:', !!c.config))"`
+Expected: `Config valid: true`
 
 - [ ] **Step 3: Final commit summary**
 
@@ -1068,3 +1068,18 @@ bun run test:e2e:crabnebula:build
 # Run tests
 bun run test:e2e:crabnebula
 ```
+
+---
+
+## Cleanup (When Trial Ends)
+
+See the spec document `docs/superpowers/specs/2026-03-23-crabnebula-e2e-test-layer-design.md` for detailed deletion instructions. Summary:
+
+```bash
+rm -rf tests/e2e/crabnebula/
+rm wdio.crabnebula.conf.ts
+bun remove @crabnebula/tauri-driver @crabnebula/test-runner-backend @crabnebula/webdriverio-cloud-reporter
+# Remove automation feature from Cargo.toml and lib.rs
+```
+
+No impact on existing `tests/e2e/tauri/` or `wdio.conf.ts`.
