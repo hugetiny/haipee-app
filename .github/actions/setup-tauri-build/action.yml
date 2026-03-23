@@ -74,3 +74,7 @@ runs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+        # ARM64 needs additional symlink for pkg-config
+        if [ "$(uname -m)" = "aarch64" ]; then
+          sudo ln -sf /usr/lib/aarch64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/pkgconfig/ 2>/dev/null || true
+        fi
