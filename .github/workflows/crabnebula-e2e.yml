@@ -1,0 +1,86 @@
+name: CrabNebula E2E Tests
+
+on:
+  push:
+    branches: [main, haipee]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'OS to run tests on'
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+jobs:
+  e2e-tests:
+    runs-on: ${{ github.event.inputs.os || 'ubuntu-latest' }}
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y webkit2gtk-driver
+
+      - name: Build Tauri app with automation feature
+        run: bun run test:e2e:crabnebula:build
+
+      - name: Run E2E tests (Linux)
+        if: runner.os == 'Linux'
+        run: bun run test:e2e:crabnebula
+        env:
+          CN_SKIP_MACOS_CHECK: "true"
+
+      - name: Run E2E tests (Windows)
+        if: runner.os == 'Windows'
+        run: bun run test:e2e:crabnebula
+        env:
+          CN_SKIP_MACOS_CHECK: "true"
+
+      - name: Run E2E tests (macOS)
+        if: runner.os == 'macOS'
+        run: bun run test:e2e:crabnebula
+        env:
+          CN_API_KEY: ${{ secrets.CN_API_KEY }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ runner.os }}
+          path: |
+            wdio-logs/
+            ai-loop-logs/
+          retention-days: 7
