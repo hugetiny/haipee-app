@@ -3,20 +3,50 @@
  *
  * Fully decoupled from wdio.conf.ts - no imports, no shared code.
  * Delete this file and tests/e2e/crabnebula/ when trial ends.
+ *
+ * Running tests:
+ * - macOS: Requires CN_API_KEY with subscription (or use remote WebDriver)
+ * - Windows/Linux: Uses webkit2gtk-driver or msedgedriver locally
+ * - Remote: Set CN_REMOTE_WEBDRIVER_URL to use CrabNebula Cloud runners
  */
 
 import path from 'path';
 import { spawn, spawnSync } from 'child_process';
 import { CrabNebulaCloudReporter } from '@crabnebula/webdriverio-cloud-reporter';
 import { waitTauriDriverReady } from '@crabnebula/tauri-driver';
-import { waitTestRunnerBackendReady } from '@crabnebula/test-runner-backend';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { readFileSync, existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Platform-specific application path
+// Load .env file if it exists
+const envPath = path.resolve(__dirname, '.env');
+if (existsSync(envPath)) {
+  const envContent = readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const [key, ...valueParts] = trimmed.split('=');
+      const value = valueParts.join('=');
+      if (key && value && !process.env[key]) {
+        process.env[key] = value;
+      }
+    }
+  }
+  console.log('[crabnebula] Loaded .env file');
+}
+
+// Check for remote WebDriver URL (CrabNebula Cloud)
+const remoteWebDriverUrl = process.env.CN_REMOTE_WEBDRIVER_URL;
+const useRemoteDriver = !!remoteWebDriverUrl;
+
+if (useRemoteDriver) {
+  console.log('[crabnebula] Using remote WebDriver:', remoteWebDriverUrl);
+}
+
+// Platform-specific application path (only used for local tests)
 const applicationPath = process.platform === 'darwin'
   ? path.resolve(__dirname, 'src-tauri/target/debug/bundle/macos/haipee.app')
   : process.platform === 'win32'
@@ -75,7 +105,7 @@ export const config = {
     timeout: 90_000,
   },
 
-  // Build app and start test-runner-backend (macOS only)
+  // Build app and configure WebDriver
   onPrepare: async () => {
     console.log('[crabnebula] Building Tauri app with automation feature...');
 
@@ -86,13 +116,35 @@ export const config = {
       shell: true,
     });
 
-    // macOS: start test-runner-backend (requires CN_API_KEY)
+    // Configure remote WebDriver if specified
+    if (useRemoteDriver) {
+      console.log('[crabnebula] Configuring remote WebDriver for Cloud testing...');
+      process.env.REMOTE_WEBDRIVER_URL = remoteWebDriverUrl;
+      return;
+    }
+
+    // Skip macOS-specific setup if requested (for CI on Linux/Windows)
+    if (process.env.CN_SKIP_MACOS_CHECK === 'true') {
+      console.log('[crabnebula] Skipping macOS checks (CN_SKIP_MACOS_CHECK=true)');
+      return;
+    }
+
+    // macOS local testing requires test-runner-backend with CN_API_KEY
     if (process.platform === 'darwin') {
+      console.log('[crabnebula] macOS detected - checking for local WebDriver support...');
+
       if (!process.env.CN_API_KEY) {
-        console.error('[crabnebula] CN_API_KEY is not set, required for macOS tests');
-        console.error('[crabnebula] Get your API key from CrabNebula Cloud');
+        console.error('[crabnebula] CN_API_KEY is not set, required for macOS local tests');
+        console.error('[crabnebula] Options:');
+        console.error('[crabnebula]   1. Set CN_API_KEY in .env for local macOS testing');
+        console.error('[crabnebula]   2. Set CN_REMOTE_WEBDRIVER_URL to use remote Windows/Linux runners');
+        console.error('[crabnebula]   3. Set CN_SKIP_MACOS_CHECK=true to skip this check');
+        console.error('[crabnebula]   4. Run tests on actual Windows/Linux machine');
         process.exit(1);
       }
+
+      // Dynamically import waitTestRunnerBackendReady only when needed
+      const { waitTestRunnerBackendReady } = await import('@crabnebula/test-runner-backend');
 
       console.log('[crabnebula] Starting test-runner-backend...');
       testRunnerBackend = spawn('bunx', ['test-runner-backend'], {
@@ -116,6 +168,7 @@ export const config = {
 
       // Instruct tauri-driver to connect to test-runner-backend
       process.env.REMOTE_WEBDRIVER_URL = 'http://127.0.0.1:3000';
+      console.log('[crabnebula] test-runner-backend ready');
     }
   },
 
