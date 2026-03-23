@@ -3,11 +3,11 @@
 use crate::app_config::AppType;
 use crate::init_status::{InitErrorPayload, SkillsMigrationPayload};
 use crate::services::ProviderService;
-use std::sync::LazyLock;
 use regex::Regex;
 use std::collections::HashMap;
 use std::path::Path;
 use std::str::FromStr;
+use std::sync::LazyLock;
 use tauri::AppHandle;
 use tauri::State;
 use tauri_plugin_opener::OpenerExt;
@@ -1221,7 +1221,11 @@ pub fn scan_installed_terminals() -> Result<Vec<InstalledTerminal>, String> {
     {
         // Common macOS terminal locations
         let terminal_apps = [
-            ("terminal", "Terminal.app", "/System/Applications/Utilities/Terminal.app"),
+            (
+                "terminal",
+                "Terminal.app",
+                "/System/Applications/Utilities/Terminal.app",
+            ),
             ("iterm2", "iTerm.app", "/Applications/iTerm.app"),
             ("alacritty", "Alacritty.app", "/Applications/Alacritty.app"),
             ("kitty", "kitty.app", "/Applications/kitty.app"),
@@ -1230,7 +1234,11 @@ pub fn scan_installed_terminals() -> Result<Vec<InstalledTerminal>, String> {
             ("hyper", "Hyper.app", "/Applications/Hyper.app"),
             ("warp", "Warp.app", "/Applications/Warp.app"),
             ("tabby", "Tabby.app", "/Applications/Tabby.app"),
-            ("terminalator", "Terminalator.app", "/Applications/Terminalator.app"),
+            (
+                "terminalator",
+                "Terminalator.app",
+                "/Applications/Terminalator.app",
+            ),
         ];
 
         for (id, name, default_path) in terminal_apps {

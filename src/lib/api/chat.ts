@@ -1,5 +1,5 @@
-import { invoke } from '@tauri-apps/api/core';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export interface ChatMessagePayload {
   role: string;
@@ -40,8 +40,10 @@ export interface ChatStreamCallbacks {
 /**
  * Get the current active provider info for a given app type.
  */
-export async function getChatProviderInfo(appType: string): Promise<ChatProviderInfo | null> {
-  return invoke<ChatProviderInfo | null>('get_chat_provider_info', { appType });
+export async function getChatProviderInfo(
+  appType: string,
+): Promise<ChatProviderInfo | null> {
+  return invoke<ChatProviderInfo | null>("get_chat_provider_info", { appType });
 }
 
 /**
@@ -54,12 +56,12 @@ export async function sendChatMessage(
   messageId: string,
   messages: ChatMessagePayload[],
   model: string | null,
-  callbacks: ChatStreamCallbacks
+  callbacks: ChatStreamCallbacks,
 ): Promise<UnlistenFn> {
   // Set up event listeners before invoking the command
   const unlistenFns: UnlistenFn[] = [];
 
-  const unlistenChunk = await listen<ChatChunkEvent>('chat-chunk', (event) => {
+  const unlistenChunk = await listen<ChatChunkEvent>("chat-chunk", (event) => {
     const { sessionId: sid, messageId: mid, delta } = event.payload;
     if (sid === sessionId && mid === messageId) {
       callbacks.onChunk(delta);
@@ -67,7 +69,7 @@ export async function sendChatMessage(
   });
   unlistenFns.push(unlistenChunk);
 
-  const unlistenDone = await listen<ChatDoneEvent>('chat-done', (event) => {
+  const unlistenDone = await listen<ChatDoneEvent>("chat-done", (event) => {
     const { sessionId: sid, messageId: mid } = event.payload;
     if (sid === sessionId && mid === messageId) {
       callbacks.onDone();
@@ -76,7 +78,7 @@ export async function sendChatMessage(
   });
   unlistenFns.push(unlistenDone);
 
-  const unlistenError = await listen<ChatErrorEvent>('chat-error', (event) => {
+  const unlistenError = await listen<ChatErrorEvent>("chat-error", (event) => {
     const { sessionId: sid, messageId: mid, error } = event.payload;
     if (sid === sessionId && mid === messageId) {
       callbacks.onError(error);
@@ -92,7 +94,7 @@ export async function sendChatMessage(
   };
 
   // Fire and forget - the streaming happens via events
-  invoke('chat_with_provider', {
+  invoke("chat_with_provider", {
     appType,
     sessionId,
     messageId,

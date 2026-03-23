@@ -1,43 +1,34 @@
 import React from "react";
-import "@/lib/browser-mock";
-import ReactDOM from "react-dom/client";
-import App from "./App";
-import { UpdateProvider } from "./contexts/UpdateContext";
-import "./index.css";
-// 导入国际化配置
-import i18n from "./i18n";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { message } from "@tauri-apps/plugin-dialog";
+import { attachConsole } from "@tauri-apps/plugin-log";
+import { exit } from "@tauri-apps/plugin-process";
+import ReactDOM from "react-dom/client";
 import { ThemeProvider } from "@/components/theme-provider";
 import { queryClient } from "@/lib/query";
 import { Toaster } from "@/components/ui/sonner";
-import { listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/core";
-import { message } from "@tauri-apps/plugin-dialog";
-import { exit } from "@tauri-apps/plugin-process";
-import { attachConsole } from "@tauri-apps/plugin-log";
+import App from "./App";
+import { UpdateProvider } from "./contexts/UpdateContext";
+import i18n from "./i18n";
+import "./index.css";
+import "@/lib/browser-mock";
 
-// 根据平台添加 body class，便于平台特定样式
-try {
-  const ua = navigator.userAgent || "";
-  const plat = (navigator.platform || "").toLowerCase();
-  const isMac = /mac/i.test(ua) || plat.includes("mac");
-  if (isMac) {
-    document.body.classList.add("is-mac");
-  }
-} catch {
-  // 忽略平台检测失败
-}
-
-// 配置加载错误payload类型
 interface ConfigLoadErrorPayload {
   path?: string;
   error?: string;
 }
 
-/**
- * 处理配置加载失败：显示错误消息并强制退出应用
- * 不给用户"取消"选项，因为配置损坏时应用无法正常运行
- */
+function applyPlatformClass(): void {
+  const userAgent = navigator.userAgent || "";
+  const platform = (navigator.platform || "").toLowerCase();
+  const isMac = /mac/i.test(userAgent) || platform.includes("mac");
+  if (isMac) {
+    document.body.classList.add("is-mac");
+  }
+}
+
 async function handleConfigLoadError(
   payload: ConfigLoadErrorPayload | null,
 ): Promise<void> {
@@ -62,42 +53,16 @@ async function handleConfigLoadError(
   await exit(1);
 }
 
-// 监听后端的配置加载错误事件：仅提醒用户并强制退出，不修改任何配置文件
-try {
-  void listen("configLoadError", async (evt) => {
-    await handleConfigLoadError(evt.payload as ConfigLoadErrorPayload | null);
+function subscribeConfigLoadError(): void {
+  void listen("configLoadError", async (event) => {
+    await handleConfigLoadError(event.payload as ConfigLoadErrorPayload | null);
+  }).catch((error) => {
+    console.error("Failed to subscribe configLoadError event", error);
   });
-} catch (e) {
-  // 忽略事件订阅异常（例如在非 Tauri 环境下）
-  console.error("订阅 configLoadError 事件失败", e);
 }
 
-async function bootstrap() {
-  // 启动时附加控制台日志到 Tauri 插件
-  if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
-    try {
-      void attachConsole();
-    } catch (e) {
-      console.error("Failed to attach tauri-plugin-log console", e);
-    }
-  }
-
-  // 启动早期主动查询后端初始化错误，避免事件竞态
-  try {
-    const initError = (await invoke(
-      "get_init_error",
-    )) as ConfigLoadErrorPayload | null;
-    if (initError && (initError.path || initError.error)) {
-      await handleConfigLoadError(initError);
-      // 注意：不会执行到这里，因为 exit(1) 会终止进程
-      return;
-    }
-  } catch (e) {
-    // 忽略拉取错误，继续渲染
-    console.error("拉取初始化错误失败", e);
-  }
-
-  ReactDOM.createRoot(document.getElementById("root")!).render(
+function renderApp(rootElement: HTMLElement): void {
+  ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="dark" storageKey="haipee-theme">
@@ -109,6 +74,44 @@ async function bootstrap() {
       </QueryClientProvider>
     </React.StrictMode>,
   );
+}
+
+async function checkInitError(): Promise<void> {
+  const initError = await Promise.race([
+    invoke("get_init_error") as Promise<ConfigLoadErrorPayload | null>,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+  ]);
+
+  if (initError && (initError.path || initError.error)) {
+    await handleConfigLoadError(initError);
+  }
+}
+
+async function bootstrap(): Promise<void> {
+  applyPlatformClass();
+  subscribeConfigLoadError();
+
+  const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    console.error("Root element not found");
+    return;
+  }
+
+  renderApp(rootElement);
+
+  if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
+    try {
+      void attachConsole();
+    } catch (error) {
+      console.error("Failed to attach console", error);
+    }
+
+    try {
+      await checkInitError();
+    } catch (error) {
+      console.error("Init error check failed", error);
+    }
+  }
 }
 
 void bootstrap();

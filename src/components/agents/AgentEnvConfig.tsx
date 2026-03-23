@@ -50,7 +50,8 @@ export function AgentEnvConfig({ appId }: AgentEnvConfigProps) {
             </h3>
             <p className="text-xs text-muted-foreground">
               {t("openclaw.env.description", {
-                defaultValue: "OpenClaw 使用 openclaw.json 的 env 字段管理环境变量",
+                defaultValue:
+                  "OpenClaw 使用 openclaw.json 的 env 字段管理环境变量",
               })}
             </p>
           </div>

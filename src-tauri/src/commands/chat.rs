@@ -54,6 +54,12 @@ pub struct ChatProviderInfo {
     pub app_type: String,
 }
 
+#[derive(Debug, Clone)]
+struct StreamEventMeta {
+    session_id: String,
+    message_id: String,
+}
+
 /// 向活跃供应商发送聊天消息并流式输出
 ///
 /// 事件:
@@ -73,7 +79,10 @@ pub async fn chat_with_provider(
     let sid = session_id.clone();
     let mid = message_id.clone();
 
-    let result = do_chat(&app, &state, app_type, session_id, message_id, messages, model).await;
+    let result = do_chat(
+        &app, &state, app_type, session_id, message_id, messages, model,
+    )
+    .await;
 
     if let Err(ref e) = result {
         let _ = app.emit(
@@ -159,6 +168,11 @@ async fn do_chat(
         _ => true, // Codex, Gemini, OpenCode, OpenClaw all use OpenAI-compatible API
     };
 
+    let stream_meta = StreamEventMeta {
+        session_id,
+        message_id,
+    };
+
     if use_openai_format {
         stream_openai_chat(
             app,
@@ -167,8 +181,7 @@ async fn do_chat(
             &auth,
             &model_name,
             api_messages,
-            session_id,
-            message_id,
+            stream_meta,
         )
         .await
     } else {
@@ -179,8 +192,7 @@ async fn do_chat(
             &auth,
             &model_name,
             api_messages,
-            session_id,
-            message_id,
+            stream_meta,
         )
         .await
     }
@@ -233,8 +245,7 @@ async fn stream_claude_chat(
     auth: &AuthInfo,
     model: &str,
     messages: Vec<serde_json::Value>,
-    session_id: String,
-    message_id: String,
+    stream_meta: StreamEventMeta,
 ) -> Result<(), AppError> {
     let base = base_url.trim_end_matches('/');
     let url = if base.ends_with("/v1") {
@@ -294,15 +305,12 @@ async fn stream_claude_chat(
                 let event_type = json.get("type").and_then(|t| t.as_str());
 
                 if event_type == Some("content_block_delta") {
-                    if let Some(delta_text) = json
-                        .pointer("/delta/text")
-                        .and_then(|t| t.as_str())
-                    {
+                    if let Some(delta_text) = json.pointer("/delta/text").and_then(|t| t.as_str()) {
                         let _ = app.emit(
                             "chat-chunk",
                             ChatChunkEvent {
-                                session_id: session_id.clone(),
-                                message_id: message_id.clone(),
+                                session_id: stream_meta.session_id.clone(),
+                                message_id: stream_meta.message_id.clone(),
                                 delta: delta_text.to_string(),
                             },
                         );
@@ -319,8 +327,8 @@ async fn stream_claude_chat(
     let _ = app.emit(
         "chat-done",
         ChatDoneEvent {
-            session_id,
-            message_id,
+            session_id: stream_meta.session_id,
+            message_id: stream_meta.message_id,
         },
     );
 
@@ -335,8 +343,7 @@ async fn stream_openai_chat(
     auth: &AuthInfo,
     model: &str,
     messages: Vec<serde_json::Value>,
-    session_id: String,
-    message_id: String,
+    stream_meta: StreamEventMeta,
 ) -> Result<(), AppError> {
     let base = base_url.trim_end_matches('/');
     let url = if base.ends_with("/v1") {
@@ -396,8 +403,8 @@ async fn stream_openai_chat(
                         let _ = app.emit(
                             "chat-chunk",
                             ChatChunkEvent {
-                                session_id: session_id.clone(),
-                                message_id: message_id.clone(),
+                                session_id: stream_meta.session_id.clone(),
+                                message_id: stream_meta.message_id.clone(),
                                 delta: delta_content.to_string(),
                             },
                         );
@@ -407,7 +414,10 @@ async fn stream_openai_chat(
                 let finish_reason = json
                     .pointer("/choices/0/finish_reason")
                     .and_then(|r| r.as_str());
-                if matches!(finish_reason, Some("stop") | Some("length") | Some("content_filter")) {
+                if matches!(
+                    finish_reason,
+                    Some("stop") | Some("length") | Some("content_filter")
+                ) {
                     break 'outer;
                 }
             }
@@ -417,8 +427,8 @@ async fn stream_openai_chat(
     let _ = app.emit(
         "chat-done",
         ChatDoneEvent {
-            session_id,
-            message_id,
+            session_id: stream_meta.session_id,
+            message_id: stream_meta.message_id,
         },
     );
 

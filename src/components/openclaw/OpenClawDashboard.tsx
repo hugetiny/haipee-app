@@ -51,7 +51,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-const VALID_TABS = ["models", "env", "gateway", "channels", "skills", "tools", "agents", "raw"];
+const VALID_TABS = [
+  "models",
+  "env",
+  "gateway",
+  "channels",
+  "skills",
+  "tools",
+  "agents",
+  "raw",
+];
 
 export function OpenClawDashboard({
   providers,
@@ -94,12 +103,15 @@ export function OpenClawDashboard({
     }
   }, [currentView]);
 
-  const setActiveTab = useCallback((tab: string) => {
-    setActiveTabState(tab);
-    if (onChangeView && VALID_TABS.includes(tab)) {
-      onChangeView(tab);
-    }
-  }, [onChangeView]);
+  const setActiveTab = useCallback(
+    (tab: string) => {
+      setActiveTabState(tab);
+      if (onChangeView && VALID_TABS.includes(tab)) {
+        onChangeView(tab);
+      }
+    },
+    [onChangeView],
+  );
   const { updateSettings, saveSettings } = useSettings();
   const { activeInstance, instanceId, allInstances } =
     useActiveOpenClawInstance();
@@ -159,8 +171,8 @@ export function OpenClawDashboard({
     } catch (e: any) {
       toast.error(
         t("openclaw.instance.connectionFailed", "Connection failed") +
-        ": " +
-        (e?.message || "Unknown error"),
+          ": " +
+          (e?.message || "Unknown error"),
       );
     } finally {
       setIsTesting(false);
@@ -179,10 +191,11 @@ export function OpenClawDashboard({
               {/* Connection Status Badge */}
               {isRemote && pingData && (
                 <div
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${pingData.ok
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                    pingData.ok
                       ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
                       : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                    }`}
+                  }`}
                 >
                   {pingData.ok ? (
                     <Wifi className="w-3 h-3" />
@@ -237,7 +250,11 @@ export function OpenClawDashboard({
                     <DialogHeader className="flex flex-row items-center justify-between space-y-0">
                       <DialogTitle>Manage OpenClaw Instances</DialogTitle>
                       <DialogClose asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 -mr-2"
+                        >
                           <X className="h-4 w-4" />
                           <span className="sr-only">Close</span>
                         </Button>
@@ -335,9 +352,9 @@ export function OpenClawDashboard({
                             {isTesting
                               ? t("openclaw.instance.testing", "Testing...")
                               : t(
-                                "openclaw.instance.testConnection",
-                                "Test Connection",
-                              )}
+                                  "openclaw.instance.testConnection",
+                                  "Test Connection",
+                                )}
                           </Button>
                           <Button
                             className="flex-1"
@@ -385,8 +402,8 @@ export function OpenClawDashboard({
                         onError: (err: any) =>
                           toast.error(
                             t("common.saveFailed") +
-                            ": " +
-                            (err?.message || ""),
+                              ": " +
+                              (err?.message || ""),
                           ),
                       });
                     }
@@ -405,7 +422,11 @@ export function OpenClawDashboard({
 
         {/* Mobile Only: Tab navigation - Desktop uses sidebar submenu */}
         <div className="md:hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="bg-muted/50 p-1 mb-2">
               <TabsTrigger
                 value="models"

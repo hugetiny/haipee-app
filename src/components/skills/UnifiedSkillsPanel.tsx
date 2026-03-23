@@ -276,7 +276,10 @@ const UnifiedSkillsPanel = React.forwardRef<
           </div>
         ) : (
           <TooltipProvider delayDuration={300}>
-            <div className="rounded-xl border border-border-default overflow-hidden" data-testid="skills-list">
+            <div
+              className="rounded-xl border border-border-default overflow-hidden"
+              data-testid="skills-list"
+            >
               {skills.map((skill, index) => (
                 <InstalledSkillListItem
                   key={skill.id}

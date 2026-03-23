@@ -1,15 +1,15 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { getAllConfigStatuses, type AllConfigStatuses } from '@/lib/api/config';
-import type { AppId } from '@/lib/api/types';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { getAllConfigStatuses, type AllConfigStatuses } from "@/lib/api/config";
+import type { AppId } from "@/lib/api/types";
 
-const ALL_APPS: AppId[] = ['claude', 'codex', 'gemini', 'opencode', 'openclaw'];
+const ALL_APPS: AppId[] = ["claude", "codex", "gemini", "opencode", "openclaw"];
 
-const STORAGE_KEY = 'haipee-selected-agent';
+const STORAGE_KEY = "haipee-selected-agent";
 
 export type AgentStatus =
-  | { type: 'loading' }
-  | { type: 'success'; exists: boolean }
-  | { type: 'error'; message: string };
+  | { type: "loading" }
+  | { type: "success"; exists: boolean }
+  | { type: "error"; message: string };
 
 export interface AgentStatusStore {
   [agentId: string]: AgentStatus;
@@ -18,29 +18,31 @@ export interface AgentStatusStore {
 interface UseNavigationStateReturn {
   // State
   selectedAgent: AppId;
-  selectedMode: 'sessions' | 'config' | 'settings';
+  selectedMode: "sessions" | "config" | "settings";
   statusMap: AgentStatusStore;
   isLoading: boolean;
 
   // Actions
   selectAgent: (agent: AppId) => void;
-  setMode: (mode: 'sessions' | 'config' | 'settings') => void;
+  setMode: (mode: "sessions" | "config" | "settings") => void;
   refreshStatuses: () => Promise<void>;
 }
 
 export function useNavigationState(): UseNavigationStateReturn {
   // Initialize selectedAgent from localStorage
   const [selectedAgent, setSelectedAgentState] = useState<AppId>(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && ALL_APPS.includes(stored as AppId)) {
         return stored as AppId;
       }
     }
-    return 'claude';
+    return "claude";
   });
 
-  const [selectedMode, setModeState] = useState<'sessions' | 'config' | 'settings'>('sessions');
+  const [selectedMode, setModeState] = useState<
+    "sessions" | "config" | "settings"
+  >("sessions");
   const [statusMap, setStatusMap] = useState<AgentStatusStore>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,7 +57,7 @@ export function useNavigationState(): UseNavigationStateReturn {
     localStorage.setItem(STORAGE_KEY, agent);
   }, []);
 
-  const setMode = useCallback((mode: 'sessions' | 'config' | 'settings') => {
+  const setMode = useCallback((mode: "sessions" | "config" | "settings") => {
     setModeState(mode);
   }, []);
 
@@ -69,29 +71,29 @@ export function useNavigationState(): UseNavigationStateReturn {
         const status = statuses[app];
         if (status) {
           if (status.exists) {
-            newStatusMap[app] = { type: 'success', exists: true };
+            newStatusMap[app] = { type: "success", exists: true };
           } else {
             // exists: false could mean no config OR error
             // Check if path contains error message (not a valid path)
-            const isLikelyError = status.path && !status.path.startsWith('/');
+            const isLikelyError = status.path && !status.path.startsWith("/");
             if (isLikelyError) {
-              newStatusMap[app] = { type: 'error', message: status.path };
+              newStatusMap[app] = { type: "error", message: status.path };
             } else {
-              newStatusMap[app] = { type: 'success', exists: false };
+              newStatusMap[app] = { type: "success", exists: false };
             }
           }
         } else {
-          newStatusMap[app] = { type: 'loading' };
+          newStatusMap[app] = { type: "loading" };
         }
       }
 
       setStatusMap(newStatusMap);
     } catch (error) {
-      console.error('Failed to fetch config statuses:', error);
+      console.error("Failed to fetch config statuses:", error);
       // Set all to error on failure
       const errorStatusMap: AgentStatusStore = {};
       for (const app of ALL_APPS) {
-        errorStatusMap[app] = { type: 'error', message: 'Failed to load' };
+        errorStatusMap[app] = { type: "error", message: "Failed to load" };
       }
       setStatusMap(errorStatusMap);
     } finally {
@@ -99,13 +101,24 @@ export function useNavigationState(): UseNavigationStateReturn {
     }
   }, []);
 
-  return useMemo(() => ({
-    selectedAgent,
-    selectedMode,
-    statusMap,
-    isLoading,
-    selectAgent,
-    setMode,
-    refreshStatuses,
-  }), [selectedAgent, selectedMode, statusMap, isLoading, selectAgent, setMode, refreshStatuses]);
+  return useMemo(
+    () => ({
+      selectedAgent,
+      selectedMode,
+      statusMap,
+      isLoading,
+      selectAgent,
+      setMode,
+      refreshStatuses,
+    }),
+    [
+      selectedAgent,
+      selectedMode,
+      statusMap,
+      isLoading,
+      selectAgent,
+      setMode,
+      refreshStatuses,
+    ],
+  );
 }

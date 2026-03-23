@@ -68,8 +68,7 @@ if (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__) {
         return { connected: true, status: "connected" };
       if (cmd === "disconnect_openclaw_gateway") return null;
       if (cmd === "inject_openclaw_system_prompt") return null;
-      if (cmd === "list_openclaw_sessions")
-        return { sessions: [], count: 0 };
+      if (cmd === "list_openclaw_sessions") return { sessions: [], count: 0 };
       if (cmd === "start_openclaw_gateway") return null;
       if (cmd === "stop_openclaw_gateway") return null;
       if (cmd === "get_openclaw_gateway_service_status")
@@ -112,13 +111,14 @@ if (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__) {
       if (cmd === "save_file_dialog") return "/mock/output.json";
 
       // Chat commands
-      if (cmd === "get_chat_provider_info") return {
-        providerId: "mock-provider",
-        providerName: "Mock Provider",
-        baseUrl: "https://api.anthropic.com",
-        defaultModel: "claude-opus-4-6",
-        appType: args?.appType ?? "claude",
-      };
+      if (cmd === "get_chat_provider_info")
+        return {
+          providerId: "mock-provider",
+          providerName: "Mock Provider",
+          baseUrl: "https://api.anthropic.com",
+          defaultModel: "claude-opus-4-6",
+          appType: args?.appType ?? "claude",
+        };
       if (cmd === "chat_with_provider") return null;
 
       console.warn(`[Tauri Mock] Unhandled command: ${cmd}`);

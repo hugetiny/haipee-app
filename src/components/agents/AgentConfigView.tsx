@@ -14,11 +14,31 @@ import PromptPanel from "@/components/prompts/PromptPanel";
 import { OpenClawSkillsMcpPanel } from "@/components/openclaw/OpenClawSkillsMcpPanel";
 
 const AGENT_TABS = [
-  { id: "basic", labelKey: "agent.config.basic", labelFallback: "基础配置", icon: Settings2 },
-  { id: "skills", labelKey: "agent.config.skills", labelFallback: "Skills", icon: Code2 },
+  {
+    id: "basic",
+    labelKey: "agent.config.basic",
+    labelFallback: "基础配置",
+    icon: Settings2,
+  },
+  {
+    id: "skills",
+    labelKey: "agent.config.skills",
+    labelFallback: "Skills",
+    icon: Code2,
+  },
   { id: "mcp", labelKey: "agent.config.mcp", labelFallback: "MCP", icon: Plug },
-  { id: "prompts", labelKey: "agent.config.prompts", labelFallback: "提示词", icon: FileText },
-  { id: "env", labelKey: "agent.config.env", labelFallback: "环境变量", icon: Terminal },
+  {
+    id: "prompts",
+    labelKey: "agent.config.prompts",
+    labelFallback: "提示词",
+    icon: FileText,
+  },
+  {
+    id: "env",
+    labelKey: "agent.config.env",
+    labelFallback: "环境变量",
+    icon: Terminal,
+  },
 ] as const;
 
 const AGENT_OPTIONS: { id: AppId; label: string; icon: string }[] = [
@@ -71,7 +91,12 @@ export function AgentConfigView() {
           <div className="px-4 pt-3 shrink-0">
             <TabsList className="w-full justify-start" data-testid="agent-tabs">
               {AGENT_TABS.map((tab) => (
-                <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5" data-testid={`agent-tab-${tab.id}`}>
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="gap-1.5"
+                  data-testid={`agent-tab-${tab.id}`}
+                >
                   <tab.icon className="w-3.5 h-3.5" />
                   {t(tab.labelKey, tab.labelFallback)}
                 </TabsTrigger>
@@ -92,23 +117,21 @@ export function AgentConfigView() {
                 {activeTab === "basic" && (
                   <AgentBasicConfig appId={activeApp} />
                 )}
-                {activeTab === "skills" && (
-                  activeApp === "openclaw" ? (
+                {activeTab === "skills" &&
+                  (activeApp === "openclaw" ? (
                     <OpenClawSkillsMcpPanel type="skills" />
                   ) : (
                     <UnifiedSkillsPanel
                       currentApp={activeApp}
                       onOpenDiscovery={() => {}}
                     />
-                  )
-                )}
-                {activeTab === "mcp" && (
-                  activeApp === "openclaw" ? (
+                  ))}
+                {activeTab === "mcp" &&
+                  (activeApp === "openclaw" ? (
                     <OpenClawSkillsMcpPanel type="mcp" />
                   ) : (
                     <UnifiedMcpPanel onOpenChange={() => {}} />
-                  )
-                )}
+                  ))}
                 {activeTab === "prompts" && (
                   <PromptPanel
                     open={true}
@@ -116,9 +139,7 @@ export function AgentConfigView() {
                     appId={activeApp}
                   />
                 )}
-                {activeTab === "env" && (
-                  <AgentEnvConfig appId={activeApp} />
-                )}
+                {activeTab === "env" && <AgentEnvConfig appId={activeApp} />}
               </motion.div>
             </AnimatePresence>
           </div>

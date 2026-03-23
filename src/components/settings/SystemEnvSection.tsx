@@ -27,11 +27,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import type { EnvConflict } from "@/types/env";
-import {
-  checkEnvConflicts,
-  deleteEnvVars,
-  setEnvVar,
-} from "@/lib/api/env";
+import { checkEnvConflicts, deleteEnvVars, setEnvVar } from "@/lib/api/env";
 
 interface SystemEnvSectionProps {
   appType: string;
@@ -256,7 +252,9 @@ export function SystemEnvSection({
                   onClick={() => setIsAddDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  {t("settings.envVar.addVar", { defaultValue: "添加环境变量" })}
+                  {t("settings.envVar.addVar", {
+                    defaultValue: "添加环境变量",
+                  })}
                 </Button>
               </>
             )}

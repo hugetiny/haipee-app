@@ -172,7 +172,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
     const providerId = selectedSession.providerId;
     const sessionId = selectedSession.sessionId;
 
-    if (providerId === 'claude') {
+    if (providerId === "claude") {
       const unsubscribe = onMessage((msg) => {
         if (msg.chatId === sessionId) {
           void refetch();
@@ -183,7 +183,6 @@ export function SessionManagerPage({ appId }: { appId: string }) {
 
     // OpenClaw polling is handled by onOpenClawMessage, but for now we rely on refetch after send
     // Future: subscribe to SSE or polling when available
-
   }, [selectedSession, refetch]);
 
   const handleCopy = async (text: string, successMessage: string) => {
@@ -259,7 +258,9 @@ export function SessionManagerPage({ appId }: { appId: string }) {
         });
         toast.success(t("sessionManager.terminalLaunched"));
       } catch (error) {
-        toast.error(extractErrorMessage(error) || t("sessionManager.openFailed"));
+        toast.error(
+          extractErrorMessage(error) || t("sessionManager.openFailed"),
+        );
       }
       return;
     }
@@ -293,11 +294,8 @@ export function SessionManagerPage({ appId }: { appId: string }) {
 
       // 提示用户粘贴 token
       toast.info(
-        t(
-          "sessionManager.pasteTokenHint",
-          "请粘贴 Gateway Token 并点击连接"
-        ),
-        { duration: 5000 }
+        t("sessionManager.pasteTokenHint", "请粘贴 Gateway Token 并点击连接"),
+        { duration: 5000 },
       );
     } catch (error) {
       toast.error(t("sessionManager.openBrowserFailed", "打开浏览器失败"));
@@ -314,22 +312,24 @@ export function SessionManagerPage({ appId }: { appId: string }) {
     const sessionId = selectedSession.sessionId;
     const content = inputMessage.trim();
 
-    setInputMessage('');
+    setInputMessage("");
     setIsSending(true);
 
     try {
-      if (providerId === 'claude') {
+      if (providerId === "claude") {
         // Use MCP Channel
         await sendToClaudeCode(content, sessionId);
-      } else if (providerId === 'openclaw') {
+      } else if (providerId === "openclaw") {
         // Use Gateway HTTP API
         await sendToOpenClaw(sessionId, content);
       } else {
         // Show "under development" toast
-        toast.info(t('sessionManager.channelUnderDevelopment', {
-          defaultValue: '{{agent}} 的消息功能正在开发中',
-          agent: getProviderLabel(providerId, t)
-        }));
+        toast.info(
+          t("sessionManager.channelUnderDevelopment", {
+            defaultValue: "{{agent}} 的消息功能正在开发中",
+            agent: getProviderLabel(providerId, t),
+          }),
+        );
         setIsSending(false);
         return;
       }
@@ -406,10 +406,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                         className="size-7"
                         onClick={() => {
                           setIsSearchOpen(true);
-                          setTimeout(
-                            () => searchInputRef.current?.focus(),
-                            0,
-                          );
+                          setTimeout(() => searchInputRef.current?.focus(), 0);
                         }}
                       >
                         <Search className="size-3.5" />
@@ -510,7 +507,10 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                           variant="ghost"
                           className="size-8 hover:bg-accent"
                           onClick={() => void handleOpenTui()}
-                          disabled={!isCurrentProviderOpenClaw && !selectedSession.resumeCommand}
+                          disabled={
+                            !isCurrentProviderOpenClaw &&
+                            !selectedSession.resumeCommand
+                          }
                         >
                           <Terminal className="size-4" />
                         </Button>
@@ -630,10 +630,7 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                       className="size-6"
                       onClick={() => {
                         setIsSearchOpen(true);
-                        setTimeout(
-                          () => searchInputRef.current?.focus(),
-                          0,
-                        );
+                        setTimeout(() => searchInputRef.current?.focus(), 0);
                       }}
                     >
                       <Search className="size-3" />
@@ -781,7 +778,10 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                                 variant="ghost"
                                 className="size-8 hover:bg-accent"
                                 onClick={() => void handleOpenTui()}
-                                disabled={!isCurrentProviderOpenClaw && !selectedSession.resumeCommand}
+                                disabled={
+                                  !isCurrentProviderOpenClaw &&
+                                  !selectedSession.resumeCommand
+                                }
                               >
                                 <Terminal className="size-4" />
                               </Button>
@@ -804,7 +804,10 @@ export function SessionManagerPage({ appId }: { appId: string }) {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {t("sessionManager.openInBrowser", "在浏览器中打开")}
+                              {t(
+                                "sessionManager.openInBrowser",
+                                "在浏览器中打开",
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -930,17 +933,21 @@ export function SessionManagerPage({ appId }: { appId: string }) {
 
                   {/* 底部输入框 */}
                   <div className="shrink-0 border-t p-3 bg-background">
-                    <form
-                      onSubmit={handleSendMessage}
-                      className="flex gap-2"
-                    >
+                    <form onSubmit={handleSendMessage} className="flex gap-2">
                       <Input
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder={t("sessionManager.inputPlaceholder", "输入消息...")}
+                        placeholder={t(
+                          "sessionManager.inputPlaceholder",
+                          "输入消息...",
+                        )}
                         className="flex-1"
                       />
-                      <Button type="submit" size="icon" disabled={!inputMessage.trim() || isSending}>
+                      <Button
+                        type="submit"
+                        size="icon"
+                        disabled={!inputMessage.trim() || isSending}
+                      >
                         {isSending ? (
                           <RefreshCw className="size-4 animate-spin" />
                         ) : (
@@ -1008,16 +1015,10 @@ export function SessionManagerPage({ appId }: { appId: string }) {
               {t("sessionManager.openTuiMessageOpenClaw", "是否打开？")}
             </p>
             <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => setShowTuiChoice(false)}
-              >
+              <Button variant="outline" onClick={() => setShowTuiChoice(false)}>
                 {t("common.cancel", "取消")}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => void handleOpenTui()}
-              >
+              <Button variant="outline" onClick={() => void handleOpenTui()}>
                 <Terminal className="size-4 mr-2" />
                 TUI
               </Button>

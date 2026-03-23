@@ -549,9 +549,7 @@ export function OpenCodeFormFields({
       {/* Models Editor */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label>
-            {t("opencode.models", { defaultValue: "Models" })}
-          </Label>
+          <Label>{t("opencode.models", { defaultValue: "Models" })}</Label>
           <Button
             type="button"
             variant="outline"

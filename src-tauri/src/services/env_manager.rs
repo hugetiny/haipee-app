@@ -284,7 +284,11 @@ pub fn get_default_shell_config() -> String {
 ///
 /// Returns the file path that was modified
 #[cfg(target_os = "windows")]
-pub fn set_env_var(var_name: String, var_value: String, _target_file: Option<String>) -> Result<String, String> {
+pub fn set_env_var(
+    var_name: String,
+    var_value: String,
+    _target_file: Option<String>,
+) -> Result<String, String> {
     use winreg::enums::*;
     use winreg::RegKey;
 
@@ -300,15 +304,15 @@ pub fn set_env_var(var_name: String, var_value: String, _target_file: Option<Str
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn set_env_var(var_name: String, var_value: String, target_file: Option<String>) -> Result<String, String> {
+pub fn set_env_var(
+    var_name: String,
+    var_value: String,
+    target_file: Option<String>,
+) -> Result<String, String> {
     let file_path = target_file.unwrap_or_else(get_default_shell_config);
 
     // Read existing content
-    let mut content = if let Ok(existing) = fs::read_to_string(&file_path) {
-        existing
-    } else {
-        String::new()
-    };
+    let mut content = fs::read_to_string(&file_path).unwrap_or_default();
 
     // Check if variable already exists
     let var_pattern = format!("export {}=", var_name);

@@ -284,11 +284,11 @@ export function BackupListSection({
             <Download className="h-3 w-3 mr-1" />
             {isCreating
               ? t("settings.backupManager.creating", {
-                defaultValue: "Backing up...",
-              })
+                  defaultValue: "Backing up...",
+                })
               : t("settings.backupManager.createBackup", {
-                defaultValue: "Backup Now",
-              })}
+                  defaultValue: "Backup Now",
+                })}
           </Button>
         </div>
 
@@ -392,11 +392,11 @@ export function BackupListSection({
                       <RotateCcw className="h-3 w-3 mr-1" />
                       {isRestoring
                         ? t("settings.backupManager.restoring", {
-                          defaultValue: "Restoring...",
-                        })
+                            defaultValue: "Restoring...",
+                          })
                         : t("settings.backupManager.restore", {
-                          defaultValue: "Restore",
-                        })}
+                            defaultValue: "Restore",
+                          })}
                     </Button>
                   </div>
                 )}
@@ -436,11 +436,11 @@ export function BackupListSection({
             <Button onClick={handleRestore} disabled={isRestoring}>
               {isRestoring
                 ? t("settings.backupManager.restoring", {
-                  defaultValue: "Restoring...",
-                })
+                    defaultValue: "Restoring...",
+                  })
                 : t("settings.backupManager.restore", {
-                  defaultValue: "Restore",
-                })}
+                    defaultValue: "Restore",
+                  })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -480,11 +480,11 @@ export function BackupListSection({
             >
               {isDeleting
                 ? t("settings.backupManager.deleting", {
-                  defaultValue: "Deleting...",
-                })
+                    defaultValue: "Deleting...",
+                  })
                 : t("settings.backupManager.delete", {
-                  defaultValue: "Delete",
-                })}
+                    defaultValue: "Delete",
+                  })}
             </Button>
           </DialogFooter>
         </DialogContent>

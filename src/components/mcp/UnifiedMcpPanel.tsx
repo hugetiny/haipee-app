@@ -158,7 +158,10 @@ const UnifiedMcpPanel = React.forwardRef<
           </div>
         ) : (
           <TooltipProvider delayDuration={300}>
-            <div className="rounded-xl border border-border-default overflow-hidden" data-testid="mcp-servers-list">
+            <div
+              className="rounded-xl border border-border-default overflow-hidden"
+              data-testid="mcp-servers-list"
+            >
               {serverEntries.map(([id, server], index) => (
                 <UnifiedMcpListItem
                   key={id}

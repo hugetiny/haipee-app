@@ -5,44 +5,44 @@
  * Shows both OpenClaw and MCP channels side by side.
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import {
   initHaipeeChannel,
   sendToClaudeCode,
   onMessage,
   getChatHistory,
   type HaipeeMessage,
-} from '@/mcp-channel';
+} from "@/mcp-channel";
 
 interface MessageItemProps {
   message: HaipeeMessage;
 }
 
 function MessageItem({ message }: MessageItemProps) {
-  const isUser = message.role === 'user';
+  const isUser = message.role === "user";
 
   return (
     <div
       className={cn(
-        'flex w-full mb-2',
-        isUser ? 'justify-end' : 'justify-start'
+        "flex w-full mb-2",
+        isUser ? "justify-end" : "justify-start",
       )}
-      data-testid={isUser ? 'user-message' : 'assistant-message'}
+      data-testid={isUser ? "user-message" : "assistant-message"}
     >
       <div
         className={cn(
-          'max-w-[80%] rounded-lg px-3 py-2 text-sm',
+          "max-w-[80%] rounded-lg px-3 py-2 text-sm",
           isUser
-            ? 'bg-green-600 text-white'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+            ? "bg-green-600 text-white"
+            : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100",
         )}
       >
         <p className="whitespace-pre-wrap">{message.content}</p>
@@ -55,7 +55,7 @@ function MessageItem({ message }: MessageItemProps) {
 }
 
 interface ChannelPanelProps {
-  channelType: 'openclaw' | 'mcp';
+  channelType: "openclaw" | "mcp";
   title: string;
   description: string;
 }
@@ -63,7 +63,7 @@ interface ChannelPanelProps {
 function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<HaipeeMessage[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +71,10 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   // Check if running in browser mode (not Tauri)
-  const isBrowserMode = typeof window !== 'undefined' && !(window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+  const isBrowserMode =
+    typeof window !== "undefined" &&
+    !(window as unknown as { __TAURI_INTERNALS__?: unknown })
+      .__TAURI_INTERNALS__;
 
   // Initialize channel on mount
   useEffect(() => {
@@ -79,7 +82,7 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
 
     const init = async () => {
       try {
-        if (channelType === 'mcp') {
+        if (channelType === "mcp") {
           // In browser mode, skip MCP server initialization but still set up message handling
           if (!isBrowserMode) {
             await initHaipeeChannel();
@@ -92,10 +95,10 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
             if (!mounted) return;
             setMessages((prev) => {
               // Avoid duplicates by checking if message already exists
-              if (prev.some(m => m.id === msg.id)) return prev;
+              if (prev.some((m) => m.id === msg.id)) return prev;
               return [...prev, msg];
             });
-            if (msg.role === 'assistant') {
+            if (msg.role === "assistant") {
               setIsLoading(false);
             }
           });
@@ -110,7 +113,10 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
       } catch (err) {
         // Don't show mock mode errors
         const errorMsg = err instanceof Error ? err.message : String(err);
-        if (!errorMsg.includes('Browser Mock') && !errorMsg.includes('not available')) {
+        if (
+          !errorMsg.includes("Browser Mock") &&
+          !errorMsg.includes("not available")
+        ) {
           if (mounted) setError(errorMsg);
         }
         if (mounted) setIsConnected(true); // Still show as connected in mock mode
@@ -138,12 +144,12 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
     if (!input.trim() || isLoading) return;
 
     const content = input.trim();
-    setInput('');
+    setInput("");
     setIsLoading(true);
     setError(null);
 
     try {
-      if (channelType === 'mcp') {
+      if (channelType === "mcp") {
         // Send to Claude Code (sendToClaudeCode handles message history)
         await sendToClaudeCode(content);
         // The onMessage callback will handle adding messages to state
@@ -155,10 +161,10 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
         // OpenClaw channel - send via HTTP
         const userMessage: HaipeeMessage = {
           id: crypto.randomUUID(),
-          role: 'user',
+          role: "user",
           content,
           timestamp: Date.now(),
-          chatId: 'main',
+          chatId: "main",
         };
         setMessages((prev) => [...prev, userMessage]);
 
@@ -167,10 +173,10 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
         setTimeout(() => {
           const responseMessage: HaipeeMessage = {
             id: crypto.randomUUID(),
-            role: 'assistant',
+            role: "assistant",
             content: `[OpenClaw] Received: "${content}"\n\nThis is a simulated response. Connect to an actual OpenClaw server for real responses.`,
             timestamp: Date.now(),
-            chatId: 'main',
+            chatId: "main",
           };
           setMessages((prev) => [...prev, responseMessage]);
           setIsLoading(false);
@@ -179,10 +185,12 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
     } catch (err) {
       // Don't show mock mode errors or browser-specific errors
       const errorMsg = err instanceof Error ? err.message : String(err);
-      if (!errorMsg.includes('Browser Mock') &&
-          !errorMsg.includes('not available') &&
-          !errorMsg.includes('write') &&
-          !errorMsg.includes('undefined')) {
+      if (
+        !errorMsg.includes("Browser Mock") &&
+        !errorMsg.includes("not available") &&
+        !errorMsg.includes("write") &&
+        !errorMsg.includes("undefined")
+      ) {
         setError(errorMsg);
       }
       setIsLoading(false);
@@ -195,25 +203,28 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
   }, []);
 
   return (
-    <Card className="h-full flex flex-col" data-testid={`${channelType}-channel-container`}>
+    <Card
+      className="h-full flex flex-col"
+      data-testid={`${channelType}-channel-container`}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{title}</CardTitle>
           <div className="flex items-center gap-2">
             <Badge
-              variant={isConnected ? 'default' : 'secondary'}
+              variant={isConnected ? "default" : "secondary"}
               className={cn(
-                'text-xs',
-                isConnected && 'bg-green-500 hover:bg-green-600'
+                "text-xs",
+                isConnected && "bg-green-500 hover:bg-green-600",
               )}
               data-testid={`${channelType}-status`}
             >
               {isConnected
-                ? t('channels.connected', { defaultValue: '已连接' })
-                : t('channels.disconnected', { defaultValue: '未连接' })}
+                ? t("channels.connected", { defaultValue: "已连接" })
+                : t("channels.disconnected", { defaultValue: "未连接" })}
             </Badge>
             <Button variant="outline" size="sm" onClick={handleClear}>
-              {t('channels.clear', { defaultValue: '清空' })}
+              {t("channels.clear", { defaultValue: "清空" })}
             </Button>
           </div>
         </div>
@@ -232,7 +243,7 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
         <ScrollArea className="flex-1" ref={scrollRef}>
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-              {t('channels.noMessages', { defaultValue: '暂无消息' })}
+              {t("channels.noMessages", { defaultValue: "暂无消息" })}
             </div>
           ) : (
             <div className="space-y-1">
@@ -248,11 +259,13 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={t('channels.inputPlaceholder', { defaultValue: '输入消息...' })}
+            placeholder={t("channels.inputPlaceholder", {
+              defaultValue: "输入消息...",
+            })}
             className="min-h-[60px] resize-none"
             data-testid={`${channelType}-chat-input`}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSend();
               }
@@ -265,8 +278,8 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
             data-testid={`${channelType}-send`}
           >
             {isLoading
-              ? t('channels.sending', { defaultValue: '发送中...' })
-              : t('channels.send', { defaultValue: '发送' })}
+              ? t("channels.sending", { defaultValue: "发送中..." })
+              : t("channels.send", { defaultValue: "发送" })}
           </Button>
         </div>
       </CardContent>
@@ -276,24 +289,24 @@ function ChannelPanel({ channelType, title, description }: ChannelPanelProps) {
 
 export function ChannelTestPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'openclaw' | 'mcp'>('openclaw');
+  const [activeTab, setActiveTab] = useState<"openclaw" | "mcp">("openclaw");
 
   return (
     <div className="h-screen flex flex-col p-4">
       <div className="mb-4">
         <h1 className="text-2xl font-bold">
-          {t('channels.title', { defaultValue: 'Channel 通信测试' })}
+          {t("channels.title", { defaultValue: "Channel 通信测试" })}
         </h1>
         <p className="text-muted-foreground">
-          {t('channels.description', {
-            defaultValue: '测试 OpenClaw 和 Claude Code MCP channel 的消息收发',
+          {t("channels.description", {
+            defaultValue: "测试 OpenClaw 和 Claude Code MCP channel 的消息收发",
           })}
         </p>
       </div>
 
       <Tabs
         value={activeTab}
-        onValueChange={(v) => setActiveTab(v as 'openclaw' | 'mcp')}
+        onValueChange={(v) => setActiveTab(v as "openclaw" | "mcp")}
         className="flex-1 flex flex-col"
       >
         <TabsList className="mb-4">
@@ -309,8 +322,8 @@ export function ChannelTestPage() {
           <ChannelPanel
             channelType="openclaw"
             title="OpenClaw Channel"
-            description={t('channels.openclawDescription', {
-              defaultValue: '通过 HTTP API 与 OpenClaw 服务通信',
+            description={t("channels.openclawDescription", {
+              defaultValue: "通过 HTTP API 与 OpenClaw 服务通信",
             })}
           />
         </TabsContent>
@@ -319,8 +332,8 @@ export function ChannelTestPage() {
           <ChannelPanel
             channelType="mcp"
             title="Claude Code MCP Channel"
-            description={t('channels.mcpDescription', {
-              defaultValue: '通过 MCP stdio 协议与 Claude Code 通信',
+            description={t("channels.mcpDescription", {
+              defaultValue: "通过 MCP stdio 协议与 Claude Code 通信",
             })}
           />
         </TabsContent>

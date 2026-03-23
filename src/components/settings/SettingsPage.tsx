@@ -128,7 +128,13 @@ export function SettingsPage({
   useEffect(() => {
     if (activeTab === "models") {
       // 刷新所有 agent 的 providers 数据
-      const appIds: AppId[] = ["claude", "codex", "gemini", "opencode", "openclaw"];
+      const appIds: AppId[] = [
+        "claude",
+        "codex",
+        "gemini",
+        "opencode",
+        "openclaw",
+      ];
       for (const appId of appIds) {
         queryClient.invalidateQueries({ queryKey: ["providers", appId] });
       }
@@ -217,22 +223,66 @@ export function SettingsPage({
           className="flex flex-col h-full"
           data-settings-loaded={settings ? "true" : undefined}
         >
-          <TabsList className="flex w-full gap-1 mb-6 glass rounded-lg overflow-x-auto" data-testid="settings-tabs">
-            <TabsTrigger value="general" className="shrink-0" ref={activeTab === "general" ? activeTabRef : null} data-testid="settings-tab-general">
+          <TabsList
+            className="flex w-full gap-1 mb-6 glass rounded-lg overflow-x-auto"
+            data-testid="settings-tabs"
+          >
+            <TabsTrigger
+              value="general"
+              className="shrink-0"
+              ref={activeTab === "general" ? activeTabRef : null}
+              data-testid="settings-tab-general"
+            >
               {t("settings.tabGeneral")}
             </TabsTrigger>
-            <TabsTrigger value="models" className="shrink-0" ref={activeTab === "models" ? activeTabRef : null} data-testid="settings-tab-models">
+            <TabsTrigger
+              value="models"
+              className="shrink-0"
+              ref={activeTab === "models" ? activeTabRef : null}
+              data-testid="settings-tab-models"
+            >
               {t("settings.tabAgentSettings", { defaultValue: "Agent设置" })}
             </TabsTrigger>
-            <TabsTrigger value="proxy" className="shrink-0" ref={activeTab === "proxy" ? activeTabRef : null} data-testid="settings-tab-proxy">{t("settings.tabProxy")}</TabsTrigger>
-            <TabsTrigger value="auth" className="shrink-0" ref={activeTab === "auth" ? activeTabRef : null} data-testid="settings-tab-auth">
+            <TabsTrigger
+              value="proxy"
+              className="shrink-0"
+              ref={activeTab === "proxy" ? activeTabRef : null}
+              data-testid="settings-tab-proxy"
+            >
+              {t("settings.tabProxy")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="auth"
+              className="shrink-0"
+              ref={activeTab === "auth" ? activeTabRef : null}
+              data-testid="settings-tab-auth"
+            >
               {t("settings.tabAuth", { defaultValue: "认证" })}
             </TabsTrigger>
-            <TabsTrigger value="advanced" className="shrink-0" ref={activeTab === "advanced" ? activeTabRef : null} data-testid="settings-tab-advanced">
+            <TabsTrigger
+              value="advanced"
+              className="shrink-0"
+              ref={activeTab === "advanced" ? activeTabRef : null}
+              data-testid="settings-tab-advanced"
+            >
               {t("settings.tabAdvanced")}
             </TabsTrigger>
-            <TabsTrigger value="usage" className="shrink-0" ref={activeTab === "usage" ? activeTabRef : null} data-testid="settings-tab-usage">{t("usage.title")}</TabsTrigger>
-            <TabsTrigger value="about" className="shrink-0" ref={activeTab === "about" ? activeTabRef : null} data-testid="settings-tab-about">{t("common.about")}</TabsTrigger>
+            <TabsTrigger
+              value="usage"
+              className="shrink-0"
+              ref={activeTab === "usage" ? activeTabRef : null}
+              data-testid="settings-tab-usage"
+            >
+              {t("usage.title")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="about"
+              className="shrink-0"
+              ref={activeTab === "about" ? activeTabRef : null}
+              data-testid="settings-tab-about"
+            >
+              {t("common.about")}
+            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 min-h-0 flex flex-col">

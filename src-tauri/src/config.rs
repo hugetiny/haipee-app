@@ -139,9 +139,7 @@ fn migrate_config_dir(old: &Path, new: &Path) -> Result<(), AppError> {
     log::info!("正在迁移配置: {} -> {}", old.display(), new.display());
 
     // 创建新目录
-    fs::create_dir_all(new).map_err(|e| {
-        AppError::io(new, e)
-    })?;
+    fs::create_dir_all(new).map_err(|e| AppError::io(new, e))?;
 
     // 递归复制所有文件和子目录
     fn copy_recursive(src: &Path, dst: &Path) -> io::Result<()> {
@@ -164,11 +162,9 @@ fn migrate_config_dir(old: &Path, new: &Path) -> Result<(), AppError> {
         let src = entry.path();
         let dest = new.join(entry.file_name());
 
-        copy_recursive(&src, &dest).map_err(|e| {
-            AppError::IoContext {
-                context: format!("迁移失败: {} -> {}", src.display(), dest.display()),
-                source: e,
-            }
+        copy_recursive(&src, &dest).map_err(|e| AppError::IoContext {
+            context: format!("迁移失败: {} -> {}", src.display(), dest.display()),
+            source: e,
         })?;
     }
 

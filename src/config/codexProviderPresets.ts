@@ -285,8 +285,7 @@ requires_openai_auth = true`,
     name: "Compshare",
     nameKey: "providerForm.presets.ucloud",
     websiteUrl: "https://www.compshare.cn",
-    apiKeyUrl:
-      "https://www.compshare.cn/coding-plan?ytag=GPU_YY_YX_git_haipee",
+    apiKeyUrl: "https://www.compshare.cn/coding-plan?ytag=GPU_YY_YX_git_haipee",
     auth: generateThirdPartyAuth(""),
     config: generateThirdPartyConfig(
       "compshare",

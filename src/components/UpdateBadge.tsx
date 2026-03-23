@@ -14,8 +14,8 @@ export function UpdateBadge({ className = "", onClick }: UpdateBadgeProps) {
   const isActive = hasUpdate && updateInfo;
   const title = isActive
     ? t("settings.updateAvailable", {
-      version: updateInfo?.availableVersion ?? "",
-    })
+        version: updateInfo?.availableVersion ?? "",
+      })
     : t("settings.checkForUpdates");
 
   if (!isActive) {

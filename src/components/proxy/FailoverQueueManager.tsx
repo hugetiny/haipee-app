@@ -98,8 +98,8 @@ export function FailoverQueueManager({
     } catch (error) {
       toast.error(
         t("proxy.failoverQueue.removeFailed", "移除失败") +
-        ": " +
-        String(error),
+          ": " +
+          String(error),
       );
     }
   };

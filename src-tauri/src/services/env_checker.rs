@@ -40,7 +40,10 @@ pub fn check_env_conflicts(app: &str) -> Result<Vec<EnvConflict>, String> {
         } else if conflict.source_type == "file" {
             // If we've seen this name/value pair, but this one is from a file (persistent),
             // replace the previous one (likely from 'system' process env)
-            if let Some(pos) = unique_conflicts.iter().position(|c| c.var_name == conflict.var_name && c.var_value == conflict.var_value) {
+            if let Some(pos) = unique_conflicts
+                .iter()
+                .position(|c| c.var_name == conflict.var_name && c.var_value == conflict.var_value)
+            {
                 unique_conflicts[pos] = conflict;
             }
         }

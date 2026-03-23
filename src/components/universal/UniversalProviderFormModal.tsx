@@ -190,26 +190,26 @@ requires_openai_auth = true`;
 
     const provider: UniversalProvider = editingProvider
       ? {
-        ...editingProvider,
-        name: name.trim(),
-        baseUrl: baseUrl.trim(),
-        apiKey: apiKey.trim(),
-        websiteUrl: websiteUrl.trim() || undefined,
-        notes: notes.trim() || undefined,
-        apps: {
-          claude: claudeEnabled,
-          codex: codexEnabled,
-          gemini: geminiEnabled,
-        },
-        models,
-      }
+          ...editingProvider,
+          name: name.trim(),
+          baseUrl: baseUrl.trim(),
+          apiKey: apiKey.trim(),
+          websiteUrl: websiteUrl.trim() || undefined,
+          notes: notes.trim() || undefined,
+          apps: {
+            claude: claudeEnabled,
+            codex: codexEnabled,
+            gemini: geminiEnabled,
+          },
+          models,
+        }
       : createUniversalProviderFromPreset(
-        selectedPreset || universalProviderPresets[0],
-        crypto.randomUUID(),
-        baseUrl.trim(),
-        apiKey.trim(),
-        name.trim(),
-      );
+          selectedPreset || universalProviderPresets[0],
+          crypto.randomUUID(),
+          baseUrl.trim(),
+          apiKey.trim(),
+          name.trim(),
+        );
 
     // 如果是新建，更新应用启用状态和模型
     if (!editingProvider) {
@@ -249,26 +249,26 @@ requires_openai_auth = true`;
 
     const provider: UniversalProvider = editingProvider
       ? {
-        ...editingProvider,
-        name: name.trim(),
-        baseUrl: baseUrl.trim(),
-        apiKey: apiKey.trim(),
-        websiteUrl: websiteUrl.trim() || undefined,
-        notes: notes.trim() || undefined,
-        apps: {
-          claude: claudeEnabled,
-          codex: codexEnabled,
-          gemini: geminiEnabled,
-        },
-        models,
-      }
+          ...editingProvider,
+          name: name.trim(),
+          baseUrl: baseUrl.trim(),
+          apiKey: apiKey.trim(),
+          websiteUrl: websiteUrl.trim() || undefined,
+          notes: notes.trim() || undefined,
+          apps: {
+            claude: claudeEnabled,
+            codex: codexEnabled,
+            gemini: geminiEnabled,
+          },
+          models,
+        }
       : createUniversalProviderFromPreset(
-        selectedPreset || universalProviderPresets[0],
-        crypto.randomUUID(),
-        baseUrl.trim(),
-        apiKey.trim(),
-        name.trim(),
-      );
+          selectedPreset || universalProviderPresets[0],
+          crypto.randomUUID(),
+          baseUrl.trim(),
+          apiKey.trim(),
+          name.trim(),
+        );
 
     // 如果是新建，更新应用启用状态和模型
     if (!editingProvider) {
@@ -366,10 +366,11 @@ requires_openai_auth = true`;
                   key={preset.providerType}
                   type="button"
                   onClick={() => handlePresetSelect(preset)}
-                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${selectedPreset?.providerType === preset.providerType
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    selectedPreset?.providerType === preset.providerType
                       ? "bg-primary text-primary-foreground"
                       : "bg-accent text-muted-foreground hover:bg-accent/80"
-                    }`}
+                  }`}
                 >
                   <ProviderIcon
                     icon={preset.icon}
@@ -654,7 +655,7 @@ requires_openai_auth = true`;
                 </div>
                 <JsonEditor
                   value={JSON.stringify(claudeConfigJson, null, 2)}
-                  onChange={() => { }}
+                  onChange={() => {}}
                   height={180}
                 />
               </div>
@@ -669,7 +670,7 @@ requires_openai_auth = true`;
                 </div>
                 <JsonEditor
                   value={JSON.stringify(codexConfigJson, null, 2)}
-                  onChange={() => { }}
+                  onChange={() => {}}
                   height={280}
                 />
               </div>
@@ -684,7 +685,7 @@ requires_openai_auth = true`;
                 </div>
                 <JsonEditor
                   value={JSON.stringify(geminiConfigJson, null, 2)}
-                  onChange={() => { }}
+                  onChange={() => {}}
                   height={140}
                 />
               </div>

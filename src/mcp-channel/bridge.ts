@@ -35,7 +35,9 @@ let serverModule: {
   startMcpChannel: () => Promise<unknown>;
   stopMcpChannel: () => Promise<void>;
   pushMessage: (content: string, chatId: string) => Promise<string>;
-  setReplyCallback: (cb: (chatId: string, text: string) => Promise<void>) => void;
+  setReplyCallback: (
+    cb: (chatId: string, text: string) => Promise<void>,
+  ) => void;
 } | null = null;
 
 // Track if MCP server started successfully
@@ -45,7 +47,11 @@ let mcpServerStarted = false;
  * Check if we're in a browser environment (not Node.js/Tauri)
  */
 function isBrowserEnvironment(): boolean {
-  return typeof window !== "undefined" && !(window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+  return (
+    typeof window !== "undefined" &&
+    !(window as unknown as { __TAURI_INTERNALS__?: unknown })
+      .__TAURI_INTERNALS__
+  );
 }
 
 /**
@@ -93,7 +99,10 @@ export async function initHaipeeChannel(): Promise<void> {
     console.log("[Haipee Channel] MCP server started");
   } catch (error) {
     // If import fails (e.g., in browser mode), log and continue with mock
-    console.warn("[Haipee Channel] MCP server not available, using mock mode:", error);
+    console.warn(
+      "[Haipee Channel] MCP server not available, using mock mode:",
+      error,
+    );
     // Don't throw - allow the app to continue with mock functionality
   }
 }
@@ -142,11 +151,19 @@ export async function sendToClaudeCode(
 
   // In browser environment or when server not available, simulate a response
   const useMock = isBrowserEnvironment() || !mcpServerStarted;
-  console.log("[Haipee Channel] sendToClaudeCode:", { useMock, isBrowser: isBrowserEnvironment(), serverStarted: mcpServerStarted, listeners: messageListeners.size });
+  console.log("[Haipee Channel] sendToClaudeCode:", {
+    useMock,
+    isBrowser: isBrowserEnvironment(),
+    serverStarted: mcpServerStarted,
+    listeners: messageListeners.size,
+  });
   if (useMock) {
     // Simulate async response
     setTimeout(() => {
-      console.log("[Haipee Channel] Simulated response firing, listeners:", messageListeners.size);
+      console.log(
+        "[Haipee Channel] Simulated response firing, listeners:",
+        messageListeners.size,
+      );
       const response: HaipeeMessage = {
         id: crypto.randomUUID(),
         role: "assistant",

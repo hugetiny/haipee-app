@@ -95,7 +95,9 @@ function App() {
   const [currentView, setCurrentView] = useState<View>(getInitialView);
   const [settingsDefaultTab, setSettingsDefaultTab] = useState("general");
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [installedApps, setInstalledApps] = useState<Partial<Record<AppId, boolean>>>({});
+  const [installedApps, setInstalledApps] = useState<
+    Partial<Record<AppId, boolean>>
+  >({});
 
   useEffect(() => {
     localStorage.setItem(VIEW_STORAGE_KEY, currentView);
@@ -112,7 +114,7 @@ function App() {
         if (active) {
           const installed: Partial<Record<AppId, boolean>> = {};
           for (const tool of tools) {
-            const toolInfo = versions.find(v => v.name === tool);
+            const toolInfo = versions.find((v) => v.name === tool);
             installed[tool] = toolInfo?.version != null;
           }
           // OpenClaw is always considered installed (config-based, no CLI binary)
@@ -134,7 +136,9 @@ function App() {
       }
     };
     void detectInstalled();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Fallback from sessions view when switching to an app without session support
@@ -757,71 +761,71 @@ function App() {
         isMac={!isWindows() && !isLinux()}
         installedApps={installedApps}
       >
-      {/* OpenClaw Health Banner */}
-      {isOpenClawView && openclawHealthWarnings.length > 0 && (
-        <OpenClawHealthBanner warnings={openclawHealthWarnings} />
-      )}
+        {/* OpenClaw Health Banner */}
+        {isOpenClawView && openclawHealthWarnings.length > 0 && (
+          <OpenClawHealthBanner warnings={openclawHealthWarnings} />
+        )}
 
-      {renderContent()}
+        {renderContent()}
 
-      <AddProviderDialog
-        open={isAddOpen}
-        onOpenChange={setIsAddOpen}
-        appId={activeApp}
-        onSubmit={addProvider}
-      />
-
-      <EditProviderDialog
-        open={Boolean(editingProvider)}
-        provider={effectiveEditingProvider}
-        onOpenChange={(open) => {
-          if (!open) {
-            setEditingProvider(null);
-          }
-        }}
-        onSubmit={handleEditProvider}
-        appId={activeApp}
-        isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
-      />
-
-      {effectiveUsageProvider && (
-        <UsageScriptModal
-          key={effectiveUsageProvider.id}
-          provider={effectiveUsageProvider}
+        <AddProviderDialog
+          open={isAddOpen}
+          onOpenChange={setIsAddOpen}
           appId={activeApp}
-          isOpen={Boolean(usageProvider)}
-          onClose={() => setUsageProvider(null)}
-          onSave={(script) => {
-            if (usageProvider) {
-              void saveUsageScript(usageProvider, script);
+          onSubmit={addProvider}
+        />
+
+        <EditProviderDialog
+          open={Boolean(editingProvider)}
+          provider={effectiveEditingProvider}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingProvider(null);
             }
           }}
+          onSubmit={handleEditProvider}
+          appId={activeApp}
+          isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
         />
-      )}
 
-      <ConfirmDialog
-        isOpen={Boolean(confirmAction)}
-        title={
-          confirmAction?.action === "remove"
-            ? t("confirm.removeProvider")
-            : t("confirm.deleteProvider")
-        }
-        message={
-          confirmAction
-            ? confirmAction.action === "remove"
-              ? t("confirm.removeProviderMessage", {
-                  name: confirmAction.provider.name,
-                })
-              : t("confirm.deleteProviderMessage", {
-                  name: confirmAction.provider.name,
-                })
-            : ""
-        }
-        onConfirm={() => void handleConfirmAction()}
-        onCancel={() => setConfirmAction(null)}
-      />
+        {effectiveUsageProvider && (
+          <UsageScriptModal
+            key={effectiveUsageProvider.id}
+            provider={effectiveUsageProvider}
+            appId={activeApp}
+            isOpen={Boolean(usageProvider)}
+            onClose={() => setUsageProvider(null)}
+            onSave={(script) => {
+              if (usageProvider) {
+                void saveUsageScript(usageProvider, script);
+              }
+            }}
+          />
+        )}
 
-      <DeepLinkImportDialog />
+        <ConfirmDialog
+          isOpen={Boolean(confirmAction)}
+          title={
+            confirmAction?.action === "remove"
+              ? t("confirm.removeProvider")
+              : t("confirm.deleteProvider")
+          }
+          message={
+            confirmAction
+              ? confirmAction.action === "remove"
+                ? t("confirm.removeProviderMessage", {
+                    name: confirmAction.provider.name,
+                  })
+                : t("confirm.deleteProviderMessage", {
+                    name: confirmAction.provider.name,
+                  })
+              : ""
+          }
+          onConfirm={() => void handleConfirmAction()}
+          onCancel={() => setConfirmAction(null)}
+        />
+
+        <DeepLinkImportDialog />
       </MainLayout>
     </TooltipProvider>
   );

@@ -9,6 +9,8 @@ import { config } from 'dotenv';
 // Load environment variables from .env file
 config();
 
+const LIVE_API_TEST_ENV = 'RUN_LIVE_API_TESTS';
+
 export interface ProviderConfig {
   name: string;
   tokenEnvVar: string;
@@ -140,7 +142,7 @@ export const API_PROVIDERS: ProviderConfig[] = [
  * Check if a provider has a valid token configured
  */
 export function hasValidToken(provider: ProviderConfig): boolean {
-  const token = process.env[provider.tokenEnvVar];
+  const token = process.env[provider.tokenEnvVar]?.trim();
   return !!token && token.length > 10;
 }
 
@@ -148,7 +150,7 @@ export function hasValidToken(provider: ProviderConfig): boolean {
  * Get the API token for a provider
  */
 export function getToken(provider: ProviderConfig): string | undefined {
-  return process.env[provider.tokenEnvVar];
+  return process.env[provider.tokenEnvVar]?.trim();
 }
 
 /**
@@ -173,5 +175,9 @@ export function getRequestHeaders(provider: ProviderConfig): Record<string, stri
  * Skip test if token not configured
  */
 export function skipIfNoToken(provider: ProviderConfig): boolean {
-  return !hasValidToken(provider);
+  const shouldRunLiveApiTests =
+    (process.env[LIVE_API_TEST_ENV] ?? '').toLowerCase() === '1' ||
+    (process.env[LIVE_API_TEST_ENV] ?? '').toLowerCase() === 'true';
+
+  return !shouldRunLiveApiTests || !hasValidToken(provider);
 }

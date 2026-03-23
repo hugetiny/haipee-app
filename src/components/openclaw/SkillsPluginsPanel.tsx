@@ -60,7 +60,9 @@ export const SkillsPluginsPanel: React.FC = () => {
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Folder className="w-4 h-4 text-zinc-500 shrink-0" />
-                  <span className="truncate font-mono text-sm">{skill.name}</span>
+                  <span className="truncate font-mono text-sm">
+                    {skill.name}
+                  </span>
                   {skill.isSymlink && (
                     <span title="Symlink">
                       <Link className="w-3 h-3 text-blue-500 shrink-0" />
@@ -95,8 +97,12 @@ export const SkillsPluginsPanel: React.FC = () => {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{provider.name}</span>
-                    <span className="text-xs text-zinc-500 font-mono">({provider.id})</span>
+                    <span className="font-medium truncate">
+                      {provider.name}
+                    </span>
+                    <span className="text-xs text-zinc-500 font-mono">
+                      ({provider.id})
+                    </span>
                   </div>
                   {provider.baseUrl && (
                     <div className="text-xs text-zinc-500 truncate mt-1">

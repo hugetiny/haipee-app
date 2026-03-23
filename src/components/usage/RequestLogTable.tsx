@@ -258,9 +258,9 @@ export function RequestLogTable({ refreshIntervalMs }: RequestLogTableProps) {
               value={
                 (rollingRangeForDisplay?.startDate ?? draftFilters.startDate)
                   ? timestampToLocalDatetime(
-                    (rollingRangeForDisplay?.startDate ??
-                      draftFilters.startDate) as number,
-                  )
+                      (rollingRangeForDisplay?.startDate ??
+                        draftFilters.startDate) as number,
+                    )
                   : ""
               }
               onChange={(e) => {
@@ -279,9 +279,9 @@ export function RequestLogTable({ refreshIntervalMs }: RequestLogTableProps) {
               value={
                 (rollingRangeForDisplay?.endDate ?? draftFilters.endDate)
                   ? timestampToLocalDatetime(
-                    (rollingRangeForDisplay?.endDate ??
-                      draftFilters.endDate) as number,
-                  )
+                      (rollingRangeForDisplay?.endDate ??
+                        draftFilters.endDate) as number,
+                    )
                   : ""
               }
               onChange={(e) => {
@@ -483,10 +483,11 @@ export function RequestLogTable({ refreshIntervalMs }: RequestLogTableProps) {
                               );
                             })()}
                           <span
-                            className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs ${log.isStreaming
+                            className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs ${
+                              log.isStreaming
                                 ? "bg-green-100 text-green-800"
                                 : "bg-purple-100 text-purple-800"
-                              }`}
+                            }`}
                           >
                             {log.isStreaming
                               ? t("usage.stream")
@@ -496,10 +497,11 @@ export function RequestLogTable({ refreshIntervalMs }: RequestLogTableProps) {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs ${log.statusCode >= 200 && log.statusCode < 300
+                          className={`inline-flex rounded-full px-2 py-1 text-xs ${
+                            log.statusCode >= 200 && log.statusCode < 300
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
-                            }`}
+                          }`}
                         >
                           {log.statusCode}
                         </span>

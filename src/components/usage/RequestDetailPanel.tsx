@@ -111,10 +111,11 @@ export function RequestDetailPanel({
                 </dt>
                 <dd>
                   <span
-                    className={`inline-flex rounded-full px-2 py-1 text-xs ${request.statusCode >= 200 && request.statusCode < 300
+                    className={`inline-flex rounded-full px-2 py-1 text-xs ${
+                      request.statusCode >= 200 && request.statusCode < 300
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
-                      }`}
+                    }`}
                   >
                     {request.statusCode}
                   </span>

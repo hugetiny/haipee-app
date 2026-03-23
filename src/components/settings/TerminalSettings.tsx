@@ -23,9 +23,16 @@ async function scanTerminals(): Promise<InstalledTerminal[]> {
 // Default terminal if none selected
 function getDefaultTerminal(terminals: InstalledTerminal[]): string {
   // Prefer Terminal.app on macOS, wt on Windows, gnome-terminal on Linux
-  const preferredOrder = ["terminal", "wt", "gnome-terminal", "iterm2", "powershell", "cmd"];
+  const preferredOrder = [
+    "terminal",
+    "wt",
+    "gnome-terminal",
+    "iterm2",
+    "powershell",
+    "cmd",
+  ];
   for (const id of preferredOrder) {
-    if (terminals.some(t => t.id === id)) {
+    if (terminals.some((t) => t.id === id)) {
       return id;
     }
   }
@@ -41,19 +48,26 @@ export interface TerminalSettingsProps {
 export function TerminalSettings({ value, onChange }: TerminalSettingsProps) {
   const { t } = useTranslation();
 
-  const { data: terminals, isLoading, error } = useQuery({
+  const {
+    data: terminals,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["installed-terminals"],
     queryFn: scanTerminals,
   });
 
   // Use value or default
-  const currentValue = value || (terminals ? getDefaultTerminal(terminals) : "terminal");
+  const currentValue =
+    value || (terminals ? getDefaultTerminal(terminals) : "terminal");
 
   if (isLoading) {
     return (
       <section className="space-y-2">
         <header className="space-y-1">
-          <h3 className="text-sm font-medium">{t("settings.terminal.title")}</h3>
+          <h3 className="text-sm font-medium">
+            {t("settings.terminal.title")}
+          </h3>
           <p className="text-xs text-muted-foreground">
             {t("settings.terminal.description")}
           </p>
@@ -71,7 +85,9 @@ export function TerminalSettings({ value, onChange }: TerminalSettingsProps) {
     return (
       <section className="space-y-2">
         <header className="space-y-1">
-          <h3 className="text-sm font-medium">{t("settings.terminal.title")}</h3>
+          <h3 className="text-sm font-medium">
+            {t("settings.terminal.title")}
+          </h3>
           <p className="text-xs text-muted-foreground">
             {t("settings.terminal.description")}
           </p>
@@ -85,7 +101,9 @@ export function TerminalSettings({ value, onChange }: TerminalSettingsProps) {
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          {t("settings.terminal.scanFailed", { defaultValue: "无法检测已安装的终端" })}
+          {t("settings.terminal.scanFailed", {
+            defaultValue: "无法检测已安装的终端",
+          })}
         </p>
       </section>
     );
@@ -101,7 +119,11 @@ export function TerminalSettings({ value, onChange }: TerminalSettingsProps) {
       </header>
       <Select value={currentValue} onValueChange={onChange}>
         <SelectTrigger className="w-[200px]">
-          <SelectValue placeholder={t("settings.terminal.selectPlaceholder", { defaultValue: "选择终端" })} />
+          <SelectValue
+            placeholder={t("settings.terminal.selectPlaceholder", {
+              defaultValue: "选择终端",
+            })}
+          />
         </SelectTrigger>
         <SelectContent>
           {terminals.map((terminal) => (

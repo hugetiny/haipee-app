@@ -119,11 +119,11 @@ export function CodexFormFields({
           <p className="text-xs text-muted-foreground">
             {modelName.trim()
               ? t("codexConfig.modelNameHint", {
-                defaultValue: "指定使用的模型，将自动更新到 config.toml 中",
-              })
+                  defaultValue: "指定使用的模型，将自动更新到 config.toml 中",
+                })
               : t("providerForm.modelHint", {
-                defaultValue: "💡 留空将使用供应商的默认模型",
-              })}
+                  defaultValue: "💡 留空将使用供应商的默认模型",
+                })}
           </p>
         </div>
       )}

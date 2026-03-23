@@ -6,7 +6,7 @@
  * - 从 haipee/.env 读取各供应商 Token
  * - 每个 provider 选择最便宜/免费的可用模型
  *
- * 运行方式: bun run test:unit --run tests/integration/OpenClaw.realdata.test.ts
+ * 运行方式: RUN_OPENCLAW_REALDATA_TESTS=1 bun run test:integration --run tests/integration/OpenClaw.realdata.test.ts
  */
 import { describe, expect, it, beforeAll } from "vitest";
 import fs from "fs";
@@ -81,7 +81,13 @@ async function assertOpenAIChoices(res: Response) {
 // Test suite
 // ──────────────────────────────────────────────
 
-describe("OpenClaw Configuration & Real Data Integration", () => {
+const shouldRunRealDataTests =
+  (process.env.RUN_OPENCLAW_REALDATA_TESTS ?? "").toLowerCase() === "1" ||
+  (process.env.RUN_OPENCLAW_REALDATA_TESTS ?? "").toLowerCase() === "true";
+
+describe.skipIf(!shouldRunRealDataTests)(
+  "OpenClaw Configuration & Real Data Integration",
+  () => {
   let cfg: any; // openclaw.json parsed
   let env: Record<string, string> = {}; // .env tokens
 
@@ -689,4 +695,5 @@ describe("OpenClaw Configuration & Real Data Integration", () => {
       }
     }, TIMEOUT);
   });
-});
+  },
+);

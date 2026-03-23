@@ -61,11 +61,11 @@ export function BasicFormFields({
               title={
                 currentIcon
                   ? t("providerIcon.clickToChange", {
-                    defaultValue: "点击更换图标",
-                  })
+                      defaultValue: "点击更换图标",
+                    })
                   : t("providerIcon.clickToSelect", {
-                    defaultValue: "点击选择图标",
-                  })
+                      defaultValue: "点击选择图标",
+                    })
               }
             >
               <ProviderIcon
@@ -130,7 +130,11 @@ export function BasicFormFields({
             <FormItem>
               <FormLabel>{t("provider.name")}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder={t("provider.namePlaceholder")} data-testid="provider-name-input" />
+                <Input
+                  {...field}
+                  placeholder={t("provider.namePlaceholder")}
+                  data-testid="provider-name-input"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

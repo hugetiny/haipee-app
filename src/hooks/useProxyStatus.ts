@@ -110,13 +110,13 @@ export function useProxyStatus() {
       toast.success(
         variables.enabled
           ? t("proxy.takeover.enabled", {
-            app: appLabel,
-            defaultValue: `已接管 ${appLabel} 配置（请求将走本地代理）`,
-          })
+              app: appLabel,
+              defaultValue: `已接管 ${appLabel} 配置（请求将走本地代理）`,
+            })
           : t("proxy.takeover.disabled", {
-            app: appLabel,
-            defaultValue: `已恢复 ${appLabel} 配置`,
-          }),
+              app: appLabel,
+              defaultValue: `已恢复 ${appLabel} 配置`,
+            }),
         { closeButton: true },
       );
 

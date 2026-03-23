@@ -543,7 +543,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
                       <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     ) : tool?.version ? (
                       tool.latest_version &&
-                        tool.version !== tool.latest_version ? (
+                      tool.version !== tool.latest_version ? (
                         <span className="text-xs px-1.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20">
                           {tool.latest_version}
                         </span>

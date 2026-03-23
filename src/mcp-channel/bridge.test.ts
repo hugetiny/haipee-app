@@ -41,7 +41,7 @@ describe("Haipee Channel Bridge", () => {
       vi.resetModules();
 
       // Re-mock after reset
-      vi.mock("./server.js", () => ({
+      vi.doMock("./server.js", () => ({
         startMcpChannel: vi.fn().mockResolvedValue(undefined),
         stopMcpChannel: vi.fn().mockResolvedValue(undefined),
         pushMessage: vi.fn().mockResolvedValue("test-message-id"),
@@ -65,7 +65,8 @@ describe("Haipee Channel Bridge", () => {
 
     it("should return a message ID", async () => {
       // This test runs in browser mock mode since we clear module state
-      const { initHaipeeChannel, sendToClaudeCode } = await import("./bridge.js");
+      const { initHaipeeChannel, sendToClaudeCode } =
+        await import("./bridge.js");
       await initHaipeeChannel();
 
       const messageId = await sendToClaudeCode("Hello Claude!");
@@ -75,7 +76,8 @@ describe("Haipee Channel Bridge", () => {
     });
 
     it("should use default chat ID 'main'", async () => {
-      const { initHaipeeChannel, getActiveChatId } = await import("./bridge.js");
+      const { initHaipeeChannel, getActiveChatId } =
+        await import("./bridge.js");
       await initHaipeeChannel();
 
       expect(getActiveChatId()).toBe("main");

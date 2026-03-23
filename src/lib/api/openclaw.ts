@@ -336,38 +336,44 @@ export const openclawApi = {
   /**
    * List all skills from ~/.openclaw-haipee/skills/
    */
-  async listSkills(): Promise<Array<{
-    name: string;
-    path: string;
-    isSymlink: boolean;
-    isDirectory: boolean;
-  }>> {
+  async listSkills(): Promise<
+    Array<{
+      name: string;
+      path: string;
+      isSymlink: boolean;
+      isDirectory: boolean;
+    }>
+  > {
     return await invoke("list_openclaw_skills");
   },
 
   /**
    * List all providers from openclaw.json models.providers
    */
-  async listProviders(): Promise<Array<{
-    id: string;
-    name: string;
-    baseUrl: string | null;
-    apiType: string | null;
-    modelsCount: number;
-  }>> {
+  async listProviders(): Promise<
+    Array<{
+      id: string;
+      name: string;
+      baseUrl: string | null;
+      apiType: string | null;
+      modelsCount: number;
+    }>
+  > {
     return await invoke("list_openclaw_providers");
   },
 
   /**
    * List all MCP servers from openclaw.json mcp.servers
    */
-  async listMcpServers(): Promise<Array<{
-    id: string;
-    command: string | null;
-    args: string[] | null;
-    env: Record<string, string> | null;
-    url: string | null;
-  }>> {
+  async listMcpServers(): Promise<
+    Array<{
+      id: string;
+      command: string | null;
+      args: string[] | null;
+      env: Record<string, string> | null;
+      url: string | null;
+    }>
+  > {
     return await invoke("list_openclaw_mcp_servers");
   },
 
@@ -376,5 +382,89 @@ export const openclawApi = {
    */
   async isMcpEnabled(): Promise<boolean> {
     return await invoke("is_openclaw_mcp_enabled");
+  },
+
+  // ============================================================
+  // Gateway Connection
+  // ============================================================
+
+  /**
+   * Connect to OpenClaw Gateway via WebSocket.
+   * Initializes the profile if needed, then connects.
+   */
+  async connectGateway(): Promise<{ connected: boolean; status: string }> {
+    return await invoke("connect_openclaw_gateway");
+  },
+
+  /**
+   * Disconnect from OpenClaw Gateway.
+   */
+  async disconnectGateway(): Promise<void> {
+    return await invoke("disconnect_openclaw_gateway");
+  },
+
+  /**
+   * Get OpenClaw Gateway connection status.
+   */
+  async getGatewayStatus(): Promise<{
+    connected: boolean;
+    status: string;
+    error?: string;
+  }> {
+    return await invoke("get_openclaw_gateway_status");
+  },
+
+  /**
+   * Send a message to an OpenClaw session via WebSocket.
+   * Uses the chat.send RPC method.
+   */
+  async sendMessage(
+    sessionKey: string,
+    message: string,
+    thinkingLevel?: string,
+  ): Promise<unknown> {
+    return await invoke("send_openclaw_message", {
+      sessionKey,
+      message,
+      thinkingLevel,
+    });
+  },
+
+  /**
+   * Inject a system prompt into an OpenClaw session.
+   */
+  async injectSystemPrompt(sessionKey: string, content: string): Promise<void> {
+    return await invoke("inject_openclaw_system_prompt", {
+      sessionKey,
+      content,
+    });
+  },
+
+  /**
+   * List OpenClaw sessions for the Haipee profile.
+   */
+  async listSessions(): Promise<unknown> {
+    return await invoke("list_openclaw_sessions");
+  },
+
+  /**
+   * Start the OpenClaw Gateway for Haipee profile.
+   */
+  async startGateway(): Promise<void> {
+    return await invoke("start_openclaw_gateway");
+  },
+
+  /**
+   * Stop the OpenClaw Gateway for Haipee profile.
+   */
+  async stopGateway(): Promise<void> {
+    return await invoke("stop_openclaw_gateway");
+  },
+
+  /**
+   * Get OpenClaw Gateway service status.
+   */
+  async getGatewayServiceStatus(): Promise<unknown> {
+    return await invoke("get_openclaw_gateway_service_status");
   },
 };

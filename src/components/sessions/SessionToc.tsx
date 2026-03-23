@@ -85,7 +85,9 @@ export function SessionTocSheet({
         <div className="flex flex-col h-full">
           <div className="px-3 py-2 border-b flex items-center gap-2">
             <List className="size-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{t("sessionManager.tocTitle")}</span>
+            <span className="text-sm font-medium">
+              {t("sessionManager.tocTitle")}
+            </span>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-0.5">

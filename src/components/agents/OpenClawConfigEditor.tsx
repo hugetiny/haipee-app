@@ -36,7 +36,7 @@ export function OpenClawConfigEditor({ onBack }: OpenClawConfigEditorProps) {
           t("openclaw.config.loadError", {
             defaultValue: "Failed to load config",
           }),
-          { description: extractErrorMessage(error) }
+          { description: extractErrorMessage(error) },
         );
       } finally {
         setIsLoading(false);
@@ -68,14 +68,14 @@ export function OpenClawConfigEditor({ onBack }: OpenClawConfigEditorProps) {
       toast.success(
         t("openclaw.config.saveSuccess", {
           defaultValue: "Config saved successfully",
-        })
+        }),
       );
     } catch (error) {
       toast.error(
         t("openclaw.config.saveError", {
           defaultValue: "Failed to save config",
         }),
-        { description: extractErrorMessage(error) }
+        { description: extractErrorMessage(error) },
       );
     } finally {
       setIsSaving(false);
@@ -90,7 +90,7 @@ export function OpenClawConfigEditor({ onBack }: OpenClawConfigEditorProps) {
         t("openclaw.config.openDirError", {
           defaultValue: "Failed to open directory",
         }),
-        { description: extractErrorMessage(error) }
+        { description: extractErrorMessage(error) },
       );
     }
   }, [t]);
@@ -112,7 +112,9 @@ export function OpenClawConfigEditor({ onBack }: OpenClawConfigEditorProps) {
           <div className="h-4 w-px bg-border" />
           <div>
             <h3 className="text-sm font-semibold">
-              {t("openclaw.config.title", { defaultValue: "Edit OpenClaw Config" })}
+              {t("openclaw.config.title", {
+                defaultValue: "Edit OpenClaw Config",
+              })}
             </h3>
             {configPath && (
               <p className="text-xs text-muted-foreground">{configPath}</p>

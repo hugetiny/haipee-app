@@ -225,7 +225,7 @@ pub fn get_openclaw_gateway_status(state: State<'_, AppState>) -> serde_json::Va
 
 /// Connect to OpenClaw Gateway
 ///
-/// Initializes the profile if needed, then connects via WebSocket.
+/// Initializes the profile if needed, then connects via HTTP.
 #[tauri::command]
 pub async fn connect_openclaw_gateway(
     state: State<'_, AppState>,
@@ -246,36 +246,37 @@ pub async fn connect_openclaw_gateway(
     // Initialize profile if needed
     openclaw_profile::init_profile()?;
 
+    // Ensure gateway is running
+    if !openclaw_profile::is_gateway_running() {
+        openclaw_profile::start_gateway()?;
+        // Wait for gateway to start
+        tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+    }
+
     // Get gateway URL and token
     let gateway_url = openclaw_profile::get_gateway_url()?;
-    let token = match openclaw_profile::get_gateway_token() {
-        Ok(t) => t,
-        Err(_) => {
-            // Try to start the gateway
-            openclaw_profile::start_gateway()?;
-            // Wait a bit for the gateway to start
-            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-            openclaw_profile::get_gateway_token()?
-        }
-    };
+    let token = openclaw_profile::get_gateway_token()?;
 
     log::info!("[OpenClaw] Connecting to gateway: {}", gateway_url);
 
-    // Connect via WebSocket
-    let (client, event_receiver) = crate::services::openclaw_gateway::OpenClawGatewayClient::connect(
-        &gateway_url,
-        &token,
-    )
-    .await?;
+    // Create HTTP client
+    let mut client =
+        crate::services::openclaw_gateway::OpenClawGatewayClient::new(&gateway_url, &token);
+
+    // Connect (verify connectivity)
+    client.connect().await?;
+
+    // Get default model from config
+    if let Ok(Some(model)) = openclaw_config::get_default_model() {
+        if !model.primary.is_empty() {
+            client.set_default_model(model.primary);
+        }
+    }
 
     // Store in state
     {
         let mut gateway = state.openclaw_gateway.write();
-        *gateway = Some(client);
-    }
-    {
-        let mut events = state.openclaw_events.write();
-        *events = Some(event_receiver);
+        *gateway = Some(std::sync::Arc::new(client));
     }
 
     log::info!("[OpenClaw] Connected to gateway successfully");
@@ -288,78 +289,68 @@ pub async fn connect_openclaw_gateway(
 
 /// Disconnect from OpenClaw Gateway
 #[tauri::command]
-pub async fn disconnect_openclaw_gateway(state: State<'_, AppState>) -> Result<(), String> {
-    // Take the client out of the state (avoids holding lock across await)
+pub fn disconnect_openclaw_gateway(state: State<'_, AppState>) -> Result<(), String> {
     let client = {
         let mut gateway = state.openclaw_gateway.write();
         gateway.take()
     };
 
-    // Clear events
-    {
-        let mut events = state.openclaw_events.write();
-        *events = None;
-    }
-
-    // Now we can safely await without holding the lock
     if let Some(client) = client {
-        client.disconnect().await;
+        client.disconnect();
     }
 
     Ok(())
 }
 
-/// Send a message to an OpenClaw session via WebSocket
+/// Send a message to OpenClaw via HTTP API
 ///
-/// Uses the `chat.send` RPC method (1:1 copy of AutoClaw's implementation).
+/// Uses the OpenAI-compatible /v1/chat/completions endpoint.
 #[tauri::command]
 pub async fn send_openclaw_message(
     state: State<'_, AppState>,
-    session_key: String,
+    #[allow(unused_variables)] session_key: String,
     message: String,
     thinking_level: Option<String>,
 ) -> Result<serde_json::Value, String> {
-    // Clone the Arc to avoid holding the lock across await
     let client = {
         let gateway = state.openclaw_gateway.read();
         match gateway.as_ref() {
-            Some(client) => {
-                if !client.is_connected() {
-                    return Err("Not connected to OpenClaw Gateway".to_string());
-                }
-                Arc::clone(client)
+            Some(client) => Arc::clone(client),
+            None => {
+                return Err(
+                    "Not connected to OpenClaw Gateway. Call connect_openclaw_gateway first."
+                        .to_string(),
+                )
             }
-            None => return Err("Not connected to OpenClaw Gateway. Call connect_openclaw_gateway first.".to_string()),
         }
     };
 
-    client
-        .send_message(&session_key, &message, thinking_level.as_deref())
-        .await
+    // The HTTP client doesn't use session_key or thinking_level currently
+    // It uses the default model set during connect
+    let _ = thinking_level; // TODO: Pass to API when supported
+
+    let response = client.send_message(&message, None).await?;
+
+    // Return as JSON value
+    Ok(serde_json::json!({
+        "content": response,
+        "sessionKey": session_key
+    }))
 }
 
 /// Inject a system prompt into an OpenClaw session
+/// Note: Currently not supported with HTTP API
 #[tauri::command]
 pub async fn inject_openclaw_system_prompt(
-    state: State<'_, AppState>,
-    session_key: String,
-    content: String,
+    _state: State<'_, AppState>,
+    _session_key: String,
+    _content: String,
 ) -> Result<(), String> {
-    // Clone the Arc to avoid holding the lock across await
-    let client = {
-        let gateway = state.openclaw_gateway.read();
-        match gateway.as_ref() {
-            Some(client) => {
-                if !client.is_connected() {
-                    return Err("Not connected to OpenClaw Gateway".to_string());
-                }
-                Arc::clone(client)
-            }
-            None => return Err("Not connected to OpenClaw Gateway".to_string()),
-        }
-    };
-
-    client.inject_system_prompt(&session_key, &content).await
+    // TODO: Implement via WebSocket or different HTTP endpoint
+    Err(
+        "System prompt injection not supported via HTTP API. Use OpenClaw CLI directly."
+            .to_string(),
+    )
 }
 
 /// List OpenClaw sessions for the Haipee profile
@@ -420,7 +411,10 @@ pub fn list_openclaw_skills() -> Result<Vec<OpenClawSkill>, String> {
         let path = entry.path();
         let metadata = std::fs::symlink_metadata(&path).ok();
 
-        let is_symlink = metadata.as_ref().map(|m| m.file_type().is_symlink()).unwrap_or(false);
+        let is_symlink = metadata
+            .as_ref()
+            .map(|m| m.file_type().is_symlink())
+            .unwrap_or(false);
         let is_directory = metadata.as_ref().map(|m| m.is_dir()).unwrap_or(false);
 
         skills.push(OpenClawSkill {
@@ -450,28 +444,31 @@ pub struct OpenClawProviderInfo {
 /// List all providers from openclaw.json models.providers
 #[tauri::command]
 pub fn list_openclaw_providers() -> Result<Vec<OpenClawProviderInfo>, String> {
-    let providers = openclaw_config::get_providers()
-        .map_err(|e| e.to_string())?;
+    let providers = openclaw_config::get_providers().map_err(|e| e.to_string())?;
 
     let mut result = Vec::new();
 
     for (id, value) in providers {
         let obj = value.as_object().cloned().unwrap_or_default();
 
-        let name = obj.get("name")
+        let name = obj
+            .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or(&id)
             .to_string();
 
-        let base_url = obj.get("baseUrl")
+        let base_url = obj
+            .get("baseUrl")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string());
 
-        let api_type = obj.get("api")
+        let api_type = obj
+            .get("api")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string());
 
-        let models_count = obj.get("models")
+        let models_count = obj
+            .get("models")
             .and_then(|v| v.as_array())
             .map(|arr| arr.len())
             .unwrap_or(0);
@@ -504,8 +501,7 @@ pub struct OpenClawMcpServer {
 /// List all MCP servers from openclaw.json mcp.servers
 #[tauri::command]
 pub fn list_openclaw_mcp_servers() -> Result<Vec<OpenClawMcpServer>, String> {
-    let config = openclaw_config::read_openclaw_config()
-        .map_err(|e| e.to_string())?;
+    let config = openclaw_config::read_openclaw_config().map_err(|e| e.to_string())?;
 
     let mcp_servers = config
         .get("mcp")
@@ -519,23 +515,25 @@ pub fn list_openclaw_mcp_servers() -> Result<Vec<OpenClawMcpServer>, String> {
     for (id, value) in mcp_servers {
         let obj = value.as_object().cloned().unwrap_or_default();
 
-        let command = obj.get("command")
+        let command = obj
+            .get("command")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string());
 
-        let args = obj.get("args")
-            .and_then(|v| v.as_array())
-            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect());
+        let args = obj.get("args").and_then(|v| v.as_array()).map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect()
+        });
 
-        let env = obj.get("env")
-            .and_then(|v| v.as_object())
-            .map(|map| {
-                map.iter()
-                    .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
-                    .collect()
-            });
+        let env = obj.get("env").and_then(|v| v.as_object()).map(|map| {
+            map.iter()
+                .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+                .collect()
+        });
 
-        let url = obj.get("url")
+        let url = obj
+            .get("url")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string());
 

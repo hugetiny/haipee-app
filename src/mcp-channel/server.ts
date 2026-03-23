@@ -105,7 +105,8 @@ This channel is connected to the Haipee Tauri desktop app.`,
           properties: {
             chat_id: {
               type: "string",
-              description: "The conversation to reply in (from the channel tag)",
+              description:
+                "The conversation to reply in (from the channel tag)",
             },
             text: {
               type: "string",
@@ -160,8 +161,7 @@ export async function stopMcpChannel() {
 // Main entry point when run as standalone (Node.js only)
 // Check for Node.js environment before accessing process
 const isMain =
-  typeof process !== "undefined" &&
-  process.argv?.[1]?.includes("server.ts");
+  typeof process !== "undefined" && process.argv?.[1]?.includes("server.ts");
 if (isMain) {
   startMcpChannel()
     .then(() => {

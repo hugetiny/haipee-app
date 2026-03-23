@@ -316,7 +316,24 @@ impl AppSettings {
             .language
             .as_ref()
             .map(|s| s.trim())
-            .filter(|s| matches!(*s, "en" | "zh" | "zh-TW" | "ja" | "ar" | "bn" | "de" | "es" | "fr" | "hi" | "it" | "ko" | "pt" | "ru"))
+            .filter(|s| {
+                matches!(
+                    *s,
+                    "en" | "zh"
+                        | "zh-TW"
+                        | "ja"
+                        | "ar"
+                        | "bn"
+                        | "de"
+                        | "es"
+                        | "fr"
+                        | "hi"
+                        | "it"
+                        | "ko"
+                        | "pt"
+                        | "ru"
+                )
+            })
             .map(|s| s.to_string());
 
         if let Some(sync) = &mut self.webdav_sync {

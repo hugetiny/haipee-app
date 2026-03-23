@@ -224,11 +224,11 @@ export function ProviderCard({
           ? "hover:border-emerald-500/50"
           : "hover:border-border-active",
         shouldUseGreen &&
-        "border-emerald-500/60 shadow-sm shadow-emerald-500/10",
+          "border-emerald-500/60 shadow-sm shadow-emerald-500/10",
         shouldUseBlue && "border-green-500/60 shadow-sm shadow-green-500/10",
         !isActiveProvider && "hover:shadow-sm",
         dragHandleProps?.isDragging &&
-        "cursor-grabbing border-primary shadow-lg scale-105 z-10",
+          "cursor-grabbing border-primary shadow-lg scale-105 z-10",
       )}
     >
       <div
@@ -267,7 +267,10 @@ export function ProviderCard({
 
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 min-h-7">
-              <h3 className="text-base font-semibold leading-none" data-testid="provider-name">
+              <h3
+                className="text-base font-semibold leading-none"
+                data-testid="provider-name"
+              >
                 {provider.name}
               </h3>
 

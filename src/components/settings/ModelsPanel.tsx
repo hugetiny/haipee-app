@@ -47,7 +47,7 @@ export function ModelsPanel() {
   } = useProxyStatus();
   const isCurrentAppTakeoverActive = takeoverStatus?.[activeApp] || false;
   const activeProviderId = proxyStatus?.active_targets?.find(
-    (t) => t.app_type === activeApp
+    (t) => t.app_type === activeApp,
   )?.provider_id;
 
   const { data, isLoading } = useProvidersQuery(activeApp, {
@@ -56,12 +56,8 @@ export function ModelsPanel() {
   const providers = data?.providers ?? {};
   const currentProviderId = data?.currentProviderId ?? "";
 
-  const {
-    addProvider,
-    updateProvider,
-    switchProvider,
-    deleteProvider,
-  } = useProviderActions(activeApp);
+  const { addProvider, updateProvider, switchProvider, deleteProvider } =
+    useProviderActions(activeApp);
 
   const handleEditProvider = async (provider: Provider) => {
     await updateProvider(provider);
@@ -78,7 +74,7 @@ export function ModelsPanel() {
       toast.success(
         t("notifications.removeFromConfigSuccess", {
           defaultValue: "已从配置移除",
-        })
+        }),
       );
     } else {
       await deleteProvider(provider.id);
@@ -92,7 +88,7 @@ export function ModelsPanel() {
     } catch (error) {
       toast.error(
         extractErrorMessage(error) ||
-          t("notifications.openLinkFailed", { defaultValue: "链接打开失败" })
+          t("notifications.openLinkFailed", { defaultValue: "链接打开失败" }),
       );
     }
   };
@@ -103,8 +99,11 @@ export function ModelsPanel() {
       settingsConfig: JSON.parse(JSON.stringify(provider.settingsConfig)),
       websiteUrl: provider.websiteUrl,
       category: provider.category,
-      sortIndex: provider.sortIndex !== undefined ? provider.sortIndex + 1 : undefined,
-      meta: provider.meta ? JSON.parse(JSON.stringify(provider.meta)) : undefined,
+      sortIndex:
+        provider.sortIndex !== undefined ? provider.sortIndex + 1 : undefined,
+      meta: provider.meta
+        ? JSON.parse(JSON.stringify(provider.meta))
+        : undefined,
       icon: provider.icon,
       iconColor: provider.iconColor,
     };

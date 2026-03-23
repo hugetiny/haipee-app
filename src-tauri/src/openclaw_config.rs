@@ -6,8 +6,8 @@
 
 use crate::config::{atomic_write, get_app_config_dir};
 use crate::error::AppError;
-use crate::settings::{effective_backup_retain_count, get_openclaw_override_dir};
 use crate::services::openclaw_profile;
+use crate::settings::{effective_backup_retain_count, get_openclaw_override_dir};
 use chrono::Local;
 use indexmap::IndexMap;
 use json_five::parser::{FormatConfiguration, TrailingComma};
@@ -945,8 +945,7 @@ pub fn read_json_raw() -> Result<String, AppError> {
     if !path.exists() {
         return Ok(OPENCLAW_DEFAULT_SOURCE.to_string());
     }
-    fs::read_to_string(&path)
-        .map_err(|e| AppError::io(&path, e))
+    fs::read_to_string(&path).map_err(|e| AppError::io(&path, e))
 }
 
 /// Write raw string content directly to openclaw.json (after basic syntax validation)
@@ -956,7 +955,7 @@ pub fn write_json_raw(content: &str) -> Result<OpenClawWriteOutcome, AppError> {
         .map_err(|e| AppError::Config(format!("Invalid config syntax: {e}")))?;
 
     let path = get_openclaw_config_path();
-    
+
     // Create backup before raw overwrite
     let backup_path = if path.exists() {
         let backup_file = format!(
@@ -1042,18 +1041,25 @@ mod tests {
     fn with_test_paths<T>(source: &str, test: impl FnOnce(&Path) -> T) -> T {
         let _guard = test_guard();
         let temp = tempfile::tempdir().unwrap();
-        let openclaw_dir = temp.path().join(".openclaw");
-        fs::create_dir_all(&openclaw_dir).unwrap();
-        let config_path = openclaw_dir.join("openclaw.json");
-        fs::write(&config_path, source).unwrap();
         let old_test_home = std::env::var_os("CC_SWITCH_TEST_HOME");
+        let old_haipee_test_home = std::env::var_os("HAIPEE_TEST_HOME");
         let old_home = std::env::var_os("HOME");
         std::env::set_var("CC_SWITCH_TEST_HOME", temp.path());
+        std::env::set_var("HAIPEE_TEST_HOME", temp.path());
         std::env::set_var("HOME", temp.path());
+        let config_path = get_openclaw_config_path();
+        if let Some(parent) = config_path.parent() {
+            fs::create_dir_all(parent).unwrap();
+        }
+        fs::write(&config_path, source).unwrap();
         let result = test(&config_path);
         match old_test_home {
             Some(value) => std::env::set_var("CC_SWITCH_TEST_HOME", value),
             None => std::env::remove_var("CC_SWITCH_TEST_HOME"),
+        }
+        match old_haipee_test_home {
+            Some(value) => std::env::set_var("HAIPEE_TEST_HOME", value),
+            None => std::env::remove_var("HAIPEE_TEST_HOME"),
         }
         match old_home {
             Some(value) => std::env::set_var("HOME", value),

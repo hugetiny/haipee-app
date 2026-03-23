@@ -7,7 +7,7 @@
 //! After that, Haipee uses its own profile independently.
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// Profile name for Haipee
@@ -53,15 +53,24 @@ pub fn init_profile() -> Result<PathBuf, String> {
 
     // One-time check: if profile already exists, don't copy again
     if profile_dir.exists() {
-        log::info!("[OpenClawProfile] Profile already exists at {:?}, skipping copy", profile_dir);
+        log::info!(
+            "[OpenClawProfile] Profile already exists at {:?}, skipping copy",
+            profile_dir
+        );
         return Ok(profile_dir);
     }
 
-    log::info!("[OpenClawProfile] Initializing profile at {:?}", profile_dir);
+    log::info!(
+        "[OpenClawProfile] Initializing profile at {:?}",
+        profile_dir
+    );
 
     // Check if main OpenClaw exists
     if main_dir.exists() {
-        log::info!("[OpenClawProfile] Copying entire .openclaw folder from {:?}", main_dir);
+        log::info!(
+            "[OpenClawProfile] Copying entire .openclaw folder from {:?}",
+            main_dir
+        );
         copy_dir_contents(&main_dir, &profile_dir)?;
     } else {
         log::info!("[OpenClawProfile] Main OpenClaw not found, creating minimal profile");
@@ -77,11 +86,10 @@ pub fn init_profile() -> Result<PathBuf, String> {
 
 /// Copy all contents from source directory to destination
 fn copy_dir_contents(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
-    fs::create_dir_all(dst)
-        .map_err(|e| format!("Failed to create directory {:?}: {}", dst, e))?;
+    fs::create_dir_all(dst).map_err(|e| format!("Failed to create directory {:?}: {}", dst, e))?;
 
-    for entry in fs::read_dir(src)
-        .map_err(|e| format!("Failed to read directory {:?}: {}", src, e))?
+    for entry in
+        fs::read_dir(src).map_err(|e| format!("Failed to read directory {:?}: {}", src, e))?
     {
         let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
         let name = entry.file_name().to_string_lossy().to_string();
@@ -93,7 +101,8 @@ fn copy_dir_contents(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
             continue;
         }
 
-        let ty = entry.file_type()
+        let ty = entry
+            .file_type()
             .map_err(|e| format!("Failed to get file type: {}", e))?;
 
         if ty.is_dir() {
@@ -111,11 +120,10 @@ fn copy_dir_contents(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
 
 /// Recursively copy a directory, preserving symlinks
 fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
-    fs::create_dir_all(dst)
-        .map_err(|e| format!("Failed to create directory {:?}: {}", dst, e))?;
+    fs::create_dir_all(dst).map_err(|e| format!("Failed to create directory {:?}: {}", dst, e))?;
 
-    for entry in fs::read_dir(src)
-        .map_err(|e| format!("Failed to read directory {:?}: {}", src, e))?
+    for entry in
+        fs::read_dir(src).map_err(|e| format!("Failed to read directory {:?}: {}", src, e))?
     {
         let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
         let file_name = entry.file_name();
@@ -139,19 +147,34 @@ fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
 
             #[cfg(unix)]
             {
-                std::os::unix::fs::symlink(&link_target, &dst_path)
-                    .map_err(|e| format!("Failed to create symlink {:?} -> {:?}: {}", dst_path, link_target, e))?;
+                std::os::unix::fs::symlink(&link_target, &dst_path).map_err(|e| {
+                    format!(
+                        "Failed to create symlink {:?} -> {:?}: {}",
+                        dst_path, link_target, e
+                    )
+                })?;
             }
             #[cfg(windows)]
             {
                 // On Windows, need to check if target is a directory
-                let is_dir = link_target.is_absolute() && fs::metadata(&link_target).map(|m| m.is_dir()).unwrap_or(false);
+                let is_dir = link_target.is_absolute()
+                    && fs::metadata(&link_target)
+                        .map(|m| m.is_dir())
+                        .unwrap_or(false);
                 if is_dir {
-                    std::os::windows::fs::symlink_dir(&link_target, &dst_path)
-                        .map_err(|e| format!("Failed to create symlink {:?} -> {:?}: {}", dst_path, link_target, e))?;
+                    std::os::windows::fs::symlink_dir(&link_target, &dst_path).map_err(|e| {
+                        format!(
+                            "Failed to create symlink {:?} -> {:?}: {}",
+                            dst_path, link_target, e
+                        )
+                    })?;
                 } else {
-                    std::os::windows::fs::symlink_file(&link_target, &dst_path)
-                        .map_err(|e| format!("Failed to create symlink {:?} -> {:?}: {}", dst_path, link_target, e))?;
+                    std::os::windows::fs::symlink_file(&link_target, &dst_path).map_err(|e| {
+                        format!(
+                            "Failed to create symlink {:?} -> {:?}: {}",
+                            dst_path, link_target, e
+                        )
+                    })?;
                 }
             }
         } else if metadata.is_dir() {
@@ -166,9 +189,16 @@ fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
 }
 
 /// Create a minimal profile when main OpenClaw doesn't exist
-fn create_minimal_profile(profile_dir: &PathBuf) -> Result<(), String> {
+fn create_minimal_profile(profile_dir: &Path) -> Result<(), String> {
     // Create essential directory structure
-    let dirs = ["identity", "agents/main/sessions", "devices", "skills", "memory", "workspace"];
+    let dirs = [
+        "identity",
+        "agents/main/sessions",
+        "devices",
+        "skills",
+        "memory",
+        "workspace",
+    ];
     for dir in dirs {
         fs::create_dir_all(profile_dir.join(dir))
             .map_err(|e| format!("Failed to create {} directory: {}", dir, e))?;
@@ -181,7 +211,7 @@ fn create_minimal_profile(profile_dir: &PathBuf) -> Result<(), String> {
 }
 
 /// Update the gateway port in the profile config
-fn update_gateway_port(profile_dir: &PathBuf) -> Result<(), String> {
+fn update_gateway_port(profile_dir: &Path) -> Result<(), String> {
     let config_path = profile_dir.join("openclaw.json");
 
     if !config_path.exists() {
@@ -190,11 +220,11 @@ fn update_gateway_port(profile_dir: &PathBuf) -> Result<(), String> {
     }
 
     // Read existing config
-    let config_str = fs::read_to_string(&config_path)
-        .map_err(|e| format!("Failed to read config: {}", e))?;
+    let config_str =
+        fs::read_to_string(&config_path).map_err(|e| format!("Failed to read config: {}", e))?;
 
-    let mut config: serde_json::Value = serde_json::from_str(&config_str)
-        .map_err(|e| format!("Failed to parse config: {}", e))?;
+    let mut config: serde_json::Value =
+        serde_json::from_str(&config_str).map_err(|e| format!("Failed to parse config: {}", e))?;
 
     // Update gateway settings
     if let Some(gateway) = config.get_mut("gateway") {
@@ -217,12 +247,15 @@ fn update_gateway_port(profile_dir: &PathBuf) -> Result<(), String> {
     fs::write(&config_path, updated_config)
         .map_err(|e| format!("Failed to write config: {}", e))?;
 
-    log::info!("[OpenClawProfile] Updated gateway port to {}", DEFAULT_GATEWAY_PORT);
+    log::info!(
+        "[OpenClawProfile] Updated gateway port to {}",
+        DEFAULT_GATEWAY_PORT
+    );
     Ok(())
 }
 
 /// Create the profile's openclaw.json configuration
-fn create_profile_config(profile_dir: &PathBuf) -> Result<(), String> {
+fn create_profile_config(profile_dir: &Path) -> Result<(), String> {
     let config_path = profile_dir.join("openclaw.json");
 
     if config_path.exists() {
@@ -249,8 +282,7 @@ fn create_profile_config(profile_dir: &PathBuf) -> Result<(), String> {
     let config_str = serde_json::to_string_pretty(&config)
         .map_err(|e| format!("Failed to serialize config: {}", e))?;
 
-    fs::write(&config_path, config_str)
-        .map_err(|e| format!("Failed to write config: {}", e))?;
+    fs::write(&config_path, config_str).map_err(|e| format!("Failed to write config: {}", e))?;
 
     log::info!("[OpenClawProfile] Created openclaw.json");
     Ok(())
@@ -261,15 +293,39 @@ fn create_profile_config(profile_dir: &PathBuf) -> Result<(), String> {
 // ============================================================================
 
 /// Get the gateway token for the Haipee profile
+///
+/// First tries to read from the config file (gateway.auth.token),
+/// then falls back to .gateway-token file.
 pub fn get_gateway_token() -> Result<String, String> {
-    let token_path = get_profile_dir().join(".gateway-token");
+    // First, try to read from config file
+    let config_path = get_profile_dir().join("openclaw.json");
+    if config_path.exists() {
+        let config_str = fs::read_to_string(&config_path)
+            .map_err(|e| format!("Failed to read config: {}", e))?;
 
-    if !token_path.exists() {
-        return Err("Gateway token not found. Start the gateway first with 'openclaw --profile haipee gateway start'".to_string());
+        if let Ok(config) = serde_json::from_str::<serde_json::Value>(&config_str) {
+            if let Some(token) = config
+                .get("gateway")
+                .and_then(|g| g.get("auth"))
+                .and_then(|a| a.get("token"))
+                .and_then(|t| t.as_str())
+            {
+                if !token.is_empty() {
+                    log::info!("[OpenClawProfile] Found gateway token in config file");
+                    return Ok(token.to_string());
+                }
+            }
+        }
     }
 
-    fs::read_to_string(&token_path)
-        .map_err(|e| format!("Failed to read gateway token: {}", e))
+    // Fallback: try .gateway-token file
+    let token_path = get_profile_dir().join(".gateway-token");
+    if token_path.exists() {
+        return fs::read_to_string(&token_path)
+            .map_err(|e| format!("Failed to read gateway token: {}", e));
+    }
+
+    Err("Gateway token not found. Start the gateway first with 'openclaw --profile haipee gateway start'".to_string())
 }
 
 /// Check if gateway is running for the Haipee profile
@@ -287,11 +343,11 @@ pub fn get_gateway_port() -> Result<u16, String> {
         return Ok(DEFAULT_GATEWAY_PORT);
     }
 
-    let config_str = fs::read_to_string(&config_path)
-        .map_err(|e| format!("Failed to read config: {}", e))?;
+    let config_str =
+        fs::read_to_string(&config_path).map_err(|e| format!("Failed to read config: {}", e))?;
 
-    let config: serde_json::Value = serde_json::from_str(&config_str)
-        .map_err(|e| format!("Failed to parse config: {}", e))?;
+    let config: serde_json::Value =
+        serde_json::from_str(&config_str).map_err(|e| format!("Failed to parse config: {}", e))?;
 
     Ok(config
         .get("gateway")
@@ -324,8 +380,8 @@ pub fn list_sessions() -> Result<serde_json::Value, String> {
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let sessions: serde_json::Value = serde_json::from_str(&stdout)
-        .map_err(|e| format!("Failed to parse sessions: {}", e))?;
+    let sessions: serde_json::Value =
+        serde_json::from_str(&stdout).map_err(|e| format!("Failed to parse sessions: {}", e))?;
 
     Ok(sessions)
 }
@@ -375,8 +431,8 @@ pub fn gateway_status() -> Result<serde_json::Value, String> {
         .map_err(|e| format!("Failed to get gateway status: {}", e))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let status: serde_json::Value = serde_json::from_str(&stdout)
-        .map_err(|e| format!("Failed to parse status: {}", e))?;
+    let status: serde_json::Value =
+        serde_json::from_str(&stdout).map_err(|e| format!("Failed to parse status: {}", e))?;
 
     Ok(status)
 }

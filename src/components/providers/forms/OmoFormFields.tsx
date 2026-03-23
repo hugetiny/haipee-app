@@ -494,9 +494,9 @@ export function OmoFormFields({
             <SelectItem key={`${variant}-${index}`} value={variant}>
               {firstIsUnavailable && index === 0
                 ? t("omo.currentValueUnavailable", {
-                  value: variant,
-                  defaultValue: "{{value}} (current value, unavailable)",
-                })
+                    value: variant,
+                    defaultValue: "{{value}} (current value, unavailable)",
+                  })
                 : variant}
             </SelectItem>
           ))}

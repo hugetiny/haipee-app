@@ -49,8 +49,12 @@ export function useHaipeeChannel(
       initializedRef.current = true;
 
       try {
-        const { initHaipeeChannel, onMessage, getChatHistory, setActiveChatId } =
-          await import("../mcp-channel/bridge.js");
+        const {
+          initHaipeeChannel,
+          onMessage,
+          getChatHistory,
+          setActiveChatId,
+        } = await import("../mcp-channel/bridge.js");
 
         await initHaipeeChannel();
         setActiveChatId(chatId);

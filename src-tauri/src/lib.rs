@@ -8,8 +8,8 @@ mod commands;
 mod config;
 mod database;
 mod deeplink;
-mod error;
 mod e2e_mode;
+mod error;
 mod gemini_config;
 mod gemini_mcp;
 mod init_status;
@@ -383,10 +383,8 @@ pub fn run() {
                     Err(e) => {
                         log::error!("Failed to init database: {e}");
 
-                        if e2e {
-                            if e2e_mode::handle_db_error(&mut db_e2e_attempt, &db_path) {
-                                continue;
-                            }
+                        if e2e && e2e_mode::handle_db_error(&mut db_e2e_attempt, &db_path) {
+                            continue;
                         }
 
                         if !show_database_init_error_dialog(app.handle(), &db_path, &e.to_string())

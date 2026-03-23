@@ -21,13 +21,25 @@ export function LanguageSettings({ value, onChange }: LanguageSettingsProps) {
         </p>
       </header>
       <div className="inline-flex gap-1 rounded-md border border-border-default bg-background p-1">
-        <LanguageButton active={value === "zh"} onClick={() => onChange("zh")} testId="language-btn-zh">
+        <LanguageButton
+          active={value === "zh"}
+          onClick={() => onChange("zh")}
+          testId="language-btn-zh"
+        >
           {t("settings.languageOptionChinese")}
         </LanguageButton>
-        <LanguageButton active={value === "en"} onClick={() => onChange("en")} testId="language-btn-en">
+        <LanguageButton
+          active={value === "en"}
+          onClick={() => onChange("en")}
+          testId="language-btn-en"
+        >
           {t("settings.languageOptionEnglish")}
         </LanguageButton>
-        <LanguageButton active={value === "ja"} onClick={() => onChange("ja")} testId="language-btn-ja">
+        <LanguageButton
+          active={value === "ja"}
+          onClick={() => onChange("ja")}
+          testId="language-btn-ja"
+        >
           {t("settings.languageOptionJapanese")}
         </LanguageButton>
       </div>
@@ -42,7 +54,12 @@ interface LanguageButtonProps {
   testId?: string;
 }
 
-function LanguageButton({ active, onClick, children, testId }: LanguageButtonProps) {
+function LanguageButton({
+  active,
+  onClick,
+  children,
+  testId,
+}: LanguageButtonProps) {
   return (
     <Button
       type="button"

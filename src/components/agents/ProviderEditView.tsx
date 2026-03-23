@@ -176,21 +176,12 @@ export function ProviderEditView({
     <div className="flex flex-col h-full">
       {/* Header with Back button */}
       <div className="flex items-center gap-3 px-4 py-3 border-b bg-background/80 backdrop-blur-sm shrink-0">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="gap-1.5"
-        >
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5">
           <ArrowLeft className="h-4 w-4" />
           {t("common.back", { defaultValue: "返回" })}
         </Button>
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <ProviderIcon
-            icon={provider.icon}
-            name={provider.name}
-            size={18}
-          />
+          <ProviderIcon icon={provider.icon} name={provider.name} size={18} />
           <span className="font-medium truncate">{provider.name}</span>
         </div>
         <Button

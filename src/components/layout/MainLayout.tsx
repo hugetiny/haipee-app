@@ -20,7 +20,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ProviderIcon } from "@/components/ProviderIcon";
-import { useNavigationState, type AgentStatus, type AgentStatusStore } from "@/hooks/useNavigationState";
+import {
+  useNavigationState,
+  type AgentStatus,
+  type AgentStatusStore,
+} from "@/hooks/useNavigationState";
 import type { AppId } from "@/lib/api";
 import logoSvg from "@/assets/logo.svg";
 
@@ -68,7 +72,7 @@ const MAIN_MENU_ITEMS = [
   },
 ] as const;
 
-type MainMenuItem = typeof MAIN_MENU_ITEMS[number];
+type MainMenuItem = (typeof MAIN_MENU_ITEMS)[number];
 
 // App 切换相关
 const ALL_APPS: AppId[] = ["claude", "codex", "gemini", "opencode", "openclaw"];
@@ -94,7 +98,12 @@ interface MainMenuButtonProps {
   variant: "desktop" | "mobile";
 }
 
-const MainMenuButton = ({ item, isActive, onClick, variant }: MainMenuButtonProps) => {
+const MainMenuButton = ({
+  item,
+  isActive,
+  onClick,
+  variant,
+}: MainMenuButtonProps) => {
   const { t } = useTranslation();
   const label = t(item.labelKey, item.labelFallback);
 
@@ -146,15 +155,23 @@ interface AgentListButtonProps {
   testId?: string;
 }
 
-const AgentListButton = ({ agentId, isActive, status, onClick, collapsed, isInstalled = true, testId }: AgentListButtonProps) => {
+const AgentListButton = ({
+  agentId,
+  isActive,
+  status,
+  onClick,
+  collapsed,
+  isInstalled = true,
+  testId,
+}: AgentListButtonProps) => {
   const renderStatusIcon = () => {
     if (!isInstalled) {
       return null;
     }
-    if (status.type === 'loading') {
+    if (status.type === "loading") {
       return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
     }
-    if (status.type === 'error') {
+    if (status.type === "error") {
       return (
         <Tooltip>
           <TooltipTrigger>
@@ -164,7 +181,7 @@ const AgentListButton = ({ agentId, isActive, status, onClick, collapsed, isInst
         </Tooltip>
       );
     }
-    if (status.type === 'success' && status.exists) {
+    if (status.type === "success" && status.exists) {
       return <Check className="h-4 w-4 text-green-500" />;
     }
     return <Circle className="h-4 w-4 text-gray-400" />;
@@ -185,7 +202,11 @@ const AgentListButton = ({ agentId, isActive, status, onClick, collapsed, isInst
             : "text-muted-foreground hover:text-foreground hover:bg-muted",
       )}
     >
-      <ProviderIcon icon={APP_ICON_NAME[agentId]} name={APP_DISPLAY_NAME[agentId]} size={16} />
+      <ProviderIcon
+        icon={APP_ICON_NAME[agentId]}
+        name={APP_DISPLAY_NAME[agentId]}
+        size={16}
+      />
       {!collapsed && (
         <>
           <span className="truncate flex-1">{APP_DISPLAY_NAME[agentId]}</span>
@@ -199,9 +220,7 @@ const AgentListButton = ({ agentId, isActive, status, onClick, collapsed, isInst
   if (collapsed) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          {buttonContent}
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
         <TooltipContent side="right">
           {APP_DISPLAY_NAME[agentId]}
         </TooltipContent>
@@ -247,7 +266,7 @@ const DesktopSidebar = ({
     <aside
       className={cn(
         "hidden md:flex flex-col border-r bg-muted/20 shrink-0 h-full relative z-10",
-        "w-16" // Always collapsed
+        "w-16", // Always collapsed
       )}
       data-testid="sidebar"
     >
@@ -275,11 +294,7 @@ const DesktopSidebar = ({
           <Menu className="h-5 w-5" />
         </Button>
         <div className="flex-1 flex justify-center">
-          <img
-            src={logoSvg}
-            alt="Haipee"
-            className="h-8 w-8 select-none"
-          />
+          <img src={logoSvg} alt="Haipee" className="h-8 w-8 select-none" />
         </div>
       </div>
 
@@ -296,7 +311,7 @@ const DesktopSidebar = ({
                     key={app}
                     agentId={app}
                     isActive={activeApp === app}
-                    status={statusMap[app] || { type: 'loading' }}
+                    status={statusMap[app] || { type: "loading" }}
                     onClick={() => onAgentClick(app)}
                     collapsed={true}
                     isInstalled={installedApps?.[app] !== false}
@@ -383,31 +398,25 @@ const MobileSidebarOverlay = ({
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-72 bg-background border-r transform transition-transform duration-300 md:hidden flex flex-col",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          isOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Header */}
         {isMac && (
           <div
-            style={{
-              height: dragBarHeight,
-              WebkitAppRegion: "drag",
-            } as React.CSSProperties}
+            style={
+              {
+                height: dragBarHeight,
+                WebkitAppRegion: "drag",
+              } as React.CSSProperties
+            }
             className="w-full shrink-0"
           />
         )}
 
         <div className="flex items-center h-14 px-4 shrink-0 justify-between">
-          <img
-            src={logoSvg}
-            alt="Haipee"
-            className="h-7 w-7 select-none"
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-          >
+          <img src={logoSvg} alt="Haipee" className="h-7 w-7 select-none" />
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -420,14 +429,14 @@ const MobileSidebarOverlay = ({
             {/* Agent List for mobile */}
             <div className="px-1 pb-2 space-y-0.5">
               <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
-                {t('nav.agents', 'Agents')}
+                {t("nav.agents", "Agents")}
               </div>
               {ALL_APPS.map((app) => (
                 <AgentListButton
                   key={app}
                   agentId={app}
                   isActive={activeApp === app}
-                  status={statusMap[app] || { type: 'loading' }}
+                  status={statusMap[app] || { type: "loading" }}
                   onClick={() => {
                     onAgentClick(app);
                     onClose();
@@ -500,9 +509,10 @@ const MobileTopBar = ({
 }: MobileTopBarProps) => {
   const { t } = useTranslation();
   const mainItem = MAIN_MENU_ITEMS.find((i) => i.id === activeMainMenu);
-  const label = currentView === "settings"
-    ? t("settings.title", "Settings")
-    : (mainItem?.labelFallback ?? t("app.title", "Haipee"));
+  const label =
+    currentView === "settings"
+      ? t("settings.title", "Settings")
+      : (mainItem?.labelFallback ?? t("app.title", "Haipee"));
 
   return (
     <header
@@ -545,11 +555,7 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
     const DRAG_BAR_HEIGHT = isMac ? 28 : 0;
 
     // Navigation state hook - use for statusMap and agent selection
-    const {
-      selectedAgent,
-      statusMap,
-      selectAgent,
-    } = useNavigationState();
+    const { selectedAgent, statusMap, selectAgent } = useNavigationState();
 
     // Sync selectedAgent from navigation state to activeApp prop on mount
     useEffect(() => {
@@ -621,10 +627,12 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
           {isMac && (
             <div
               className="hidden md:block shrink-0 bg-transparent"
-              style={{
-                height: DRAG_BAR_HEIGHT,
-                WebkitAppRegion: "drag",
-              } as React.CSSProperties}
+              style={
+                {
+                  height: DRAG_BAR_HEIGHT,
+                  WebkitAppRegion: "drag",
+                } as React.CSSProperties
+              }
             />
           )}
 

@@ -252,7 +252,21 @@ export interface Settings {
   // User has confirmed the auto-sync traffic warning
   autoSyncConfirmed?: boolean;
   // 首选语言（可选，默认中文）
-  language?: "zh" | "zh-TW" | "en" | "ja" | "fr" | "de" | "es" | "ko" | "ru" | "pt" | "it" | "hi" | "ar" | "bn";
+  language?:
+    | "zh"
+    | "zh-TW"
+    | "en"
+    | "ja"
+    | "fr"
+    | "de"
+    | "es"
+    | "ko"
+    | "ru"
+    | "pt"
+    | "it"
+    | "hi"
+    | "ar"
+    | "bn";
 
   // ===== 设备级目录覆盖 =====
   // 覆盖 Claude Code 配置目录（可选）

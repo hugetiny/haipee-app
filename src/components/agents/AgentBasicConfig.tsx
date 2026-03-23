@@ -39,7 +39,7 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
   } = useProxyStatus();
   const isCurrentAppTakeoverActive = takeoverStatus?.[appId] || false;
   const activeProviderId = proxyStatus?.active_targets?.find(
-    (t) => t.app_type === appId
+    (t) => t.app_type === appId,
   )?.provider_id;
 
   const { data, isLoading } = useProvidersQuery(appId, {
@@ -79,7 +79,7 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
       toast.success(
         t("notifications.removeFromConfigSuccess", {
           defaultValue: "已从配置移除",
-        })
+        }),
       );
     } else {
       await deleteProvider(provider.id);
@@ -93,7 +93,7 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
     } catch (error) {
       toast.error(
         extractErrorMessage(error) ||
-          t("notifications.openLinkFailed", { defaultValue: "链接打开失败" })
+          t("notifications.openLinkFailed", { defaultValue: "链接打开失败" }),
       );
     }
   };
@@ -104,8 +104,11 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
       settingsConfig: JSON.parse(JSON.stringify(provider.settingsConfig)),
       websiteUrl: provider.websiteUrl,
       category: provider.category,
-      sortIndex: provider.sortIndex !== undefined ? provider.sortIndex + 1 : undefined,
-      meta: provider.meta ? JSON.parse(JSON.stringify(provider.meta)) : undefined,
+      sortIndex:
+        provider.sortIndex !== undefined ? provider.sortIndex + 1 : undefined,
+      meta: provider.meta
+        ? JSON.parse(JSON.stringify(provider.meta))
+        : undefined,
       icon: provider.icon,
       iconColor: provider.iconColor,
     };
@@ -190,8 +193,7 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
             }
             onRemoveFromConfig={
               appId === "opencode" || appId === "openclaw"
-                ? (provider) =>
-                    setConfirmAction({ provider, action: "remove" })
+                ? (provider) => setConfirmAction({ provider, action: "remove" })
                 : undefined
             }
             onDuplicate={handleDuplicateProvider}

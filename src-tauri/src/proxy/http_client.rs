@@ -4,10 +4,10 @@
 //! 所有需要发送 HTTP 请求的模块都应使用此模块提供的客户端。
 
 use crate::provider::ProviderProxyConfig;
-use std::sync::OnceLock;
 use reqwest::Client;
 use std::env;
 use std::net::IpAddr;
+use std::sync::OnceLock;
 use std::sync::RwLock;
 use std::time::Duration;
 

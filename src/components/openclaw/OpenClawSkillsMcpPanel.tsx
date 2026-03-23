@@ -45,8 +45,7 @@ export const OpenClawSkillsMcpPanel: React.FC<OpenClawSkillsMcpPanelProps> = ({
               </h3>
               <p className="text-sm text-muted-foreground">
                 {t("openclaw.mcp.description", {
-                  defaultValue:
-                    "OpenClaw MCP servers (mcp.servers)",
+                  defaultValue: "OpenClaw MCP servers (mcp.servers)",
                 })}
               </p>
             </div>
@@ -73,7 +72,8 @@ export const OpenClawSkillsMcpPanel: React.FC<OpenClawSkillsMcpPanelProps> = ({
               </h3>
               <p className="text-muted-foreground text-sm mb-4">
                 {t("openclaw.mcp.disabledHint", {
-                  defaultValue: "在 openclaw.json 中设置 commands.mcp: true 以启用 MCP",
+                  defaultValue:
+                    "在 openclaw.json 中设置 commands.mcp: true 以启用 MCP",
                 })}
               </p>
               <div className="bg-muted/30 rounded-md p-3 font-mono text-xs text-left max-w-md mx-auto">
@@ -89,7 +89,9 @@ export const OpenClawSkillsMcpPanel: React.FC<OpenClawSkillsMcpPanelProps> = ({
                 <Server size={24} className="text-muted-foreground" />
               </div>
               <h3 className="text-lg font-medium text-foreground mb-2">
-                {t("openclaw.mcp.noServers", { defaultValue: "没有配置 MCP Servers" })}
+                {t("openclaw.mcp.noServers", {
+                  defaultValue: "没有配置 MCP Servers",
+                })}
               </h3>
               <p className="text-muted-foreground text-sm mb-4">
                 {t("openclaw.mcp.emptyHint", {
@@ -151,7 +153,8 @@ export const OpenClawSkillsMcpPanel: React.FC<OpenClawSkillsMcpPanelProps> = ({
         <div className="text-xs text-muted-foreground p-3 rounded-lg bg-muted/30 border border-border-default mt-2">
           <p>
             {t("openclaw.mcp.manageHint", {
-              defaultValue: "使用 /mcp 命令管理 MCP servers（OpenClaw 配置，非项目级）",
+              defaultValue:
+                "使用 /mcp 命令管理 MCP servers（OpenClaw 配置，非项目级）",
             })}
           </p>
         </div>
@@ -171,14 +174,14 @@ export const OpenClawSkillsMcpPanel: React.FC<OpenClawSkillsMcpPanelProps> = ({
             </h3>
             <p className="text-sm text-muted-foreground">
               {t("openclaw.skills.description", {
-                defaultValue:
-                  "已安装的 Skills 来自 ~/.openclaw-haipee/skills/",
+                defaultValue: "已安装的 Skills 来自 ~/.openclaw-haipee/skills/",
               })}
             </p>
           </div>
         </div>
         <span className="text-sm text-muted-foreground">
-          {skills?.length || 0} {t("skills.installed", { count: skills?.length || 0 })}
+          {skills?.length || 0}{" "}
+          {t("skills.installed", { count: skills?.length || 0 })}
         </span>
       </div>
 
@@ -219,16 +222,15 @@ export const OpenClawSkillsMcpPanel: React.FC<OpenClawSkillsMcpPanelProps> = ({
                     {skill.name}
                   </span>
                   {skill.isSymlink && (
-                    <span
-                      title="Symlink"
-                      className="text-blue-500 shrink-0"
-                    >
+                    <span title="Symlink" className="text-blue-500 shrink-0">
                       <Link className="w-3 h-3" />
                     </span>
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                  {skill.isDirectory ? t("skills.directory", { defaultValue: "目录" }) : t("skills.file", { defaultValue: "文件" })}
+                  {skill.isDirectory
+                    ? t("skills.directory", { defaultValue: "目录" })
+                    : t("skills.file", { defaultValue: "文件" })}
                 </div>
               </div>
             ))}
