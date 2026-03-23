@@ -123,6 +123,30 @@ export const config = {
       return;
     }
 
+    // Start tauri-driver proxy for local testing (all platforms)
+    console.log('[crabnebula] Starting tauri-driver...');
+
+    tauriDriver = spawn('bunx', ['tauri-driver'], {
+      stdio: [null, process.stdout, process.stderr],
+      shell: true,
+    });
+
+    tauriDriver.on('error', (error) => {
+      console.error('[crabnebula] tauri-driver error:', error);
+      process.exit(1);
+    });
+
+    tauriDriver.on('exit', (code) => {
+      if (!killedTauriDriver) {
+        console.error('[crabnebula] tauri-driver exited with code:', code);
+        process.exit(1);
+      }
+    });
+
+    // Wait for tauri-driver to initialize its proxy server
+    await waitTauriDriverReady();
+    console.log('[crabnebula] tauri-driver ready');
+
     // Skip macOS-specific setup if requested (for CI on Linux/Windows)
     if (process.env.CN_SKIP_MACOS_CHECK === 'true') {
       console.log('[crabnebula] Skipping macOS checks (CN_SKIP_MACOS_CHECK=true)');
@@ -170,30 +194,6 @@ export const config = {
       process.env.REMOTE_WEBDRIVER_URL = 'http://127.0.0.1:3000';
       console.log('[crabnebula] test-runner-backend ready');
     }
-
-    // Start tauri-driver proxy (only once for all workers)
-    console.log('[crabnebula] Starting tauri-driver...');
-
-    tauriDriver = spawn('bunx', ['tauri-driver'], {
-      stdio: [null, process.stdout, process.stderr],
-      shell: true,
-    });
-
-    tauriDriver.on('error', (error) => {
-      console.error('[crabnebula] tauri-driver error:', error);
-      process.exit(1);
-    });
-
-    tauriDriver.on('exit', (code) => {
-      if (!killedTauriDriver) {
-        console.error('[crabnebula] tauri-driver exited with code:', code);
-        process.exit(1);
-      }
-    });
-
-    // Wait for tauri-driver to initialize its proxy server
-    await waitTauriDriverReady();
-    console.log('[crabnebula] tauri-driver ready');
   },
 
   // Start tauri-driver proxy once for all workers (in onPrepare)
