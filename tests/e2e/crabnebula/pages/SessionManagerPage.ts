@@ -109,9 +109,20 @@ export class SessionManagerPage extends CrabNebulaBasePage {
    * Filter sessions by provider
    */
   async filterByProvider(provider: string): Promise<void> {
-    const filterBtn = await $(`[data-filter-provider="${provider}"], button:has-text("${provider}")`);
-    if (await filterBtn.isExisting()) {
-      await filterBtn.click();
+    const clicked = await browser.execute((providerName) => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const filterBtn = buttons.find(btn => {
+        const dataFilter = btn.getAttribute('data-filter-provider');
+        const text = btn.textContent || '';
+        return dataFilter === providerName || text.includes(providerName);
+      });
+      if (filterBtn) {
+        (filterBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    }, provider);
+    if (clicked) {
       await browser.pause(300);
     }
   }
@@ -157,9 +168,26 @@ export class SessionManagerPage extends CrabNebulaBasePage {
    * Click send button
    */
   async clickSend(): Promise<void> {
-    const sendBtn = await $('button[type="submit"], button:has-text("发送"), button:has-text("Send")');
-    await sendBtn.waitForClickable({ timeout: 5000 });
-    await sendBtn.click();
+    const clicked = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const sendBtn = buttons.find(btn =>
+        btn.type === 'submit' ||
+        btn.textContent?.includes('发送') ||
+        btn.textContent?.includes('Send')
+      );
+      if (sendBtn) {
+        (sendBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+    if (!clicked) {
+      // Fallback to submit button
+      const submitBtn = await $('button[type="submit"]');
+      if (await submitBtn.isExisting()) {
+        await submitBtn.click();
+      }
+    }
   }
 
   /**
@@ -206,8 +234,15 @@ export class SessionManagerPage extends CrabNebulaBasePage {
    * Check if send button exists
    */
   async hasSendButton(): Promise<boolean> {
-    const btn = await $('button[type="submit"], button:has-text("发送"), button:has-text("Send")');
-    return btn.isExisting();
+    const hasBtn = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      return buttons.some(btn =>
+        btn.type === 'submit' ||
+        btn.textContent?.includes('发送') ||
+        btn.textContent?.includes('Send')
+      );
+    });
+    return hasBtn;
   }
 
   /**
@@ -243,9 +278,20 @@ export class SessionManagerPage extends CrabNebulaBasePage {
    * Create new session
    */
   async createNewSession(): Promise<void> {
-    const newBtn = await $('button:has-text("新建"), button:has-text("New"), button[aria-label*="new"]');
-    if (await newBtn.isExisting()) {
-      await newBtn.click();
+    const clicked = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const newBtn = buttons.find(btn => {
+        const text = btn.textContent || '';
+        const ariaLabel = btn.getAttribute('aria-label') || '';
+        return text.includes('新建') || text.includes('New') || ariaLabel.toLowerCase().includes('new');
+      });
+      if (newBtn) {
+        (newBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+    if (clicked) {
       await browser.pause(300);
     }
   }
@@ -265,9 +311,19 @@ export class SessionManagerPage extends CrabNebulaBasePage {
           await browser.pause(300);
 
           // Confirm deletion
-          const confirmBtn = await $('button:has-text("确认"), button:has-text("Confirm")');
-          if (await confirmBtn.isExisting()) {
-            await confirmBtn.click();
+          const confirmed = await browser.execute(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const confirmBtn = buttons.find(btn =>
+              btn.textContent?.includes('确认') ||
+              btn.textContent?.includes('Confirm')
+            );
+            if (confirmBtn) {
+              (confirmBtn as HTMLElement).click();
+              return true;
+            }
+            return false;
+          });
+          if (confirmed) {
             await browser.pause(500);
           }
           return true;
@@ -318,9 +374,20 @@ export class SessionManagerPage extends CrabNebulaBasePage {
    * Stop generation (for streaming responses)
    */
   async stopGeneration(): Promise<void> {
-    const stopBtn = await $('button:has-text("停止"), button:has-text("Stop"), button[aria-label*="stop"]');
-    if (await stopBtn.isExisting()) {
-      await stopBtn.click();
+    const clicked = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const stopBtn = buttons.find(btn => {
+        const text = btn.textContent || '';
+        const ariaLabel = btn.getAttribute('aria-label') || '';
+        return text.includes('停止') || text.includes('Stop') || ariaLabel.toLowerCase().includes('stop');
+      });
+      if (stopBtn) {
+        (stopBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+    if (clicked) {
       await browser.pause(300);
     }
   }

@@ -266,10 +266,20 @@ export class DashboardPage extends CrabNebulaBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return false;
 
-    // Find edit button
-    const editBtn = await card.$('button[aria-label*="编辑"], button[aria-label*="Edit"], button:has-text("编辑"), button:has-text("Edit")');
-    if (await editBtn.isExisting()) {
-      await editBtn.click();
+    // Find edit button using browser.execute for compatibility
+    const clicked = await browser.execute((cardEl) => {
+      const buttons = cardEl.querySelectorAll('button');
+      for (const btn of buttons) {
+        const ariaLabel = btn.getAttribute('aria-label') || '';
+        if (ariaLabel.includes('编辑') || ariaLabel.toLowerCase().includes('edit')) {
+          (btn as HTMLElement).click();
+          return true;
+        }
+      }
+      return false;
+    }, card);
+
+    if (clicked) {
       await browser.pause(500);
       await this.fillProviderForm(newData as ProviderFormData);
       await this.saveProvider();
@@ -285,29 +295,40 @@ export class DashboardPage extends CrabNebulaBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return false;
 
-    // Find delete button
-    const deleteBtn = await card.$('button[aria-label*="删除"], button[aria-label*="Delete"], button:has-text("删除"), button:has-text("Delete")');
-    if (await deleteBtn.isExisting()) {
-      await deleteBtn.click();
+    // Find delete button using browser.execute for compatibility
+    const clicked = await browser.execute((cardEl) => {
+      const buttons = cardEl.querySelectorAll('button');
+      for (const btn of buttons) {
+        const ariaLabel = btn.getAttribute('aria-label') || '';
+        if (ariaLabel.includes('删除') || ariaLabel.toLowerCase().includes('delete')) {
+          (btn as HTMLElement).click();
+          return true;
+        }
+      }
+      return false;
+    }, card);
+
+    if (clicked) {
       await browser.pause(300);
 
-      // Confirm deletion
-      const confirmBtn = await browser.execute(() => {
+      // Confirm deletion using browser.execute
+      const confirmed = await browser.execute(() => {
         const buttons = Array.from(document.querySelectorAll('button'));
-        return buttons.find(btn =>
+        const confirmBtn = buttons.find(btn =>
           btn.textContent?.includes('确认') ||
           btn.textContent?.includes('Confirm') ||
           btn.textContent?.includes('删除') ||
           btn.textContent?.includes('Delete')
         );
+        if (confirmBtn) {
+          (confirmBtn as HTMLElement).click();
+          return true;
+        }
+        return false;
       });
 
-      if (confirmBtn) {
-        const btn = await $('button:has-text("确认"), button:has-text("Confirm"), button:has-text("删除")');
-        if (await btn.isExisting()) {
-          await btn.click();
-          await browser.pause(500);
-        }
+      if (confirmed) {
+        await browser.pause(500);
       }
       return true;
     }
@@ -324,10 +345,23 @@ export class DashboardPage extends CrabNebulaBasePage {
     // Open actions menu first if needed
     await this.openProviderActions(name);
 
-    // Find duplicate button
-    const duplicateBtn = await $('button:has-text("复制"), button:has-text("Duplicate"), button[aria-label*="复制"], button[aria-label*="Duplicate"]');
-    if (await duplicateBtn.isExisting()) {
-      await duplicateBtn.click();
+    // Find duplicate button using browser.execute
+    const clicked = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const duplicateBtn = buttons.find(btn => {
+        const text = btn.textContent || '';
+        const ariaLabel = btn.getAttribute('aria-label') || '';
+        return text.includes('复制') || text.includes('Duplicate') ||
+               ariaLabel.includes('复制') || ariaLabel.includes('Duplicate');
+      });
+      if (duplicateBtn) {
+        (duplicateBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+
+    if (clicked) {
       await browser.pause(500);
       return true;
     }
@@ -395,9 +429,20 @@ export class DashboardPage extends CrabNebulaBasePage {
    * Clear search
    */
   async clearSearch(): Promise<void> {
-    const clearBtn = await $('button:has-text("Clear"), button:has-text("清除"), button[aria-label*="clear"]');
-    if (await clearBtn.isExisting()) {
-      await clearBtn.click();
+    const clicked = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const clearBtn = buttons.find(btn => {
+        const text = btn.textContent || '';
+        const ariaLabel = btn.getAttribute('aria-label') || '';
+        return text.includes('Clear') || text.includes('清除') || ariaLabel.includes('clear');
+      });
+      if (clearBtn) {
+        (clearBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+    if (clicked) {
       await browser.pause(200);
     }
   }
@@ -495,9 +540,20 @@ export class DashboardPage extends CrabNebulaBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return;
 
-    const testBtn = await card.$('button:has-text("测试"), button:has-text("Test"), button[aria-label*="test"]');
-    if (await testBtn.isExisting()) {
-      await testBtn.click();
+    const clicked = await browser.execute((cardEl) => {
+      const buttons = cardEl.querySelectorAll('button');
+      for (const btn of buttons) {
+        const text = btn.textContent || '';
+        const ariaLabel = btn.getAttribute('aria-label') || '';
+        if (text.includes('测试') || text.includes('Test') || ariaLabel.toLowerCase().includes('test')) {
+          (btn as HTMLElement).click();
+          return true;
+        }
+      }
+      return false;
+    }, card);
+
+    if (clicked) {
       await browser.pause(1000); // Wait for test to complete
     }
   }
@@ -509,9 +565,24 @@ export class DashboardPage extends CrabNebulaBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return;
 
-    const link = await card.$('a[href*="http"], button:has-text("网站"), button:has-text("Website")');
-    if (await link.isExisting()) {
-      await link.click();
+    const clicked = await browser.execute((cardEl) => {
+      const links = cardEl.querySelectorAll('a[href*="http"]');
+      if (links.length > 0) {
+        (links[0] as HTMLElement).click();
+        return true;
+      }
+      const buttons = cardEl.querySelectorAll('button');
+      for (const btn of buttons) {
+        const text = btn.textContent || '';
+        if (text.includes('网站') || text.includes('Website')) {
+          (btn as HTMLElement).click();
+          return true;
+        }
+      }
+      return false;
+    }, card);
+
+    if (clicked) {
       await browser.pause(300);
     }
   }
