@@ -47,6 +47,8 @@ export const config = {
     './tests/e2e/crabnebula/flows/*.spec.ts',
     './tests/e2e/crabnebula/views/*.spec.ts',
     './tests/e2e/crabnebula/channel-communication.spec.ts',
+    // User journey tests
+    './tests/e2e/crabnebula/user-journeys/*.spec.ts',
   ],
 
   maxInstances: 1,
