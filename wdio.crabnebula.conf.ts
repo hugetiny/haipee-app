@@ -71,31 +71,10 @@ export const config = {
   connectionRetryCount: 0,
 
   onPrepare: async () => {
-    // Start tauri-driver ONCE globally (not per worker)
-    tauriDriver = spawn('bunx', ['tauri-driver'], {
-      stdio: [null, process.stdout, process.stderr],
-      shell: true,
-    });
-
-    tauriDriver.on('error', (error) => {
-      console.error('tauri-driver error:', error);
-      process.exit(1);
-    });
-
-    tauriDriver.on('exit', (code) => {
-      if (!killedTauriDriver) {
-        console.error('tauri-driver exited with code:', code);
-        process.exit(1);
-      }
-    });
-
-    // Wait for tauri-driver to initialize its proxy server
-    await waitTauriDriverReady();
-
-    // macOS requires test-runner-backend with CN_API_KEY
-    if (process.platform === 'darwin' && process.env.CN_SKIP_MACOS_CHECK !== 'true') {
+    // macOS requires test-runner-backend with CN_API_KEY (must start BEFORE tauri-driver)
+    if (process.platform === 'darwin') {
       if (!process.env.CN_API_KEY) {
-        console.error('CN_API_KEY is not set, required for CrabNebula Webdriver');
+        console.error('CN_API_KEY is not set, required for CrabNebula Webdriver on macOS');
         process.exit(1);
       }
 
@@ -120,9 +99,30 @@ export const config = {
 
       await waitTestRunnerBackendReady();
 
-      // Instruct tauri-driver to connect to test-runner-backend
+      // Instruct tauri-driver to connect to test-runner-backend (must be set BEFORE starting tauri-driver)
       process.env.REMOTE_WEBDRIVER_URL = 'http://127.0.0.1:3000';
     }
+
+    // Start tauri-driver AFTER test-runner-backend is ready
+    tauriDriver = spawn('bunx', ['tauri-driver'], {
+      stdio: [null, process.stdout, process.stderr],
+      shell: true,
+    });
+
+    tauriDriver.on('error', (error) => {
+      console.error('tauri-driver error:', error);
+      process.exit(1);
+    });
+
+    tauriDriver.on('exit', (code) => {
+      if (!killedTauriDriver) {
+        console.error('tauri-driver exited with code:', code);
+        process.exit(1);
+      }
+    });
+
+    // Wait for tauri-driver to initialize its proxy server
+    await waitTauriDriverReady();
   },
 
   onComplete: () => {
