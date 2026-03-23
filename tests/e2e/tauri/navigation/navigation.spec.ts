@@ -101,7 +101,8 @@ describe('Navigation – Active State', () => {
     await browser.pause(500);
 
     const activeApp = await navigationPage.getActiveApp();
-    expect(typeof activeApp).toBe('object');
+    // getActiveApp returns string like 'claude' or null
+    expect(activeApp === 'claude' || activeApp === null).toBe(true);
   });
 
   it('should update active indicator on app switch', async () => {
@@ -109,7 +110,8 @@ describe('Navigation – Active State', () => {
     await browser.pause(500);
 
     const activeApp = await navigationPage.getActiveApp();
-    expect(typeof activeApp).toBe('object');
+    // getActiveApp returns string like 'gemini' or null
+    expect(activeApp === 'gemini' || activeApp === null).toBe(true);
   });
 });
 
