@@ -202,6 +202,12 @@ pub fn run() {
         builder = builder.plugin(tauri_plugin_webdriver::init());
     }
 
+    // CrabNebula automation plugin for E2E testing (cargo build --features automation)
+    #[cfg(feature = "automation")]
+    {
+        builder = builder.plugin(tauri_plugin_automation::init());
+    }
+
     #[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
