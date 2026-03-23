@@ -12,18 +12,14 @@
 
 import { expect } from '@wdio/globals';
 import { SessionManagerPage } from '../pages/SessionManagerPage';
-import { DashboardPage } from '../pages/DashboardPage';
 import { NavigationPage } from '../pages/NavigationPage';
-import { JourneyHelpers } from './journey-helpers';
 
 describe('Session Chat Journey', () => {
   let sessionPage: SessionManagerPage;
-  let dashboard: DashboardPage;
   let navigation: NavigationPage;
 
   beforeEach(async () => {
     sessionPage = new SessionManagerPage();
-    dashboard = new DashboardPage();
     navigation = new NavigationPage();
     await sessionPage.waitForReactReady();
   });
@@ -46,7 +42,6 @@ describe('Session Chat Journey', () => {
       await sessionPage.navigateToSessions();
       await browser.pause(500);
 
-      const initialCount = await sessionPage.getSessionCount();
       await sessionPage.createNewSession();
       await browser.pause(500);
 
@@ -258,8 +253,6 @@ describe('Session Chat Journey', () => {
       if (appButtons.length >= 2) {
         await sessionPage.navigateToSessions();
         await browser.pause(300);
-
-        const count1 = await sessionPage.getSessionCount();
 
         // Switch app
         await navigation.switchToApp(appButtons[1].app.toLowerCase() as any);

@@ -108,7 +108,8 @@ export class JourneyHelpers {
     await browser.waitUntil(
       async () => {
         const spinners = await $$('[class*="animate-spin"], [class*="loading"], [data-testid="loading"]');
-        return spinners.length === 0;
+        const count = await spinners.length;
+        return count === 0;
       },
       { timeout, timeoutMsg: 'Loading did not complete' }
     );

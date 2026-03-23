@@ -12,16 +12,13 @@
 
 import { expect } from '@wdio/globals';
 import { McpPage } from '../pages/McpPage';
-import { NavigationPage } from '../pages/NavigationPage';
 import { JourneyHelpers } from './journey-helpers';
 
 describe('MCP Integration Journey', () => {
   let mcpPage: McpPage;
-  let navigation: NavigationPage;
 
   beforeEach(async () => {
     mcpPage = new McpPage();
-    navigation = new NavigationPage();
     await mcpPage.waitForReactReady();
   });
 

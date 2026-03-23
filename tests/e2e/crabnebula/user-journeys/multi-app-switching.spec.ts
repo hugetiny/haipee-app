@@ -12,7 +12,6 @@
 import { expect } from '@wdio/globals';
 import { NavigationPage, AppType } from '../pages/NavigationPage';
 import { DashboardPage } from '../pages/DashboardPage';
-import { JourneyHelpers } from './journey-helpers';
 
 describe('Multi-App Switching Journey', () => {
   let navigation: NavigationPage;
@@ -152,10 +151,6 @@ describe('Multi-App Switching Journey', () => {
         // Go to sessions
         await navigation.navigateToView('sessions');
         await browser.pause(300);
-
-        const sessions1 = await browser.execute(() => {
-          return document.querySelectorAll('[data-session-id], [data-session-provider]').length;
-        });
 
         // Switch app
         await navigation.switchToApp(enabledApps[1].app.toLowerCase() as AppType);

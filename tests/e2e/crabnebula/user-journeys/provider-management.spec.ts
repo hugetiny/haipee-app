@@ -12,16 +12,13 @@
 
 import { expect } from '@wdio/globals';
 import { DashboardPage } from '../pages/DashboardPage';
-import { NavigationPage } from '../pages/NavigationPage';
 import { JourneyHelpers } from './journey-helpers';
 
 describe('Provider Management Journey', () => {
   let dashboard: DashboardPage;
-  let navigation: NavigationPage;
 
   beforeEach(async () => {
     dashboard = new DashboardPage();
-    navigation = new NavigationPage();
     await dashboard.waitForReactReady();
   });
 
