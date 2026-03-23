@@ -23,7 +23,8 @@ env:
 
 jobs:
   e2e-tests:
-    runs-on: ubuntu-24.04-arm
+    # Must use x86_64 - CrabNebula tauri-driver doesn't support ARM Linux
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
 
     steps:
@@ -34,7 +35,7 @@ jobs:
         uses: ./.github/actions/setup-tauri-build
         with:
           bun-version: ${{ env.BUN_VERSION }}
-          rust-target: aarch64-unknown-linux-gnu
+          rust-target: x86_64-unknown-linux-gnu
           enable-sccache: 'true'
 
       - name: Install E2E test dependencies
