@@ -27,7 +27,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev webkit2gtk-driver
+          sudo apt-get install -y libwebkit2gtk-4.1-dev webkit2gtk-driver libayatana-appindicator3-dev
 
       - name: Install dependencies
         run: bun install
