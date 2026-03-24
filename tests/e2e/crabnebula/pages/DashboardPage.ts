@@ -141,7 +141,7 @@ export class DashboardPage extends CrabNebulaBasePage {
 
     // Fill base URL
     if (data.baseUrl) {
-      const urlInput = await $('input[name*="baseUrl"], input[name*="base_url"], input[name*="endpoint"], input[placeholder*="URL"], input[placeholder*="Endpoint"]');
+      const urlInput = await $('input[id="baseUrl"], input[name*="baseUrl"], input[name*="base_url"], input[name*="endpoint"], input[placeholder*="URL"], input[placeholder*="Endpoint"], input[placeholder*="端点"]');
       if (await urlInput.isExisting()) {
         await urlInput.clearValue();
         await urlInput.setValue(data.baseUrl);

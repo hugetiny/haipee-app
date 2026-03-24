@@ -26,7 +26,7 @@ export function createTestProvider(overrides: Partial<TestProvider> = {}): TestP
     id,
     name: generateProviderName('Test'),
     apiKey: generateTestApiKey(),
-    baseUrl: undefined,
+    baseUrl: 'https://api.anthropic.com/v1', // Default baseUrl for non-official providers
     model: undefined,
     notes: `Test provider created at ${new Date().toISOString()}`,
     category: 'test',

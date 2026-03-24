@@ -51,6 +51,7 @@ describe('Provider Management Journey', () => {
       await dashboard.addProvider({
         name: testName,
         apiKey: testKey,
+        baseUrl: 'https://api.anthropic.com/v1',
       });
 
       await browser.pause(500);
@@ -85,6 +86,7 @@ describe('Provider Management Journey', () => {
       await dashboard.fillProviderForm({
         name: testName,
         apiKey: 'invalid-key-with-spaces',
+        baseUrl: 'https://api.anthropic.com/v1',
       });
 
       await dashboard.saveProvider();
@@ -193,6 +195,7 @@ describe('Provider Management Journey', () => {
       await dashboard.addProvider({
         name: testName,
         apiKey: JourneyHelpers.generateTestApiKey(),
+        baseUrl: 'https://api.anthropic.com/v1',
       });
 
       await browser.pause(500);
@@ -243,6 +246,7 @@ describe('Provider Management Journey', () => {
       await dashboard.addProvider({
         name: testName,
         apiKey: JourneyHelpers.generateTestApiKey(),
+        baseUrl: 'https://api.anthropic.com/v1',
       });
 
       await browser.pause(500);
@@ -272,6 +276,7 @@ describe('Provider Management Journey', () => {
       await dashboard.addProvider({
         name: testName,
         apiKey: JourneyHelpers.generateTestApiKey(),
+        baseUrl: 'https://api.anthropic.com/v1',
       });
 
       await browser.pause(500);
@@ -294,6 +299,7 @@ describe('Provider Management Journey', () => {
       await dashboard.addProvider({
         name: testName,
         apiKey: JourneyHelpers.generateTestApiKey(),
+        baseUrl: 'https://api.anthropic.com/v1',
       });
 
       await browser.pause(500);
@@ -361,6 +367,7 @@ describe('Provider Management Journey', () => {
       await dashboard.fillProviderForm({
         name: '',
         apiKey: JourneyHelpers.generateTestApiKey(),
+        baseUrl: 'https://api.anthropic.com/v1',
       });
       await dashboard.saveProvider();
       await browser.pause(300);
@@ -378,6 +385,7 @@ describe('Provider Management Journey', () => {
       await dashboard.addProvider({
         name: testName,
         apiKey: JourneyHelpers.generateTestApiKey(),
+        baseUrl: 'https://api.anthropic.com/v1',
       });
       await browser.pause(500);
 
@@ -387,6 +395,7 @@ describe('Provider Management Journey', () => {
       await dashboard.fillProviderForm({
         name: testName,
         apiKey: JourneyHelpers.generateTestApiKey(),
+        baseUrl: 'https://api.anthropic.com/v1',
       });
       await dashboard.saveProvider();
       await browser.pause(300);

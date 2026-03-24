@@ -19,11 +19,13 @@ describe('Provider Switch – Basic', () => {
     await dashboardPage.addProvider({
       name: testProvider1.name,
       apiKey: testProvider1.apiKey,
+      baseUrl: testProvider1.baseUrl,
     });
     await browser.pause(500);
     await dashboardPage.addProvider({
       name: testProvider2.name,
       apiKey: testProvider2.apiKey,
+      baseUrl: testProvider2.baseUrl,
     });
     await browser.pause(1000);
   });
@@ -73,6 +75,7 @@ describe('Provider Switch – Toast Notifications', () => {
     await dashboardPage.addProvider({
       name: testProvider.name,
       apiKey: testProvider.apiKey,
+      baseUrl: testProvider.baseUrl,
     });
     await browser.pause(1000);
   });
@@ -111,6 +114,7 @@ describe('Provider Switch – Proxy Takeover', () => {
     await dashboardPage.addProvider({
       name: testProvider.name,
       apiKey: testProvider.apiKey,
+      baseUrl: testProvider.baseUrl,
     });
     await browser.pause(1000);
   });

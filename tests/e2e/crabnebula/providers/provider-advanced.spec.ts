@@ -19,6 +19,7 @@ describe('Provider Advanced – Reorder', () => {
       await dashboardPage.addProvider({
         name: provider.name,
         apiKey: provider.apiKey,
+        baseUrl: provider.baseUrl,
       });
       await browser.pause(300);
     }
@@ -132,6 +133,7 @@ describe('Provider Advanced – Filter by Category', () => {
     await dashboardPage.addProvider({
       name: testProvider.name,
       apiKey: testProvider.apiKey,
+      baseUrl: testProvider.baseUrl,
     });
     await browser.pause(1000);
   });

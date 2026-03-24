@@ -44,6 +44,7 @@ describe('Provider CRUD – Create', () => {
     await dashboardPage.addProvider({
       name: testProvider.name,
       apiKey: testProvider.apiKey,
+      baseUrl: testProvider.baseUrl,
     });
     await browser.pause(1500);
 
@@ -95,6 +96,7 @@ describe('Provider CRUD – Create', () => {
     await dashboardPage.addProvider({
       name: provider.name,
       apiKey: provider.apiKey,
+      baseUrl: provider.baseUrl,
     });
     await browser.pause(1000);
 
@@ -123,6 +125,7 @@ describe('Provider CRUD – Update', () => {
     await dashboardPage.addProvider({
       name: testProvider.name,
       apiKey: testProvider.apiKey,
+      baseUrl: testProvider.baseUrl,
     });
     await browser.pause(1000);
   });
@@ -291,6 +294,7 @@ describe('Provider CRUD – Duplicate', () => {
     await dashboardPage.addProvider({
       name: testProvider.name,
       apiKey: testProvider.apiKey,
+      baseUrl: testProvider.baseUrl,
     });
     await browser.pause(1000);
   });

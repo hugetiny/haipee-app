@@ -18,6 +18,7 @@ describe('Provider Actions – Website', () => {
     await dashboardPage.addProvider({
       name: testProvider.name,
       apiKey: testProvider.apiKey,
+      baseUrl: testProvider.baseUrl,
     });
     await browser.pause(1000);
   });

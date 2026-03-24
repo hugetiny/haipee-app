@@ -149,6 +149,7 @@ describe('Provider Lifecycle Flow', () => {
         await dashboardPage.addProvider({
           name: providerName,
           apiKey: generateTestApiKey(),
+          baseUrl: 'https://api.anthropic.com/v1',
         });
         await browser.pause(500);
 
