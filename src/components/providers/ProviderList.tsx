@@ -83,7 +83,7 @@ export function ProviderList({
   onCreate,
   isLoading = false,
   isProxyRunning = false,
-  isProxyTakeover = false,
+  isProxyTakeover: _isProxyTakeover = false,
   activeProviderId,
   onSetAsDefault,
 }: ProviderListProps) {
@@ -139,7 +139,7 @@ export function ProviderList({
   const removeFromQueue = useRemoveFromFailoverQueue();
 
   const isFailoverModeActive =
-    isProxyTakeover === true && isAutoFailoverEnabled === true;
+    isProxyRunning === true && isAutoFailoverEnabled === true;
 
   const isOpenCode = appId === "opencode";
   const { data: currentOmoId } = useCurrentOmoProviderId(isOpenCode);
@@ -357,7 +357,7 @@ export function ProviderList({
                 }
                 isTesting={isChecking(provider.id)}
                 isProxyRunning={isProxyRunning}
-                isProxyTakeover={isProxyTakeover}
+                isProxyTakeover={isFailoverModeActive}
                 isAutoFailoverEnabled={isFailoverModeActive}
                 failoverPriority={getFailoverPriority(provider.id)}
                 isInFailoverQueue={isInFailoverQueue(provider.id)}

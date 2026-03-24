@@ -25,7 +25,6 @@ import { AddProviderDialog } from "@/components/providers/AddProviderDialog";
 import { EditProviderDialog } from "@/components/providers/EditProviderDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SettingsPage } from "@/components/settings/SettingsPage";
-import { ProxyToggle } from "@/components/proxy/ProxyToggle";
 import { FailoverToggle } from "@/components/proxy/FailoverToggle";
 import UsageScriptModal from "@/components/UsageScriptModal";
 import UnifiedMcpPanel from "@/components/mcp/UnifiedMcpPanel";
@@ -172,10 +171,8 @@ function App() {
 
   const {
     isRunning: isProxyRunning,
-    takeoverStatus,
     status: proxyStatus,
   } = useProxyStatus();
-  const isCurrentAppTakeoverActive = takeoverStatus?.[activeApp] || false;
   const activeProviderId = useMemo(() => {
     const target = proxyStatus?.active_targets?.find(
       (t) => t.app_type === activeApp,
@@ -668,7 +665,6 @@ function App() {
               {/* Top toolbar for providers view */}
               <div className="flex items-center justify-between px-4 py-2 border-b bg-background/80 backdrop-blur-sm shrink-0">
                 <div className="flex items-center gap-1">
-                  <ProxyToggle activeApp={activeApp} />
                   <FailoverToggle activeApp={activeApp} />
                 </div>
               </div>
@@ -690,9 +686,7 @@ function App() {
                       appId={activeApp}
                       isLoading={isLoading}
                       isProxyRunning={isProxyRunning}
-                      isProxyTakeover={
-                        isProxyRunning && isCurrentAppTakeoverActive
-                      }
+                      isProxyTakeover={false}
                       activeProviderId={activeProviderId}
                       onSwitch={switchProvider}
                       onEdit={(provider) => {
@@ -785,7 +779,7 @@ function App() {
           }}
           onSubmit={handleEditProvider}
           appId={activeApp}
-          isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+          isProxyTakeover={false}
         />
 
         {effectiveUsageProvider && (

@@ -21,27 +21,6 @@ pub async fn stop_proxy_with_restore(state: tauri::State<'_, AppState>) -> Resul
     state.proxy_service.stop_with_restore().await
 }
 
-/// 获取各应用接管状态
-#[tauri::command]
-pub async fn get_proxy_takeover_status(
-    state: tauri::State<'_, AppState>,
-) -> Result<ProxyTakeoverStatus, String> {
-    state.proxy_service.get_takeover_status().await
-}
-
-/// 为指定应用开启/关闭接管
-#[tauri::command]
-pub async fn set_proxy_takeover_for_app(
-    state: tauri::State<'_, AppState>,
-    app_type: String,
-    enabled: bool,
-) -> Result<(), String> {
-    state
-        .proxy_service
-        .set_takeover_for_app(&app_type, enabled)
-        .await
-}
-
 /// 获取代理服务器状态
 #[tauri::command]
 pub async fn get_proxy_status(state: tauri::State<'_, AppState>) -> Result<ProxyStatus, String> {
@@ -240,12 +219,6 @@ pub async fn is_proxy_running(state: tauri::State<'_, AppState>) -> Result<bool,
     Ok(state.proxy_service.is_running().await)
 }
 
-/// 检查是否处于 Live 接管模式
-#[tauri::command]
-pub async fn is_live_takeover_active(state: tauri::State<'_, AppState>) -> Result<bool, String> {
-    state.proxy_service.is_takeover_active().await
-}
-
 /// 代理模式下切换供应商（热切换）
 #[tauri::command]
 pub async fn switch_proxy_provider(
@@ -299,16 +272,16 @@ pub async fn reset_circuit_breaker(
         .await?;
 
     // 3. 检查是否应该切回优先级更高的供应商（从 proxy_config 表读取）
-    // 只有当该应用已被代理接管（enabled=true）且开启了自动故障转移时才执行
-    let (app_enabled, auto_failover_enabled) = match db.get_proxy_config_for_app(&app_type).await {
-        Ok(config) => (config.enabled, config.auto_failover_enabled),
+    // 仅当自动故障转移开启且代理服务运行时执行
+    let auto_failover_enabled = match db.get_proxy_config_for_app(&app_type).await {
+        Ok(config) => config.auto_failover_enabled,
         Err(e) => {
             log::error!("[{app_type}] Failed to read proxy_config: {e}, defaulting to disabled");
-            (false, false)
+            false
         }
     };
 
-    if app_enabled && auto_failover_enabled && state.proxy_service.is_running().await {
+    if auto_failover_enabled && state.proxy_service.is_running().await {
         // 获取当前供应商 ID
         let current_id = db
             .get_current_provider(&app_type)

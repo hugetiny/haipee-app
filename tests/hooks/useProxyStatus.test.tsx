@@ -61,7 +61,7 @@ describe("useProxyStatus", () => {
         return Promise.resolve({
           running: false,
           address: "127.0.0.1",
-          port: 15721,
+          port: 17890,
           active_connections: 0,
           total_requests: 0,
           success_requests: 0,
@@ -76,20 +76,10 @@ describe("useProxyStatus", () => {
         });
       }
 
-      if (command === "get_proxy_takeover_status") {
-        return Promise.resolve({
-          claude: false,
-          codex: false,
-          gemini: false,
-          opencode: false,
-          openclaw: false,
-        });
-      }
-
       if (command === "start_proxy_server") {
         return Promise.resolve({
           address: "127.0.0.1",
-          port: 15721,
+          port: 17890,
           started_at: "2026-03-10T00:00:00Z",
         });
       }
@@ -111,7 +101,7 @@ describe("useProxyStatus", () => {
     });
 
     expect(toastSuccessMock).toHaveBeenCalledWith(
-      "代理服务已启动 - 127.0.0.1:15721",
+      "代理服务已启动 - 127.0.0.1:17890",
       { closeButton: true },
     );
   });

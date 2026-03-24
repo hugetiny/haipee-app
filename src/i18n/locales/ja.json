@@ -1810,7 +1810,7 @@
         },
         "listenPort": {
           "label": "リッスンポート",
-          "placeholder": "15721",
+          "placeholder": "17890",
           "description": "プロキシサーバーがリッスンするポート番号（1024 ~ 65535）"
         },
         "maxRetries": {

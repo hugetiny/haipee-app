@@ -260,29 +260,9 @@ impl ProviderService {
         let is_current = effective_current.as_deref() == Some(provider.id.as_str());
 
         if is_current {
-            // 如果代理接管模式处于激活状态，并且代理服务正在运行：
-            // - 不写 Live 配置（否则会破坏接管）
-            // - 仅更新 Live 备份（保证关闭代理时能恢复到最新配置）
-            let is_app_taken_over =
-                futures::executor::block_on(state.db.get_live_backup(app_type.as_str()))
-                    .ok()
-                    .flatten()
-                    .is_some();
-            let is_proxy_running = futures::executor::block_on(state.proxy_service.is_running());
-            let should_skip_live_write = is_app_taken_over && is_proxy_running;
-
-            if should_skip_live_write {
-                futures::executor::block_on(
-                    state
-                        .proxy_service
-                        .update_live_backup_from_provider(app_type.as_str(), &provider),
-                )
-                .map_err(|e| AppError::Message(format!("更新 Live 备份失败: {e}")))?;
-            } else {
-                write_live_with_common_config(state.db.as_ref(), &app_type, &provider)?;
-                // Sync MCP
-                McpService::sync_all_enabled(state)?;
-            }
+            write_live_with_common_config(state.db.as_ref(), &app_type, &provider)?;
+            // Sync MCP
+            McpService::sync_all_enabled(state)?;
         }
 
         Ok(true)
@@ -429,9 +409,7 @@ impl ProviderService {
     ///
     /// Switch flow:
     /// 1. Validate target provider exists
-    /// 2. Check if proxy takeover mode is active AND proxy server is running
-    /// 3. If takeover mode active: hot-switch proxy target only (no Live config write)
-    /// 4. If normal mode:
+    /// 2. 正常切换：
     ///    a. **Backfill mechanism**: Backfill current live config to current provider
     ///    b. Update local settings current_provider_xxx (device-level)
     ///    c. Update database is_current (as default for new devices)
@@ -456,63 +434,6 @@ impl ProviderService {
             return Self::switch_normal(state, app_type, id, &providers);
         }
 
-        // Check if proxy takeover mode is active AND proxy server is actually running
-        // Both conditions must be true to use hot-switch mode
-        // Use blocking wait since this is a sync function
-        let is_app_taken_over =
-            futures::executor::block_on(state.db.get_live_backup(app_type.as_str()))
-                .ok()
-                .flatten()
-                .is_some();
-        let is_proxy_running = futures::executor::block_on(state.proxy_service.is_running());
-        let live_taken_over = state
-            .proxy_service
-            .detect_takeover_in_live_config_for_app(&app_type);
-
-        // Hot-switch only when BOTH: this app is taken over AND proxy server is actually running
-        let should_hot_switch = (is_app_taken_over || live_taken_over) && is_proxy_running;
-
-        if should_hot_switch {
-            // Proxy takeover mode: hot-switch only, don't write Live config
-            log::info!(
-                "代理接管模式：热切换 {} 的目标供应商为 {}",
-                app_type.as_str(),
-                id
-            );
-
-            // 获取新供应商的完整配置（用于更新备份）
-            let provider = providers
-                .get(id)
-                .ok_or_else(|| AppError::Message(format!("供应商 {id} 不存在")))?;
-
-            // Update database is_current
-            state.db.set_current_provider(app_type.as_str(), id)?;
-
-            // Update local settings for consistency
-            crate::settings::set_current_provider(&app_type, Some(id))?;
-
-            // 更新 Live 备份（确保代理关闭时恢复正确的供应商配置）
-            futures::executor::block_on(
-                state
-                    .proxy_service
-                    .update_live_backup_from_provider(app_type.as_str(), provider),
-            )
-            .map_err(|e| AppError::Message(format!("更新 Live 备份失败: {e}")))?;
-
-            // 关键修复：接管模式下切换供应商不会写回 Live 配置，
-            // 需要主动清理 Claude Live 中的“模型覆盖”字段，避免仍以旧模型名发起请求。
-            if matches!(app_type, AppType::Claude) {
-                if let Err(e) = state.proxy_service.cleanup_claude_model_overrides_in_live() {
-                    log::warn!("清理 Claude Live 模型字段失败（不影响切换结果）: {e}");
-                }
-            }
-
-            // Note: No Live config write, no MCP sync
-            // The proxy server will route requests to the new provider via is_current
-            return Ok(SwitchResult::default());
-        }
-
-        // Normal mode: full switch with Live config write
         Self::switch_normal(state, app_type, id, &providers)
     }
 
@@ -625,32 +546,7 @@ impl ProviderService {
             };
 
         let providers = state.db.get_all_providers(app_type.as_str())?;
-        let Some(provider) = providers.get(&current_id) else {
-            return Ok(());
-        };
-
-        let takeover_enabled =
-            futures::executor::block_on(state.db.get_proxy_config_for_app(app_type.as_str()))
-                .map(|config| config.enabled)
-                .unwrap_or(false);
-
-        let has_live_backup =
-            futures::executor::block_on(state.db.get_live_backup(app_type.as_str()))
-                .ok()
-                .flatten()
-                .is_some();
-
-        let live_taken_over = state
-            .proxy_service
-            .detect_takeover_in_live_config_for_app(&app_type);
-
-        if takeover_enabled && (has_live_backup || live_taken_over) {
-            futures::executor::block_on(
-                state
-                    .proxy_service
-                    .update_live_backup_from_provider(app_type.as_str(), provider),
-            )
-            .map_err(|e| AppError::Message(format!("更新 Live 备份失败: {e}")))?;
+        if !providers.contains_key(&current_id) {
             return Ok(());
         }
 

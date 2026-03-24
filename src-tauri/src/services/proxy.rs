@@ -193,35 +193,12 @@ impl ProxyService {
 
     /// 获取各应用的接管状态（是否改写该应用的 Live 配置指向本地代理）
     pub async fn get_takeover_status(&self) -> Result<ProxyTakeoverStatus, String> {
-        // 从 proxy_config.enabled 读取（优先），兼容旧的 live_backup 备份检测
-        let claude_enabled = self
-            .db
-            .get_proxy_config_for_app("claude")
-            .await
-            .map(|c| c.enabled)
-            .unwrap_or(false);
-        let codex_enabled = self
-            .db
-            .get_proxy_config_for_app("codex")
-            .await
-            .map(|c| c.enabled)
-            .unwrap_or(false);
-        let gemini_enabled = self
-            .db
-            .get_proxy_config_for_app("gemini")
-            .await
-            .map(|c| c.enabled)
-            .unwrap_or(false);
-        // OpenCode and OpenClaw don't support proxy features, always return false
-        let opencode_enabled = false;
-        let openclaw_enabled = false;
-
         Ok(ProxyTakeoverStatus {
-            claude: claude_enabled,
-            codex: codex_enabled,
-            gemini: gemini_enabled,
-            opencode: opencode_enabled,
-            openclaw: openclaw_enabled,
+            claude: false,
+            codex: false,
+            gemini: false,
+            opencode: false,
+            openclaw: false,
         })
     }
 
@@ -229,140 +206,11 @@ impl ProxyService {
     ///
     /// - 开启：自动启动代理服务，仅接管当前 app 的 Live 配置
     /// - 关闭：仅恢复当前 app 的 Live 配置；若无其它接管，则自动停止代理服务
-    pub async fn set_takeover_for_app(&self, app_type: &str, enabled: bool) -> Result<(), String> {
-        let app = AppType::from_str(app_type).map_err(|e| format!("无效的应用类型: {e}"))?;
-        let app_type_str = app.as_str();
-
-        if enabled {
-            // 1) 代理服务未运行则自动启动
-            if !self.is_running().await {
-                self.start().await?;
-            }
-
-            // 2) 已接管则直接返回（幂等）；但如果缺少备份或占位符残留，需要重建接管
-            let current_config = self
-                .db
-                .get_proxy_config_for_app(app_type_str)
-                .await
-                .map_err(|e| format!("获取 {app_type_str} 配置失败: {e}"))?;
-
-            if current_config.enabled {
-                let has_backup = match self.db.get_live_backup(app_type_str).await {
-                    Ok(v) => v.is_some(),
-                    Err(e) => {
-                        log::warn!("读取 {app_type_str} 备份失败（将继续重建接管）: {e}");
-                        false
-                    }
-                };
-                let live_taken_over = self.detect_takeover_in_live_config_for_app(&app);
-
-                if has_backup || live_taken_over {
-                    return Ok(());
-                }
-
-                log::warn!(
-                    "{app_type_str} 标记为已接管，但缺少备份或占位符，正在重新接管并补齐备份"
-                );
-            }
-
-            // 3) 备份 Live 配置（严格：目标 app 不存在则报错）
-            self.backup_live_config_strict(&app).await?;
-
-            // 4) 同步 Live Token 到数据库（仅当前 app）
-            if let Err(e) = self.sync_live_to_provider(&app).await {
-                let _ = self.db.delete_live_backup(app_type_str).await;
-                return Err(e);
-            }
-
-            // 5) 写入接管配置（仅当前 app）
-            if let Err(e) = self.takeover_live_config_strict(&app).await {
-                log::error!("{app_type_str} 接管 Live 配置失败，尝试恢复: {e}");
-                match self.restore_live_config_for_app(&app).await {
-                    Ok(()) => {
-                        // 恢复成功才清理备份，避免失败场景下丢失唯一可回滚来源
-                        let _ = self.db.delete_live_backup(app_type_str).await;
-                    }
-                    Err(restore_err) => {
-                        log::error!(
-                            "{app_type_str} 恢复 Live 配置失败，将保留备份以便下次启动恢复: {restore_err}"
-                        );
-                    }
-                }
-                return Err(e);
-            }
-
-            // 6) 设置 proxy_config.enabled = true
-            let mut updated_config = self
-                .db
-                .get_proxy_config_for_app(app_type_str)
-                .await
-                .map_err(|e| format!("获取 {app_type_str} 配置失败: {e}"))?;
-            updated_config.enabled = true;
-            self.db
-                .update_proxy_config_for_app(updated_config)
-                .await
-                .map_err(|e| format!("设置 {app_type_str} enabled 状态失败: {e}"))?;
-
-            // 7) 兼容旧逻辑：写入 any-of 标志（失败不影响功能）
-            let _ = self.db.set_live_takeover_active(true).await;
-            return Ok(());
-        }
-
-        // 关闭接管：检查 enabled 状态
-        let current_config = self
-            .db
-            .get_proxy_config_for_app(app_type_str)
-            .await
-            .map_err(|e| format!("获取 {app_type_str} 配置失败: {e}"))?;
-
-        if !current_config.enabled {
-            return Ok(()); // 未接管，幂等返回
-        }
-
-        // 1) 恢复 Live 配置
-        self.restore_live_config_for_app(&app).await?;
-
-        // 2) 删除该 app 的备份（避免长期存储敏感 Token）
-        self.db
-            .delete_live_backup(app_type_str)
-            .await
-            .map_err(|e| format!("删除 {app_type_str} Live 备份失败: {e}"))?;
-
-        // 3) 设置 proxy_config.enabled = false
-        let mut updated_config = self
-            .db
-            .get_proxy_config_for_app(app_type_str)
-            .await
-            .map_err(|e| format!("获取 {app_type_str} 配置失败: {e}"))?;
-        updated_config.enabled = false;
-        self.db
-            .update_proxy_config_for_app(updated_config)
-            .await
-            .map_err(|e| format!("清除 {app_type_str} enabled 状态失败: {e}"))?;
-
-        // 4) 清除该应用的健康状态（关闭代理时重置队列状态）
-        self.db
-            .clear_provider_health_for_app(app_type_str)
-            .await
-            .map_err(|e| format!("清除 {app_type_str} 健康状态失败: {e}"))?;
-
-        // 5) 若无其它接管，更新旧标志，并停止代理服务
-        // 检查是否还有其它 app 的 enabled = true
-        let any_enabled = self
-            .db
-            .is_live_takeover_active()
-            .await
-            .map_err(|e| format!("检查接管状态失败: {e}"))?;
-
-        if !any_enabled {
-            let _ = self.db.set_live_takeover_active(false).await;
-
-            if self.is_running().await {
-                // 此时没有任何 app 处于接管状态，停止服务即可
-                let _ = self.stop().await;
-            }
-        }
-
+    pub async fn set_takeover_for_app(
+        &self,
+        _app_type: &str,
+        _enabled: bool,
+    ) -> Result<(), String> {
         Ok(())
     }
 
@@ -1221,29 +1069,8 @@ impl ProxyService {
         }
     }
 
-    pub fn detect_takeover_in_live_config_for_app(&self, app_type: &AppType) -> bool {
-        match app_type {
-            AppType::Claude => match self.read_claude_live() {
-                Ok(config) => Self::is_claude_live_taken_over(&config),
-                Err(_) => false,
-            },
-            AppType::Codex => match self.read_codex_live() {
-                Ok(config) => Self::is_codex_live_taken_over(&config),
-                Err(_) => false,
-            },
-            AppType::Gemini => match self.read_gemini_live() {
-                Ok(config) => Self::is_gemini_live_taken_over(&config),
-                Err(_) => false,
-            },
-            AppType::OpenCode => {
-                // OpenCode doesn't support proxy takeover
-                false
-            }
-            AppType::OpenClaw => {
-                // OpenClaw doesn't support proxy takeover
-                false
-            }
-        }
+    pub fn detect_takeover_in_live_config_for_app(&self, _app_type: &AppType) -> bool {
+        false
     }
 
     /// 当 Live 备份缺失时，尝试用 SSOT（当前供应商）写回 Live，以解除占位符接管。
@@ -1389,8 +1216,7 @@ impl ProxyService {
 
     /// 检查是否处于 Live 接管模式
     pub async fn is_takeover_active(&self) -> Result<bool, String> {
-        let status = self.get_takeover_status().await?;
-        Ok(status.claude || status.codex || status.gemini)
+        Ok(false)
     }
 
     /// 从异常退出中恢复（启动时调用）
@@ -1422,24 +1248,6 @@ impl ProxyService {
     /// 用于兜底处理：当数据库备份缺失但 Live 文件已经写成代理占位符时，
     /// 启动流程可以据此触发恢复逻辑。
     pub fn detect_takeover_in_live_configs(&self) -> bool {
-        if let Ok(config) = self.read_claude_live() {
-            if Self::is_claude_live_taken_over(&config) {
-                return true;
-            }
-        }
-
-        if let Ok(config) = self.read_codex_live() {
-            if Self::is_codex_live_taken_over(&config) {
-                return true;
-            }
-        }
-
-        if let Ok(config) = self.read_gemini_live() {
-            if Self::is_gemini_live_taken_over(&config) {
-                return true;
-            }
-        }
-
         false
     }
 
@@ -1622,22 +1430,9 @@ impl ProxyService {
         crate::settings::set_current_provider(&app_type_enum, Some(provider_id))
             .map_err(|e| format!("更新本地当前供应商失败: {e}"))?;
 
-        // 仅在确实处于接管状态时才更新 Live 备份，避免无接管时误写覆盖 Live
-        let has_backup = self
-            .db
-            .get_live_backup(app_type_enum.as_str())
-            .await
-            .ok()
-            .flatten()
-            .is_some();
-        let live_taken_over = self.detect_takeover_in_live_config_for_app(&app_type_enum);
-
         if let Ok(Some(provider)) = self.db.get_provider_by_id(provider_id, app_type) {
-            // 同步更新 Live 备份（用于 stop_with_restore 恢复）
-            if has_backup || live_taken_over {
-                self.update_live_backup_from_provider(app_type, &provider)
-                    .await?;
-            }
+            write_live_with_common_config(self.db.as_ref(), &app_type_enum, &provider)
+                .map_err(|e| format!("写入 Live 配置失败: {e}"))?;
 
             // 同步更新 ProxyStatus.active_targets（用于 UI 立即反映切换目标）
             if let Some(server) = self.server.read().await.as_ref() {
@@ -1647,7 +1442,7 @@ impl ProxyService {
             }
         }
 
-        log::info!("代理模式：已切换 {app_type} 的目标供应商为 {provider_id}");
+        log::info!("已切换 {app_type} 的目标供应商为 {provider_id}");
         Ok(())
     }
 
@@ -2133,7 +1928,7 @@ model = "gpt-5.1-codex"
 
     #[tokio::test]
     #[serial]
-    async fn switch_proxy_target_updates_live_backup_when_taken_over() {
+    async fn switch_proxy_target_updates_live_config() {
         let _home = TempHome::new();
         crate::settings::reload_settings().expect("reload settings");
 
@@ -2167,11 +1962,6 @@ model = "gpt-5.1-codex"
         db.set_current_provider("claude", "a")
             .expect("set current provider");
 
-        // 模拟"已接管"状态：存在 Live 备份（内容不重要，会被热切换更新）
-        db.save_live_backup("claude", "{\"env\":{}}")
-            .await
-            .expect("seed live backup");
-
         service
             .switch_proxy_target("claude", "b")
             .await
@@ -2183,14 +1973,16 @@ model = "gpt-5.1-codex"
             Some("b")
         );
 
-        // 断言：Live 备份已更新为目标供应商配置（用于 stop_with_restore 恢复）
-        let backup = db
-            .get_live_backup("claude")
-            .await
-            .expect("get live backup")
-            .expect("backup exists");
-        let expected = serde_json::to_string(&provider_b.settings_config).expect("serialize");
-        assert_eq!(backup.original_config, expected);
+        // 断言：Live 配置已写成目标供应商配置
+        let live_path = crate::config::get_claude_settings_path();
+        let live_config: Value = crate::config::read_json_file(&live_path).expect("read live");
+        assert_eq!(
+            live_config
+                .get("env")
+                .and_then(|v| v.get("ANTHROPIC_API_KEY"))
+                .and_then(|v| v.as_str()),
+            Some("b-key")
+        );
     }
 
     #[tokio::test]

@@ -1810,7 +1810,7 @@
         },
         "listenPort": {
           "label": "监听通訊埠",
-          "placeholder": "15721",
+          "placeholder": "17890",
           "description": "代理服務器监听的通訊埠号（1024 ~ 65535）"
         },
         "maxRetries": {

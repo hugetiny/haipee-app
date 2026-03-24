@@ -192,8 +192,11 @@ impl Database {
 
     /// 检查是否有任一应用开启了代理接管
     ///
-    /// **已废弃**: 请使用 `is_live_takeover_active()` 替代
-    #[deprecated(since = "3.9.0", note = "使用 is_live_takeover_active() 替代")]
+    /// **已废弃**: 请改为检查 `proxy_config.enabled`
+    #[deprecated(
+        since = "3.9.0",
+        note = "使用 get_proxy_config_for_app().enabled 替代"
+    )]
     pub fn has_any_proxy_takeover(&self) -> Result<bool, AppError> {
         let conn = lock_conn!(self.conn);
         let count: i64 = conn

@@ -34,10 +34,8 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
 
   const {
     isRunning: isProxyRunning,
-    takeoverStatus,
     status: proxyStatus,
   } = useProxyStatus();
-  const isCurrentAppTakeoverActive = takeoverStatus?.[appId] || false;
   const activeProviderId = proxyStatus?.active_targets?.find(
     (t) => t.app_type === appId,
   )?.provider_id;
@@ -126,7 +124,7 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
       <ProviderEditView
         provider={editingProvider}
         appId={appId}
-        isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+        isProxyTakeover={false}
         onBack={handleBackFromEdit}
         onSave={handleEditProvider}
       />
@@ -184,7 +182,7 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
             appId={appId}
             isLoading={isLoading}
             isProxyRunning={isProxyRunning}
-            isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+            isProxyTakeover={false}
             activeProviderId={activeProviderId}
             onSwitch={switchProvider}
             onEdit={setEditingProvider}

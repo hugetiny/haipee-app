@@ -239,7 +239,7 @@ command = "say"
 }
 
 #[test]
-fn sync_current_provider_for_app_keeps_live_takeover_and_updates_restore_backup() {
+fn sync_current_provider_for_app_always_writes_live_config() {
     let _guard = test_mutex().lock().expect("acquire test mutex");
     reset_test_fs();
     let _home = ensure_test_home();
@@ -281,7 +281,7 @@ fn sync_current_provider_for_app_keeps_live_takeover_and_updates_restore_backup(
         )
         .expect("set common config snippet");
 
-    let taken_over_live = json!({
+    let stale_live = json!({
         "env": {
             "ANTHROPIC_BASE_URL": "http://127.0.0.1:5000",
             "ANTHROPIC_AUTH_TOKEN": "PROXY_MANAGED"
@@ -291,18 +291,9 @@ fn sync_current_provider_for_app_keeps_live_takeover_and_updates_restore_backup(
     std::fs::create_dir_all(settings_path.parent().expect("settings dir")).expect("create dir");
     std::fs::write(
         &settings_path,
-        serde_json::to_string_pretty(&taken_over_live).expect("serialize taken over live"),
+        serde_json::to_string_pretty(&stale_live).expect("serialize stale live"),
     )
-    .expect("write taken over live");
-
-    futures::executor::block_on(state.db.save_live_backup("claude", "{\"env\":{}}"))
-        .expect("seed live backup");
-
-    let mut proxy_config = futures::executor::block_on(state.db.get_proxy_config_for_app("claude"))
-        .expect("get proxy config");
-    proxy_config.enabled = true;
-    futures::executor::block_on(state.db.update_proxy_config_for_app(proxy_config))
-        .expect("enable takeover");
+    .expect("write stale live");
 
     ProviderService::sync_current_provider_for_app(&state, AppType::Claude)
         .expect("sync current provider should succeed");
@@ -310,30 +301,19 @@ fn sync_current_provider_for_app_keeps_live_takeover_and_updates_restore_backup(
     let live_after: serde_json::Value =
         read_json_file(&settings_path).expect("read live settings after sync");
     assert_eq!(
-        live_after, taken_over_live,
-        "sync should not overwrite live config while takeover is active"
-    );
-
-    let backup = futures::executor::block_on(state.db.get_live_backup("claude"))
-        .expect("get live backup")
-        .expect("backup exists");
-    let backup_value: serde_json::Value =
-        serde_json::from_str(&backup.original_config).expect("parse backup value");
-
-    assert_eq!(
-        backup_value
+        live_after
             .get("includeCoAuthoredBy")
             .and_then(|v| v.as_bool()),
         Some(false),
-        "restore backup should receive the updated effective config"
+        "live config should include merged common snippet"
     );
     assert_eq!(
-        backup_value
+        live_after
             .get("env")
             .and_then(|v| v.get("ANTHROPIC_AUTH_TOKEN"))
             .and_then(|v| v.as_str()),
         Some("real-token"),
-        "restore backup should preserve the provider token rather than proxy placeholder"
+        "live config should be rewritten to provider token"
     );
 }
 

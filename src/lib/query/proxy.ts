@@ -28,28 +28,6 @@ export function useIsProxyRunning() {
   });
 }
 
-/**
- * 检查是否处于接管模式
- */
-export function useIsLiveTakeoverActive() {
-  return useQuery({
-    queryKey: ["liveTakeoverActive"],
-    queryFn: () => proxyApi.isLiveTakeoverActive(),
-    refetchInterval: 2000,
-  });
-}
-
-/**
- * 获取各应用接管状态
- */
-export function useProxyTakeoverStatus() {
-  return useQuery({
-    queryKey: ["proxyTakeoverStatus"],
-    queryFn: () => proxyApi.getProxyTakeoverStatus(),
-    refetchInterval: 2000,
-  });
-}
-
 // ========== 代理服务器控制 Hooks ==========
 
 /**
@@ -63,8 +41,6 @@ export function useStartProxyServer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["proxyStatus"] });
       queryClient.invalidateQueries({ queryKey: ["proxyRunning"] });
-      queryClient.invalidateQueries({ queryKey: ["liveTakeoverActive"] });
-      queryClient.invalidateQueries({ queryKey: ["proxyTakeoverStatus"] });
     },
   });
 }
@@ -80,24 +56,6 @@ export function useStopProxyServer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["proxyStatus"] });
       queryClient.invalidateQueries({ queryKey: ["proxyRunning"] });
-      queryClient.invalidateQueries({ queryKey: ["liveTakeoverActive"] });
-      queryClient.invalidateQueries({ queryKey: ["proxyTakeoverStatus"] });
-    },
-  });
-}
-
-/**
- * 设置应用接管状态
- */
-export function useSetProxyTakeoverForApp() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ appType, enabled }: { appType: string; enabled: boolean }) =>
-      proxyApi.setProxyTakeoverForApp(appType, enabled),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["proxyTakeoverStatus"] });
-      queryClient.invalidateQueries({ queryKey: ["liveTakeoverActive"] });
     },
   });
 }

@@ -42,10 +42,8 @@ export function ModelsPanel() {
 
   const {
     isRunning: isProxyRunning,
-    takeoverStatus,
     status: proxyStatus,
   } = useProxyStatus();
-  const isCurrentAppTakeoverActive = takeoverStatus?.[activeApp] || false;
   const activeProviderId = proxyStatus?.active_targets?.find(
     (t) => t.app_type === activeApp,
   )?.provider_id;
@@ -163,7 +161,7 @@ export function ModelsPanel() {
                   appId={activeApp}
                   isLoading={isLoading}
                   isProxyRunning={isProxyRunning}
-                  isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+                  isProxyTakeover={false}
                   activeProviderId={activeProviderId}
                   onSwitch={switchProvider}
                   onEdit={setEditingProvider}
@@ -203,7 +201,7 @@ export function ModelsPanel() {
         }}
         onSubmit={handleEditProvider}
         appId={activeApp}
-        isProxyTakeover={isProxyRunning && isCurrentAppTakeoverActive}
+        isProxyTakeover={false}
       />
 
       {/* Confirm Dialog */}

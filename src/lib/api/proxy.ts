@@ -3,7 +3,6 @@ import type {
   ProxyConfig,
   ProxyStatus,
   ProxyServerInfo,
-  ProxyTakeoverStatus,
   GlobalProxyConfig,
   AppProxyConfig,
 } from "@/types/proxy";
@@ -31,32 +30,12 @@ export const proxyApi = {
     return invoke("is_proxy_running");
   },
 
-  // 检查是否处于接管模式
-  async isLiveTakeoverActive(): Promise<boolean> {
-    return invoke("is_live_takeover_active");
-  },
-
   // 代理模式下切换供应商
   async switchProxyProvider(
     appType: string,
     providerId: string,
   ): Promise<void> {
     return invoke("switch_proxy_provider", { appType, providerId });
-  },
-
-  // ========== 接管状态 API ==========
-
-  // 获取各应用接管状态
-  async getProxyTakeoverStatus(): Promise<ProxyTakeoverStatus> {
-    return invoke("get_proxy_takeover_status");
-  },
-
-  // 为指定应用开启/关闭接管
-  async setProxyTakeoverForApp(
-    appType: string,
-    enabled: boolean,
-  ): Promise<void> {
-    return invoke("set_proxy_takeover_for_app", { appType, enabled });
   },
 
   // ========== Legacy 代理配置 API (兼容) ==========

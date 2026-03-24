@@ -42,7 +42,7 @@ impl Database {
                 Ok(GlobalProxyConfig {
                     proxy_enabled: false,
                     listen_address: "127.0.0.1".to_string(),
-                    listen_port: 15721,
+                    listen_port: 17890,
                     enable_logging: true,
                 })
             }
@@ -453,21 +453,6 @@ impl Database {
         // 不再使用此字段，由 enabled 字段替代
         // 保留空实现以兼容旧代码
         Ok(())
-    }
-
-    /// 检查是否处于 Live 接管模式
-    ///
-    /// 检查是否有任一 app 的 enabled = true
-    pub async fn is_live_takeover_active(&self) -> Result<bool, AppError> {
-        let conn = lock_conn!(self.conn);
-        let count: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM proxy_config WHERE enabled = 1",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| AppError::Database(e.to_string()))?;
-        Ok(count > 0)
     }
 
     // ==================== Provider Health ====================

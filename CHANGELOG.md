@@ -605,7 +605,7 @@ This release focuses on stability improvements and crash prevention.
 
 - **Proxy Panic Prevention** - Graceful degradation when HTTP client initialization fails due to invalid proxy settings; falls back to no_proxy mode (#560)
 - **UTF-8 Safety** - Fix potential panic when masking API keys or truncating logs containing multi-byte characters (Chinese, emoji, etc.) (#560)
-- **Default Proxy Port** - Change default port from 5000 to 15721 to avoid conflict with macOS AirPlay Receiver (#560)
+- **Default Proxy Port** - Change default port from 5000 to 17890 to avoid conflict with macOS AirPlay Receiver (#560)
 - **Windows Title** - Display "Haipee" instead of default "Tauri app" in window title
 - **Windows/Linux Spacing** - Remove extra 28px blank space below native titlebar introduced in v3.9.0
 - **Flatpak Tray Icon** - Bundle libayatana-appindicator for tray icon support on Flatpak (#556)

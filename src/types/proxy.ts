@@ -4,7 +4,6 @@ export interface ProxyConfig {
   max_retries: number;
   request_timeout: number;
   enable_logging: boolean;
-  live_takeover_active?: boolean;
   // 超时配置
   streaming_first_byte_timeout: number;
   streaming_idle_timeout: number;
@@ -39,14 +38,6 @@ export interface ProxyServerInfo {
   address: string;
   port: number;
   started_at: string;
-}
-
-export interface ProxyTakeoverStatus {
-  claude: boolean;
-  codex: boolean;
-  gemini: boolean;
-  opencode: boolean;
-  openclaw: boolean;
 }
 
 export interface ProviderHealth {

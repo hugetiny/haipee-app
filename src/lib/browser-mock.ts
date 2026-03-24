@@ -35,8 +35,6 @@ if (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__) {
       // Proxy & Failover commands
       if (cmd === "get_proxy_status")
         return { running: false, port: 0, address: "127.0.0.1" };
-      if (cmd === "get_proxy_takeover_status")
-        return { claude: false, codex: false, gemini: false };
       if (cmd === "get_failover_queue") return [];
       if (cmd === "get_available_providers_for_failover") return [];
       if (cmd === "get_circuit_breaker_config")

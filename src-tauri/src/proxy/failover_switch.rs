@@ -5,7 +5,7 @@
 //! - 数据库更新
 //! - 托盘菜单更新
 //! - 前端事件发射
-//! - Live 备份更新
+//! - Live 配置同步
 
 use crate::database::Database;
 use crate::error::AppError;
@@ -81,18 +81,17 @@ impl FailoverSwitchManager {
         provider_id: &str,
         provider_name: &str,
     ) -> Result<bool, AppError> {
-        // 检查该应用是否已被代理接管（enabled=true）
-        // 只有被接管的应用才允许执行故障转移切换
-        let app_enabled = match self.db.get_proxy_config_for_app(app_type).await {
-            Ok(config) => config.enabled,
+        // 仅在该应用开启自动故障转移时执行切换
+        let auto_failover_enabled = match self.db.get_proxy_config_for_app(app_type).await {
+            Ok(config) => config.auto_failover_enabled,
             Err(e) => {
                 log::warn!("[FO-002] 无法读取 {app_type} 配置: {e}，跳过切换");
                 return Ok(false);
             }
         };
 
-        if !app_enabled {
-            log::debug!("[Failover] {app_type} 未启用代理，跳过切换");
+        if !auto_failover_enabled {
+            log::debug!("[Failover] {app_type} 未开启自动故障转移，跳过切换");
             return Ok(false);
         }
 
@@ -110,14 +109,14 @@ impl FailoverSwitchManager {
         if let Some(app) = app_handle {
             // 更新托盘菜单
             if let Some(app_state) = app.try_state::<crate::store::AppState>() {
-                // 更新 Live 备份（确保代理停止时恢复正确配置）
+                // 同步写回 Live 配置，确保应用侧立即使用新的供应商
                 if let Ok(Some(provider)) = self.db.get_provider_by_id(provider_id, app_type) {
-                    if let Err(e) = app_state
-                        .proxy_service
-                        .update_live_backup_from_provider(app_type, &provider)
-                        .await
-                    {
-                        log::warn!("[FO-003] Live 备份更新失败: {e}");
+                    if let Err(e) = crate::services::provider::write_live_with_common_config(
+                        self.db.as_ref(),
+                        &app_type_enum,
+                        &provider,
+                    ) {
+                        log::warn!("[FO-003] Live 配置更新失败: {e}");
                     }
                 }
 

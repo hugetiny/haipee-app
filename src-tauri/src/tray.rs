@@ -219,7 +219,7 @@ fn handle_auto_click(app: &tauri::AppHandle, app_type: &AppType) -> Result<(), A
             .map(|item| item.provider_id.clone())
             .ok_or_else(|| AppError::Message("故障转移队列为空，无法启用 Auto 模式".to_string()))?;
 
-        // 真正启用 failover：启动代理服务 + 执行接管 + 开启 auto_failover
+        // 真正启用 failover：启动代理服务 + 开启 auto_failover
         let proxy_service = &app_state.proxy_service;
 
         // 1) 确保代理服务运行（会自动设置 proxy_enabled = true）
@@ -232,21 +232,12 @@ fn handle_auto_click(app: &tauri::AppHandle, app_type: &AppType) -> Result<(), A
             }
         }
 
-        // 2) 执行 Live 配置接管（确保该 app 被代理接管）
-        log::info!("[Tray] Auto 模式：对 {app_type_str} 执行接管");
-        if let Err(e) =
-            futures::executor::block_on(proxy_service.set_takeover_for_app(app_type_str, true))
-        {
-            log::error!("[Tray] 执行接管失败: {e}");
-            return Err(AppError::Message(format!("执行接管失败: {e}")));
-        }
-
-        // 3) 设置 auto_failover_enabled = true
+        // 2) 设置 auto_failover_enabled = true
         app_state
             .db
             .set_proxy_flags_sync(app_type_str, true, true)?;
 
-        // 3.1) 立即切到队列 P1（热切换：不写 Live，仅更新 DB/settings/备份）
+        // 2.1) 立即切到队列 P1（更新 DB/settings/Live）
         if let Err(e) = futures::executor::block_on(
             proxy_service.switch_proxy_target(app_type_str, &p1_provider_id),
         ) {
@@ -256,14 +247,14 @@ fn handle_auto_click(app: &tauri::AppHandle, app_type: &AppType) -> Result<(), A
             )));
         }
 
-        // 4) 更新托盘菜单
+        // 3) 更新托盘菜单
         if let Ok(new_menu) = create_tray_menu(app, app_state.inner()) {
             if let Some(tray) = app.tray_by_id("main") {
                 let _ = tray.set_menu(Some(new_menu));
             }
         }
 
-        // 5) 发射事件到前端
+        // 4) 发射事件到前端
         let event_data = serde_json::json!({
             "appType": app_type_str,
             "proxyEnabled": true,
