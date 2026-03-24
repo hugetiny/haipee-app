@@ -18,7 +18,7 @@ export class WebDavPage extends CrabNebulaBasePage {
     }
 
     // Click on sync/webdav tab
-    const webdavTab = await $('[data-testid="settings-tab-sync"], [data-testid="settings-tab-webdav"], button:contains("同步"), button:contains("Sync")');
+    const webdavTab = await $('[data-testid="settings-tab-sync"], [data-testid="settings-tab-webdav"]');
     if (await webdavTab.isExisting()) {
       await webdavTab.click();
       await browser.pause(300);
@@ -126,7 +126,7 @@ export class WebDavPage extends CrabNebulaBasePage {
    * Save WebDAV settings
    */
   async saveSettings(): Promise<void> {
-    const saveBtn = await $('[data-testid="webdav-save-btn"], button:contains("保存"), button:contains("Save")');
+    const saveBtn = await $('[data-testid="webdav-save-btn"], button[data-testid="save-btn"]');
     if (await saveBtn.isExisting()) {
       await saveBtn.click();
       await browser.pause(500);

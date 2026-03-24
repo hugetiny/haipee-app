@@ -164,7 +164,7 @@ describe('Sessions – Create Operations', () => {
   });
 
   it('should show create session button', async () => {
-    const createBtn = await $('[data-testid="session-create-btn"], button:contains("新建"), button:contains("New")');
+    const createBtn = await $('[data-testid="session-create-btn"]');
     const hasBtn = await createBtn.isExisting();
     expect(typeof hasBtn).toBe('boolean');
   });
@@ -267,7 +267,7 @@ describe('Sessions – Delete Operations', () => {
   });
 
   it('should cancel delete operation', async () => {
-    const cancelBtn = await $('[data-testid="confirm-cancel"], button:contains("取消"), button:contains("Cancel")');
+    const cancelBtn = await $('[data-testid="confirm-cancel"]');
     if (await cancelBtn.isExisting()) {
       await cancelBtn.click();
       await browser.pause(300);
@@ -282,7 +282,7 @@ describe('Sessions – Delete Operations', () => {
       await deleteBtnArray[0].click();
       await browser.pause(500);
 
-      const confirmBtn = await $('[data-testid="confirm-ok"], button:contains("确认"), button:contains("Confirm")');
+      const confirmBtn = await $('[data-testid="confirm-ok"]');
       if (await confirmBtn.isExisting()) {
         await confirmBtn.click();
         await browser.pause(500);

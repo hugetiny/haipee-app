@@ -87,13 +87,13 @@ describe('WebDAV Settings – Sync Operations', () => {
   });
 
   it('should show sync button', async () => {
-    const syncBtn = await $('[data-testid="webdav-sync-btn"], button:contains("同步"), button:contains("Sync")');
+    const syncBtn = await $('[data-testid="webdav-sync-btn"]');
     const hasBtn = await syncBtn.isExisting();
     expect(typeof hasBtn).toBe('boolean');
   });
 
   it('should show test connection button', async () => {
-    const testBtn = await $('[data-testid="webdav-test-btn"], button:contains("测试"), button:contains("Test")');
+    const testBtn = await $('[data-testid="webdav-test-btn"]');
     const hasBtn = await testBtn.isExisting();
     expect(typeof hasBtn).toBe('boolean');
   });

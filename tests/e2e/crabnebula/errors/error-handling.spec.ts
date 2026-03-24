@@ -55,7 +55,7 @@ describe('Error Handling – Network Errors', () => {
   });
 
   it('should retry failed operations', async () => {
-    const retryBtn = await $('[data-testid="retry-btn"], button:contains("重试"), button:contains("Retry")');
+    const retryBtn = await $('[data-testid="retry-btn"]');
     const hasRetry = await retryBtn.isExisting();
     expect(typeof hasRetry).toBe('boolean');
   });
@@ -68,7 +68,7 @@ describe('Error Handling – Validation Errors', () => {
   });
 
   it('should show validation error for empty required fields', async () => {
-    const addBtn = await $('[data-testid="provider-add-btn"], button:contains("添加")');
+    const addBtn = await $('[data-testid="provider-add-btn"]');
     if (await addBtn.isExisting()) {
       await addBtn.click();
       await browser.pause(500);
@@ -147,7 +147,7 @@ describe('Error Handling – Recovery', () => {
   });
 
   it('should allow retry after error', async () => {
-    const retryBtn = await $('[data-testid="retry-btn"], button:contains("重试"), button:contains("Retry")');
+    const retryBtn = await $('[data-testid="retry-btn"]');
     if (await retryBtn.isExisting()) {
       await retryBtn.click();
       await browser.pause(500);

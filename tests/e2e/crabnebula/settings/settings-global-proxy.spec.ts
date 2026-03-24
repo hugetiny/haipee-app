@@ -121,7 +121,7 @@ describe('Global Proxy – UI Integration', () => {
   });
 
   it('should show test connection button', async () => {
-    const testBtn = await $('[data-testid="test-global-proxy-btn"], button:contains("测试代理"), button:contains("Test Proxy")');
+    const testBtn = await $('[data-testid="test-global-proxy-btn"]');
     const hasBtn = await testBtn.isExisting();
     expect(typeof hasBtn).toBe('boolean');
   });
@@ -133,7 +133,7 @@ describe('Global Proxy – UI Integration', () => {
   });
 
   it('should show clear proxy button', async () => {
-    const clearBtn = await $('[data-testid="clear-global-proxy-btn"], button:contains("清除"), button:contains("Clear")');
+    const clearBtn = await $('[data-testid="clear-global-proxy-btn"]');
     const hasClear = await clearBtn.isExisting();
     expect(typeof hasClear).toBe('boolean');
   });

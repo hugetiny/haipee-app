@@ -120,7 +120,7 @@ describe('Environment Variables – Warning Banner', () => {
   it('should have delete button on banner', async () => {
     const banner = await $('[data-testid="env-warning-banner"]');
     if (await banner.isExisting()) {
-      const deleteBtn = await banner.$('button:contains("删除"), button:contains("Delete"), [data-testid="delete-env-btn"]');
+      const deleteBtn = await banner.$('[data-testid="delete-env-btn"], button[data-testid="delete-btn"]');
       const hasDelete = await deleteBtn.isExisting();
       expect(typeof hasDelete).toBe('boolean');
     }
