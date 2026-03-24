@@ -69,22 +69,20 @@ export const config = defineConfig({
   runner: 'local',
 
   specs: [
-    // Feature-based test directories
-    './tests/e2e/tauri/providers/*.spec.ts',
-    './tests/e2e/tauri/settings/*.spec.ts',
-    './tests/e2e/tauri/agents/*.spec.ts',
-    './tests/e2e/tauri/skills/*.spec.ts',
-    './tests/e2e/tauri/mcp/*.spec.ts',
-    './tests/e2e/tauri/prompts/*.spec.ts',
-    './tests/e2e/tauri/sessions/*.spec.ts',
-    './tests/e2e/tauri/navigation/*.spec.ts',
-    './tests/e2e/tauri/openclaw/*.spec.ts',
-    './tests/e2e/tauri/universal/*.spec.ts',
-    // Legacy tests (kept for backwards compatibility)
-    './tests/e2e/tauri/flows/*.spec.ts',
-    './tests/e2e/tauri/views/*.spec.ts',
-    // Channel communication E2E tests
-    './tests/e2e/tauri/channel-communication.spec.ts',
+    // Feature-based test directories (same suite as CrabNebula — shared canonical tests)
+    './tests/e2e/crabnebula/providers/*.spec.ts',
+    './tests/e2e/crabnebula/settings/*.spec.ts',
+    './tests/e2e/crabnebula/agents/*.spec.ts',
+    './tests/e2e/crabnebula/skills/*.spec.ts',
+    './tests/e2e/crabnebula/mcp/*.spec.ts',
+    './tests/e2e/crabnebula/prompts/*.spec.ts',
+    './tests/e2e/crabnebula/sessions/*.spec.ts',
+    './tests/e2e/crabnebula/navigation/*.spec.ts',
+    './tests/e2e/crabnebula/openclaw/*.spec.ts',
+    './tests/e2e/crabnebula/universal/*.spec.ts',
+    './tests/e2e/crabnebula/flows/*.spec.ts',
+    './tests/e2e/crabnebula/views/*.spec.ts',
+    './tests/e2e/crabnebula/channel-communication.spec.ts',
   ],
   exclude: [],
   maxInstances: 1, // Only one Tauri window at a time

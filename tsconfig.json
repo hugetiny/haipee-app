@@ -20,5 +20,6 @@
     },
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src/**/*", "tests/**/*", "*.d.ts"]
+  "include": ["src/**/*", "tests/**/*", "*.d.ts"],
+  "exclude": ["tests/e2e/**/*"]
 }

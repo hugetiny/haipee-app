@@ -2,9 +2,8 @@
 //!
 //! Manages Haipee's OpenClaw profile directory (~/.openclaw-haipee/).
 //!
-//! On first startup, copies the entire .openclaw folder to .openclaw-haipee
-//! to ensure the profile has all necessary folders (skills, memory, workspace, etc.)
-//! After that, Haipee uses its own profile independently.
+//! On first startup, creates a fresh minimal profile with default configuration.
+//! After initialization, Haipee uses its own profile independently.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -15,9 +14,6 @@ pub const PROFILE_NAME: &str = "haipee";
 
 /// Default gateway port for Haipee (different from main OpenClaw's 18789)
 pub const DEFAULT_GATEWAY_PORT: u16 = 18770;
-
-/// Directories to skip when copying (logs, temp files, etc.)
-const SKIP_DIRS: &[&str] = &["logs"];
 
 // ============================================================================
 // Profile Management
@@ -30,13 +26,6 @@ pub fn get_profile_dir() -> PathBuf {
         .join(format!(".openclaw-{}", PROFILE_NAME))
 }
 
-/// Get the main OpenClaw directory path
-fn get_main_openclaw_dir() -> PathBuf {
-    dirs::home_dir()
-        .expect("Cannot find home directory")
-        .join(".openclaw")
-}
-
 /// Check if the profile directory exists
 pub fn profile_exists() -> bool {
     get_profile_dir().exists()
@@ -44,151 +33,31 @@ pub fn profile_exists() -> bool {
 
 /// Initialize the Haipee OpenClaw profile
 ///
-/// One-time operation: copies the entire .openclaw folder to .openclaw-haipee.
-/// If .openclaw-haipee already exists, skips copying (profile is already initialized).
-/// After initialization, Haipee uses its own profile independently.
+/// Creates a fresh minimal profile at ~/.openclaw-haipee/ with default configuration.
+/// If the profile already exists, this is a no-op.
 pub fn init_profile() -> Result<PathBuf, String> {
     let profile_dir = get_profile_dir();
-    let main_dir = get_main_openclaw_dir();
 
-    // One-time check: if profile already exists, don't copy again
     if profile_dir.exists() {
         log::info!(
-            "[OpenClawProfile] Profile already exists at {:?}, skipping copy",
+            "[OpenClawProfile] Profile already exists at {:?}",
             profile_dir
         );
         return Ok(profile_dir);
     }
 
     log::info!(
-        "[OpenClawProfile] Initializing profile at {:?}",
+        "[OpenClawProfile] Creating fresh profile at {:?}",
         profile_dir
     );
-
-    // Check if main OpenClaw exists
-    if main_dir.exists() {
-        log::info!(
-            "[OpenClawProfile] Copying entire .openclaw folder from {:?}",
-            main_dir
-        );
-        copy_dir_contents(&main_dir, &profile_dir)?;
-    } else {
-        log::info!("[OpenClawProfile] Main OpenClaw not found, creating minimal profile");
-        create_minimal_profile(&profile_dir)?;
-    }
-
-    // Update gateway port to avoid conflict with main OpenClaw
+    create_minimal_profile(&profile_dir)?;
     update_gateway_port(&profile_dir)?;
 
     log::info!("[OpenClawProfile] Profile initialized successfully");
     Ok(profile_dir)
 }
 
-/// Copy all contents from source directory to destination
-fn copy_dir_contents(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
-    fs::create_dir_all(dst).map_err(|e| format!("Failed to create directory {:?}: {}", dst, e))?;
-
-    for entry in
-        fs::read_dir(src).map_err(|e| format!("Failed to read directory {:?}: {}", src, e))?
-    {
-        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
-        let name = entry.file_name().to_string_lossy().to_string();
-        let src_path = entry.path();
-        let dst_path = dst.join(&name);
-
-        // Skip logs and other temp directories
-        if SKIP_DIRS.contains(&name.as_str()) {
-            continue;
-        }
-
-        let ty = entry
-            .file_type()
-            .map_err(|e| format!("Failed to get file type: {}", e))?;
-
-        if ty.is_dir() {
-            log::info!("[OpenClawProfile] Copying directory: {}", name);
-            copy_dir_all(&src_path, &dst_path)?;
-        } else {
-            log::info!("[OpenClawProfile] Copying file: {}", name);
-            fs::copy(&src_path, &dst_path)
-                .map_err(|e| format!("Failed to copy {:?}: {}", src_path, e))?;
-        }
-    }
-
-    Ok(())
-}
-
-/// Recursively copy a directory, preserving symlinks
-fn copy_dir_all(src: &PathBuf, dst: &PathBuf) -> Result<(), String> {
-    fs::create_dir_all(dst).map_err(|e| format!("Failed to create directory {:?}: {}", dst, e))?;
-
-    for entry in
-        fs::read_dir(src).map_err(|e| format!("Failed to read directory {:?}: {}", src, e))?
-    {
-        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
-        let file_name = entry.file_name();
-        let src_path = entry.path();
-        let dst_path = dst.join(&file_name);
-
-        // Check if it's a symlink
-        let metadata = fs::symlink_metadata(&src_path)
-            .map_err(|e| format!("Failed to get metadata for {:?}: {}", src_path, e))?;
-
-        if metadata.file_type().is_symlink() {
-            // Copy symlink itself (preserve the link structure)
-            let link_target = fs::read_link(&src_path)
-                .map_err(|e| format!("Failed to read symlink {:?}: {}", src_path, e))?;
-
-            // Remove existing file/link if present
-            if dst_path.exists() || dst_path.symlink_metadata().is_ok() {
-                fs::remove_file(&dst_path)
-                    .map_err(|e| format!("Failed to remove existing {:?}: {}", dst_path, e))?;
-            }
-
-            #[cfg(unix)]
-            {
-                std::os::unix::fs::symlink(&link_target, &dst_path).map_err(|e| {
-                    format!(
-                        "Failed to create symlink {:?} -> {:?}: {}",
-                        dst_path, link_target, e
-                    )
-                })?;
-            }
-            #[cfg(windows)]
-            {
-                // On Windows, need to check if target is a directory
-                let is_dir = link_target.is_absolute()
-                    && fs::metadata(&link_target)
-                        .map(|m| m.is_dir())
-                        .unwrap_or(false);
-                if is_dir {
-                    std::os::windows::fs::symlink_dir(&link_target, &dst_path).map_err(|e| {
-                        format!(
-                            "Failed to create symlink {:?} -> {:?}: {}",
-                            dst_path, link_target, e
-                        )
-                    })?;
-                } else {
-                    std::os::windows::fs::symlink_file(&link_target, &dst_path).map_err(|e| {
-                        format!(
-                            "Failed to create symlink {:?} -> {:?}: {}",
-                            dst_path, link_target, e
-                        )
-                    })?;
-                }
-            }
-        } else if metadata.is_dir() {
-            copy_dir_all(&src_path, &dst_path)?;
-        } else {
-            fs::copy(&src_path, &dst_path)
-                .map_err(|e| format!("Failed to copy {:?}: {}", src_path, e))?;
-        }
-    }
-
-    Ok(())
-}
-
-/// Create a minimal profile when main OpenClaw doesn't exist
+/// Create a minimal profile with default configuration
 fn create_minimal_profile(profile_dir: &Path) -> Result<(), String> {
     // Create essential directory structure
     let dirs = [

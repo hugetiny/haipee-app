@@ -60,7 +60,10 @@ export const config = {
     },
   }],
 
-  reporters: [CrabNebulaCloudReporter],
+  reporters: [
+    'spec',
+    ...(process.env.CN_API_KEY ? [CrabNebulaCloudReporter] : []),
+  ],
   framework: 'mocha',
 
   mochaOpts: {
@@ -74,8 +77,13 @@ export const config = {
     // macOS requires test-runner-backend with CN_API_KEY (must start BEFORE tauri-driver)
     if (process.platform === 'darwin') {
       if (!process.env.CN_API_KEY) {
-        console.error('CN_API_KEY is not set, required for CrabNebula Webdriver on macOS');
-        process.exit(1);
+        console.error('');
+        console.error('⚠️  CN_API_KEY is required for CrabNebula Webdriver on macOS.');
+        console.error('   The test-runner-backend process cannot start without it.');
+        console.error('   Get your key at https://app.crabnebula.dev and set CN_API_KEY=<key>.');
+        console.error('   Alternatively, run "bun run test:e2e:tauri" to use the webdriver fallback.');
+        console.error('');
+        throw new Error('CN_API_KEY required on macOS for CrabNebula driver');
       }
 
       const { waitTestRunnerBackendReady } = await import('@crabnebula/test-runner-backend');

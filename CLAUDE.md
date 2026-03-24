@@ -48,27 +48,27 @@ bun run gen:test              # 生成测试文件模板
 bun run test:unit
 bun run test:unit:watch        # 监听模式
 
-# Rust 后端测试（cargo test）
-cargo test --manifest-path src-tauri/Cargo.toml
+# 集成测试（cargo test + vitest，合并为一层）
+bun run test:integration
 
-# Tauri WebView E2E（真实 WKWebView，通过 tauri-plugin-webdriver）
-bun run test:e2e:tauri:build   # 首次需要编译（约 2-3 分钟）
-bun run test:e2e:tauri         # 运行 WebdriverIO 测试
+# E2E 测试（CrabNebula tauri-driver，首次需编译）
+bun run test:e2e:build         # 编译带 automation feature 的二进制（约 2-3 分钟）
+CN_API_KEY=xxx bun run test:e2e  # 运行 E2E（macOS 需要 CN_API_KEY）
 
-# 运行特定测试层
-bun run test:layer <layer>     # layer: unit, rust, integration, tauri-e2e
+# 回退选项（无 CN_API_KEY 时使用）
+bun run test:e2e:tauri:build   # 编译带 webdriver feature 的二进制
+bun run test:e2e:tauri         # 运行 WebdriverIO（tauri-plugin-webdriver）
 
-# AI 自主开发循环（4层测试 + Claude 自动修复）
+# AI 自主开发循环（3层测试 + Claude 自动修复）
 bun run ai:dev                 # 启动循环
 bun run ai:dev:resume          # 从最新检查点恢复
 bun run ai:dev:dry             # 演练（不提交修复）
 bun run ai:dev:checkpoints     # 列出所有检查点
 ```
 
-> **Tauri E2E 前置条件（macOS）：**
-> ```bash
-> sudo safaridriver --enable   # 只需执行一次
-> ```
+> **E2E 前置条件（macOS）：**
+> CrabNebula driver 需要 `CN_API_KEY`，获取地址：https://app.crabnebula.dev
+> 未设置 CN_API_KEY 时，AI dev loop 自动回退到 `wdio.conf.ts`（tauri-plugin-webdriver）。
 
 ---
 
@@ -152,9 +152,9 @@ tests/                      # JS/TS 测试
   config/                   # 配置预设测试
   msw/                      # Mock Service Worker 配置
   integration/              # 集成测试
-  e2e/tauri/                # Tauri WebView E2E（WebdriverIO）
-    providers/              # 供应商测试（5 个 spec 文件，50 个测试）
-    settings/               # 设置测试（6 个 spec 文件，78 个测试）
+  e2e/crabnebula/           # Tauri WebView E2E（CrabNebula tauri-driver）
+    providers/              # 供应商测试
+    settings/               # 设置测试
     agents/                 # 代理测试
     skills/                 # 技能测试
     mcp/                    # MCP 服务器测试
@@ -165,7 +165,8 @@ tests/                      # JS/TS 测试
     universal/              # 统一供应商测试
     flows/                  # 端到端流程测试
     views/                  # 视图测试
-    pages/                  # Page Object Models（13 个页面对象）
+    user-journeys/          # 用户旅程测试
+    pages/                  # Page Object Models（14 个页面对象）
     fixtures/               # 测试数据生成器
     setup/                  # 测试启动/清理
   setupGlobals.ts           # 全局测试设置
@@ -173,7 +174,7 @@ tests/                      # JS/TS 测试
 
 scripts/ai-dev-loop/        # AI 自主开发循环
   index.ts                  # CLI 入口
-  loop.ts                   # 主循环逻辑（4 层测试迭代）
+  loop.ts                   # 主循环逻辑（3 层测试迭代）
   test-runner.ts            # 各层测试执行器
   failure-parser.ts         # 错误解析（Vitest/Cargo/WebdriverIO）
   fix-orchestrator.ts       # 调用 claude CLI 自动修复
@@ -216,59 +217,50 @@ Rust 端用 `#[tauri::command]` 注解，在 `lib.rs` 中通过 `.invoke_handler
 
 ### Page Object Models
 
-位于 `tests/e2e/tauri/pages/`，共 13 个页面对象：
+位于 `tests/e2e/crabnebula/pages/`，共 14 个页面对象：
 
-- `TauriBasePage.ts` - 基础页面对象，提供通用方法
+- `CrabNebulaBasePage.ts` - 基础页面对象，提供通用方法（isDisplayed() 正常工作，无 WKWebView 限制）
 - `NavigationPage.ts` - 导航和 App 切换
-- `ProviderPage.ts` - 供应商管理
+- `DashboardPage.ts` - 供应商管理（CRUD、搜索、切换）
 - `SettingsPage.ts` - 设置面板
 - `SessionManagerPage.ts` - 会话管理
 - `PromptsPage.ts` - 提示词管理
 - `SkillsPage.ts` - 技能列表
-- `McpServersPage.ts` - MCP 服务器
-- `AgentsPage.ts` - 代理管理
-- `OpenClawGatewayPage.ts` - OpenClaw 网关
-- `OpenClawChannelsPage.ts` - OpenClaw 频道
-- `OpenClawSkillsMcpPage.ts` - OpenClaw Skills/MCP
+- `McpPage.ts` - MCP 服务器
+- `AgentConfigPage.ts` - 代理配置
+- `OpenClawChatPage.ts` - OpenClaw 聊天
+- `OpenClawPages.ts` - OpenClaw 网关/频道/Skills-MCP
 - `UniversalProviderPage.ts` - 统一供应商
+- `WebDavPage.ts` - WebDAV 配置
 
-### WKWebView 兼容性
+### 元素定位约定
 
-Tauri E2E 测试在 macOS 上使用 WKWebView（WebKit），有以下限制：
-
-1. **不支持 `:has-text()` 伪选择器** - 在 `wdio.conf.ts` 中通过 `browser.execute()` 实现文本搜索
-2. **`isDisplayed()` 始终返回 false** - 通过检查 CSS 属性（display, visibility, opacity）判断可见性
-3. **元素查找** - 使用 `data-testid` 属性作为主要选择器
+所有 E2E 测试使用 `data-testid` 属性定位元素：
 
 ```typescript
-// 示例：通过 data-testid 查找元素
+// 通过 data-testid 查找元素
 const btn = await $('[data-testid="provider-add-btn"]');
 
-// 示例：检查元素可见性
-const isVisible = await browser.execute((sel) => {
-  const el = document.querySelector(sel);
-  if (!el) return false;
-  const style = window.getComputedStyle(el);
-  return style.display !== 'none' && style.visibility !== 'hidden';
-}, '[data-testid="my-element"]');
+// CrabNebula driver 支持标准 isDisplayed()
+const visible = await btn.isDisplayed();
 ```
 
 ---
 
 ## AI 自主开发循环
 
-`scripts/ai-dev-loop/` 实现了一个 10 小时无人值守的自修复开发循环，按优先级依次运行 4 个测试层：
+`scripts/ai-dev-loop/` 实现了一个 10 小时无人值守的自修复开发循环，按优先级依次运行 3 个测试层：
 
 | 优先级 | 层名 | 命令 | 超时 |
 |--------|------|------|------|
 | 1 | `unit` | `bun vitest run` | 2 分钟 |
-| 2 | `rust` | `cargo test --manifest-path src-tauri/Cargo.toml` | 5 分钟 |
-| 3 | `integration` | `bun vitest run tests/integration` | 5 分钟 |
-| 4 | `tauri-e2e` | `bunx wdio run wdio.conf.ts` | 30 分钟 |
+| 2 | `integration` | `bun run test:integration`（cargo + vitest） | 10 分钟 |
+| 3 | `e2e` | CrabNebula `wdio.crabnebula.conf.ts`（或 webdriver 回退） | 30 分钟 |
 
 **跳过规则：**
-- `integration` 在 unit 失败时跳过
-- `tauri-e2e` 在 rust 或 integration 失败时跳过（二进制不可信）
+- `e2e` 在 unit 或 integration 失败时跳过（二进制不可信）
+
+**E2E 自动选择：** 设置了 `CN_API_KEY` 时使用 CrabNebula driver，macOS 未设置时自动回退到 `wdio.conf.ts`。
 
 **修复流程：** 解析失败 → 构建上下文（源文件 + 错误）→ 调用 `claude -p <prompt>` → 应用 XML 文件块 → 重跑测试 → 失败则回滚
 
@@ -277,31 +269,32 @@ const isVisible = await browser.execute((sel) => {
 ## Cargo Features
 
 ```toml
-webdriver = ["tauri-plugin-webdriver"]   # 启用 WebDriver E2E 端点（port 4445）
+automation = ["tauri-plugin-automation"]  # CrabNebula E2E（推荐，port 4444）
+webdriver  = ["tauri-plugin-webdriver"]   # 回退 E2E（port 4445，无 CN_API_KEY 时用）
 test-hooks = []                          # 测试专用 hook（集成测试用）
 ```
 
-构建带 WebDriver 支持的二进制：
+构建带 CrabNebula 支持的二进制（推荐）：
 ```bash
-cargo build --manifest-path src-tauri/Cargo.toml --features webdriver
+bun run test:e2e:build
+# 等价于：bunx tauri build --debug --no-bundle -- --features automation
 ```
 
-### tauri-plugin-webdriver 说明
+构建带 webdriver 回退的二进制：
+```bash
+bun run test:e2e:tauri:build
+```
 
-**作用**：在 Tauri 应用内启动一个 WebDriver 兼容的 HTTP 服务器（默认端口 4445），允许 WebdriverIO 等测试框架直接控制 WebView。
+### E2E 测试方式对比
 
-**为什么需要它**：
-- macOS 使用 WKWebView（WebKit），没有独立的 WebDriver 可执行文件
-- Linux 使用 WRY WebView（基于 WebKitGTK），同样需要内置 WebDriver
-- tauri-plugin-webdriver 让 Tauri 应用自己暴露 WebDriver 协议
-
-**工作原理**：
-1. 编译时启用 `--features webdriver`
-2. 应用启动后，插件在内部启动 WebDriver 服务器（port 4445）
-3. WebdriverIO 连接 `127.0.0.1:4445`，发送标准 WebDriver 命令
-4. 插件将命令转发给 WebView，执行 DOM 操作、截图等
-
-**注意**：`bun run test:e2e:tauri:build` 会自动编译带 webdriver feature 的二进制。
+| | CrabNebula (`automation`) | tauri-plugin-webdriver (`webdriver`) |
+|---|---|---|
+| **端口** | 4444 | 4445 |
+| **macOS 前置** | `CN_API_KEY` + test-runner-backend | `sudo safaridriver --enable` |
+| **成熟度** | 高（CrabNebula 官方维护） | 中（社区 fork） |
+| **AI dev loop** | 默认（CN_API_KEY 存在时） | 回退（macOS 无 CN_API_KEY） |
+| **WDIO 配置** | `wdio.crabnebula.conf.ts` | `wdio.conf.ts` |
+| **测试目录** | `tests/e2e/crabnebula/` | `tests/e2e/tauri/` |
 
 ---
 

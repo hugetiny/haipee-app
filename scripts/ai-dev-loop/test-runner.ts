@@ -16,12 +16,12 @@ export async function runTestLayer(config: TestLayerConfig, options: RunOptions 
   const startTime = Date.now();
 
   try {
-    if (config.name === 'unit' || config.name === 'integration') {
+    if (config.name === 'unit') {
       return await runVitestLayer(config, options);
-    } else if (config.name === 'rust') {
-      return await runCargoTestLayer(config);
-    } else if (config.name === 'tauri-e2e') {
-      return await runTauriE2ELayer(config);
+    } else if (config.name === 'integration') {
+      return await runIntegrationLayer(config, options);
+    } else if (config.name === 'e2e') {
+      return await runE2ELayer(config);
     }
     throw new Error(`Unknown test layer: ${config.name}`);
   } catch (error) {
@@ -67,25 +67,53 @@ async function runVitestLayer(config: TestLayerConfig, options: RunOptions): Pro
   return result;
 }
 
-async function runCargoTestLayer(config: TestLayerConfig): Promise<TestLayerResult> {
+async function runIntegrationLayer(config: TestLayerConfig, options: RunOptions): Promise<TestLayerResult> {
   const startTime = Date.now();
-  const cmd = 'cargo';
-  const args = ['test', '--manifest-path', 'src-tauri/Cargo.toml', '--', '--test-output', 'immediate'];
 
-  log('info', `Executing: ${cmd} ${args.join(' ')}`);
-  const { stdout, exitCode } = await executeCommand(cmd, args, config.timeout);
+  // Run Rust backend tests first
+  log('info', 'Executing: cargo test --manifest-path src-tauri/Cargo.toml -- --test-output immediate');
+  const cargoResult = await executeCommand(
+    'cargo',
+    ['test', '--manifest-path', 'src-tauri/Cargo.toml', '--', '--test-output', 'immediate'],
+    Math.floor(config.timeout * 0.5), // half the budget for cargo
+  );
 
-  // Cargo test output: "test result: FAILED. N passed; M failed; ..."
-  const resultMatch = stdout.match(/test result:.*?(\d+) passed;\s*(\d+) failed/);
-  const passed = parseInt(resultMatch?.[1] || '0', 10);
-  const failed = parseInt(resultMatch?.[2] || '0', 10);
-  // count ignored as skipped
-  const ignoredMatch = stdout.match(/(\d+) ignored/);
-  const skipped = parseInt(ignoredMatch?.[1] || '0', 10);
+  const cargoResultMatch = cargoResult.stdout.match(/test result:.*?(\d+) passed;\s*(\d+) failed/);
+  const cargoIgnoredMatch = cargoResult.stdout.match(/(\d+) ignored/);
+  const cargoPassed = parseInt(cargoResultMatch?.[1] || '0', 10);
+  const cargoFailed = parseInt(cargoResultMatch?.[2] || '0', 10);
+  const cargoSkipped = parseInt(cargoIgnoredMatch?.[1] || '0', 10);
+  log('info', `rust (cargo): ${cargoPassed}/${cargoPassed + cargoFailed} passed (${cargoFailed} failed)`);
 
-  const result: TestLayerResult = { passed, failed, skipped, duration: Date.now() - startTime, tests: [], rawOutput: stdout };
-  const total = passed + failed + skipped;
-  log('info', `rust results: ${passed}/${total} passed (${failed} failed) in ${result.duration}ms`);
+  // Run JS integration tests
+  const vitestArgs = ['vitest', 'run', '--reporter=verbose'];
+  if (options.targetTest) {
+    vitestArgs.push(options.targetTest);
+  } else {
+    vitestArgs.push('tests/integration');
+  }
+  log('info', `Executing: bun ${vitestArgs.join(' ')}`);
+  const vitestResult = await executeCommand('bun', vitestArgs, Math.floor(config.timeout * 0.5));
+
+  const vitestPassedMatch = vitestResult.stdout.match(/(\d+) passed/);
+  const vitestFailedMatch = vitestResult.stdout.match(/(\d+) failed/);
+  const vitestSkippedMatch = vitestResult.stdout.match(/(\d+) skipped/);
+  const vitestPassed = parseInt(vitestPassedMatch?.[1] || '0', 10);
+  const vitestFailed = parseInt(vitestFailedMatch?.[1] || '0', 10);
+  const vitestSkipped = parseInt(vitestSkippedMatch?.[1] || '0', 10);
+  log('info', `js (vitest):  ${vitestPassed}/${vitestPassed + vitestFailed} passed (${vitestFailed} failed)`);
+
+  const result: TestLayerResult = {
+    passed: cargoPassed + vitestPassed,
+    failed: cargoFailed + vitestFailed,
+    skipped: cargoSkipped + vitestSkipped,
+    duration: Date.now() - startTime,
+    tests: [],
+    rawOutput: `=== CARGO ===\n${cargoResult.stdout}\n=== VITEST ===\n${vitestResult.stdout}`,
+  };
+
+  const total = result.passed + result.failed + result.skipped;
+  log('info', `integration total: ${result.passed}/${total} passed (${result.failed} failed) in ${result.duration}ms`);
 
   return result;
 }
@@ -120,9 +148,12 @@ function executeCommand(cmd: string, args: string[], timeout: number): Promise<{
 
 export async function runSingleTest(testPath: string, timeout: number = 120000): Promise<{ passed: boolean; output: string }> {
   log('info', `Running single test: ${testPath}`);
-  const isTauriE2E = testPath.includes('e2e/tauri');
+  const isTauriE2E = testPath.includes('e2e/');
   const cmd = isTauriE2E ? 'bunx' : 'bun';
-  const args = isTauriE2E ? ['wdio', 'run', 'wdio.conf.ts', '--spec', testPath] : ['vitest', 'run', testPath];
+  const wdioConf = process.env.CN_API_KEY || process.platform !== 'darwin'
+    ? 'wdio.crabnebula.conf.ts'
+    : 'wdio.conf.ts';
+  const args = isTauriE2E ? ['wdio', 'run', wdioConf, '--spec', testPath] : ['vitest', 'run', testPath];
 
   try {
     const { stdout, exitCode } = await executeCommand(cmd, args, timeout);
@@ -132,7 +163,7 @@ export async function runSingleTest(testPath: string, timeout: number = 120000):
   }
 }
 
-async function runTauriE2ELayer(config: TestLayerConfig): Promise<TestLayerResult> {
+async function runE2ELayer(config: TestLayerConfig): Promise<TestLayerResult> {
   const startTime = Date.now();
 
   // Import process manager for crash detection
@@ -150,7 +181,7 @@ async function runTauriE2ELayer(config: TestLayerConfig): Promise<TestLayerResul
   }
 
   const cmd = 'bunx';
-  const args = ['wdio', 'run', 'wdio.conf.ts'];
+  const args = ['wdio', 'run', config.command.includes('crabnebula') ? 'wdio.crabnebula.conf.ts' : 'wdio.conf.ts'];
 
   log('info', `Executing: ${cmd} ${args.join(' ')}`);
   const { stdout, exitCode } = await executeCommand(cmd, args, config.timeout);
@@ -209,7 +240,7 @@ async function runTauriE2ELayer(config: TestLayerConfig): Promise<TestLayerResul
   };
 
   const total = passed + failed + skipped;
-  log('info', `tauri-e2e results: ${passed}/${total} passed (${failed} failed) in ${result.duration}ms`);
+  log('info', `e2e results: ${passed}/${total} passed (${failed} failed) in ${result.duration}ms`);
 
   // Reset restart count on successful iteration
   if (failed === 0) {
@@ -219,25 +250,21 @@ async function runTauriE2ELayer(config: TestLayerConfig): Promise<TestLayerResul
   return result;
 }
 
-function getFailureLayer(failure: TestFailure): 'unit' | 'rust' | 'integration' | 'tauri-e2e' {
+function getFailureLayer(failure: TestFailure): 'unit' | 'integration' | 'e2e' {
   const fp = failure.filePath.replace(/\\/g, '/');
-  if (fp.includes('/e2e/tauri')) return 'tauri-e2e';
-  if (fp.includes('/integration/')) return 'integration';
-  if (fp.includes('src-tauri') || fp.endsWith('.rs')) return 'rust';
+  if (fp.includes('/e2e/')) return 'e2e';
+  if (fp.includes('/integration/') || fp.includes('src-tauri') || fp.endsWith('.rs')) return 'integration';
   return 'unit';
 }
 
 export function shouldSkipLayer(layer: TestLayerConfig, pendingFailures: TestFailure[]): boolean {
-  // rust tests cover the Tauri backend — independent of JS unit/integration failures
-  if (layer.name === 'unit' || layer.name === 'rust') return false;
+  // unit and integration always run
+  if (layer.name === 'unit' || layer.name === 'integration') return false;
 
   const blockers = pendingFailures.filter((f) => {
     const failureLayer = getFailureLayer(f);
-    // Skip integration if JS unit tests are red
-    if (layer.name === 'integration') return failureLayer === 'unit';
-    // Skip Tauri WebView E2E if Rust OR integration layer has failures
-    // (a broken Rust backend means the binary won't behave correctly)
-    if (layer.name === 'tauri-e2e') return failureLayer === 'rust' || failureLayer === 'integration';
+    // Skip e2e if integration layer has failures (broken backend / API = unreliable binary)
+    if (layer.name === 'e2e') return failureLayer === 'integration' || failureLayer === 'unit';
     return false;
   });
 

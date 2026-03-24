@@ -248,7 +248,7 @@ export function detectFlakyTests(failures: TestFailure[], history: TestFailure[]
  * Mocha spec format (abbreviated):
  *   N) Suite name test name:
  *      Error: <message>
- *        at Context.<anonymous> (tests/e2e/tauri/app.spec.ts:28:7)
+ *        at Context.<anonymous> (tests/e2e/crabnebula/app.spec.ts:28:7)
  */
 export function parseWdioFailures(output: string): TestFailure[] {
   const failures: TestFailure[] = [];
@@ -264,7 +264,7 @@ export function parseWdioFailures(output: string): TestFailure[] {
     // Find the source file reference from the stack trace
     const stackLine = lines.find((l) => l.includes('.spec.ts') || l.includes('.spec.js'));
     const fileMatch = stackLine?.match(/\((.+?\.spec\.[jt]s):(\d+)/);
-    const filePath = fileMatch ? fileMatch[1] : 'tests/e2e/tauri/unknown.spec.ts';
+    const filePath = fileMatch ? fileMatch[1] : 'tests/e2e/crabnebula/unknown.spec.ts';
 
     // Error message is typically on the line after the title
     const errorLine = lines.find((l) => l.trim().startsWith('Error:') || l.trim().startsWith('AssertionError:'));
@@ -287,6 +287,44 @@ export function parseWdioFailures(output: string): TestFailure[] {
   }
 
   return failures;
+}
+
+/**
+ * Parse integration layer failures: combines cargo test output (=== CARGO ===)
+ * and vitest output (=== VITEST ===) from the merged rawOutput.
+ */
+export function parseIntegrationFailures(output: string): TestFailure[] {
+  const cargoMarker = output.indexOf('=== CARGO ===');
+  const vitestMarker = output.indexOf('=== VITEST ===');
+
+  let cargoOutput = '';
+  let vitestOutput = '';
+
+  if (cargoMarker !== -1 && vitestMarker !== -1) {
+    cargoOutput = output.slice(cargoMarker + '=== CARGO ==='.length, vitestMarker);
+    vitestOutput = output.slice(vitestMarker + '=== VITEST ==='.length);
+  } else {
+    // Fallback: try to parse as one or the other based on content
+    if (output.includes('test result:') || output.includes('FAILED.')) {
+      cargoOutput = output;
+    } else {
+      vitestOutput = output;
+    }
+  }
+
+  const cargoFailures = cargoOutput ? parseCargoTestFailures(cargoOutput) : [];
+  const vitestFailures = vitestOutput ? parseVitestFailures(vitestOutput) : [];
+
+  // Deduplicate by test name
+  const seen = new Set<string>();
+  const all: TestFailure[] = [];
+  for (const f of [...cargoFailures, ...vitestFailures]) {
+    if (!seen.has(f.testName)) {
+      seen.add(f.testName);
+      all.push(f);
+    }
+  }
+  return all;
 }
 
 function classifyWdioErrorType(errorSection: string): FailureType {

@@ -6,8 +6,18 @@ import type { LoopConfig, Checkpoint, TestFailure, ResolvedFailure, SkippedFailu
 import { initLogger, log, logSection, logProgress, logAlert } from './logger.ts';
 import { generateRunId, getGitCommit, createCheckpoint, saveCheckpoint, loadCheckpoint, shouldCreateCheckpoint, createGitSnapshot } from './checkpoint.ts';
 import { runTestLayer, shouldSkipLayer } from './test-runner.ts';
-import { parseVitestFailures, parseCargoTestFailures, parseWdioFailures, detectFlakyTests } from './failure-parser.ts';
+import { parseVitestFailures, parseIntegrationFailures, parseWdioFailures, detectFlakyTests } from './failure-parser.ts';
 import { fixFailure, validateFix, rollbackChanges } from './fix-orchestrator.ts';
+
+// Detect the correct E2E command based on environment.
+// On macOS without CN_API_KEY, falls back to tauri-plugin-webdriver.
+function getE2ECommand(): string {
+  const hasCNKey = !!process.env.CN_API_KEY;
+  if (process.platform === 'darwin' && !hasCNKey) {
+    return 'bunx wdio run wdio.conf.ts';
+  }
+  return 'bunx wdio run wdio.crabnebula.conf.ts';
+}
 
 const DEFAULT_CONFIG: LoopConfig = {
   maxDurationHours: 10,
@@ -17,15 +27,13 @@ const DEFAULT_CONFIG: LoopConfig = {
   layers: [
     // 1. Fast JS unit tests (React components / hooks / utils)
     { name: 'unit', command: 'bun vitest run', timeout: 120000, priority: 1 },
-    // 2. Rust backend tests (Tauri commands, config, MCP — cargo test in src-tauri/)
-    //    Independent of JS layers; runs in parallel priority with integration.
-    { name: 'rust', command: 'cargo test --manifest-path src-tauri/Cargo.toml', timeout: 300000, priority: 2 },
-    // 3. JS integration tests (includes API provider tests)
-    { name: 'integration', command: 'bun vitest run tests/integration', timeout: 300000, priority: 3 },
-    // 4. Tauri WebView E2E — tests the REAL Tauri binary via tauri-plugin-webdriver.
-    //    Build: cargo build --features webdriver (cached; only rebuilds on Rust source change).
-    //    skipped when rust OR integration failures are present.
-    { name: 'tauri-e2e', command: 'bunx wdio run wdio.conf.ts', timeout: 1800000, priority: 4 },
+    // 2. Integration: Rust backend (cargo test) + JS integration tests (vitest)
+    //    Combined into one layer — both test app internals before launching the real binary.
+    { name: 'integration', command: 'bun run test:integration', timeout: 600000, priority: 2 },
+    // 3. E2E: CrabNebula tauri-driver (preferred) or tauri-plugin-webdriver fallback.
+    //    Requires binary built with --features automation (or webdriver for fallback).
+    //    Skipped when integration layer has failures.
+    { name: 'e2e', command: getE2ECommand(), timeout: 1800000, priority: 3 },
   ],
 };
 
@@ -54,6 +62,18 @@ export async function runAutonomousLoop(config: Partial<LoopConfig> = {}): Promi
   log('info', `Git commit: ${getGitCommit()}`);
   log('info', `Max duration: ${fullConfig.maxDurationHours} hours`);
   log('info', `Dry run: ${fullConfig.dryRun}`);
+
+  // Log which E2E approach is active
+  const e2eLayer = fullConfig.layers.find((l) => l.name === 'e2e');
+  if (e2eLayer) {
+    const usingFallback = e2eLayer.command.includes('wdio.conf.ts') && !e2eLayer.command.includes('crabnebula');
+    if (usingFallback) {
+      log('warn', 'E2E: CN_API_KEY not set on macOS — using tauri-plugin-webdriver fallback');
+      log('warn', '     Set CN_API_KEY to use CrabNebula driver (recommended)');
+    } else {
+      log('info', 'E2E: Using CrabNebula tauri-driver');
+    }
+  }
 
   let state: LoopState;
 
@@ -95,17 +115,16 @@ export async function runAutonomousLoop(config: Partial<LoopConfig> = {}): Promi
 
       const totalTests =
         state.testResults.unit.passed + state.testResults.unit.failed +
-        state.testResults.rust.passed + state.testResults.rust.failed +
         state.testResults.integration.passed + state.testResults.integration.failed +
-        state.testResults.tauri_e2e.passed + state.testResults.tauri_e2e.failed;
+        state.testResults.e2e.passed + state.testResults.e2e.failed;
       const totalPassed =
-        state.testResults.unit.passed + state.testResults.rust.passed +
+        state.testResults.unit.passed +
         state.testResults.integration.passed +
-        state.testResults.tauri_e2e.passed;
+        state.testResults.e2e.passed;
       const totalFailed =
-        state.testResults.unit.failed + state.testResults.rust.failed +
+        state.testResults.unit.failed +
         state.testResults.integration.failed +
-        state.testResults.tauri_e2e.failed;
+        state.testResults.e2e.failed;
 
       logProgress(state.iteration, totalTests, totalPassed, totalFailed);
       await sleep(5000);
@@ -134,17 +153,15 @@ async function runTestIterations(state: LoopState, config: LoopConfig): Promise<
 
     log('info', `Running ${layer.name} tests...`);
     const result = await runTestLayer(layer, { targetTest: config.targetTest });
-    // Map layer name to state key (tauri-e2e → tauri_e2e due to JS identifier rules)
-    const stateKey = layer.name === 'tauri-e2e' ? 'tauri_e2e' : layer.name;
-    state.testResults[stateKey] = result;
+    state.testResults[layer.name as keyof typeof state.testResults] = result;
 
     if (result.failed > 0 && result.rawOutput) {
       log('info', `${result.failed} tests failed in ${layer.name} layer, parsing failures...`);
 
       let rawFailures;
-      if (layer.name === 'rust') {
-        rawFailures = parseCargoTestFailures(result.rawOutput);
-      } else if (layer.name === 'tauri-e2e') {
+      if (layer.name === 'integration') {
+        rawFailures = parseIntegrationFailures(result.rawOutput);
+      } else if (layer.name === 'e2e') {
         rawFailures = parseWdioFailures(result.rawOutput);
       } else {
         rawFailures = parseVitestFailures(result.rawOutput);
@@ -268,9 +285,8 @@ function shouldContinue(state: LoopState, config: LoopConfig): boolean {
 
   const allTestsPassing =
     state.testResults.unit.failed === 0 &&
-    state.testResults.rust.failed === 0 &&
     state.testResults.integration.failed === 0 &&
-    state.testResults.tauri_e2e.failed === 0;
+    state.testResults.e2e.failed === 0;
 
   const noPendingFailures = state.pendingFailures.length === 0;
 
@@ -304,9 +320,8 @@ function createInitialState(runId: string): LoopState {
     lastCheckpointTime: Date.now(),
     testResults: {
       unit: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
-      rust: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
       integration: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
-      tauri_e2e: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
+      e2e: { passed: 0, failed: 0, skipped: 0, duration: 0, tests: [] },
     },
     pendingFailures: [],
     resolvedFailures: [],
@@ -335,17 +350,16 @@ function restoreStateFromCheckpoint(checkpoint: Checkpoint, runId: string): Loop
 function updateStats(state: LoopState): void {
   const totalTests =
     state.testResults.unit.passed + state.testResults.unit.failed +
-    state.testResults.rust.passed + state.testResults.rust.failed +
     state.testResults.integration.passed + state.testResults.integration.failed +
-    state.testResults.tauri_e2e.passed + state.testResults.tauri_e2e.failed;
+    state.testResults.e2e.passed + state.testResults.e2e.failed;
   const totalPassed =
-    state.testResults.unit.passed + state.testResults.rust.passed +
+    state.testResults.unit.passed +
     state.testResults.integration.passed +
-    state.testResults.tauri_e2e.passed;
+    state.testResults.e2e.passed;
   const totalFailed =
-    state.testResults.unit.failed + state.testResults.rust.failed +
+    state.testResults.unit.failed +
     state.testResults.integration.failed +
-    state.testResults.tauri_e2e.failed;
+    state.testResults.e2e.failed;
 
   state.stats.totalTestsRun = totalTests;
   state.stats.totalTestsPassed = totalPassed;
