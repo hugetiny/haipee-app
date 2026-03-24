@@ -29,8 +29,11 @@ export abstract class CrabNebulaBasePage {
   async invokeIPC<T = unknown>(command: string, args?: Record<string, unknown>): Promise<T> {
     return browser.execute(
       async (cmd, cmdArgs) => {
-        const { invoke } = (window as any).__TAURI__.core;
-        return invoke(cmd, cmdArgs);
+        const tauri = (window as any).__TAURI__;
+        if (!tauri?.core?.invoke) {
+          throw new Error(`Tauri IPC not available. Make sure the app is running with Tauri context.`);
+        }
+        return tauri.core.invoke(cmd, cmdArgs);
       },
       command,
       args ?? {}
