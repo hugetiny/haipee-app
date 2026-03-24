@@ -274,14 +274,7 @@ export class NavigationPage extends CrabNebulaBasePage {
     }
   }
 
-  /**
-   * Check if current page has specific heading
-   */
-  async hasHeading(text: string): Promise<boolean> {
-    const heading = await $(`h1*="${text}", h2*="${text}", h3*="${text}"`);
-    return heading.isExisting();
-  }
-
+  
   /**
    * Get current view from localStorage
    */

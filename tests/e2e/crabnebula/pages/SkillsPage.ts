@@ -50,7 +50,7 @@ export class SkillsPage extends CrabNebulaBasePage {
    */
   async installSkill(skillId: string): Promise<void> {
     // Look for install button for the skill
-    const installButton = await $(`button[data-skill="${skillId}"], button[aria-label*="Install ${skillId}"], button*="Install"]`);
+    const installButton = await $(`button[data-skill="${skillId}"], button[aria-label*="Install ${skillId}"]`);
     if (await installButton.isExisting()) {
       await installButton.click();
       await browser.pause(500);
@@ -66,16 +66,25 @@ export class SkillsPage extends CrabNebulaBasePage {
       const text = await card.getText();
       if (text.includes(name)) {
         const uninstallButton = await card.$(
-          'button[aria-label*="卸载"], button[aria-label*="Uninstall"], button*="卸载"], button*="Uninstall"]'
+          'button[aria-label*="卸载"], button[aria-label*="Uninstall"]'
         );
         if (await uninstallButton.isExisting()) {
           await uninstallButton.click();
           await browser.pause(300);
 
-          // Confirm uninstallation
-          const confirmButton = await $('button*="确认"], button*="Confirm"], button*="Yes"]');
-          if (await confirmButton.isExisting()) {
-            await confirmButton.click();
+          // Confirm uninstallation using browser.execute
+          const confirmed = await browser.execute(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const confirmBtn = buttons.find(b =>
+              b.textContent?.includes('确认') || b.textContent?.includes('Confirm') || b.textContent?.includes('Yes')
+            );
+            if (confirmBtn) {
+              (confirmBtn as HTMLElement).click();
+              return true;
+            }
+            return false;
+          });
+          if (confirmed) {
             await browser.pause(500);
           }
         }
@@ -112,7 +121,7 @@ export class SkillsPage extends CrabNebulaBasePage {
       const text = await card.getText();
       if (text.includes(name)) {
         const backupButton = await card.$(
-          'button[aria-label*="备份"], button[aria-label*="Backup"], button*="备份"]'
+          'button[aria-label*="备份"], button[aria-label*="Backup"]'
         );
         if (await backupButton.isExisting()) {
           await backupButton.click();
@@ -132,7 +141,7 @@ export class SkillsPage extends CrabNebulaBasePage {
       const text = await card.getText();
       if (text.includes(name)) {
         const restoreButton = await card.$(
-          'button[aria-label*="恢复"], button[aria-label*="Restore"], button*="恢复"]'
+          'button[aria-label*="恢复"], button[aria-label*="Restore"]'
         );
         if (await restoreButton.isExisting()) {
           await restoreButton.click();
@@ -147,7 +156,7 @@ export class SkillsPage extends CrabNebulaBasePage {
    * Import skill from zip file
    */
   async importFromZip(_filePath: string): Promise<void> {
-    const importButton = await $('button[aria-label*="导入"], button*="Import"], button*="导入"]');
+    const importButton = await $('button[aria-label*="导入"], [data-testid="import-btn"]');
     if (await importButton.isExisting()) {
       await importButton.click();
       await browser.pause(300);
@@ -159,7 +168,7 @@ export class SkillsPage extends CrabNebulaBasePage {
    * Import skill from another app
    */
   async importFromApp(app: AppId): Promise<void> {
-    const importButton = await $(`button[aria-label*="Import from ${app}"], button*="从${app}导入"]`);
+    const importButton = await $(`button[aria-label*="Import from ${app}"]`);
     if (await importButton.isExisting()) {
       await importButton.click();
       await browser.pause(500);

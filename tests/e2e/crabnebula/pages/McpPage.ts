@@ -50,10 +50,11 @@ export class McpPage extends CrabNebulaBasePage {
    * Click add server button
    */
   async clickAddServer(): Promise<void> {
-    const addButton = await $('button[aria-label*="添加"], button*="Add Server", button*="添加服务器"]');
-    await addButton.waitForClickable({ timeout: 5000 });
-    await addButton.click();
-    await browser.pause(300);
+    const addButton = await $('button[aria-label*="添加"], [data-testid="add-server-btn"]');
+    if (await addButton.isExisting()) {
+      await addButton.click();
+      await browser.pause(300);
+    }
   }
 
   /**
@@ -88,19 +89,41 @@ export class McpPage extends CrabNebulaBasePage {
    * Save server
    */
   async saveServer(): Promise<void> {
-    const saveButton = await $('button[type="submit"], button*="保存", button*="Save"]');
-    await saveButton.waitForClickable({ timeout: 5000 });
-    await saveButton.click();
-    await browser.pause(500);
+    const saveButton = await $('button[type="submit"], [data-testid="save-btn"]');
+    if (await saveButton.isExisting()) {
+      await saveButton.click();
+      await browser.pause(500);
+    } else {
+      // Fallback: find by text
+      const clicked = await browser.execute(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        const btn = buttons.find(b => b.textContent?.includes('保存') || b.textContent?.includes('Save'));
+        if (btn) {
+          (btn as HTMLElement).click();
+          return true;
+        }
+        return false;
+      });
+      if (clicked) await browser.pause(500);
+    }
   }
 
   /**
    * Cancel server form
    */
   async cancelServerForm(): Promise<void> {
-    const cancelButton = await $('button*="取消"], button*="Cancel"]');
-    if (await cancelButton.isExisting()) {
-      await cancelButton.click();
+    const clicked = await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const cancelBtn = buttons.find(b =>
+        b.textContent?.includes('取消') || b.textContent?.includes('Cancel')
+      );
+      if (cancelBtn) {
+        (cancelBtn as HTMLElement).click();
+        return true;
+      }
+      return false;
+    });
+    if (clicked) {
       await browser.pause(300);
     }
   }
@@ -122,15 +145,24 @@ export class McpPage extends CrabNebulaBasePage {
     for (const card of cards) {
       const text = await card.getText();
       if (text.includes(name)) {
-        const deleteButton = await card.$('button[aria-label*="删除"], button[aria-label*="Delete"], button*="删除"]');
+        const deleteButton = await card.$('button[aria-label*="删除"], button[aria-label*="Delete"]');
         if (await deleteButton.isExisting()) {
           await deleteButton.click();
           await browser.pause(300);
 
-          // Confirm deletion
-          const confirmButton = await $('button*="确认"], button*="Confirm"], button*="Yes"]');
-          if (await confirmButton.isExisting()) {
-            await confirmButton.click();
+          // Confirm deletion using browser.execute
+          const confirmed = await browser.execute(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const confirmBtn = buttons.find(b =>
+              b.textContent?.includes('确认') || b.textContent?.includes('Confirm') || b.textContent?.includes('Yes')
+            );
+            if (confirmBtn) {
+              (confirmBtn as HTMLElement).click();
+              return true;
+            }
+            return false;
+          });
+          if (confirmed) {
             await browser.pause(500);
           }
         }
@@ -184,7 +216,7 @@ export class McpPage extends CrabNebulaBasePage {
     for (const card of cards) {
       const text = await card.getText();
       if (text.includes(name)) {
-        const editButton = await card.$('button[aria-label*="编辑"], button[aria-label*="Edit"], button*="编辑"]');
+        const editButton = await card.$('button[aria-label*="编辑"], button[aria-label*="Edit"]');
         if (await editButton.isExisting()) {
           await editButton.click();
           await browser.pause(300);

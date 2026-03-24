@@ -200,7 +200,7 @@ describe('Provider Lifecycle Flow', () => {
           const text = await card.getText();
           if (text.includes(originalName)) {
             const editBtn = await card.$(
-              'button[aria-label*="编辑"], button[aria-label*="Edit"], button*="编辑"'
+              'button[aria-label*="编辑"], button[aria-label*="Edit"]'
             );
             if (await editBtn.isExisting()) {
               await editBtn.click();
@@ -213,7 +213,7 @@ describe('Provider Lifecycle Flow', () => {
                 await browser.pause(200);
 
                 // Save
-                const saveBtn = await $('button[type="submit"], button*="保存"]');
+                const saveBtn = await $('button[type="submit"], [data-testid="save-btn"]');
                 if (await saveBtn.isExisting()) {
                   await saveBtn.click();
                   await browser.pause(500);
