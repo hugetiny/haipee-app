@@ -218,6 +218,7 @@ impl ProxyService {
     ///
     /// 在清空 Live Token 之前调用，确保数据库中的 Provider 配置有最新的 Token。
     /// 这样代理才能从数据库读取到正确的认证信息。
+    #[allow(dead_code)]
     async fn sync_live_to_provider(&self, app_type: &AppType) -> Result<(), String> {
         let live_config = match app_type {
             AppType::Claude => self.read_claude_live()?,
@@ -623,6 +624,7 @@ impl ProxyService {
     }
 
     /// 备份指定应用的 Live 配置（严格模式：目标配置不存在则返回错误）
+    #[allow(dead_code)]
     async fn backup_live_config_strict(&self, app_type: &AppType) -> Result<(), String> {
         let (app_type_str, config) = match app_type {
             AppType::Claude => ("claude", self.read_claude_live()?),
@@ -767,6 +769,7 @@ impl ProxyService {
     }
 
     /// 接管指定应用的 Live 配置（严格模式：目标配置不存在则返回错误）
+    #[allow(dead_code)]
     async fn takeover_live_config_strict(&self, app_type: &AppType) -> Result<(), String> {
         let (proxy_url, proxy_codex_base_url) = self.build_proxy_urls().await?;
 
@@ -947,6 +950,7 @@ impl ProxyService {
     }
 
     /// 恢复指定应用的 Live 配置（若无备份则不做任何操作）
+    #[allow(dead_code)]
     async fn restore_live_config_for_app(&self, app_type: &AppType) -> Result<(), String> {
         match app_type {
             AppType::Claude => {
@@ -1251,6 +1255,7 @@ impl ProxyService {
         false
     }
 
+    #[allow(dead_code)]
     fn is_claude_live_taken_over(config: &Value) -> bool {
         let env = match config.get("env").and_then(|v| v.as_object()) {
             Some(env) => env,
@@ -1271,6 +1276,7 @@ impl ProxyService {
         false
     }
 
+    #[allow(dead_code)]
     fn is_codex_live_taken_over(config: &Value) -> bool {
         let auth = match config.get("auth").and_then(|v| v.as_object()) {
             Some(auth) => auth,
@@ -1279,6 +1285,7 @@ impl ProxyService {
         auth.get("OPENAI_API_KEY").and_then(|v| v.as_str()) == Some(PROXY_TOKEN_PLACEHOLDER)
     }
 
+    #[allow(dead_code)]
     fn is_gemini_live_taken_over(config: &Value) -> bool {
         let env = match config.get("env").and_then(|v| v.as_object()) {
             Some(env) => env,
