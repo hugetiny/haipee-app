@@ -14,7 +14,7 @@ export class SettingsPage extends TauriBasePage {
     // Try native WebDriver click first (most reliable in WKWebView)
     let navigated = false;
     try {
-      const btn = await $('[data-testid="settings-nav-btn"]');
+      const btn = await $('[data-testid="nav-btn-settings"], [data-testid="settings-nav-btn"]');
       if (await btn.isExisting()) {
         await btn.click();
         navigated = true;
@@ -23,10 +23,22 @@ export class SettingsPage extends TauriBasePage {
 
     if (!navigated) {
       navigated = await browser.execute(() => {
+        const byTestId = document.querySelector('[data-testid="nav-btn-settings"], [data-testid="settings-nav-btn"]');
+        if (byTestId) {
+          (byTestId as HTMLElement).click();
+          return true;
+        }
+
         const allButtons = Array.from(document.querySelectorAll('button[type="button"]'));
         for (const btn of allButtons) {
           const ariaLabel = btn.getAttribute('aria-label') || '';
-          if (ariaLabel.includes('设置') || ariaLabel.toLowerCase().includes('setting')) {
+          const title = btn.getAttribute('title') || '';
+          if (
+            ariaLabel.includes('设置') ||
+            ariaLabel.toLowerCase().includes('setting') ||
+            title.includes('设置') ||
+            title.toLowerCase().includes('setting')
+          ) {
             (btn as HTMLElement).click();
             return true;
           }
@@ -64,7 +76,7 @@ export class SettingsPage extends TauriBasePage {
     // Strategy 1: Native WebDriver click (most reliable in WKWebView)
     let clicked = false;
     try {
-      const tab = await $(`[role="tab"][id$="-trigger-${tabKey}"]`);
+      const tab = await $(`[data-testid="settings-tab-${tabKey}"], [role="tab"][id$="-trigger-${tabKey}"]`);
       if (await tab.isExisting()) {
         await tab.click();
         clicked = true;
@@ -74,10 +86,15 @@ export class SettingsPage extends TauriBasePage {
     // Strategy 2: JavaScript click fallback
     if (!clicked) {
       clicked = await browser.execute((key) => {
-        const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+        const tabs = Array.from(document.querySelectorAll('[role="tab"], [data-testid^="settings-tab-"]'));
         for (const tab of tabs) {
           const id = tab.getAttribute('id') || '';
           if (id.endsWith('-trigger-' + key)) {
+            (tab as HTMLElement).click();
+            return true;
+          }
+          const testId = tab.getAttribute('data-testid') || '';
+          if (testId === `settings-tab-${key}`) {
             (tab as HTMLElement).click();
             return true;
           }
@@ -101,11 +118,12 @@ export class SettingsPage extends TauriBasePage {
       await browser.waitUntil(
         async () => {
           const isActive = await browser.execute((key) => {
-            const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+            const tabs = Array.from(document.querySelectorAll('[role="tab"], [data-testid^="settings-tab-"]'));
             for (const tab of tabs) {
               const id = tab.getAttribute('id') || '';
+              const testId = tab.getAttribute('data-testid') || '';
               const val = tab.getAttribute('data-value') || tab.getAttribute('value') || '';
-              if (id.endsWith('-trigger-' + key) || val === key) {
+              if (id.endsWith('-trigger-' + key) || val === key || testId === `settings-tab-${key}`) {
                 return (
                   tab.getAttribute('data-state') === 'active' ||
                   tab.getAttribute('aria-selected') === 'true'

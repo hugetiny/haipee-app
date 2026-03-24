@@ -220,6 +220,7 @@ export function ProviderActions({
         onClick={handleMainButtonClick}
         disabled={buttonState.disabled}
         className={cn("w-[4.5rem] px-2.5", buttonState.className)}
+        data-testid="provider-switch-btn"
       >
         {buttonState.icon}
         {buttonState.text}
@@ -232,6 +233,7 @@ export function ProviderActions({
           onClick={onEdit}
           title={t("common.edit")}
           className={iconButtonClass}
+          data-testid="provider-edit-btn"
         >
           <Edit className="h-4 w-4" />
         </Button>
@@ -242,6 +244,7 @@ export function ProviderActions({
           onClick={onDuplicate}
           title={t("provider.duplicate")}
           className={iconButtonClass}
+          data-testid="provider-duplicate-btn"
         >
           <Copy className="h-4 w-4" />
         </Button>
@@ -254,6 +257,7 @@ export function ProviderActions({
             disabled={isTesting}
             title={t("modelTest.testProvider", "测试模型")}
             className={iconButtonClass}
+            data-testid="provider-test-btn"
           >
             {isTesting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -269,6 +273,7 @@ export function ProviderActions({
           onClick={onConfigureUsage}
           title={t("provider.configureUsage")}
           className={iconButtonClass}
+          data-testid="provider-usage-btn"
         >
           <BarChart3 className="h-4 w-4" />
         </Button>
@@ -298,6 +303,7 @@ export function ProviderActions({
             canDelete && "hover:text-red-500 dark:hover:text-red-400",
             !canDelete && "opacity-40 cursor-not-allowed text-muted-foreground",
           )}
+          data-testid="provider-delete-btn"
         >
           <Trash2 className="h-4 w-4" />
         </Button>

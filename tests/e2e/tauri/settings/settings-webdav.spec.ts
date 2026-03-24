@@ -87,14 +87,20 @@ describe('WebDAV Settings – Sync Operations', () => {
   });
 
   it('should show sync button', async () => {
-    const syncBtn = await $('[data-testid="webdav-sync-btn"], button:contains("同步"), button:contains("Sync")');
-    const hasBtn = await syncBtn.isExisting();
+    const byTestId = await $('[data-testid="webdav-sync-btn"]');
+    let hasBtn = await byTestId.isExisting();
+    if (!hasBtn) {
+      hasBtn = await navigationPage.pageContainsAnyText(['同步', 'Sync']);
+    }
     expect(typeof hasBtn).toBe('boolean');
   });
 
   it('should show test connection button', async () => {
-    const testBtn = await $('[data-testid="webdav-test-btn"], button:contains("测试"), button:contains("Test")');
-    const hasBtn = await testBtn.isExisting();
+    const byTestId = await $('[data-testid="webdav-test-btn"]');
+    let hasBtn = await byTestId.isExisting();
+    if (!hasBtn) {
+      hasBtn = await navigationPage.pageContainsAnyText(['测试', 'Test']);
+    }
     expect(typeof hasBtn).toBe('boolean');
   });
 
@@ -106,8 +112,8 @@ describe('WebDAV Settings – Sync Operations', () => {
 
   it('should get sync status', async () => {
     const status = await webDavPage.getSyncStatus();
-    expect(typeof status).toBe('object');
-    expect(typeof status.status).toBe('string');
+    expect(status && typeof status === 'object').toBe(true);
+    expect(typeof (status as { status?: unknown }).status).toBe('string');
   });
 });
 

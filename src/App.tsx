@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -42,6 +43,7 @@ import {
 } from "@/lib/query/omo";
 import OpenClawHealthBanner from "@/components/openclaw/OpenClawHealthBanner";
 import { MainLayout, type MainView } from "@/components/layout/MainLayout";
+import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 type View =
@@ -667,6 +669,16 @@ function App() {
                 <div className="flex items-center gap-1">
                   <FailoverToggle activeApp={activeApp} />
                 </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  data-testid="provider-add-btn"
+                  onClick={() => setIsAddOpen(true)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {t("common.add", { defaultValue: "添加" })}
+                </Button>
               </div>
 
               {/* Provider list content */}

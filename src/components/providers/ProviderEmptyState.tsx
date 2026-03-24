@@ -37,13 +37,17 @@ export function ProviderEmptyState({
       )}
       <div className="mt-6 flex flex-col gap-2">
         {onImport && (
-          <Button onClick={onImport}>
+          <Button onClick={onImport} data-testid="provider-import-btn">
             <Download className="mr-2 h-4 w-4" />
             {t("provider.importCurrent")}
           </Button>
         )}
         {onCreate && (
-          <Button variant={onImport ? "outline" : "default"} onClick={onCreate}>
+          <Button
+            variant={onImport ? "outline" : "default"}
+            onClick={onCreate}
+            data-testid="provider-add-btn"
+          >
             {t("provider.addProvider")}
           </Button>
         )}

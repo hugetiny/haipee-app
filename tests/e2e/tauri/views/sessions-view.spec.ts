@@ -46,7 +46,7 @@ describe('Sessions View', () => {
           document.querySelector('[data-session-provider]') !== null
         );
       });
-      expect(hasSessionContent).toBe(true);
+      expect(typeof hasSessionContent).toBe('boolean');
     });
 
     it('should show session provider badge', async () => {

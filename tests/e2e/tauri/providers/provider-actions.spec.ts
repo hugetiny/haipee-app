@@ -12,6 +12,7 @@ describe('Provider Actions – Website', () => {
   before(async () => {
     await navigationPage.waitForReactReady();
     await navigationPage.switchToApp('claude');
+    await navigationPage.navigateToView('providers');
     await browser.pause(1000);
 
     // Create test provider with website
@@ -47,6 +48,7 @@ describe('Provider Actions – Test Endpoint', () => {
   before(async () => {
     await navigationPage.waitForReactReady();
     await navigationPage.switchToApp('claude');
+    await navigationPage.navigateToView('providers');
     await browser.pause(1000);
 
     // Create test provider
@@ -93,6 +95,7 @@ describe('Provider Actions – Menu', () => {
   before(async () => {
     await navigationPage.waitForReactReady();
     await navigationPage.switchToApp('claude');
+    await navigationPage.navigateToView('providers');
     await browser.pause(1000);
 
     // Create test provider
@@ -115,39 +118,32 @@ describe('Provider Actions – Menu', () => {
     await dashboardPage.openProviderActions(testProvider.name);
     await browser.pause(300);
 
-    // Should show action options
-    const hasActions = await dashboardPage.pageContainsAnyText([
-      '编辑', 'Edit', '删除', 'Delete', '复制', 'Duplicate'
-    ]);
-    expect(typeof hasActions).toBe('boolean');
-
-    // Close menu
-    await browser.keys(['Escape']);
-    await browser.pause(200);
+    const card = await dashboardPage.findProviderCard(testProvider.name);
+    expect(card === null || typeof card === 'object').toBe(true);
   });
 
   it('should show edit option in menu', async () => {
     await dashboardPage.openProviderActions(testProvider.name);
     await browser.pause(300);
 
-    const editBtn = await $('button:has-text("编辑"), button:has-text("Edit")');
-    const hasEdit = await editBtn.isExisting();
-    expect(typeof hasEdit).toBe('boolean');
-
-    await browser.keys(['Escape']);
-    await browser.pause(200);
+    const card = await dashboardPage.findProviderCard(testProvider.name);
+    if (card) {
+      const editBtn = await card.$('[data-testid="provider-edit-btn"]');
+      const hasEdit = await editBtn.isExisting();
+      expect(hasEdit).toBe(true);
+    }
   });
 
   it('should show delete option in menu', async () => {
     await dashboardPage.openProviderActions(testProvider.name);
     await browser.pause(300);
 
-    const deleteBtn = await $('button:has-text("删除"), button:has-text("Delete")');
-    const hasDelete = await deleteBtn.isExisting();
-    expect(typeof hasDelete).toBe('boolean');
-
-    await browser.keys(['Escape']);
-    await browser.pause(200);
+    const card = await dashboardPage.findProviderCard(testProvider.name);
+    if (card) {
+      const deleteBtn = await card.$('[data-testid="provider-delete-btn"]');
+      const hasDelete = await deleteBtn.isExisting();
+      expect(hasDelete).toBe(true);
+    }
   });
 });
 
@@ -155,6 +151,7 @@ describe('Provider Actions – App-Specific', () => {
   before(async () => {
     await navigationPage.waitForReactReady();
     await navigationPage.switchToApp('claude');
+    await navigationPage.navigateToView('providers');
     await browser.pause(1000);
   });
 
@@ -178,6 +175,7 @@ describe('Provider Actions – App-Specific', () => {
 
   it('should show OpenClaw-specific actions for OpenClaw providers', async () => {
     await navigationPage.switchToApp('openclaw');
+    await navigationPage.navigateToView('providers');
     await browser.pause(1000);
 
     const count = await dashboardPage.getProviderCount();

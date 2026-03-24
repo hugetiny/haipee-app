@@ -121,8 +121,19 @@ describe('Global Proxy – UI Integration', () => {
   });
 
   it('should show test connection button', async () => {
-    const testBtn = await $('[data-testid="test-global-proxy-btn"], button:contains("测试代理"), button:contains("Test Proxy")');
-    const hasBtn = await testBtn.isExisting();
+    const byTestId = await $('[data-testid="test-global-proxy-btn"]');
+    let hasBtn = await byTestId.isExisting();
+    if (!hasBtn) {
+      hasBtn = await browser.execute(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        return buttons.some((btn) => {
+          const text = btn.textContent || '';
+          const aria = btn.getAttribute('aria-label') || '';
+          return text.includes('测试代理') || text.includes('Test Proxy') ||
+            aria.includes('测试代理') || aria.includes('Test Proxy');
+        });
+      });
+    }
     expect(typeof hasBtn).toBe('boolean');
   });
 
@@ -133,8 +144,19 @@ describe('Global Proxy – UI Integration', () => {
   });
 
   it('should show clear proxy button', async () => {
-    const clearBtn = await $('[data-testid="clear-global-proxy-btn"], button:contains("清除"), button:contains("Clear")');
-    const hasClear = await clearBtn.isExisting();
+    const byTestId = await $('[data-testid="clear-global-proxy-btn"]');
+    let hasClear = await byTestId.isExisting();
+    if (!hasClear) {
+      hasClear = await browser.execute(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        return buttons.some((btn) => {
+          const text = btn.textContent || '';
+          const aria = btn.getAttribute('aria-label') || '';
+          return text.includes('清除') || text.includes('Clear') ||
+            aria.includes('清除') || aria.includes('Clear');
+        });
+      });
+    }
     expect(typeof hasClear).toBe('boolean');
   });
 });

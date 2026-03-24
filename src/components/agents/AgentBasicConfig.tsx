@@ -162,6 +162,7 @@ export function AgentBasicConfig({ appId }: AgentBasicConfigProps) {
             size="sm"
             variant="outline"
             className="gap-1"
+            data-testid="provider-add-btn"
           >
             <Plus className="w-3.5 h-3.5" />
             {t("common.add", { defaultValue: "添加" })}

@@ -18,11 +18,24 @@ export class WebDavPage extends TauriBasePage {
     }
 
     // Click on sync/webdav tab
-    const webdavTab = await $('[data-testid="settings-tab-sync"], [data-testid="settings-tab-webdav"], button:contains("同步"), button:contains("Sync")');
+    const webdavTab = await $('[data-testid="settings-tab-sync"], [data-testid="settings-tab-webdav"]');
     if (await webdavTab.isExisting()) {
       await webdavTab.click();
       await browser.pause(300);
+      return;
     }
+
+    await browser.execute(() => {
+      const tabs = Array.from(document.querySelectorAll('button, [role="tab"]'));
+      const target = tabs.find((el) => {
+        const text = el.textContent || '';
+        const aria = el.getAttribute('aria-label') || '';
+        return text.includes('同步') || text.includes('Sync') ||
+          aria.includes('同步') || aria.includes('Sync');
+      });
+      target?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await browser.pause(300);
   }
 
   /**
@@ -102,7 +115,18 @@ export class WebDavPage extends TauriBasePage {
    */
   async getSyncStatus(): Promise<{ status: string; lastSync?: string; error?: string }> {
     try {
-      return await this.invokeIPC('get_webdav_sync_status');
+      const result = await this.invokeIPC<{
+        status?: string;
+        lastSync?: string;
+        error?: string;
+      } | null>('get_webdav_sync_status');
+      if (!result || typeof result !== 'object') {
+        return { status: 'unknown' };
+      }
+      if (typeof result.status !== 'string') {
+        return { status: 'unknown', lastSync: result.lastSync, error: result.error };
+      }
+      return result as { status: string; lastSync?: string; error?: string };
     } catch {
       return { status: 'unknown' };
     }
@@ -126,11 +150,24 @@ export class WebDavPage extends TauriBasePage {
    * Save WebDAV settings
    */
   async saveSettings(): Promise<void> {
-    const saveBtn = await $('[data-testid="webdav-save-btn"], button:contains("保存"), button:contains("Save")');
+    const saveBtn = await $('[data-testid="webdav-save-btn"]');
     if (await saveBtn.isExisting()) {
       await saveBtn.click();
       await browser.pause(500);
+      return;
     }
+
+    await browser.execute(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const target = buttons.find((btn) => {
+        const text = btn.textContent || '';
+        const aria = btn.getAttribute('aria-label') || '';
+        return text.includes('保存') || text.includes('Save') ||
+          aria.includes('保存') || aria.includes('Save');
+      });
+      target?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await browser.pause(500);
   }
 
   /**

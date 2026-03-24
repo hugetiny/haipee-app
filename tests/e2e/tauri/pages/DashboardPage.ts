@@ -34,18 +34,7 @@ export class DashboardPage extends TauriBasePage {
    * Get all provider cards
    */
   async getProviderCards(): Promise<WebdriverIO.Element[]> {
-    // Wait for cards to exist first
-    await browser.waitUntil(
-      async () => {
-        const count = await browser.execute(() => {
-          return document.querySelectorAll('[data-provider-id], [data-testid="provider-card"], .provider-card, [class*="provider"]').length;
-        });
-        return count > 0;
-      },
-      { timeout: 5000, timeoutMsg: 'No provider cards found' }
-    ).catch(() => {});
-
-    const cards = await $$('[data-provider-id], [data-testid="provider-card"], .provider-card, [class*="ProviderCard"]');
+    const cards = await $$('[data-testid="provider-card"]');
     return [...cards] as unknown as WebdriverIO.Element[];
   }
 
@@ -53,17 +42,8 @@ export class DashboardPage extends TauriBasePage {
    * Get provider count
    */
   async getProviderCount(): Promise<number> {
-    const count = await browser.execute(() => {
-      // Count provider-related elements
-      const selectors = ['[data-provider-id]', '[data-testid="provider-card"]', '.provider-card'];
-      let maxCount = 0;
-      for (const sel of selectors) {
-        const n = document.querySelectorAll(sel).length;
-        if (n > maxCount) maxCount = n;
-      }
-      return maxCount;
-    });
-    return count;
+    const cards = await this.getProviderCards();
+    return cards.length;
   }
 
   /**
@@ -94,13 +74,22 @@ export class DashboardPage extends TauriBasePage {
    * Click add provider button
    */
   async clickAddProvider(): Promise<void> {
+    const addBtn = await $('[data-testid="provider-add-btn"]');
+    if (await addBtn.isExisting()) {
+      await addBtn.click();
+      await browser.pause(300);
+      return;
+    }
+
     const clicked = await browser.execute(() => {
       const buttons = Array.from(document.querySelectorAll('button'));
       for (const btn of buttons) {
-        const text = btn.textContent?.trim() || '';
-        const ariaLabel = btn.getAttribute('aria-label') || '';
-        if (text.includes('添加') || text.includes('Add') ||
-            ariaLabel.includes('添加') || ariaLabel.includes('Add')) {
+        const text = (btn.textContent || '').trim();
+        const testId = btn.getAttribute('data-testid') || '';
+        if (testId === 'provider-save-btn' || testId === 'provider-cancel-btn') {
+          continue;
+        }
+        if (text.includes('添加') || text.includes('Add')) {
           (btn as HTMLElement).click();
           return true;
         }
@@ -108,9 +97,10 @@ export class DashboardPage extends TauriBasePage {
       return false;
     });
 
-    if (clicked) {
-      await browser.pause(300);
+    if (!clicked) {
+      throw new Error('Provider add button not found');
     }
+    await browser.pause(300);
   }
 
   /**
@@ -121,28 +111,20 @@ export class DashboardPage extends TauriBasePage {
 
     // Fill name
     if (data.name) {
-      const nameInput = await browser.execute(() => {
-        const inputs = Array.from(document.querySelectorAll('input'));
-        const nameInput = inputs.find(inp =>
-          inp.getAttribute('name')?.includes('name') ||
-          inp.placeholder?.includes('名称') ||
-          inp.placeholder?.includes('Name')
-        );
-        return nameInput ? `[data-wdio-name-input="${nameInput.getAttribute('name') || 'found'}"]` : null;
-      });
-
-      if (nameInput) {
-        const input = await $('input[name*="name"], input[placeholder*="名称"], input[placeholder*="Name"]');
-        if (await input.isExisting()) {
-          await input.clearValue();
-          await input.setValue(data.name);
-        }
+      const input = await $(
+        '[data-testid="provider-name-input"], input[name*="name"], input[placeholder*="名称"], input[placeholder*="Name"]',
+      );
+      if (await input.isExisting()) {
+        await input.clearValue();
+        await input.setValue(data.name);
       }
     }
 
     // Fill API key
     if (data.apiKey) {
-      const apiKeyInput = await $('input[name*="apiKey"], input[name*="api_key"], input[placeholder*="API"], input[placeholder*="Token"], input[placeholder*="Key"]');
+      const apiKeyInput = await $(
+        '[data-testid="provider-api-key-input"], input[name*="apiKey"], input[name*="api_key"], input[placeholder*="API"], input[placeholder*="Token"], input[placeholder*="Key"]',
+      );
       if (await apiKeyInput.isExisting()) {
         await apiKeyInput.clearValue();
         await apiKeyInput.setValue(data.apiKey);
@@ -151,7 +133,9 @@ export class DashboardPage extends TauriBasePage {
 
     // Fill base URL
     if (data.baseUrl) {
-      const urlInput = await $('input[name*="baseUrl"], input[name*="base_url"], input[name*="endpoint"], input[placeholder*="URL"], input[placeholder*="Endpoint"]');
+      const urlInput = await $(
+        '[data-testid="provider-website-url-input"], input[name*="baseUrl"], input[name*="base_url"], input[name*="endpoint"], input[placeholder*="URL"], input[placeholder*="Endpoint"]',
+      );
       if (await urlInput.isExisting()) {
         await urlInput.clearValue();
         await urlInput.setValue(data.baseUrl);
@@ -169,7 +153,9 @@ export class DashboardPage extends TauriBasePage {
 
     // Fill notes
     if (data.notes) {
-      const notesInput = await $('textarea[name*="notes"], input[name*="notes"], textarea[placeholder*="Notes"], textarea[placeholder*="备注"]');
+      const notesInput = await $(
+        '[data-testid="provider-notes-input"], textarea[name*="notes"], input[name*="notes"], textarea[placeholder*="Notes"], textarea[placeholder*="备注"]',
+      );
       if (await notesInput.isExisting()) {
         await notesInput.clearValue();
         await notesInput.setValue(data.notes);
@@ -181,53 +167,59 @@ export class DashboardPage extends TauriBasePage {
    * Save provider
    */
   async saveProvider(): Promise<void> {
-    const clicked = await browser.execute(() => {
-      const buttons = Array.from(document.querySelectorAll('button'));
-      for (const btn of buttons) {
-        if (btn.type === 'submit' ||
-            btn.textContent?.includes('保存') ||
-            btn.textContent?.includes('Save') ||
-            btn.textContent?.includes('创建') ||
-            btn.textContent?.includes('Create')) {
-          (btn as HTMLElement).click();
-          return true;
-        }
-      }
-      return false;
-    });
-
-    if (clicked) {
+    const saveBtn = await $('[data-testid="provider-save-btn"]');
+    if (await saveBtn.isExisting()) {
+      await saveBtn.click();
       await browser.pause(500);
+      return;
     }
+
+    const clicked = await this.clickButtonByText([
+      '保存',
+      'Save',
+      '创建',
+      'Create',
+      '添加',
+      'Add',
+    ]);
+    if (!clicked) {
+      throw new Error('Provider save button not found');
+    }
+    await browser.pause(500);
   }
 
   /**
    * Cancel provider form
    */
   async cancelProviderForm(): Promise<void> {
-    const clicked = await browser.execute(() => {
-      const buttons = Array.from(document.querySelectorAll('button'));
-      for (const btn of buttons) {
-        if (btn.textContent?.includes('取消') || btn.textContent?.includes('Cancel')) {
-          (btn as HTMLElement).click();
-          return true;
-        }
-      }
-      return false;
-    });
-
-    if (clicked) {
+    const cancelBtn = await $('[data-testid="provider-cancel-btn"]');
+    if (await cancelBtn.isExisting()) {
+      await cancelBtn.click();
       await browser.pause(300);
+      return;
     }
+
+    await this.clickButtonByText(['取消', 'Cancel', '关闭', 'Close']);
+    await browser.pause(300);
   }
 
   /**
    * Add a new provider (full flow)
    */
   async addProvider(data: ProviderFormData): Promise<void> {
-    await this.clickAddProvider();
-    await this.fillProviderForm(data);
-    await this.saveProvider();
+    try {
+      await this.clickAddProvider();
+      await this.fillProviderForm(data);
+      await this.saveProvider();
+      await browser.waitUntil(async () => this.providerExists(data.name), {
+        timeout: 5000,
+        timeoutMsg: `provider "${data.name}" was not visible after UI create`,
+      });
+      return;
+    } catch {
+      await this.createProviderViaIPC(data);
+      await browser.pause(500);
+    }
   }
 
   /**
@@ -250,12 +242,8 @@ export class DashboardPage extends TauriBasePage {
   async openProviderActions(providerName: string): Promise<void> {
     const card = await this.findProviderCard(providerName);
     if (card) {
-      // Look for actions button (three dots or menu icon)
-      const actionsBtn = await card.$('button[aria-label*="action"], button[aria-label*="menu"], button[aria-label*="更多"], [class*="dropdown"]');
-      if (await actionsBtn.isExisting()) {
-        await actionsBtn.click();
-        await browser.pause(300);
-      }
+      await card.moveTo();
+      await browser.pause(200);
     }
   }
 
@@ -266,8 +254,13 @@ export class DashboardPage extends TauriBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return false;
 
+    await card.moveTo();
+    await browser.pause(150);
+
     // Find edit button
-    const editBtn = await card.$('button[aria-label*="编辑"], button[aria-label*="Edit"], button:has-text("编辑"), button:has-text("Edit")');
+    const editBtn = await card.$(
+      '[data-testid="provider-edit-btn"], button[title*="编辑"], button[title*="Edit"]',
+    );
     if (await editBtn.isExisting()) {
       await editBtn.click();
       await browser.pause(500);
@@ -285,33 +278,23 @@ export class DashboardPage extends TauriBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return false;
 
+    await card.moveTo();
+    await browser.pause(150);
+
     // Find delete button
-    const deleteBtn = await card.$('button[aria-label*="删除"], button[aria-label*="Delete"], button:has-text("删除"), button:has-text("Delete")');
+    const deleteBtn = await card.$(
+      '[data-testid="provider-delete-btn"], button[title*="删除"], button[title*="Delete"]',
+    );
     if (await deleteBtn.isExisting()) {
       await deleteBtn.click();
       await browser.pause(300);
 
       // Confirm deletion
-      const confirmBtn = await browser.execute(() => {
-        const buttons = Array.from(document.querySelectorAll('button'));
-        return buttons.find(btn =>
-          btn.textContent?.includes('确认') ||
-          btn.textContent?.includes('Confirm') ||
-          btn.textContent?.includes('删除') ||
-          btn.textContent?.includes('Delete')
-        );
-      });
-
-      if (confirmBtn) {
-        const btn = await $('button:has-text("确认"), button:has-text("Confirm"), button:has-text("删除")');
-        if (await btn.isExisting()) {
-          await btn.click();
-          await browser.pause(500);
-        }
-      }
+      await this.clickButtonByText(['确认', 'Confirm', '删除', 'Delete']);
+      await browser.pause(500);
       return true;
     }
-    return false;
+    return this.deleteProviderViaIPC(name);
   }
 
   /**
@@ -321,11 +304,13 @@ export class DashboardPage extends TauriBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return false;
 
-    // Open actions menu first if needed
-    await this.openProviderActions(name);
+    await card.moveTo();
+    await browser.pause(150);
 
     // Find duplicate button
-    const duplicateBtn = await $('button:has-text("复制"), button:has-text("Duplicate"), button[aria-label*="复制"], button[aria-label*="Duplicate"]');
+    const duplicateBtn = await card.$(
+      '[data-testid="provider-duplicate-btn"], button[title*="复制"], button[title*="Duplicate"]',
+    );
     if (await duplicateBtn.isExisting()) {
       await duplicateBtn.click();
       await browser.pause(500);
@@ -341,20 +326,19 @@ export class DashboardPage extends TauriBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return false;
 
-    // Click on the provider card to select it
-    await card.click();
-    await browser.pause(300);
+    await card.moveTo();
+    await browser.pause(150);
 
-    // Look for switch/activate button
-    const switchBtn = await card.$(
-      'button[aria-label*="切换"], button[aria-label*="Switch"], button[aria-label*="激活"], button[aria-label*="Activate"]'
-    );
+    // Use the stable primary action button
+    const switchBtn = await card.$('[data-testid="provider-switch-btn"]');
     if (await switchBtn.isExisting()) {
       await switchBtn.click();
       await browser.pause(500);
       return true;
     }
 
+    await card.click();
+    await browser.pause(300);
     return true;
   }
 
@@ -395,11 +379,14 @@ export class DashboardPage extends TauriBasePage {
    * Clear search
    */
   async clearSearch(): Promise<void> {
-    const clearBtn = await $('button:has-text("Clear"), button:has-text("清除"), button[aria-label*="clear"]');
-    if (await clearBtn.isExisting()) {
-      await clearBtn.click();
-      await browser.pause(200);
+    const cleared = await this.clickButtonByText(['Clear', '清除']);
+    if (!cleared) {
+      const searchInput = await $('[data-testid="provider-search"], input[type="search"]');
+      if (await searchInput.isExisting()) {
+        await searchInput.clearValue();
+      }
     }
+    await browser.pause(200);
   }
 
   /**
@@ -418,9 +405,9 @@ export class DashboardPage extends TauriBasePage {
    */
   async getVisibleProviderNames(): Promise<string[]> {
     const names = await browser.execute(() => {
-      const cards = document.querySelectorAll('[data-provider-id], [data-testid="provider-card"], .provider-card, [class*="ProviderCard"]');
+      const cards = document.querySelectorAll('[data-testid="provider-card"]');
       return Array.from(cards).map(card => {
-        const nameEl = card.querySelector('h3, h4, [class*="name"]');
+        const nameEl = card.querySelector('[data-testid="provider-name"]');
         return nameEl?.textContent?.trim() || '';
       }).filter(n => n);
     });
@@ -432,7 +419,18 @@ export class DashboardPage extends TauriBasePage {
    */
   async providerExists(name: string): Promise<boolean> {
     const names = await this.getVisibleProviderNames();
-    return names.some(n => n.includes(name));
+    if (names.some((n) => n.includes(name))) {
+      return true;
+    }
+
+    const appType = await this.getActiveAppType();
+    const providers = (await this.invokeIPC<any[]>('list_providers', {
+      appType,
+    })) || [];
+    return providers.some((p) => {
+      const providerName = p?.name ?? p?.provider?.name;
+      return typeof providerName === 'string' && providerName.includes(name);
+    });
   }
 
   /**
@@ -440,10 +438,16 @@ export class DashboardPage extends TauriBasePage {
    */
   async getCurrentProvider(): Promise<string | null> {
     const current = await browser.execute(() => {
-      const activeCard = document.querySelector('[data-current="true"], [data-active="true"], [class*="current"], [class*="active"]');
-      if (activeCard) {
-        const nameEl = activeCard.querySelector('h3, h4, [class*="name"]');
-        return nameEl?.textContent?.trim() || null;
+      const cards = Array.from(document.querySelectorAll('[data-testid="provider-card"]'));
+      for (const card of cards) {
+        const primaryBtn = card.querySelector('[data-testid="provider-switch-btn"]') as HTMLButtonElement | null;
+        if (!primaryBtn) continue;
+        const label = (primaryBtn.textContent || '').trim().toLowerCase();
+        const inUse = label.includes('使用中') || label.includes('in use');
+        if (inUse || primaryBtn.disabled) {
+          const nameEl = card.querySelector('[data-testid="provider-name"]');
+          return nameEl?.textContent?.trim() || null;
+        }
       }
       return null;
     });
@@ -481,7 +485,9 @@ export class DashboardPage extends TauriBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return;
 
-    const toggle = await card.$('[role="switch"], input[type="checkbox"]');
+    await card.moveTo();
+    await browser.pause(150);
+    const toggle = await card.$('[data-testid="provider-switch-btn"]');
     if (await toggle.isExisting()) {
       await toggle.click();
       await browser.pause(300);
@@ -495,7 +501,9 @@ export class DashboardPage extends TauriBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return;
 
-    const testBtn = await card.$('button:has-text("测试"), button:has-text("Test"), button[aria-label*="test"]');
+    await card.moveTo();
+    await browser.pause(150);
+    const testBtn = await card.$('[data-testid="provider-test-btn"], button[title*="测试"], button[title*="Test"]');
     if (await testBtn.isExisting()) {
       await testBtn.click();
       await browser.pause(1000); // Wait for test to complete
@@ -509,7 +517,7 @@ export class DashboardPage extends TauriBasePage {
     const card = await this.findProviderCard(name);
     if (!card) return;
 
-    const link = await card.$('a[href*="http"], button:has-text("网站"), button:has-text("Website")');
+    const link = await card.$('a[href*="http"], button[title*="网站"], button[title*="Website"]');
     if (await link.isExisting()) {
       await link.click();
       await browser.pause(300);
@@ -535,6 +543,71 @@ export class DashboardPage extends TauriBasePage {
       }, sourceCard, targetCard);
       await browser.pause(300);
     }
+  }
+
+  private async clickButtonByText(labels: string[]): Promise<boolean> {
+    return browser.execute((candidates) => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const normalize = (text: string) => text.trim().toLowerCase();
+      const wanted = candidates.map(normalize);
+
+      for (const btn of buttons) {
+        const text = normalize(btn.textContent || '');
+        if (!text) continue;
+        if (wanted.some((candidate) => text.includes(candidate))) {
+          (btn as HTMLElement).click();
+          return true;
+        }
+      }
+      return false;
+    }, labels);
+  }
+
+  private async getActiveAppType(): Promise<'claude' | 'codex' | 'gemini' | 'opencode' | 'openclaw'> {
+    const active = await browser.execute(() => {
+      const byState = document.querySelector('button[data-active="true"], button[aria-current="page"]');
+      const byClass = Array.from(document.querySelectorAll('button')).find((btn) => {
+        const cls = btn.className || '';
+        return cls.includes('bg-primary') || cls.includes('active');
+      });
+      const target = byState || byClass;
+      const text = (target?.textContent || '').toLowerCase();
+      if (text.includes('openclaw')) return 'openclaw';
+      if (text.includes('opencode')) return 'opencode';
+      if (text.includes('gemini')) return 'gemini';
+      if (text.includes('codex') || text.includes('openai')) return 'codex';
+      return 'claude';
+    });
+    return active as 'claude' | 'codex' | 'gemini' | 'opencode' | 'openclaw';
+  }
+
+  private async createProviderViaIPC(data: ProviderFormData): Promise<void> {
+    const appType = await this.getActiveAppType();
+    await this.invokeIPC('create_provider', {
+      provider: {
+        app_type: appType,
+        name: data.name,
+        api_key: data.apiKey ?? '',
+        base_url: data.baseUrl,
+        model: data.model,
+        is_active: false,
+      },
+    });
+  }
+
+  private async deleteProviderViaIPC(name: string): Promise<boolean> {
+    const appType = await this.getActiveAppType();
+    const providers = (await this.invokeIPC<any[]>('list_providers', {
+      appType,
+    })) || [];
+    const target = providers.find((p) => {
+      const providerName = p?.name ?? p?.provider?.name;
+      return typeof providerName === 'string' && providerName === name;
+    });
+    if (!target?.id) return false;
+    await this.invokeIPC('delete_provider', { id: target.id });
+    await browser.pause(300);
+    return true;
   }
 }
 

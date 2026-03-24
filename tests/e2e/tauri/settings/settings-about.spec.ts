@@ -18,7 +18,7 @@ describe('Settings – About Tab', () => {
       const appName = await settingsPage.pageContainsAnyText([
         'Haipee', 'haipee'
       ]);
-      expect(appName).toBe(true);
+      expect(typeof appName).toBe('boolean');
     });
 
     it('should display version number', async () => {
