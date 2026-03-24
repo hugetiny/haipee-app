@@ -150,10 +150,7 @@ export async function runSingleTest(testPath: string, timeout: number = 120000):
   log('info', `Running single test: ${testPath}`);
   const isTauriE2E = testPath.includes('e2e/');
   const cmd = isTauriE2E ? 'bunx' : 'bun';
-  const wdioConf = process.env.CN_API_KEY || process.platform !== 'darwin'
-    ? 'wdio.crabnebula.conf.ts'
-    : 'wdio.conf.ts';
-  const args = isTauriE2E ? ['wdio', 'run', wdioConf, '--spec', testPath] : ['vitest', 'run', testPath];
+  const args = isTauriE2E ? ['wdio', 'run', 'wdio.crabnebula.conf.ts', '--spec', testPath] : ['vitest', 'run', testPath];
 
   try {
     const { stdout, exitCode } = await executeCommand(cmd, args, timeout);
@@ -181,7 +178,7 @@ async function runE2ELayer(config: TestLayerConfig): Promise<TestLayerResult> {
   }
 
   const cmd = 'bunx';
-  const args = ['wdio', 'run', config.command.includes('crabnebula') ? 'wdio.crabnebula.conf.ts' : 'wdio.conf.ts'];
+  const args = ['wdio', 'run', 'wdio.crabnebula.conf.ts'];
 
   log('info', `Executing: ${cmd} ${args.join(' ')}`);
   const { stdout, exitCode } = await executeCommand(cmd, args, config.timeout);

@@ -5,7 +5,6 @@ mod chat;
 mod config;
 mod copilot;
 mod deeplink;
-pub(crate) mod e2e;
 mod env;
 mod failover;
 mod global_proxy;

@@ -30,10 +30,6 @@ mod store;
 mod tray;
 mod usage_script;
 
-// Ensure webdriver and automation features are mutually exclusive
-#[cfg(all(feature = "webdriver", feature = "automation"))]
-compile_error!("Features 'webdriver' and 'automation' are mutually exclusive. Use only one at a time.");
-
 pub use app_config::{AppType, InstalledSkill, McpApps, McpServer, MultiAppConfig, SkillApps};
 pub use codex_config::{get_codex_auth_path, get_codex_config_path, write_codex_live_atomic};
 pub use commands::open_provider_terminal;
@@ -199,12 +195,6 @@ pub fn run() {
     panic_hook::setup_panic_hook();
 
     let mut builder = tauri::Builder::default();
-
-    // Enable WebDriver endpoint for automated E2E testing (cargo build --features webdriver)
-    #[cfg(feature = "webdriver")]
-    {
-        builder = builder.plugin(tauri_plugin_webdriver::init());
-    }
 
     // CrabNebula automation plugin for E2E testing (cargo build --features automation)
     #[cfg(feature = "automation")]
@@ -1126,9 +1116,6 @@ pub fn run() {
             commands::delete_daily_memory_file,
             commands::search_daily_memory_files,
             commands::open_workspace_directory,
-            // E2E testing commands
-            commands::e2e::e2e_get_app_info,
-            commands::e2e::e2e_ping,
             // Chat commands
             commands::chat_with_provider,
             commands::get_chat_provider_info,

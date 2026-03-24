@@ -43,10 +43,10 @@ jobs:
           sudo apt-get install -y webkit2gtk-driver libayatana-appindicator3-dev
 
       - name: Build Tauri app for E2E tests
-        run: bun run test:e2e:crabnebula:build
+        run: bun run test:e2e:build
 
       - name: Run E2E tests
-        run: xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" bun run test:e2e:crabnebula
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" bun run test:e2e
 
       - name: Upload test results
         if: always()

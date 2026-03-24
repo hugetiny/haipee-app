@@ -55,10 +55,6 @@ bun run test:integration
 bun run test:e2e:build         # 编译带 automation feature 的二进制（约 2-3 分钟）
 CN_API_KEY=xxx bun run test:e2e  # 运行 E2E（macOS 需要 CN_API_KEY）
 
-# 回退选项（无 CN_API_KEY 时使用）
-bun run test:e2e:tauri:build   # 编译带 webdriver feature 的二进制
-bun run test:e2e:tauri         # 运行 WebdriverIO（tauri-plugin-webdriver）
-
 # AI 自主开发循环（3层测试 + Claude 自动修复）
 bun run ai:dev                 # 启动循环
 bun run ai:dev:resume          # 从最新检查点恢复
@@ -68,7 +64,6 @@ bun run ai:dev:checkpoints     # 列出所有检查点
 
 > **E2E 前置条件（macOS）：**
 > CrabNebula driver 需要 `CN_API_KEY`，获取地址：https://app.crabnebula.dev
-> 未设置 CN_API_KEY 时，AI dev loop 自动回退到 `wdio.conf.ts`（tauri-plugin-webdriver）。
 
 ---
 
@@ -255,12 +250,10 @@ const visible = await btn.isDisplayed();
 |--------|------|------|------|
 | 1 | `unit` | `bun vitest run` | 2 分钟 |
 | 2 | `integration` | `bun run test:integration`（cargo + vitest） | 10 分钟 |
-| 3 | `e2e` | CrabNebula `wdio.crabnebula.conf.ts`（或 webdriver 回退） | 30 分钟 |
+| 3 | `e2e` | CrabNebula `wdio.crabnebula.conf.ts` | 30 分钟 |
 
 **跳过规则：**
 - `e2e` 在 unit 或 integration 失败时跳过（二进制不可信）
-
-**E2E 自动选择：** 设置了 `CN_API_KEY` 时使用 CrabNebula driver，macOS 未设置时自动回退到 `wdio.conf.ts`。
 
 **修复流程：** 解析失败 → 构建上下文（源文件 + 错误）→ 调用 `claude -p <prompt>` → 应用 XML 文件块 → 重跑测试 → 失败则回滚
 
@@ -269,32 +262,15 @@ const visible = await btn.isDisplayed();
 ## Cargo Features
 
 ```toml
-automation = ["tauri-plugin-automation"]  # CrabNebula E2E（推荐，port 4444）
-webdriver  = ["tauri-plugin-webdriver"]   # 回退 E2E（port 4445，无 CN_API_KEY 时用）
+automation = ["tauri-plugin-automation"]  # CrabNebula E2E（port 4444）
 test-hooks = []                          # 测试专用 hook（集成测试用）
 ```
 
-构建带 CrabNebula 支持的二进制（推荐）：
+构建带 CrabNebula 支持的二进制：
 ```bash
 bun run test:e2e:build
 # 等价于：bunx tauri build --debug --no-bundle -- --features automation
 ```
-
-构建带 webdriver 回退的二进制：
-```bash
-bun run test:e2e:tauri:build
-```
-
-### E2E 测试方式对比
-
-| | CrabNebula (`automation`) | tauri-plugin-webdriver (`webdriver`) |
-|---|---|---|
-| **端口** | 4444 | 4445 |
-| **macOS 前置** | `CN_API_KEY` + test-runner-backend | `sudo safaridriver --enable` |
-| **成熟度** | 高（CrabNebula 官方维护） | 中（社区 fork） |
-| **AI dev loop** | 默认（CN_API_KEY 存在时） | 回退（macOS 无 CN_API_KEY） |
-| **WDIO 配置** | `wdio.crabnebula.conf.ts` | `wdio.conf.ts` |
-| **测试目录** | `tests/e2e/crabnebula/` | `tests/e2e/tauri/` |
 
 ---
 
@@ -304,7 +280,7 @@ bun run test:e2e:tauri:build
 |------|------|
 | `vite.config.ts` | Vite 配置，开发端口 **3000** |
 | `src-tauri/tauri.conf.json` | Tauri 主配置，`devUrl: http://localhost:3000` |
-| `wdio.conf.ts` | WebdriverIO Tauri E2E（连接 localhost:4445，测试真实 WebView） |
+| `wdio.crabnebula.conf.ts` | CrabNebula E2E（连接 localhost:4444） |
 | `vitest.config.ts` | Vitest 单元/集成测试配置 |
 | `tailwind.config.cjs` | Tailwind CSS 配置 |
 | `postcss.config.cjs` | PostCSS 配置 |
