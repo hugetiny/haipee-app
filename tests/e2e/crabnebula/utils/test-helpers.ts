@@ -74,7 +74,14 @@ export async function countElements(selector: string): Promise<number> {
  * Check if Tauri IPC is available.
  */
 export async function isTauriAvailable(): Promise<boolean> {
-  return browser.execute(() => typeof (window as any).__TAURI__ !== 'undefined');
+  return browser.execute(() => {
+    // Check for Tauri v2 API: window.__TAURI__.core
+    const tauri = (window as any).__TAURI__;
+    if (tauri?.core?.invoke) return true;
+    // Fallback to internal API: window.__TAURI_INTERNALS__.invoke
+    const internals = (window as any).__TAURI_INTERNALS__;
+    return !!internals?.invoke;
+  });
 }
 
 /**
@@ -89,8 +96,17 @@ export async function invokeIPC<T>(
 
   return browser.execute(async (c, a) => {
     try {
-      const { invoke } = (window as any).__TAURI__.core;
-      return await invoke(c, a);
+      // Try Tauri v2 API first
+      const tauri = (window as any).__TAURI__;
+      if (tauri?.core?.invoke) {
+        return await tauri.core.invoke(c, a);
+      }
+      // Fallback to internal API
+      const internals = (window as any).__TAURI_INTERNALS__;
+      if (internals?.invoke) {
+        return await internals.invoke(c, a);
+      }
+      throw new Error('Tauri IPC not available');
     } catch (e) {
       console.error(`IPC call ${c} failed:`, e);
       return null;

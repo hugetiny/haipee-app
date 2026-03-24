@@ -121,28 +121,18 @@ export class DashboardPage extends CrabNebulaBasePage {
 
     // Fill name
     if (data.name) {
-      const nameInput = await browser.execute(() => {
-        const inputs = Array.from(document.querySelectorAll('input'));
-        const nameInput = inputs.find(inp =>
-          inp.getAttribute('name')?.includes('name') ||
-          inp.placeholder?.includes('名称') ||
-          inp.placeholder?.includes('Name')
-        );
-        return nameInput ? `[data-wdio-name-input="${nameInput.getAttribute('name') || 'found'}"]` : null;
-      });
-
-      if (nameInput) {
-        const input = await $('input[name*="name"], input[placeholder*="名称"], input[placeholder*="Name"]');
-        if (await input.isExisting()) {
-          await input.clearValue();
-          await input.setValue(data.name);
-        }
+      // Try data-testid first, then fallback to other selectors
+      const nameInput = await $('[data-testid="provider-name-input"], input[name*="name"], input[placeholder*="名称"], input[placeholder*="Name"]');
+      if (await nameInput.isExisting()) {
+        await nameInput.clearValue();
+        await nameInput.setValue(data.name);
       }
     }
 
     // Fill API key
     if (data.apiKey) {
-      const apiKeyInput = await $('input[name*="apiKey"], input[name*="api_key"], input[placeholder*="API"], input[placeholder*="Token"], input[placeholder*="Key"]');
+      // Try data-testid first, then fallback to other selectors
+      const apiKeyInput = await $('[data-testid="provider-api-key-input"], input[id="apiKey"], input[name*="apiKey"], input[name*="api_key"], input[placeholder*="API"], input[placeholder*="Token"], input[placeholder*="Key"]');
       if (await apiKeyInput.isExisting()) {
         await apiKeyInput.clearValue();
         await apiKeyInput.setValue(data.apiKey);
