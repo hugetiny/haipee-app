@@ -86,15 +86,38 @@ describe('Settings Workflow Journey', () => {
 
   describe('Proxy Settings', () => {
     it('should display proxy settings on proxy tab', async () => {
+      await settings.navigateTo('Settings');
+      await browser.pause(500);
+
+      // Wait for settings to load
+      await browser.waitUntil(
+        async () => {
+          const loaded = await browser.execute(() => {
+            return document.querySelector('[data-settings-loaded="true"]') !== null;
+          });
+          return loaded;
+        },
+        { timeout: 5000, timeoutMsg: 'Settings did not load' }
+      ).catch(() => {});
+
       // Click on proxy tab
       const proxyTab = await $('[data-testid="settings-tab-proxy"]');
       if (await proxyTab.isExisting()) {
         await proxyTab.click();
         await browser.pause(500);
 
-        // Look for proxy settings container
+        // Look for proxy settings container - may take time to render
+        await browser.waitUntil(
+          async () => {
+            const proxySettings = await $('[data-testid="proxy-settings"]');
+            return proxySettings.isExisting();
+          },
+          { timeout: 5000, timeoutMsg: 'Proxy settings did not appear' }
+        ).catch(() => {});
+
         const proxySettings = await $('[data-testid="proxy-settings"]');
-        expect(await proxySettings.isExisting()).toBe(true);
+        const exists = await proxySettings.isExisting();
+        expect(exists).toBe(true);
       } else {
         expect(true).toBe(true);
       }

@@ -25,20 +25,47 @@ describe('Provider Management Journey', () => {
   describe('Creating Providers', () => {
     it('should open add provider dialog', async () => {
       await dashboard.open();
+      await browser.pause(300);
 
-      // Look for add button
-      const addBtn = await $('[data-testid="provider-add-btn"], button, button');
+      // First close any existing dialogs
+      await JourneyHelpers.closeModal();
+      await browser.pause(200);
+
+      // Look for add button with specific testid first
+      const addBtn = await $('[data-testid="provider-add-btn"]');
       if (await addBtn.isExisting()) {
         await addBtn.click();
-        await browser.pause(300);
+        await browser.pause(500);
 
         // Dialog should open
         const dialogOpen = await JourneyHelpers.isModalOpen();
         expect(dialogOpen).toBe(true);
       } else {
-        // Verify dashboard is shown
-        const providerCount = await dashboard.getProviderCount();
-        expect(typeof providerCount).toBe('number');
+        // Try clicking by text content
+        const clicked = await browser.execute(() => {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const addBtn = buttons.find(btn =>
+            btn.textContent?.includes('添加') ||
+            btn.textContent?.includes('Add') ||
+            btn.getAttribute('aria-label')?.includes('添加') ||
+            btn.getAttribute('aria-label')?.includes('Add')
+          );
+          if (addBtn && !addBtn.textContent?.includes('×') && !addBtn.textContent?.includes('✕')) {
+            (addBtn as HTMLElement).click();
+            return true;
+          }
+          return false;
+        });
+
+        if (clicked) {
+          await browser.pause(500);
+          const dialogOpen = await JourneyHelpers.isModalOpen();
+          expect(dialogOpen).toBe(true);
+        } else {
+          // Verify dashboard is shown
+          const providerCount = await dashboard.getProviderCount();
+          expect(typeof providerCount).toBe('number');
+        }
       }
     });
 
