@@ -1810,7 +1810,7 @@
         },
         "listenPort": {
           "label": "Listen Port",
-          "placeholder": "17890",
+          "placeholder": "0",
           "description": "Port number the proxy server listens on (1024 ~ 65535)"
         },
         "maxRetries": {

@@ -41,7 +41,7 @@ fn get_proxy_port() -> u16 {
         .get()
         .and_then(|lock| lock.read().ok())
         .map(|port| *port)
-        .unwrap_or(17890) // 默认端口作为回退
+        .unwrap_or(0) // 默认端口作为回退
 }
 
 /// 初始化全局 HTTP 客户端
@@ -483,13 +483,13 @@ mod tests {
 
     #[test]
     fn test_proxy_points_to_loopback() {
-        // 设置 Haipee 代理端口为 17890（默认值）
-        set_proxy_port(17890);
+        // 设置 Haipee 代理端口为 0（默认值）
+        set_proxy_port(0);
 
         // 只有指向 Haipee 自己端口的 loopback 地址才返回 true
-        assert!(proxy_points_to_loopback("http://127.0.0.1:17890"));
-        assert!(proxy_points_to_loopback("socks5://localhost:17890"));
-        assert!(proxy_points_to_loopback("127.0.0.1:17890"));
+        assert!(proxy_points_to_loopback("http://127.0.0.1:0"));
+        assert!(proxy_points_to_loopback("socks5://localhost:0"));
+        assert!(proxy_points_to_loopback("127.0.0.1:0"));
 
         // 其他 loopback 端口不应该被跳过（允许使用其他本地代理工具）
         assert!(!proxy_points_to_loopback("http://127.0.0.1:7890"));
@@ -497,7 +497,7 @@ mod tests {
 
         // 非 loopback 地址不应该被跳过
         assert!(!proxy_points_to_loopback("http://192.168.1.10:7890"));
-        assert!(!proxy_points_to_loopback("http://192.168.1.10:17890"));
+        assert!(!proxy_points_to_loopback("http://192.168.1.10:0"));
     }
 
     #[test]
@@ -505,7 +505,7 @@ mod tests {
         let _guard = env_lock().lock().unwrap();
 
         // 设置 Haipee 代理端口
-        set_proxy_port(17890);
+        set_proxy_port(0);
 
         let keys = [
             "HTTP_PROXY",
@@ -521,7 +521,7 @@ mod tests {
         }
 
         // 指向 Haipee 端口的代理应该被跳过
-        std::env::set_var("HTTP_PROXY", "http://127.0.0.1:17890");
+        std::env::set_var("HTTP_PROXY", "http://127.0.0.1:0");
         assert!(system_proxy_points_to_loopback());
 
         // 指向其他端口的本地代理不应该被跳过

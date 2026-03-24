@@ -49,13 +49,15 @@ export function ProxyPanel({
 
   // 监听地址/端口的本地状态（端口用字符串以支持完全清空）
   const [listenAddress, setListenAddress] = useState("127.0.0.1");
-  const [listenPort, setListenPort] = useState("17890");
+  const [listenPort, setListenPort] = useState("");
 
   // 同步全局配置到本地状态
   useEffect(() => {
     if (globalConfig) {
       setListenAddress(globalConfig.listenAddress);
-      setListenPort(String(globalConfig.listenPort));
+      setListenPort(
+        globalConfig.listenPort > 0 ? String(globalConfig.listenPort) : "",
+      );
     }
   }, [globalConfig]);
 
@@ -109,8 +111,27 @@ export function ProxyPanel({
       return;
     }
 
-    // 严格校验端口：必须是纯数字
+    // 端口留空表示自动分配
     const portTrimmed = listenPort.trim();
+    if (portTrimmed === "") {
+      try {
+        await updateGlobalConfig.mutateAsync({
+          ...globalConfig,
+          listenAddress: addressTrimmed,
+          listenPort: 0,
+        });
+        toast.success(
+          t("proxy.settings.configSaved", { defaultValue: "代理配置已保存" }),
+          { closeButton: true },
+        );
+      } catch (error) {
+        toast.error(
+          t("proxy.settings.configSaveFailed", { defaultValue: "保存配置失败" }),
+        );
+      }
+      return;
+    }
+
     if (!/^\d+$/.test(portTrimmed)) {
       toast.error(
         t("proxy.settings.invalidPort", {
@@ -449,7 +470,7 @@ export function ProxyPanel({
                     placeholder={t(
                       "proxy.settings.fields.listenPort.placeholder",
                       {
-                        defaultValue: "17890",
+                        defaultValue: "留空自动分配",
                       },
                     )}
                   />
