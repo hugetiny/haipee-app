@@ -187,7 +187,17 @@ export class DashboardPage extends CrabNebulaBasePage {
     });
 
     if (clicked) {
-      await browser.pause(500);
+      // Wait for the dialog to close (form submission complete)
+      await browser.waitUntil(
+        async () => {
+          const dialog = await $('[role="dialog"], [data-testid="add-provider-dialog"]');
+          return !(await dialog.isExisting());
+        },
+        { timeout: 10_000, timeoutMsg: 'Dialog did not close after save' }
+      ).catch(() => {
+        // Fallback: just wait for a longer period
+        return browser.pause(2000);
+      });
     }
   }
 
@@ -218,6 +228,19 @@ export class DashboardPage extends CrabNebulaBasePage {
     await this.clickAddProvider();
     await this.fillProviderForm(data);
     await this.saveProvider();
+
+    // Wait for the provider card to appear
+    if (data.name) {
+      await browser.waitUntil(
+        async () => {
+          const count = await this.getProviderCount();
+          return count > 0;
+        },
+        { timeout: 10_000, timeoutMsg: `Provider "${data.name}" did not appear after save` }
+      ).catch(() => {
+        // Ignore timeout - test will fail later if provider is missing
+      });
+    }
   }
 
   /**
