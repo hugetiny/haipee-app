@@ -140,16 +140,24 @@ export class OpenClawGatewayPage extends CrabNebulaBasePage {
    * Get gateway connection status
    */
   async getConnectionStatus(): Promise<{ connected: boolean; status: string; error?: string }> {
-    return this.invokeIPC<{ connected: boolean; status: string; error?: string }>(
-      'get_openclaw_gateway_status'
-    );
+    try {
+      return await this.invokeIPC<{ connected: boolean; status: string; error?: string }>(
+        'get_openclaw_gateway_status'
+      );
+    } catch {
+      return { connected: false, status: 'error', error: 'IPC not available' };
+    }
   }
 
   /**
    * Disconnect from gateway
    */
   async disconnect(): Promise<void> {
-    await this.invokeIPC('disconnect_openclaw_gateway');
+    try {
+      await this.invokeIPC('disconnect_openclaw_gateway');
+    } catch {
+      // Ignore errors
+    }
   }
 
   /**

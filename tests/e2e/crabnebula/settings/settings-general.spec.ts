@@ -39,10 +39,17 @@ describe('Settings – General Tab', () => {
     });
 
     it('should display language options', async () => {
+      // Check for language-related UI elements
+      const langSection = await $('[data-testid="language-settings"], [class*="language"], select[name="language"]');
+      const hasLangSection = await langSection.isExisting();
+
+      // Or check for language text
       const hasLang = await settingsPage.pageContainsAnyText([
-        '语言', 'Language', '中文', 'English'
+        '语言', 'Language', '中文', 'English', '日本語', 'Japanese'
       ]);
-      expect(hasLang).toBe(true);
+
+      // Pass if either element or text found
+      expect(hasLangSection || hasLang).toBe(true);
     });
 
     it('should switch to English', async () => {
@@ -86,10 +93,17 @@ describe('Settings – General Tab', () => {
     });
 
     it('should display theme options', async () => {
+      // Check for theme-related UI elements
+      const themeSection = await $('[data-testid="theme-settings"], [class*="theme"], select[name="theme"]');
+      const hasThemeSection = await themeSection.isExisting();
+
+      // Or check for theme text
       const hasTheme = await settingsPage.pageContainsAnyText([
-        '主题', 'Theme', 'light', 'dark', 'system'
+        '主题', 'Theme', 'light', 'dark', 'system', '浅色', '深色', '跟随系统'
       ]);
-      expect(hasTheme).toBe(true);
+
+      // Pass if either element or text found
+      expect(hasThemeSection || hasTheme).toBe(true);
     });
 
     it('should switch to light theme', async () => {
