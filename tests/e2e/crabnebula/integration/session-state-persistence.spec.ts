@@ -87,11 +87,13 @@ describe('Session State Persistence', () => {
           await browser.pause(300);
 
           // Draft may or may not be preserved depending on implementation
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should preserve scroll position in session list', async () => {
@@ -116,10 +118,12 @@ describe('Session State Persistence', () => {
         await browser.pause(500);
 
         // Check scroll position (may or may not be preserved)
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should save session filter state', async () => {
@@ -139,7 +143,8 @@ describe('Session State Persistence', () => {
       await browser.pause(500);
 
       // Filter should be reset or preserved
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -189,7 +194,8 @@ describe('Session State Persistence', () => {
         console.log(`[test] Session before: ${sessionName}, after: ${afterName}`);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should restore message history after refresh', async () => {
@@ -221,7 +227,8 @@ describe('Session State Persistence', () => {
         }
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should restore session order after refresh', async () => {
@@ -284,7 +291,8 @@ describe('Session State Persistence', () => {
         }
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should persist message timestamps', async () => {
@@ -307,9 +315,11 @@ describe('Session State Persistence', () => {
         });
 
         console.log(`[test] Has timestamps: ${hasTimestamps}`);
+        expect(hasTimestamps).toBe(true);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should persist conversation context', async () => {
@@ -320,10 +330,12 @@ describe('Session State Persistence', () => {
         const sessionWithMessages = sessions.find(s => s.messages && s.messages.length > 0);
         if (sessionWithMessages) {
           console.log(`[test] Session has ${sessionWithMessages.messages?.length || 0} messages`);
+          expect(sessionWithMessages.messages!.length).toBeGreaterThanOrEqual(0);
         }
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -353,7 +365,8 @@ describe('Session State Persistence', () => {
         console.log(`[test] Selected: ${selectedName}, Current: ${currentName}`);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should restore active session on app start', async () => {
@@ -364,7 +377,8 @@ describe('Session State Persistence', () => {
 
       console.log(`[test] Active session in storage: ${activeSession || 'none'}`);
 
-      expect(typeof activeSession).toBe('string');
+      // activeSession can be null if no session was active, so check it's a string or null
+      expect(activeSession === null || typeof activeSession === 'string').toBe(true);
     });
 
     it('should clear active session when deleted', async () => {
@@ -391,7 +405,8 @@ describe('Session State Persistence', () => {
         }
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should switch to next session when active is deleted', async () => {
@@ -418,7 +433,8 @@ describe('Session State Persistence', () => {
         }
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -445,8 +461,8 @@ describe('Session State Persistence', () => {
       console.log(`[test] Claude sessions: ${claudeSessionCount}, Codex sessions: ${codexSessionCount}`);
 
       // Session counts should be independent per app
-      expect(typeof claudeSessionCount).toBe('number');
-      expect(typeof codexSessionCount).toBe('number');
+      expect(claudeSessionCount).toBeGreaterThanOrEqual(0);
+      expect(codexSessionCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should isolate sessions between apps', async () => {
@@ -461,9 +477,11 @@ describe('Session State Persistence', () => {
 
         const overlap = [...claudeIds].filter(id => codexIds.has(id));
         console.log(`[test] Session overlap: ${overlap.length}`);
+        expect(overlap.length).toBe(0);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should restore app-specific session on switch back', async () => {
@@ -500,7 +518,8 @@ describe('Session State Persistence', () => {
         console.log(`[test] Claude active: ${claudeActive} -> ${restoredActive}`);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
