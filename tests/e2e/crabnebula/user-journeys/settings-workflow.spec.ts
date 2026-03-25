@@ -12,6 +12,7 @@
 import { expect } from '@wdio/globals';
 import { SettingsPage } from '../pages/SettingsPage';
 import { NavigationPage } from '../pages/NavigationPage';
+import { JourneyHelpers } from './journey-helpers';
 
 describe('Settings Workflow Journey', () => {
   let settings: SettingsPage;
@@ -35,8 +36,9 @@ describe('Settings Workflow Journey', () => {
         const themeButtons = await themeSelector.$$('button');
         expect(themeButtons.length).toBeGreaterThan(0);
       } else {
-        // Theme selector might not be present, that's OK
-        expect(true).toBe(true);
+        // Theme selector might not be present, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
 
@@ -55,7 +57,9 @@ describe('Settings Workflow Journey', () => {
         }
       }
 
-      expect(true).toBe(true);
+      // Verify settings page is in valid state after interaction
+      const isValid = await JourneyHelpers.assertValidPageState();
+      expect(isValid).toBe(true);
     });
 
     it('should persist settings after navigation', async () => {
@@ -125,7 +129,9 @@ describe('Settings Workflow Journey', () => {
         // Test passes if we have any proxy content or the container exists
         expect(hasProxyContent || containerExists).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // Proxy tab not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
 
@@ -141,10 +147,19 @@ describe('Settings Workflow Journey', () => {
         if (await proxyInput.isExisting()) {
           await proxyInput.clearValue();
           await proxyInput.addValue('http://127.0.0.1:7890');
+          // Verify input was set
+          const inputValue = await proxyInput.getValue();
+          expect(inputValue).toBe('http://127.0.0.1:7890');
+        } else {
+          // Input not found, verify valid page state
+          const isValid = await JourneyHelpers.assertValidPageState();
+          expect(isValid).toBe(true);
         }
+      } else {
+        // Proxy tab not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
-
-      expect(true).toBe(true);
     });
 
     it('should show proxy test button', async () => {
@@ -162,9 +177,12 @@ describe('Settings Workflow Journey', () => {
           return buttons.length >= 2; // Should have at least scan, test, clear, save buttons
         });
 
-        expect(typeof hasTestButton).toBe('boolean');
+        // Verify buttons exist in proxy settings container
+        expect(hasTestButton).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // Proxy tab not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
   });
@@ -180,7 +198,9 @@ describe('Settings Workflow Journey', () => {
         const accordions = await $$('[data-state]');
         expect(accordions.length).toBeGreaterThanOrEqual(0);
       } else {
-        expect(true).toBe(true);
+        // Advanced tab not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
 
@@ -196,9 +216,12 @@ describe('Settings Workflow Journey', () => {
           return text.includes('WebDAV') || text.includes('云同步') || text.includes('Cloud');
         });
 
-        expect(typeof hasCloudSync).toBe('boolean');
+        // Verify cloud sync section is present
+        expect(hasCloudSync).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // Advanced tab not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
   });
@@ -217,15 +240,18 @@ describe('Settings Workflow Journey', () => {
         'settings-tab-about',
       ];
 
+      let navigatedCount = 0;
       for (const tabId of tabs) {
         const tab = await $(`[data-testid="${tabId}"]`);
         if (await tab.isExisting()) {
           await tab.click();
           await browser.pause(300);
+          navigatedCount++;
         }
       }
 
-      expect(true).toBe(true);
+      // Verify we successfully navigated to at least some tabs
+      expect(navigatedCount).toBeGreaterThan(0);
     });
   });
 
@@ -245,9 +271,12 @@ describe('Settings Workflow Journey', () => {
           return document.documentElement.getAttribute('data-theme') === 'dark' ||
                  document.body.className.includes('dark');
         });
-        expect(typeof isDark).toBe('boolean');
+        // Verify dark theme was applied
+        expect(isDark).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // Dark button not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
 
@@ -265,9 +294,12 @@ describe('Settings Workflow Journey', () => {
                  document.body.className.includes('light') ||
                  (!document.body.className.includes('dark') && !document.documentElement.getAttribute('data-theme'));
         });
-        expect(typeof isLight).toBe('boolean');
+        // Verify light theme was applied
+        expect(isLight).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // Light button not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
 
@@ -279,9 +311,13 @@ describe('Settings Workflow Journey', () => {
       if (await systemBtn.isExisting()) {
         await systemBtn.click();
         await browser.pause(300);
-        expect(true).toBe(true);
+        // Verify system theme button was clickable
+        const isClickable = await systemBtn.isClickable();
+        expect(isClickable).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // System button not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
   });
@@ -301,9 +337,12 @@ describe('Settings Workflow Journey', () => {
           const text = document.body.textContent || '';
           return text.includes('设置') || text.includes('供应商') || text.includes('语言');
         });
-        expect(typeof hasChinese).toBe('boolean');
+        // Verify Chinese language was applied
+        expect(hasChinese).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // Chinese button not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
 
@@ -321,9 +360,12 @@ describe('Settings Workflow Journey', () => {
           const text = document.body.textContent || '';
           return text.includes('Settings') || text.includes('Provider') || text.includes('Language');
         });
-        expect(typeof hasEnglish).toBe('boolean');
+        // Verify English language was applied
+        expect(hasEnglish).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // English button not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
 
@@ -335,10 +377,13 @@ describe('Settings Workflow Journey', () => {
       if (await jaBtn.isExisting()) {
         await jaBtn.click();
         await browser.pause(500);
-        expect(true).toBe(true);
+        // Verify Japanese button was clickable
+        const isClickable = await jaBtn.isClickable();
+        expect(isClickable).toBe(true);
       } else {
-        // Japanese might not be available
-        expect(true).toBe(true);
+        // Japanese might not be available, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
   });
@@ -365,7 +410,8 @@ describe('Settings Workflow Journey', () => {
         const text = document.body.textContent || '';
         return text.includes('Settings') || text.includes('Provider');
       });
-      expect(typeof hasEnglish).toBe('boolean');
+      // Verify English persisted after refresh
+      expect(hasEnglish).toBe(true);
     });
 
     it('should persist theme across sessions', async () => {
@@ -388,9 +434,12 @@ describe('Settings Workflow Journey', () => {
           return document.documentElement.getAttribute('data-theme') === 'dark' ||
                  document.body.className.includes('dark');
         });
-        expect(typeof isDark).toBe('boolean');
+        // Verify dark theme persisted after refresh
+        expect(isDark).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // Dark button not found, verify valid page state
+        const isValid = await JourneyHelpers.assertValidPageState();
+        expect(isValid).toBe(true);
       }
     });
   });
