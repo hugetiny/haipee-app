@@ -51,7 +51,7 @@ describe('Data Corruption Handling', () => {
         await JourneyHelpers.pageContainsText('错误');
 
       // App should either show error or gracefully continue
-      expect(typeof hasError).toBe('boolean');
+      expect(hasError).toBe(true);
     });
 
     it('should allow recovery when config file is corrupted', async () => {
@@ -70,10 +70,11 @@ describe('Data Corruption Handling', () => {
         // Verify provider was created
         await browser.pause(500);
         const exists = await dashboard.providerExists(testName);
-        expect(typeof exists).toBe('boolean');
+        expect(exists).toBe(true);
       } catch {
-        // Write may fail if config is truly corrupted
-        expect(true).toBe(true);
+        // Write may fail if config is truly corrupted - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -86,7 +87,7 @@ describe('Data Corruption Handling', () => {
       // Check if database status indicator exists
       const dbIndicator = await $('[data-testid="db-status"], [class*="database-status"]');
       const hasIndicator = await dbIndicator.isExisting();
-      expect(typeof hasIndicator).toBe('boolean');
+      expect(hasIndicator).toBe(true);
     });
 
     it('should show recovery options for corrupted database', async () => {
@@ -100,7 +101,7 @@ describe('Data Corruption Handling', () => {
                text.includes('Restore') || text.includes('修复');
       });
 
-      expect(typeof recoveryUI).toBe('boolean');
+      expect(recoveryUI).toBe(true);
     });
 
     it('should create new database if recovery fails', async () => {
@@ -109,7 +110,7 @@ describe('Data Corruption Handling', () => {
 
       // Verify app is functional
       const providerCount = await dashboard.getProviderCount();
-      expect(typeof providerCount).toBe('number');
+      expect(providerCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should preserve uncorrupted data during recovery', async () => {
@@ -127,7 +128,7 @@ describe('Data Corruption Handling', () => {
 
       // Provider should persist
       const exists = await dashboard.providerExists(testName);
-      expect(typeof exists).toBe('boolean');
+      expect(exists).toBe(true);
     });
   });
 
@@ -145,15 +146,12 @@ describe('Data Corruption Handling', () => {
 
         // Check if file input or import dialog appears
         const fileInput = await $('input[type="file"]');
-        if (await fileInput.isExisting()) {
-          // File input exists - malformed JSON would be rejected by backend
-          expect(true).toBe(true);
-        } else {
-          expect(true).toBe(true);
-        }
+        // File input exists - malformed JSON would be rejected by backend
+        expect(fileInput.isExisting()).toBe(true);
       } else {
-        // Import not available via UI
-        expect(true).toBe(true);
+        // Import not available via UI - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -192,9 +190,11 @@ describe('Data Corruption Handling', () => {
 
         // Should show validation error
         const hasError = await JourneyHelpers.hasFormError();
-        expect(typeof hasError).toBe('boolean');
+        expect(hasError).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No submit button - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -218,9 +218,11 @@ describe('Data Corruption Handling', () => {
         // Form should not submit without name
         const dialog = await $('[role="dialog"]');
         const dialogStillOpen = await dialog.isExisting();
-        expect(typeof dialogStillOpen).toBe('boolean');
+        expect(dialogStillOpen).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No submit button - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -246,9 +248,11 @@ describe('Data Corruption Handling', () => {
           const inputs = document.querySelectorAll('input[aria-invalid="true"]');
           return inputs.length > 0;
         });
-        expect(typeof hasError).toBe('boolean');
+        expect(hasError).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No submit button - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -271,7 +275,7 @@ describe('Data Corruption Handling', () => {
 
       // If migration happened, app should still work
       const providerCount = await dashboard.getProviderCount();
-      expect(typeof providerCount).toBe('number');
+      expect(providerCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should show migration warning if needed', async () => {
@@ -281,7 +285,7 @@ describe('Data Corruption Handling', () => {
       // Check for migration notification
       const toast = await JourneyHelpers.waitForToast(3000);
       // Toast may or may not appear depending on migration state
-      expect(toast === null || typeof toast === 'string').toBe(true);
+      expect(toast === null || (toast !== null && toast.length > 0)).toBe(true);
     });
   });
 
@@ -301,7 +305,7 @@ describe('Data Corruption Handling', () => {
 
       // Verify the write completed
       const exists = await dashboard.providerExists(testName);
-      expect(typeof exists).toBe('boolean');
+      expect(exists).toBe(true);
     });
 
     it('should recover from interrupted save', async () => {
@@ -324,7 +328,7 @@ describe('Data Corruption Handling', () => {
       // At least one should exist
       const exists1 = await dashboard.providerExists(name1);
       const exists2 = await dashboard.providerExists(name2);
-      expect(typeof (exists1 || exists2)).toBe('boolean');
+      expect(exists1 || exists2).toBe(true);
     });
   });
 
@@ -343,7 +347,7 @@ describe('Data Corruption Handling', () => {
                text.includes('恢复') || text.includes('Restore');
       });
 
-      expect(typeof backupSection).toBe('boolean');
+      expect(backupSection).toBe(true);
     });
 
     it('should validate backup file before restore', async () => {
@@ -353,13 +357,8 @@ describe('Data Corruption Handling', () => {
       // Check if restore validation exists
       const restoreBtn = await $('[data-testid="restore-btn"], button[aria-label*="restore"]');
 
-      if (await restoreBtn.isExisting()) {
-        // Restore UI exists
-        expect(true).toBe(true);
-      } else {
-        // Restore may be handled differently
-        expect(true).toBe(true);
-      }
+      // Restore UI exists or handled differently
+      expect(restoreBtn.isExisting()).toBe(true);
     });
 
     it('should preserve current data if restore fails', async () => {
@@ -395,9 +394,11 @@ describe('Data Corruption Handling', () => {
         await browser.pause(200);
 
         const ariaInvalid = await urlInput.getAttribute('aria-invalid');
-        expect(typeof ariaInvalid).toBe('string');
+        expect(ariaInvalid).toBe('true');
       } else {
-        expect(true).toBe(true);
+        // No URL input - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -419,9 +420,11 @@ describe('Data Corruption Handling', () => {
           return errors.length > 0;
         });
 
-        expect(typeof errorVisible).toBe('boolean');
+        expect(errorVisible).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No submit button - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
