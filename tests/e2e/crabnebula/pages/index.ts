@@ -23,6 +23,7 @@ export { PromptsPage, promptsPage } from './PromptsPage';
 export { SkillsPage, skillsPage } from './SkillsPage';
 export { WebDavPage, webDavPage } from './WebDavPage';
 export { OnboardingPage, onboardingPage } from './OnboardingPage';
+export { ImportExportPage, importExportPage } from './ImportExportPage';
 
 // Type exports
 export type { ProviderFormData } from './DashboardPage';
@@ -32,3 +33,4 @@ export type { McpServerFormData, AppId } from './McpPage';
 export type { PromptFormData } from './PromptsPage';
 export type { SkillFormData } from './SkillsPage';
 export type { UniversalProviderData } from './UniversalProviderPage';
+export type { ExportOptions } from './ImportExportPage';
