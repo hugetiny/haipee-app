@@ -4,6 +4,7 @@
  */
 
 import { navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Global Proxy – URL Configuration', () => {
   before(async () => {
@@ -18,7 +19,8 @@ describe('Global Proxy – URL Configuration', () => {
         // Should return null (no proxy) or a URL string
         expect(proxyUrl === null || typeof proxyUrl === 'string').toBe(true);
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -34,7 +36,8 @@ describe('Global Proxy – URL Configuration', () => {
         expect(proxyUrl).toContain('127.0.0.1:7890');
       } catch {
         // May fail if proxy validation fails
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -47,7 +50,8 @@ describe('Global Proxy – URL Configuration', () => {
         const proxyUrl = await navigationPage.invokeIPC<string | null>('get_global_proxy_url');
         expect(proxyUrl).toContain('socks5');
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -58,7 +62,8 @@ describe('Global Proxy – URL Configuration', () => {
         const proxyUrl = await navigationPage.invokeIPC<string | null>('get_global_proxy_url');
         expect(proxyUrl).toBeNull();
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -88,10 +93,11 @@ describe('Global Proxy – Test Connection', () => {
         error?: string;
       }>('test_global_proxy');
 
-      expect(typeof result).toBe('object');
-      expect(typeof result.success).toBe('boolean');
+      expect(result).toBeDefined();
+      expect(result!.success).toBeDefined();
     } catch {
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -100,9 +106,10 @@ describe('Global Proxy – Test Connection', () => {
       const result = await navigationPage.invokeIPC('test_global_proxy_with_url', {
         url: 'http://127.0.0.1:7890'
       });
-      expect(typeof result).toBe('object');
+      expect(result).toBeDefined();
     } catch {
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -117,24 +124,24 @@ describe('Global Proxy – UI Integration', () => {
   it('should show global proxy input in settings', async () => {
     const proxyInput = await $('[data-testid="global-proxy-url-input"], input[name="globalProxyUrl"]');
     const hasInput = await proxyInput.isExisting();
-    expect(typeof hasInput).toBe('boolean');
+    expect(hasInput).toBe(true);
   });
 
   it('should show test connection button', async () => {
     const testBtn = await $('[data-testid="test-global-proxy-btn"]');
     const hasBtn = await testBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    expect(hasBtn).toBe(true);
   });
 
   it('should show proxy status indicator', async () => {
     const statusIndicator = await $('[data-testid="global-proxy-status"], [class*="proxy-status"]');
     const hasStatus = await statusIndicator.isExisting();
-    expect(typeof hasStatus).toBe('boolean');
+    expect(hasStatus).toBe(true);
   });
 
   it('should show clear proxy button', async () => {
     const clearBtn = await $('[data-testid="clear-global-proxy-btn"]');
     const hasClear = await clearBtn.isExisting();
-    expect(typeof hasClear).toBe('boolean');
+    expect(hasClear).toBe(true);
   });
 });
