@@ -12,6 +12,7 @@
 import { expect } from '@wdio/globals';
 import { NavigationPage, AppType } from '../pages/NavigationPage';
 import { DashboardPage } from '../pages/DashboardPage';
+import { JourneyHelpers } from './journey-helpers';
 
 describe('Multi-App Switching Journey', () => {
   let navigation: NavigationPage;
@@ -49,8 +50,9 @@ describe('Multi-App Switching Journey', () => {
         const sidebarVisible = await navigation.isSidebarVisible();
         expect(sidebarVisible).toBe(true);
       } else {
-        // Claude button not found or disabled - skip test
-        expect(true).toBe(true);
+        // Claude button not found or disabled - verify UI is still valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -69,10 +71,12 @@ describe('Multi-App Switching Journey', () => {
           const sidebarVisible = await navigation.isSidebarVisible();
           expect(sidebarVisible).toBe(true);
         } else {
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -91,10 +95,12 @@ describe('Multi-App Switching Journey', () => {
           const sidebarVisible = await navigation.isSidebarVisible();
           expect(sidebarVisible).toBe(true);
         } else {
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -113,10 +119,12 @@ describe('Multi-App Switching Journey', () => {
           const sidebarVisible = await navigation.isSidebarVisible();
           expect(sidebarVisible).toBe(true);
         } else {
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -135,10 +143,12 @@ describe('Multi-App Switching Journey', () => {
           const sidebarVisible = await navigation.isSidebarVisible();
           expect(sidebarVisible).toBe(true);
         } else {
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -170,7 +180,8 @@ describe('Multi-App Switching Journey', () => {
         // Providers should be the same
         expect(providers2.length).toBe(providers1.length);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -197,10 +208,11 @@ describe('Multi-App Switching Journey', () => {
           return document.querySelectorAll('[data-session-id], [data-session-provider]').length;
         });
 
-        // Session counts should match (or both be 0)
-        expect(typeof sessions2).toBe('number');
+        // Session counts should be a valid number
+        expect(sessions2).toBeGreaterThanOrEqual(0);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -219,10 +231,12 @@ describe('Multi-App Switching Journey', () => {
           const sidebarVisible = await navigation.isSidebarVisible();
           expect(sidebarVisible).toBe(true);
         } else {
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -243,7 +257,8 @@ describe('Multi-App Switching Journey', () => {
         const sidebarVisible2 = await navigation.isSidebarVisible();
         expect(sidebarVisible2).toBe(sidebarVisible1);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -264,9 +279,10 @@ describe('Multi-App Switching Journey', () => {
         // Should still be on settings or providers
         const bodyText = await browser.execute(() => document.body.textContent || '');
         const onSettings = bodyText.includes('设置') || bodyText.includes('Settings');
-        expect(typeof onSettings).toBe('boolean');
+        expect(onSettings).toBe(true);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -292,10 +308,11 @@ describe('Multi-App Switching Journey', () => {
         const providers2 = await dashboard.getProviderCount();
 
         // Counts may differ per app
-        expect(typeof providers1).toBe('number');
-        expect(typeof providers2).toBe('number');
+        expect(providers1).toBeGreaterThanOrEqual(0);
+        expect(providers2).toBeGreaterThanOrEqual(0);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -323,10 +340,11 @@ describe('Multi-App Switching Journey', () => {
         );
 
         // Session counts are isolated per app
-        expect(typeof sessions1).toBe('number');
-        expect(typeof sessions2).toBe('number');
+        expect(sessions1).toBeGreaterThanOrEqual(0);
+        expect(sessions2).toBeGreaterThanOrEqual(0);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -347,10 +365,12 @@ describe('Multi-App Switching Journey', () => {
         await navigation.navigateToView('mcp');
         await browser.pause(500);
 
-        // MCP configs are isolated
-        expect(true).toBe(true);
+        // MCP configs are isolated - verify UI is still functional
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -384,7 +404,8 @@ describe('Multi-App Switching Journey', () => {
         // Theme should be shared
         expect(theme2).toBe(theme1);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -414,9 +435,10 @@ describe('Multi-App Switching Journey', () => {
           const text = document.body.textContent || '';
           return text.includes('Settings') || text.includes('Provider');
         });
-        expect(typeof hasEnglish).toBe('boolean');
+        expect(hasEnglish).toBe(true);
       } else {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
