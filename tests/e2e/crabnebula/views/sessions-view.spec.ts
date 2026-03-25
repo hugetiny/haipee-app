@@ -12,6 +12,7 @@
 
 import { SessionManagerPage } from '../pages/SessionManagerPage';
 import { invokeIPC } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Sessions View', () => {
   const sessionManagerPage = new SessionManagerPage();
@@ -60,10 +61,11 @@ describe('Sessions View', () => {
             document.querySelector('[class*="provider"]') !== null
           );
         });
-        expect(typeof hasProviderBadge).toBe('boolean');
+        expect(hasProviderBadge).toBe(true);
       } else {
         console.log('[test] No sessions - skip provider badge test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -81,7 +83,7 @@ describe('Sessions View', () => {
         );
       });
 
-      expect(typeof hasTimestamp).toBe('boolean');
+      expect(hasTimestamp).toBe(true);
     });
   });
 
@@ -95,7 +97,7 @@ describe('Sessions View', () => {
         );
       });
 
-      expect(typeof hasFilter).toBe('boolean');
+      expect(hasFilter).toBe(true);
     });
 
     it('should filter by provider', async () => {
@@ -125,7 +127,8 @@ describe('Sessions View', () => {
         console.log('[test] Provider filter - may not be implemented');
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -139,7 +142,7 @@ describe('Sessions View', () => {
         );
       });
 
-      expect(typeof hasSearch).toBe('boolean');
+      expect(hasSearch).toBe(true);
     });
 
     it('should filter sessions by search query', async () => {
@@ -156,7 +159,8 @@ describe('Sessions View', () => {
         await browser.pause(200);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -185,10 +189,11 @@ describe('Sessions View', () => {
           );
         });
 
-        expect(typeof hasMessages).toBe('boolean');
+        expect(hasMessages).toBe(true);
       } else {
         console.log('[test] No sessions - skip message list test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -219,7 +224,7 @@ describe('Sessions View', () => {
       });
 
       // TOC may or may not be implemented
-      expect(typeof hasTOC).toBe('boolean');
+      expect(hasTOC).toBe(true);
     });
   });
 
@@ -235,7 +240,7 @@ describe('Sessions View', () => {
         );
       });
 
-      expect(typeof hasDelete).toBe('boolean');
+      expect(hasDelete).toBe(true);
     });
 
     it('should have export action if implemented', async () => {
@@ -248,7 +253,7 @@ describe('Sessions View', () => {
         );
       });
 
-      expect(typeof hasExport).toBe('boolean');
+      expect(hasExport).toBe(true);
     });
   });
 });
