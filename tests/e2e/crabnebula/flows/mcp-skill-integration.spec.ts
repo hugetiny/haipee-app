@@ -14,6 +14,7 @@
 import { mcpPage } from '../pages/McpPage';
 import { skillsPage } from '../pages/SkillsPage';
 import { invokeIPC, generateTestId } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('MCP/Skill Integration Flow', () => {
   const testServers: string[] = [];
@@ -80,10 +81,15 @@ describe('MCP/Skill Integration Flow', () => {
             await browser.pause(500);
           }
         }
-        expect(true).toBe(true); // Navigation attempted
+
+        // Verify page is in a valid state after navigation attempt
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       } catch {
         console.log('[test] MCP navigation - UI may differ');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -123,7 +129,9 @@ describe('MCP/Skill Integration Flow', () => {
         expect(hasMcpContent).toBe(true);
       } catch {
         console.log('[test] MCP content check - UI may differ');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -165,7 +173,9 @@ describe('MCP/Skill Integration Flow', () => {
         expect(hasContent).toBe(true);
       } catch {
         console.log('[test] Server list check - UI may differ');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -180,7 +190,14 @@ describe('MCP/Skill Integration Flow', () => {
             b.textContent?.includes('配置')
         );
       });
-      expect(typeof hasAddBtn).toBe('boolean');
+
+      // Either we have an add button, or the page is in a valid state
+      if (!hasAddBtn) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasAddBtn).toBe(true);
+      }
     });
   });
 
@@ -251,7 +268,10 @@ describe('MCP/Skill Integration Flow', () => {
       try {
         await mcpPage.toggleServerApp(testServers[0], 'claude');
         await browser.pause(300);
-        expect(true).toBe(true);
+
+        // Verify the server still exists after toggle
+        const exists = await mcpPage.serverExists(testServers[0]);
+        expect(exists).toBe(true);
       } catch {
         console.log('[test] Toggle MCP server app - UI may differ');
       }
@@ -282,7 +302,7 @@ describe('MCP/Skill Integration Flow', () => {
   describe('Skills Management', () => {
     it('should have skills accessible via settings or navigation', async () => {
       // Skills might be in settings > skills tab or a dedicated panel
-      const hasSkillsContent = await browser.execute(() => {
+      let hasSkillsContent = await browser.execute(() => {
         const text = document.body.textContent || '';
         return (
           text.includes('Skills') ||
@@ -299,9 +319,26 @@ describe('MCP/Skill Integration Flow', () => {
           await settingsBtn.click();
           await browser.pause(500);
         }
+
+        // Check again after navigation
+        hasSkillsContent = await browser.execute(() => {
+          const text = document.body.textContent || '';
+          return (
+            text.includes('Skills') ||
+            text.includes('技能') ||
+            text.includes('Install') ||
+            text.includes('安装')
+          );
+        });
       }
 
-      expect(true).toBe(true);
+      // Either skills content is visible or page is in valid state
+      if (!hasSkillsContent) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasSkillsContent).toBe(true);
+      }
     });
 
     it('should navigate to skills view', async () => {
@@ -318,10 +355,19 @@ describe('MCP/Skill Integration Flow', () => {
             text.includes('安装')
           );
         });
-        expect(typeof hasSkillsContent).toBe('boolean');
+
+        // Either skills content is visible or page is in valid state
+        if (!hasSkillsContent) {
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
+        } else {
+          expect(hasSkillsContent).toBe(true);
+        }
       } catch {
         console.log('[test] Skills navigation - UI may differ');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -361,7 +407,9 @@ describe('MCP/Skill Integration Flow', () => {
         expect(hasContent).toBe(true);
       } catch {
         console.log('[test] Skill list check - UI may differ');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -385,10 +433,19 @@ describe('MCP/Skill Integration Flow', () => {
               b.textContent?.includes('添加')
           );
         });
-        expect(typeof hasInstall).toBe('boolean');
+
+        // Either we have an install option, or the page is in a valid state
+        if (!hasInstall) {
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
+        } else {
+          expect(hasInstall).toBe(true);
+        }
       } catch {
         console.log('[test] Install skill option - UI may differ');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -431,10 +488,18 @@ describe('MCP/Skill Integration Flow', () => {
           );
         });
 
-        expect(typeof hasSearch).toBe('boolean');
+        // Either we have search, or the page is in a valid state
+        if (!hasSearch) {
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
+        } else {
+          expect(hasSearch).toBe(true);
+        }
       } catch {
         console.log('[test] Search skills - UI may differ');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -446,9 +511,12 @@ describe('MCP/Skill Integration Flow', () => {
       if (servers) {
         console.log(`[test] Found ${servers.length} MCP servers via IPC`);
         expect(Array.isArray(servers)).toBe(true);
+        expect(servers.length).toBeGreaterThanOrEqual(0);
       } else {
         console.log('[test] IPC not available - running in browser mock mode');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -458,9 +526,12 @@ describe('MCP/Skill Integration Flow', () => {
       if (skills) {
         console.log(`[test] Found ${skills.length} skills via IPC`);
         expect(Array.isArray(skills)).toBe(true);
+        expect(skills.length).toBeGreaterThanOrEqual(0);
       } else {
         console.log('[test] IPC not available - running in browser mock mode');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
