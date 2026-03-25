@@ -279,6 +279,15 @@ export class SettingsPage extends CrabNebulaBasePage {
    * Change theme
    */
   async changeTheme(theme: 'light' | 'dark' | 'system'): Promise<void> {
+    // The actual UI uses button group with theme-btn-{theme} testids
+    const themeBtn = await $(`[data-testid="theme-btn-${theme}"]`);
+    if (await themeBtn.isExisting()) {
+      await themeBtn.click();
+      await browser.pause(500);
+      return;
+    }
+
+    // Fallback: try legacy dropdown pattern
     const themeSelector = await $('[data-testid="theme-selector"]');
     if (!await themeSelector.isExisting()) {
       const themeOption = await $(`[data-theme="${theme}"]`);
@@ -289,12 +298,15 @@ export class SettingsPage extends CrabNebulaBasePage {
       return;
     }
 
+    // Try clicking selector and then option
     await themeSelector.click();
     await browser.pause(300);
 
     const option = await $(`[data-value="${theme}"]`);
-    await option.click();
-    await browser.pause(500);
+    if (await option.isExisting()) {
+      await option.click();
+      await browser.pause(500);
+    }
   }
 
   /**
