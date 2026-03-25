@@ -4,6 +4,7 @@
  */
 
 import { promptsPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Prompts – List', () => {
   before(async () => {
@@ -15,7 +16,13 @@ describe('Prompts – List', () => {
   it('should display prompts list', async () => {
     const list = await $('[data-testid="prompts-list"]');
     const hasList = await list.isExisting();
-    expect(typeof hasList).toBe('boolean');
+    // Verify the app is in a valid state whether list exists or not
+    if (!hasList) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasList).toBe(true);
+    }
   });
 
   it('should show prompt count', async () => {
@@ -37,7 +44,13 @@ describe('Prompts – List', () => {
   it('should show enabled prompt indicator', async () => {
     const enabledIndicator = await $('[data-testid="enabled-prompt"], [class*="enabled"]');
     const hasIndicator = await enabledIndicator.isExisting();
-    expect(typeof hasIndicator).toBe('boolean');
+    // Either indicator exists or app state is valid
+    if (!hasIndicator) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasIndicator).toBe(true);
+    }
   });
 });
 
@@ -51,7 +64,13 @@ describe('Prompts – CRUD', () => {
   it('should show add prompt button', async () => {
     const addBtn = await $('[data-testid="prompt-add-btn"]');
     const hasBtn = await addBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    // Either button exists or app state is valid
+    if (!hasBtn) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasBtn).toBe(true);
+    }
   });
 
   it('should open add prompt form', async () => {
@@ -63,7 +82,13 @@ describe('Prompts – CRUD', () => {
       const hasForm = await promptsPage.pageContainsAnyText([
         '添加', 'Add', 'Prompt', '提示词'
       ]);
-      expect(typeof hasForm).toBe('boolean');
+      // Verify form appeared or app is in valid state
+      if (!hasForm) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasForm).toBe(true);
+      }
 
       await browser.keys(['Escape']);
     }
@@ -76,9 +101,12 @@ describe('Prompts – CRUD', () => {
       const firstPrompt = promptArray[0];
       const toggle = await firstPrompt.$('button[role="switch"], input[type="checkbox"]');
       if (await toggle.isExisting()) {
+        const beforeState = await toggle.getAttribute('aria-checked');
         await toggle.click();
         await browser.pause(300);
-        expect(true).toBe(true);
+        // Verify toggle action completed - app should be in valid state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     }
   });
@@ -90,7 +118,13 @@ describe('Prompts – CRUD', () => {
       const firstPrompt = promptArray[0];
       const editBtn = await firstPrompt.$('button[aria-label*="edit"], button[aria-label*="编辑"]');
       const hasEdit = await editBtn.isExisting();
-      expect(typeof hasEdit).toBe('boolean');
+      // Either edit button exists or app state is valid
+      if (!hasEdit) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasEdit).toBe(true);
+      }
     }
   });
 
@@ -101,7 +135,13 @@ describe('Prompts – CRUD', () => {
       const firstPrompt = promptArray[0];
       const deleteBtn = await firstPrompt.$('button[aria-label*="delete"], button[aria-label*="删除"]');
       const hasDelete = await deleteBtn.isExisting();
-      expect(typeof hasDelete).toBe('boolean');
+      // Either delete button exists or app state is valid
+      if (!hasDelete) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasDelete).toBe(true);
+      }
     }
   });
 });
@@ -120,7 +160,7 @@ describe('Prompts – Content', () => {
       const preview = await firstPrompt.$('[class*="preview"], [class*="content"]');
       if (await preview.isExisting()) {
         const text = await preview.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThan(0);
       }
     }
   });
@@ -133,7 +173,13 @@ describe('Prompts – Content', () => {
       const text = await firstPrompt.getText();
       // Check for character count indicator
       const hasCount = text.includes('字符') || text.includes('char') || /\d+/.test(text);
-      expect(typeof hasCount).toBe('boolean');
+      // Either has count indicator or app state is valid
+      if (!hasCount) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasCount).toBe(true);
+      }
     }
   });
 });
@@ -147,12 +193,24 @@ describe('Prompts – Import/Export', () => {
   it('should show import button', async () => {
     const importBtn = await $('[data-testid="prompt-import-btn"]');
     const hasBtn = await importBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    // Either import button exists or app state is valid
+    if (!hasBtn) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasBtn).toBe(true);
+    }
   });
 
   it('should show export button', async () => {
     const exportBtn = await $('[data-testid="prompt-export-btn"]');
     const hasBtn = await exportBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    // Either export button exists or app state is valid
+    if (!hasBtn) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasBtn).toBe(true);
+    }
   });
 });
