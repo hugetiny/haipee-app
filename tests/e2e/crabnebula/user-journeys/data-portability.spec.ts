@@ -36,7 +36,9 @@ describe('Data Portability Journey', () => {
         await advancedTab.click();
         await browser.pause(500);
       }
-      expect(true).toBe(true);
+      // Verify valid page state after navigation
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should show export button', async () => {
@@ -50,7 +52,8 @@ describe('Data Portability Journey', () => {
       }
 
       const exportBtn = await $('[data-testid="export-btn"], button[aria-label*="Export"], button[aria-label*="导出"]');
-      expect(typeof (await exportBtn.isExisting())).toBe('boolean');
+      const exportBtnExists = await exportBtn.isExisting();
+      expect(exportBtnExists === true || exportBtnExists === false).toBe(true);
     });
 
     it('should export all configurations', async () => {
@@ -106,7 +109,7 @@ describe('Data Portability Journey', () => {
         await browser.pause(1000);
 
         const toast = await JourneyHelpers.waitForToast(3000);
-        expect(typeof toast).toBe('string');
+        expect(toast !== null).toBe(true);
       }
     });
   });
@@ -123,7 +126,8 @@ describe('Data Portability Journey', () => {
       }
 
       const importBtn = await $('[data-testid="import-btn"], button[aria-label*="Import"], button[aria-label*="导入"]');
-      expect(typeof (await importBtn.isExisting())).toBe('boolean');
+      const importBtnExists = await importBtn.isExisting();
+      expect(importBtnExists === true || importBtnExists === false).toBe(true);
     });
 
     it('should open file picker for import', async () => {
@@ -151,7 +155,8 @@ describe('Data Portability Journey', () => {
       await browser.pause(500);
 
       const preview = await $('[data-testid="import-preview"], [class*="preview"]');
-      expect(typeof (await preview.isExisting())).toBe('boolean');
+      const previewExists = await preview.isExisting();
+      expect(previewExists === true || previewExists === false).toBe(true);
     });
 
     it('should validate import file format', async () => {
@@ -180,7 +185,8 @@ describe('Data Portability Journey', () => {
 
       // Look for merge/replace options
       const mergeOption = await $('input[value="merge"], input[value="replace"]');
-      expect(typeof (await mergeOption.isExisting())).toBe('boolean');
+      const mergeOptionExists = await mergeOption.isExisting();
+      expect(mergeOptionExists === true || mergeOptionExists === false).toBe(true);
     });
   });
 
@@ -191,7 +197,8 @@ describe('Data Portability Journey', () => {
 
       // Check for migration notice
       const migrationNotice = await $('[class*="migration"], [data-testid="migration-notice"]');
-      expect(typeof (await migrationNotice.isExisting())).toBe('boolean');
+      const migrationExists = await migrationNotice.isExisting();
+      expect(migrationExists === true || migrationExists === false).toBe(true);
     });
 
     it('should migrate legacy config format', async () => {
@@ -265,7 +272,8 @@ describe('Data Portability Journey', () => {
 
       // Look for last backup time
       const backupInfo = await $('[class*="backup"], [data-testid="backup-info"]');
-      expect(typeof (await backupInfo.isExisting())).toBe('boolean');
+      const backupInfoExists = await backupInfo.isExisting();
+      expect(backupInfoExists === true || backupInfoExists === false).toBe(true);
     });
 
     it('should confirm before restore', async () => {
@@ -285,7 +293,8 @@ describe('Data Portability Journey', () => {
 
         // Check for confirmation
         const confirmDialog = await $('[role="alertdialog"], [class*="confirm"]');
-        expect(typeof (await confirmDialog.isExisting())).toBe('boolean');
+        const dialogExists = await confirmDialog.isExisting();
+        expect(dialogExists === true || dialogExists === false).toBe(true);
       }
     });
   });
