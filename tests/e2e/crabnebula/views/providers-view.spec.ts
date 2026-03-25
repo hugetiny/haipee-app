@@ -13,6 +13,7 @@
 
 import { dashboardPage } from '../pages/DashboardPage';
 import { invokeIPC } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Providers View', () => {
   before(async () => {
@@ -51,7 +52,8 @@ describe('Providers View', () => {
         }
       } else {
         console.log('[test] No providers - skip card name test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -71,7 +73,8 @@ describe('Providers View', () => {
         expect(hasActions).toBe(true);
       } else {
         console.log('[test] No providers - skip action buttons test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -88,10 +91,11 @@ describe('Providers View', () => {
       // Either there's an active indicator or no providers
       const count = await dashboardPage.getProviderCount();
       if (count > 0) {
-        expect(typeof hasActiveIndicator).toBe('boolean');
+        expect(hasActiveIndicator).toBe(true);
       } else {
         console.log('[test] No providers - skip active indicator test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -115,7 +119,7 @@ describe('Providers View', () => {
       });
 
       // This is a visual indicator that may or may not be present
-      expect(typeof hasGreenBorder).toBe('boolean');
+      expect(hasGreenBorder).toBe(true);
     });
   });
 
@@ -130,7 +134,7 @@ describe('Providers View', () => {
         );
       });
 
-      expect(typeof hasSearch).toBe('boolean');
+      expect(hasSearch).toBe(true);
     });
 
     it('should filter providers when searching', async () => {
@@ -154,7 +158,8 @@ describe('Providers View', () => {
         await browser.pause(200);
       } else {
         console.log('[test] Search input not found - skip');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -170,7 +175,7 @@ describe('Providers View', () => {
       });
 
       // Drag and drop may or may not be implemented
-      expect(typeof hasDragHandle).toBe('boolean');
+      expect(hasDragHandle).toBe(true);
     });
   });
 
@@ -197,17 +202,20 @@ describe('Providers View', () => {
 
           if (!hasEmptyState) {
             console.log('[test] Empty state text not found, but no providers exist');
-            expect(true).toBe(true); // Pass anyway - empty state may be visual-only
+            const validState = await JourneyHelpers.assertValidPageState();
+            expect(validState).toBe(true); // Pass anyway - empty state may be visual-only
           } else {
             expect(hasEmptyState).toBe(true);
           }
         } else {
           console.log('[test] Providers exist - skip empty state test');
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
         console.log('[test] Empty state check - IPC may not be available');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -236,11 +244,12 @@ describe('Providers View', () => {
             );
           });
 
-          expect(typeof hasDetails).toBe('boolean');
+          expect(hasDetails).toBe(true);
         }
       } else {
         console.log('[test] No providers - skip details test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -258,7 +267,7 @@ describe('Providers View', () => {
       });
 
       // Proxy status may be in a different view
-      expect(typeof hasProxyStatus).toBe('boolean');
+      expect(hasProxyStatus).toBe(true);
     });
   });
 });
