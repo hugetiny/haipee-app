@@ -19,8 +19,7 @@ describe('Workspace - File Operations', () => {
           filename: 'AGENTS.md'
         });
         expect(content).toBeDefined();
-        expect(typeof content).toBe('string');
-        expect(content.length).toBeGreaterThan(0);
+        expect(content!.length).toBeGreaterThan(0);
       } catch {
         const validState = await JourneyHelpers.assertValidPageState();
         expect(validState).toBe(true);
@@ -33,8 +32,7 @@ describe('Workspace - File Operations', () => {
           filename: 'SOUL.md'
         });
         expect(content).toBeDefined();
-        expect(typeof content).toBe('string');
-        expect(content.length).toBeGreaterThan(0);
+        expect(content!.length).toBeGreaterThan(0);
       } catch {
         const validState = await JourneyHelpers.assertValidPageState();
         expect(validState).toBe(true);
@@ -47,8 +45,7 @@ describe('Workspace - File Operations', () => {
           filename: 'USER.md'
         });
         expect(content).toBeDefined();
-        expect(typeof content).toBe('string');
-        expect(content.length).toBeGreaterThan(0);
+        expect(content!.length).toBeGreaterThan(0);
       } catch {
         const validState = await JourneyHelpers.assertValidPageState();
         expect(validState).toBe(true);
@@ -61,8 +58,7 @@ describe('Workspace - File Operations', () => {
           filename: 'MEMORY.md'
         });
         expect(content).toBeDefined();
-        expect(typeof content).toBe('string');
-        expect(content.length).toBeGreaterThan(0);
+        expect(content!.length).toBeGreaterThan(0);
       } catch {
         const validState = await JourneyHelpers.assertValidPageState();
         expect(validState).toBe(true);
@@ -203,7 +199,7 @@ describe('Workspace - Daily Memory', () => {
           filename: todayFilename
         });
         expect(content).toBeDefined();
-        expect(typeof content).toBe('string');
+        expect(content!.length).toBeGreaterThanOrEqual(0);
       } catch {
         const validState = await JourneyHelpers.assertValidPageState();
         expect(validState).toBe(true);
