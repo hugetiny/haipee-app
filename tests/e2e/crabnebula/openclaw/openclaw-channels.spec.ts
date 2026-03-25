@@ -4,6 +4,7 @@
  */
 
 import { openClawChannelsPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('OpenClaw Channels – List', () => {
   before(async () => {
@@ -29,7 +30,13 @@ describe('OpenClaw Channels – List', () => {
       const firstChannel = channelArray[0];
       const status = await firstChannel.$('[data-testid="channel-status"], [class*="status"]');
       const hasStatus = await status.isExisting();
-      expect(typeof hasStatus).toBe('boolean');
+      // Status indicator may or may not exist - just verify channel is displayed
+      const isDisplayed = await firstChannel.isDisplayed();
+      expect(isDisplayed).toBe(true);
+    } else {
+      // No channels - verify page state is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -44,7 +51,8 @@ describe('OpenClaw Channels – CRUD', () => {
   it('should show add channel button', async () => {
     const addBtn = await $('[data-testid="channel-add-btn"]');
     const hasBtn = await addBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    // Add button should exist in the channels UI
+    expect(hasBtn).toBe(true);
   });
 
   it('should open add channel form', async () => {
@@ -56,9 +64,14 @@ describe('OpenClaw Channels – CRUD', () => {
       const hasForm = await openClawChannelsPage.pageContainsAnyText([
         '添加', 'Add', 'Channel', '频道'
       ]);
-      expect(typeof hasForm).toBe('boolean');
+      // Form should appear with channel-related text
+      expect(hasForm).toBe(true);
 
       await browser.keys(['Escape']);
+    } else {
+      // Button not found - verify page state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -69,10 +82,21 @@ describe('OpenClaw Channels – CRUD', () => {
       const firstChannel = channelArray[0];
       const toggle = await firstChannel.$('button[role="switch"], input[type="checkbox"]');
       if (await toggle.isExisting()) {
+        const beforeState = await toggle.isSelected();
         await toggle.click();
         await browser.pause(300);
-        expect(true).toBe(true);
+        const afterState = await toggle.isSelected();
+        // State should have changed
+        expect(afterState).toBe(!beforeState);
+      } else {
+        // No toggle - verify channel is still displayed
+        const isDisplayed = await firstChannel.isDisplayed();
+        expect(isDisplayed).toBe(true);
       }
+    } else {
+      // No channels - verify page state is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -82,8 +106,14 @@ describe('OpenClaw Channels – CRUD', () => {
     if (channelArray.length > 0) {
       const firstChannel = channelArray[0];
       const deleteBtn = await firstChannel.$('button[aria-label*="delete"], button[aria-label*="删除"]');
-      const hasDelete = await deleteBtn.isExisting();
-      expect(typeof hasDelete).toBe('boolean');
+      // Delete button may or may not exist depending on UI design
+      // Verify channel item is displayed instead
+      const isDisplayed = await firstChannel.isDisplayed();
+      expect(isDisplayed).toBe(true);
+    } else {
+      // No channels - verify page state is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -99,18 +129,35 @@ describe('OpenClaw Channels – Connection', () => {
     const status = await $('[data-testid="connection-status"]');
     if (await status.isExisting()) {
       const text = await status.getText();
-      expect(typeof text).toBe('string');
+      expect(text!.length).toBeGreaterThan(0);
+    } else {
+      // Status element not found - verify page state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
   it('should show WebSocket indicator', async () => {
     const wsIndicator = await $('[data-testid="websocket-status"]');
-    const hasIndicator = await wsIndicator.isExisting();
-    expect(typeof hasIndicator).toBe('boolean');
+    // WebSocket indicator may or may not exist depending on connection state
+    // Verify the page is in a valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should attempt reconnection on disconnect', async () => {
-    // This would test the reconnection logic
-    expect(true).toBe(true);
+    // This test verifies the reconnection UI/behavior is available
+    // Check for reconnection-related UI elements or status
+    const reconnectBtn = await $('[data-testid="reconnect-btn"], button[data-reconnect]');
+    const statusIndicator = await $('[data-testid="connection-status"]');
+
+    // Either reconnection UI exists or the connection status element exists
+    const hasReconnectUI = await reconnectBtn.isExisting();
+    const hasStatusIndicator = await statusIndicator.isExisting();
+
+    // At minimum, verify the page is functional for reconnection logic
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
+    expect(hasReconnectUI || hasStatusIndicator).toBe(true);
   });
 });
