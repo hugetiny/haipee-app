@@ -52,7 +52,7 @@ describe('Form Validation – Required Fields', () => {
         return errorElements.length > 0 || errorText;
       });
 
-      expect(typeof hasError).toBe('boolean');
+      expect(hasError).toBe(true);
     }
 
     // Close dialog
@@ -81,7 +81,7 @@ describe('Form Validation – Required Fields', () => {
                document.querySelectorAll('[class*="error"]').length > 0;
       });
 
-      expect(typeof hasError).toBe('boolean');
+      expect(hasError).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
@@ -102,7 +102,7 @@ describe('Form Validation – Required Fields', () => {
              Array.from(labels).some(l => l.textContent?.includes('*'));
     });
 
-    expect(typeof hasRequiredIndicator).toBe('boolean');
+    expect(hasRequiredIndicator).toBe(true);
     await JourneyHelpers.closeModal();
   });
 });
@@ -131,9 +131,11 @@ describe('Form Validation – Format Validation', () => {
       await browser.pause(300);
 
       const isInvalid = await emailInput.getAttribute('aria-invalid');
-      expect(typeof isInvalid).toBe('string');
+      expect(isInvalid).toBe('true');
     } else {
-      expect(true).toBe(true);
+      // No email input - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -150,7 +152,7 @@ describe('Form Validation – Format Validation', () => {
       await browser.pause(300);
 
       const isInvalid = await urlInput.getAttribute('aria-invalid');
-      expect(typeof isInvalid).toBe('string');
+      expect(isInvalid).toBe('true');
     }
 
     await JourneyHelpers.closeModal();
@@ -175,7 +177,7 @@ describe('Form Validation – Format Validation', () => {
                document.querySelectorAll('[class*="error"]').length > 0;
       });
 
-      expect(typeof hasValidation).toBe('boolean');
+      expect(hasValidation).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
@@ -234,7 +236,7 @@ describe('Form Validation – Range Validation', () => {
         );
       });
 
-      expect(typeof hasMinLengthError).toBe('boolean');
+      expect(hasMinLengthError).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
@@ -288,9 +290,11 @@ describe('Form Validation – Range Validation', () => {
       await browser.pause(300);
 
       const isInvalid = await portInput.getAttribute('aria-invalid');
-      expect(typeof isInvalid).toBe('string');
+      expect(isInvalid).toBe('true');
     } else {
-      expect(true).toBe(true);
+      // No port input - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -310,11 +314,13 @@ describe('Form Validation – Range Validation', () => {
         await browser.pause(300);
 
         const isInvalid = await numericInput.getAttribute('aria-invalid');
-        expect(typeof isInvalid).toBe('string');
+        expect(isInvalid).toBe('true');
       }
     }
 
-    expect(true).toBe(true);
+    // Verify page is in valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 });
 
@@ -345,7 +351,9 @@ describe('Form Validation – Type Validation', () => {
       // Browser typically clears invalid numeric input
       expect(value === '' || isNaN(Number(value))).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // No numeric input - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -363,7 +371,9 @@ describe('Form Validation – Type Validation', () => {
 
       expect(hasValidation).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // No date input - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -383,7 +393,9 @@ describe('Form Validation – Type Validation', () => {
       const value = await numericInput.getValue();
       expect(value).toBe('8080');
     } else {
-      expect(true).toBe(true);
+      // No numeric input - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -426,9 +438,11 @@ describe('Form Validation – Cross-Field Validation', () => {
         );
       });
 
-      expect(typeof hasMismatchError).toBe('boolean');
+      expect(hasMismatchError).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // No password fields - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -456,7 +470,7 @@ describe('Form Validation – Cross-Field Validation', () => {
         await browser.pause(300);
 
         const hasError = await JourneyHelpers.hasFormError();
-        expect(typeof hasError).toBe('boolean');
+        expect(hasError).toBe(true);
       }
     }
 
@@ -489,7 +503,7 @@ describe('Form Validation – Cross-Field Validation', () => {
         return nameInputEl?.getAttribute('aria-invalid') !== 'true';
       });
 
-      expect(typeof hasCleared).toBe('boolean');
+      expect(hasCleared).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
@@ -530,12 +544,14 @@ describe('Form Validation – Async Validation', () => {
           );
         });
 
-        expect(typeof hasDuplicateError).toBe('boolean');
+        expect(hasDuplicateError).toBe(true);
       }
 
       await JourneyHelpers.closeModal();
     } else {
-      expect(true).toBe(true);
+      // No existing providers - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -557,7 +573,7 @@ describe('Form Validation – Async Validation', () => {
         return indicators.length > 0;
       });
 
-      expect(typeof hasValidationIndicator).toBe('boolean');
+      expect(hasValidationIndicator).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
@@ -584,7 +600,7 @@ describe('Form Validation – Async Validation', () => {
       // Wait for validation to complete
       await browser.pause(1000);
 
-      expect(typeof hasLoading).toBe('boolean');
+      expect(hasLoading).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
@@ -617,7 +633,7 @@ describe('Form Validation – Error Display', () => {
         return errors.length > 0;
       });
 
-      expect(typeof inlineError).toBe('boolean');
+      expect(inlineError).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
@@ -640,7 +656,7 @@ describe('Form Validation – Error Display', () => {
         return summary.length > 0;
       });
 
-      expect(typeof hasSummary).toBe('boolean');
+      expect(hasSummary).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
@@ -665,7 +681,8 @@ describe('Form Validation – Error Display', () => {
         return { tagName: focused?.tagName, isInvalid, hasErrorClass };
       });
 
-      expect(typeof focusedElement).toBe('object');
+      expect(focusedElement).toBeDefined();
+      expect(focusedElement.tagName).toBeTruthy();
     }
 
     await JourneyHelpers.closeModal();
@@ -729,7 +746,7 @@ describe('Form Validation – Submission Handling', () => {
       await submitBtn.click();
       const isDisabled = await submitBtn.getAttribute('disabled');
 
-      expect(typeof isDisabled).toBe('string');
+      expect(isDisabled).toBe('true');
     }
 
     await JourneyHelpers.closeModal();
@@ -811,7 +828,7 @@ describe('Form Validation – Submission Handling', () => {
         return loading.length > 0;
       });
 
-      expect(typeof hasLoading).toBe('boolean');
+      expect(hasLoading).toBe(true);
     }
 
     await JourneyHelpers.closeModal();
