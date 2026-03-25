@@ -13,6 +13,7 @@ import { expect } from '@wdio/globals';
 import { SessionManagerPage } from './pages/SessionManagerPage';
 import { NavigationPage } from './pages/NavigationPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { JourneyHelpers } from './user-journeys/journey-helpers';
 
 describe('Channel Communication', () => {
   let sessionPage: SessionManagerPage;

@@ -362,6 +362,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
               href="https://github.com/hugetiny/haipee"
               target="_blank"
               rel="noopener noreferrer"
+              data-testid="github-link"
               className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
               onClick={(e) => {
                 e.preventDefault();
@@ -370,6 +371,34 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
             >
               <ExternalLink className="h-3.5 w-3.5" />
               GitHub
+            </a>
+            <a
+              href="https://github.com/hugetiny/haipee/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="documentation-link"
+              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                settingsApi.openExternal("https://github.com/hugetiny/haipee/blob/main/README.md");
+              }}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              {t("settings.documentation", { defaultValue: "Docs" })}
+            </a>
+            <a
+              href="https://github.com/hugetiny/haipee/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="issue-tracker-link"
+              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                settingsApi.openExternal("https://github.com/hugetiny/haipee/issues");
+              }}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              {t("settings.issueTracker", { defaultValue: "Issues" })}
             </a>
             <Button
               type="button"
@@ -386,6 +415,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
               size="sm"
               onClick={handleCheckUpdate}
               disabled={isChecking || isDownloading}
+              data-testid="check-update-btn"
               className="h-8 gap-1.5 text-xs"
             >
               {isDownloading ? (
@@ -602,6 +632,49 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
           </div>
         </motion.div>
       )}
+
+      {/* Open Source Licenses */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.35 }}
+        className="space-y-3"
+        data-testid="oss-licenses"
+      >
+        <h3 className="text-sm font-medium px-1">
+          {t("settings.ossLicenses", { defaultValue: "Open Source Licenses" })}
+        </h3>
+        <div className="rounded-xl border border-border bg-gradient-to-br from-card/80 to-card/40 p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground">
+            {t("settings.ossLicensesHint", {
+              defaultValue: "This application is built with open source software."
+            })}
+          </p>
+          <div className="mt-2 text-xs text-muted-foreground">
+            Tauri • React • TypeScript • Tailwind CSS • Radix UI • Lucide Icons
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Credits */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.4 }}
+        className="space-y-3"
+        data-testid="credits"
+      >
+        <h3 className="text-sm font-medium px-1">
+          {t("settings.credits", { defaultValue: "Credits" })}
+        </h3>
+        <div className="rounded-xl border border-border bg-gradient-to-br from-card/80 to-card/40 p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground">
+            {t("settings.creditsHint", {
+              defaultValue: "Thanks to all contributors and the open source community."
+            })}
+          </p>
+        </div>
+      </motion.div>
     </motion.section>
   );
 }

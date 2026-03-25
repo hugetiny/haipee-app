@@ -61,19 +61,37 @@ export class SettingsPage extends CrabNebulaBasePage {
    * Uses native WebDriver click for WKWebView reliability, then verifies the tab actually switched.
    */
   async openTab(tabKey: string): Promise<void> {
-    // Strategy 1: Native WebDriver click (most reliable in WKWebView)
+    // Strategy 1: Use data-testid (most reliable)
     let clicked = false;
     try {
-      const tab = await $(`[role="tab"][id$="-trigger-${tabKey}"]`);
+      const tab = await $(`[data-testid="settings-tab-${tabKey}"]`);
       if (await tab.isExisting()) {
         await tab.click();
         clicked = true;
       }
     } catch { /* fall through */ }
 
-    // Strategy 2: JavaScript click fallback
+    // Strategy 2: Native WebDriver click by Radix ID pattern
+    if (!clicked) {
+      try {
+        const tab = await $(`[role="tab"][id$="-trigger-${tabKey}"]`);
+        if (await tab.isExisting()) {
+          await tab.click();
+          clicked = true;
+        }
+      } catch { /* fall through */ }
+    }
+
+    // Strategy 3: JavaScript click fallback
     if (!clicked) {
       clicked = await browser.execute((key) => {
+        // Try data-testid first
+        const testIdTab = document.querySelector(`[data-testid="settings-tab-${key}"]`);
+        if (testIdTab) {
+          (testIdTab as HTMLElement).click();
+          return true;
+        }
+        // Then try role="tab" with ID pattern
         const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
         for (const tab of tabs) {
           const id = tab.getAttribute('id') || '';
