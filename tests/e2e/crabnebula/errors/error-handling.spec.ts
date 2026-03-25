@@ -4,6 +4,7 @@
  */
 
 import { navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Error Handling – Toast Notifications', () => {
   before(async () => {
@@ -14,7 +15,7 @@ describe('Error Handling – Toast Notifications', () => {
   it('should display toast container', async () => {
     const toastContainer = await $('[data-sonner-toaster], [role="region"][aria-label*="notification"]');
     const hasContainer = await toastContainer.isExisting();
-    expect(typeof hasContainer).toBe('boolean');
+    expect(hasContainer).toBe(true);
   });
 
   it('should show error toast on failed operation', async () => {
@@ -28,7 +29,7 @@ describe('Error Handling – Toast Notifications', () => {
     // Check for toast
     await browser.pause(500);
     const toast = await $('[data-sonner-toast][data-type="error"], [role="alert"]');
-    expect(typeof (await toast.isExisting())).toBe('boolean');
+    expect(await toast.isExisting()).toBe(true);
   });
 });
 
@@ -51,13 +52,13 @@ describe('Error Handling – Network Errors', () => {
   it('should show offline indicator if network unavailable', async () => {
     const offlineIndicator = await $('[data-testid="offline-indicator"], [class*="offline"], [class*="network-error"]');
     const hasIndicator = await offlineIndicator.isExisting();
-    expect(typeof hasIndicator).toBe('boolean');
+    expect(hasIndicator).toBe(true);
   });
 
   it('should retry failed operations', async () => {
     const retryBtn = await $('[data-testid="retry-btn"]');
     const hasRetry = await retryBtn.isExisting();
-    expect(typeof hasRetry).toBe('boolean');
+    expect(hasRetry).toBe(true);
   });
 });
 
@@ -80,7 +81,7 @@ describe('Error Handling – Validation Errors', () => {
 
         const errorText = await $('[data-testid="form-error"], [class*="error"], [aria-invalid="true"]');
         const hasError = await errorText.isExisting();
-        expect(typeof hasError).toBe('boolean');
+        expect(hasError).toBe(true);
       }
     }
   });
@@ -93,7 +94,7 @@ describe('Error Handling – Validation Errors', () => {
       await browser.pause(200);
 
       const ariaInvalid = await apiKeyInput.getAttribute('aria-invalid');
-      expect(typeof ariaInvalid).toBe('string');
+      expect(ariaInvalid).toBe('true');
     }
   });
 
@@ -105,7 +106,7 @@ describe('Error Handling – Validation Errors', () => {
       await browser.pause(200);
 
       const ariaInvalid = await urlInput.getAttribute('aria-invalid');
-      expect(typeof ariaInvalid).toBe('string');
+      expect(ariaInvalid).toBe('true');
     }
   });
 });
@@ -119,7 +120,7 @@ describe('Error Handling – Database Errors', () => {
   it('should handle database read errors gracefully', async () => {
     try {
       const result = await navigationPage.invokeIPC('list_providers', { appType: 'claude' });
-      expect(typeof result).toBe('object');
+      expect(result).toBeDefined();
     } catch (error) {
       expect(error).toBeDefined();
     }
@@ -128,10 +129,11 @@ describe('Error Handling – Database Errors', () => {
   it('should handle duplicate entry errors', async () => {
     try {
       const result = await navigationPage.invokeIPC<{ providers: Record<string, unknown> }>('list_providers', { appType: 'claude' });
-      expect(typeof result).toBe('object');
+      expect(result).toBeDefined();
     } catch {
-      // IPC may not be available
-      expect(true).toBe(true);
+      // IPC may not be available - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -148,7 +150,9 @@ describe('Error Handling – Recovery', () => {
       await closeBtn.click();
       await browser.pause(300);
     }
-    expect(true).toBe(true);
+    // Verify page is in valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should allow retry after error', async () => {
@@ -157,7 +161,9 @@ describe('Error Handling – Recovery', () => {
       await retryBtn.click();
       await browser.pause(500);
     }
-    expect(true).toBe(true);
+    // Verify page is in valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should preserve form data on validation error', async () => {
@@ -184,7 +190,7 @@ describe('Error Handling – Loading States', () => {
     if (await refreshBtn.isExisting()) {
       await refreshBtn.click();
       const loading = await $('[data-testid="loading"], .animate-spin, [aria-busy="true"]');
-      expect(typeof (await loading.isExisting())).toBe('boolean');
+      expect(await loading.isExisting()).toBe(true);
     }
   });
 
@@ -192,7 +198,7 @@ describe('Error Handling – Loading States', () => {
     const submitBtn = await $('[data-testid="provider-submit-btn"], button[type="submit"]');
     if (await submitBtn.isExisting()) {
       const disabled = await submitBtn.getAttribute('disabled');
-      expect(typeof disabled).toBe('string');
+      expect(disabled).toBe('true');
     }
   });
 
