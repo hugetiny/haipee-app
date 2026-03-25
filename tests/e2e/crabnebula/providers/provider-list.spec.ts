@@ -4,6 +4,7 @@
  */
 
 import { dashboardPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Provider List – Display', () => {
   before(async () => {
@@ -51,7 +52,13 @@ describe('Provider List – Display', () => {
     const count = await dashboardPage.getProviderCount();
     if (count === 0) {
       const hasEmpty = await dashboardPage.isEmptyState();
-      expect(typeof hasEmpty).toBe('boolean');
+      // If no empty state detected, verify page is functional
+      if (!hasEmpty) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasEmpty).toBe(true);
+      }
     }
   });
 });
@@ -74,7 +81,13 @@ describe('Provider List – Search', () => {
     const hasSearch = await dashboardPage.pageContainsAnyText([
       '搜索', 'Search'
     ]);
-    expect(typeof hasSearch).toBe('boolean');
+    // If no search UI found, verify page is functional
+    if (!hasSearch) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasSearch).toBe(true);
+    }
 
     // Close search
     await browser.keys(['Escape']);
@@ -137,8 +150,13 @@ describe('Provider List – Layout', () => {
   it('should display provider grid container', async () => {
     const grid = await $('[data-testid="provider-grid"]');
     const exists = await grid.isExisting();
-    // May not exist if no providers
-    expect(typeof exists).toBe('boolean');
+    // If grid doesn't exist, verify page is functional (might have no providers)
+    if (!exists) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(exists).toBe(true);
+    }
   });
 
   it('should have consistent card styling', async () => {
@@ -153,6 +171,12 @@ describe('Provider List – Layout', () => {
     const hasStatus = await dashboardPage.pageContainsAnyText([
       '供应商', 'Provider', '个', 'total', 'count'
     ]);
-    expect(typeof hasStatus).toBe('boolean');
+    // If no status text found, verify page is functional
+    if (!hasStatus) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasStatus).toBe(true);
+    }
   });
 });
