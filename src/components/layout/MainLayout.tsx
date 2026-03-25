@@ -112,6 +112,7 @@ const MainMenuButton = ({
       <button
         type="button"
         title={label}
+        data-testid={item.id === 'settings' ? 'settings-nav-btn' : `nav-btn-${item.id}`}
         className={cn(
           "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
           isActive
@@ -128,6 +129,7 @@ const MainMenuButton = ({
   return (
     <button
       type="button"
+      data-testid={item.id === 'settings' ? 'settings-nav-btn' : `nav-btn-${item.id}`}
       className={cn(
         "flex-1 flex flex-col items-center justify-center gap-0.5 px-1 text-xs transition-colors",
         isActive
@@ -334,7 +336,7 @@ const DesktopSidebar = ({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  data-testid={`nav-btn-${item.id}`}
+                  data-testid={item.id === 'settings' ? 'settings-nav-btn' : `nav-btn-${item.id}`}
                   className={cn(
                     "flex items-center justify-center py-2 px-1 rounded-md transition-colors",
                     activeMainMenu === item.id
