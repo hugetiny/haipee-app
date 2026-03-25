@@ -18,6 +18,7 @@ import {
   generateProviderName,
   generateTestApiKey,
 } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Provider Lifecycle Flow', () => {
   const testProviders: string[] = [];
@@ -73,9 +74,17 @@ describe('Provider Lifecycle Flow', () => {
           return text.includes('Provider') || text.includes('供应商') || text.includes('配置');
         });
         console.log(`[test] Has provider list: ${hasProviderList}`);
-      }
 
-      expect(typeof hasAddOption).toBe('boolean');
+        // Either provider list is visible or page is in a valid state
+        if (!hasProviderList) {
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
+        } else {
+          expect(hasProviderList).toBe(true);
+        }
+      } else {
+        expect(hasAddOption).toBe(true);
+      }
     });
 
     it('should open provider form when clicking add', async () => {
@@ -134,10 +143,18 @@ describe('Provider Lifecycle Flow', () => {
           await browser.pause(300);
         }
 
-        expect(typeof formExists).toBe('boolean');
+        // Either form exists or page is in a valid state
+        if (!formExists) {
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
+        } else {
+          expect(formExists).toBe(true);
+        }
       } catch {
         console.log('[test] Provider form - UI may differ');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -249,7 +266,13 @@ describe('Provider Lifecycle Flow', () => {
           return !!activeCard;
         });
 
-        expect(typeof switched || hasActiveProvider).toBe('boolean');
+        // Either switch succeeded or we have an active provider or page is valid
+        if (!switched && !hasActiveProvider) {
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
+        } else {
+          expect(switched || hasActiveProvider).toBe(true);
+        }
       } catch {
         console.log('[test] Switch provider - UI may differ');
       }
