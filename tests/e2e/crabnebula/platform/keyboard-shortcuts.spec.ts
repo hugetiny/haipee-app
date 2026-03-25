@@ -10,6 +10,7 @@
 import { getModifierKey, isMacOS } from '../utils/platform-helpers';
 import { navigationPage, dashboardPage } from '../pages';
 import { waitForAnyText, pageContainsText } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 /**
  * Helper to send keyboard shortcut with platform-specific modifier
@@ -59,7 +60,7 @@ describe('Keyboard Shortcuts – Global', () => {
 
     // App should still be running
     const title = await browser.getTitle();
-    expect(typeof title).toBe('string');
+    expect(title!.length).toBeGreaterThan(0);
   });
 
   it('should respond to Cmd/Ctrl+W for close window (disabled in test mode)', async () => {
@@ -71,7 +72,7 @@ describe('Keyboard Shortcuts – Global', () => {
 
     // App should still be running
     const title = await browser.getTitle();
-    expect(typeof title).toBe('string');
+    expect(title!.length).toBeGreaterThan(0);
   });
 
   it('should respond to Cmd/Ctrl+, for settings', async () => {
@@ -83,7 +84,7 @@ describe('Keyboard Shortcuts – Global', () => {
     ]);
 
     // The test passes if we detect settings or gracefully degrade
-    expect(typeof hasSettings).toBe('boolean');
+    expect(hasSettings).toBe(true);
 
     // Navigate back to providers
     await navigationPage.switchToApp('claude');
@@ -100,7 +101,7 @@ describe('Keyboard Shortcuts – Global', () => {
 
     // Search input might appear, or there might be a search dialog
     const hasSearch = await searchInput.isExisting();
-    expect(typeof hasSearch).toBe('boolean');
+    expect(hasSearch).toBe(true);
 
     // Press Escape to close search if open
     await browser.keys(['Escape']);
@@ -116,7 +117,7 @@ describe('Keyboard Shortcuts – Global', () => {
       '新会话', 'New Session', 'Create Session', '创建会话'
     ]);
 
-    expect(typeof hasNewSession).toBe('boolean');
+    expect(hasNewSession).toBe(true);
 
     // Press Escape to close any dialog
     await browser.keys(['Escape']);
@@ -147,8 +148,8 @@ describe('Keyboard Shortcuts – Navigation', () => {
     );
 
     // Focus should have moved (may be same element if only one focusable)
-    expect(typeof initialFocus).toBe('string');
-    expect(typeof newFocus).toBe('string');
+    expect(initialFocus!.length).toBeGreaterThan(0);
+    expect(newFocus!.length).toBeGreaterThan(0);
   });
 
   it('should respond to Arrow keys for list navigation', async () => {
@@ -169,7 +170,7 @@ describe('Keyboard Shortcuts – Navigation', () => {
 
     // Arrow keys should not cause errors
     const title = await browser.getTitle();
-    expect(typeof title).toBe('string');
+    expect(title!.length).toBeGreaterThan(0);
   });
 
   it('should respond to Enter for selection', async () => {
@@ -183,7 +184,7 @@ describe('Keyboard Shortcuts – Navigation', () => {
 
     // Should trigger some action or be harmless
     const title = await browser.getTitle();
-    expect(typeof title).toBe('string');
+    expect(title!.length).toBeGreaterThan(0);
   });
 
   it('should respond to Escape for cancel/close', async () => {
@@ -196,7 +197,7 @@ describe('Keyboard Shortcuts – Navigation', () => {
 
     // Dialog should be closed or we're back to providers
     const hasSettings = await pageContainsText('Settings');
-    expect(typeof hasSettings).toBe('boolean');
+    expect(hasSettings).toBe(true);
   });
 
   it('should respond to Backspace for navigation (browser-like behavior)', async () => {
@@ -211,7 +212,7 @@ describe('Keyboard Shortcuts – Navigation', () => {
 
     // App should still be functional
     const title = await browser.getTitle();
-    expect(typeof title).toBe('string');
+    expect(title!.length).toBeGreaterThan(0);
 
     // Reset to providers view
     await navigationPage.switchToApp('claude');
@@ -259,11 +260,13 @@ describe('Keyboard Shortcuts – Text Editing', () => {
       await sendShortcut('a'); // Select all
       await sendShortcut('c'); // Copy
 
-      // Operation should complete without error
-      expect(true).toBe(true);
+      // Operation should complete without error - verify page is functional
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     } else {
-      // Graceful degradation - no input to test with
-      expect(true).toBe(true);
+      // Graceful degradation - verify page state is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -280,10 +283,13 @@ describe('Keyboard Shortcuts – Text Editing', () => {
       await testInput.clearValue();
       await sendShortcut('v');
 
-      // Operation should complete without error
-      expect(true).toBe(true);
+      // Operation should complete without error - verify page is functional
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // Graceful degradation - verify page state is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -306,9 +312,11 @@ describe('Keyboard Shortcuts – Text Editing', () => {
       );
 
       // Selection might exist or input might be selected
-      expect(typeof selection).toBe('string');
+      expect(selection!.length).toBeGreaterThanOrEqual(0);
     } else {
-      expect(true).toBe(true);
+      // Graceful degradation - verify page state is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -328,9 +336,11 @@ describe('Keyboard Shortcuts – Text Editing', () => {
 
       // Value might have changed
       const newValue = await testInput.getValue();
-      expect(typeof newValue).toBe('string');
+      expect(newValue!.length).toBeGreaterThanOrEqual(0);
     } else {
-      expect(true).toBe(true);
+      // Graceful degradation - verify page state is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -347,10 +357,13 @@ describe('Keyboard Shortcuts – Text Editing', () => {
       await browser.keys([modifier, 'Shift', 'z']);
       await browser.pause(100);
 
-      // Operation should complete without error
-      expect(true).toBe(true);
+      // Operation should complete without error - verify page is functional
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // Graceful degradation - verify page state is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
 
     // Close any open dialogs
@@ -385,7 +398,7 @@ describe('Keyboard Shortcuts – App-Specific', () => {
       '供应商', 'Provider', 'Dashboard'
     ]);
 
-    expect(typeof hasProviders).toBe('boolean');
+    expect(hasProviders).toBe(true);
   });
 
   it('should respond to Cmd/Ctrl+S for sessions', async () => {
@@ -396,7 +409,7 @@ describe('Keyboard Shortcuts – App-Specific', () => {
       '会话', 'Session', 'History', '历史'
     ]);
 
-    expect(typeof hasSessions).toBe('boolean');
+    expect(hasSessions).toBe(true);
   });
 
   it('should respond to Cmd/Ctrl+M for MCP', async () => {
@@ -407,7 +420,7 @@ describe('Keyboard Shortcuts – App-Specific', () => {
       'MCP', 'Server', '服务器'
     ]);
 
-    expect(typeof hasMcp).toBe('boolean');
+    expect(hasMcp).toBe(true);
   });
 
   it('should respond to Cmd/Ctrl+K for skills', async () => {
@@ -418,7 +431,7 @@ describe('Keyboard Shortcuts – App-Specific', () => {
       '技能', 'Skill', 'Skills'
     ]);
 
-    expect(typeof hasSkills).toBe('boolean');
+    expect(hasSkills).toBe(true);
   });
 
   it('should support custom shortcut configuration (graceful degradation)', async () => {
@@ -438,7 +451,7 @@ describe('Keyboard Shortcuts – App-Specific', () => {
 
     // If shortcuts configuration exists, it should be functional
     // If not, the test still passes (graceful degradation)
-    expect(typeof hasShortcutsSection).toBe('boolean');
+    expect(hasShortcutsSection).toBe(true);
   });
 });
 
@@ -467,7 +480,7 @@ describe('Keyboard Shortcuts – Platform-Specific', () => {
 
     // App should respond without crashing
     const title = await browser.getTitle();
-    expect(typeof title).toBe('string');
+    expect(title!.length).toBeGreaterThan(0);
   });
 
   it('should handle modifier key combinations correctly', async () => {
@@ -479,6 +492,6 @@ describe('Keyboard Shortcuts – Platform-Specific', () => {
 
     // App should respond without crashing
     const title = await browser.getTitle();
-    expect(typeof title).toBe('string');
+    expect(title!.length).toBeGreaterThan(0);
   });
 });
