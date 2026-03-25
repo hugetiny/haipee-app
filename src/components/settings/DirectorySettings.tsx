@@ -50,6 +50,7 @@ export function DirectorySettings({
 
         <div className="flex items-center gap-2">
           <Input
+            data-testid="data-directory"
             value={appConfigDir ?? resolvedDirs.appConfig ?? ""}
             placeholder={t("settings.browsePlaceholderApp")}
             className="text-xs"
@@ -59,6 +60,7 @@ export function DirectorySettings({
             type="button"
             variant="outline"
             size="icon"
+            data-testid="open-data-dir-btn"
             onClick={onBrowseAppConfig}
             title={t("settings.browseDirectory")}
           >

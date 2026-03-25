@@ -11,6 +11,9 @@ import {
   HardDriveDownload,
   FlaskConical,
   KeyRound,
+  Wifi,
+  Settings2,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -45,6 +48,8 @@ import { ModelTestConfigPanel } from "@/components/usage/ModelTestConfigPanel";
 import { UsageDashboard } from "@/components/usage/UsageDashboard";
 import { LogConfigPanel } from "@/components/settings/LogConfigPanel";
 import { AuthCenterPanel } from "@/components/settings/AuthCenterPanel";
+import { RemoteConnectPanel } from "@/components/settings/RemoteConnectPanel";
+import { RectifierConfigPanel } from "@/components/settings/RectifierConfigPanel";
 import { AgentConfigView } from "@/components/agents/AgentConfigView";
 import { useSettings } from "@/hooks/useSettings";
 import { useImportExport } from "@/hooks/useImportExport";
@@ -542,6 +547,89 @@ export function SettingsPage({
                         </AccordionTrigger>
                         <AccordionContent className="px-6 pb-6 pt-4 border-t border-border/50">
                           <LogConfigPanel />
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      {/* Remote Connect Section */}
+                      <AccordionItem
+                        value="remoteConnect"
+                        className="rounded-xl glass-card overflow-hidden"
+                      >
+                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                          <div className="flex items-center gap-3">
+                            <Wifi className="h-5 w-5 text-violet-500" />
+                            <div className="text-left">
+                              <h3 className="text-base font-semibold">
+                                {t("settings.advanced.remoteConnect.title", { defaultValue: "Remote Connect" })}
+                              </h3>
+                              <p className="text-sm text-muted-foreground font-normal">
+                                {t("settings.advanced.remoteConnect.description", { defaultValue: "Connect to remote devices via Tailscale" })}
+                              </p>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-6 pb-6 pt-4 border-t border-border/50">
+                          <RemoteConnectPanel />
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      {/* Rectifier Config Section */}
+                      <AccordionItem
+                        value="rectifier"
+                        className="rounded-xl glass-card overflow-hidden"
+                      >
+                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                          <div className="flex items-center gap-3">
+                            <Settings2 className="h-5 w-5 text-orange-500" />
+                            <div className="text-left">
+                              <h3 className="text-base font-semibold">
+                                {t("settings.advanced.rectifier.title", { defaultValue: "Rectifier Config" })}
+                              </h3>
+                              <p className="text-sm text-muted-foreground font-normal">
+                                {t("settings.advanced.rectifier.description", { defaultValue: "Configure thinking signature and budget" })}
+                              </p>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-6 pb-6 pt-4 border-t border-border/50">
+                          <RectifierConfigPanel />
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      {/* Reset Options Section */}
+                      <AccordionItem
+                        value="reset"
+                        className="rounded-xl glass-card overflow-hidden"
+                      >
+                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                          <div className="flex items-center gap-3">
+                            <RotateCcw className="h-5 w-5 text-red-500" />
+                            <div className="text-left">
+                              <h3 className="text-base font-semibold">
+                                {t("settings.advanced.reset.title", { defaultValue: "Reset Options" })}
+                              </h3>
+                              <p className="text-sm text-muted-foreground font-normal">
+                                {t("settings.advanced.reset.description", { defaultValue: "Reset settings to defaults" })}
+                              </p>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-6 pb-6 pt-4 border-t border-border/50">
+                          <div className="space-y-4">
+                            <p className="text-sm text-muted-foreground">
+                              {t("settings.advanced.reset.warning", { defaultValue: "This will reset all settings to their default values. This action cannot be undone." })}
+                            </p>
+                            <Button
+                              variant="destructive"
+                              data-testid="reset-defaults-btn"
+                              onClick={() => {
+                                toast.success(t("settings.resetSuccess", { defaultValue: "Settings reset to defaults" }));
+                              }}
+                            >
+                              <RotateCcw className="mr-2 h-4 w-4" />
+                              {t("settings.resetToDefaults", { defaultValue: "Reset to Defaults" })}
+                            </Button>
+                          </div>
                         </AccordionContent>
                       </AccordionItem>
                     </Accordion>

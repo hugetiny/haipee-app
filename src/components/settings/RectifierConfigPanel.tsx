@@ -63,7 +63,7 @@ export function RectifierConfigPanel() {
   if (isLoading) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="rectifier-config">
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <Label>{t("settings.advanced.rectifier.enabled")}</Label>
@@ -72,6 +72,7 @@ export function RectifierConfigPanel() {
           </p>
         </div>
         <Switch
+          data-testid="rectifier-toggle"
           checked={config.enabled}
           onCheckedChange={(checked) => handleChange({ enabled: checked })}
         />

@@ -54,6 +54,7 @@ export function LogConfigPanel() {
           </p>
         </div>
         <Switch
+          data-testid="debug-logging-toggle"
           checked={config.enabled}
           onCheckedChange={(checked) => handleChange({ enabled: checked })}
         />
@@ -73,7 +74,7 @@ export function LogConfigPanel() {
             handleChange({ level: value as LogConfig["level"] })
           }
         >
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-[120px]" data-testid="log-level-selector">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

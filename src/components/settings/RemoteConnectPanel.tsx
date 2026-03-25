@@ -118,7 +118,43 @@ export function RemoteConnectPanel() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="remote-connect-config">
+      {/* Remote Connect Toggle */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <Label>{t("remoteConnect.toggleLabel", { defaultValue: "Enable Remote Connect" })}</Label>
+          <p className="text-xs text-muted-foreground">
+            {t("remoteConnect.toggleDescription", { defaultValue: "Allow remote connections to this device" })}
+          </p>
+        </div>
+        <input
+          type="checkbox"
+          data-testid="remote-connect-toggle"
+          className="h-4 w-4"
+          defaultChecked
+        />
+      </div>
+
+      {/* Port Input */}
+      <div className="flex items-center gap-2 max-w-xs">
+        <Label htmlFor="remote-port" className="text-sm font-medium">
+          {t("remoteConnect.portLabel", { defaultValue: "Port" })}
+        </Label>
+        <input
+          id="remote-port"
+          type="number"
+          data-testid="remote-connect-port"
+          placeholder="8000"
+          defaultValue="8000"
+          className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm"
+        />
+      </div>
+
+      {/* Status */}
+      <div data-testid="remote-connect-status" className="text-xs text-muted-foreground">
+        {t("remoteConnect.statusReady", { defaultValue: "Ready to connect" })}
+      </div>
+
       {/* Notice banner */}
       <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm">
         <p className="font-medium text-violet-700 dark:text-violet-300 mb-1">

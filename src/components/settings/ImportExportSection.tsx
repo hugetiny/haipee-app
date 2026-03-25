@@ -60,6 +60,7 @@ export function ImportExportSection({
           <div className="relative">
             <Button
               type="button"
+              data-testid="import-settings-btn"
               className={`w-full h-auto py-3 px-4 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white ${selectedFile && !isImporting ? "flex-col items-start" : "items-center"}`}
               onClick={!selectedFile ? onSelectFile : onImport}
               disabled={isImporting}
@@ -104,6 +105,7 @@ export function ImportExportSection({
           <div>
             <Button
               type="button"
+              data-testid="export-settings-btn"
               className="w-full h-full py-3 px-4 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white items-center"
               onClick={onExport}
             >
