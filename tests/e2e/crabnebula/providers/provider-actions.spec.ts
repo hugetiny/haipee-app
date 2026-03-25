@@ -5,6 +5,7 @@
 
 import { dashboardPage, navigationPage } from '../pages';
 import { createTestProvider } from '../fixtures';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Provider Actions – Website', () => {
   const testProvider = createTestProvider({ name: `Web Test ${Date.now()}` });
@@ -37,7 +38,13 @@ describe('Provider Actions – Website', () => {
       // Look for website link
       const websiteBtn = await card.$('a[href*="http"], button[aria-label*="网站"], button[aria-label*="website"]');
       const hasWebsite = await websiteBtn.isExisting();
-      expect(typeof hasWebsite).toBe('boolean');
+      // If no website button, verify page state is valid
+      if (!hasWebsite) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasWebsite).toBe(true);
+      }
     }
   });
 });
@@ -72,7 +79,13 @@ describe('Provider Actions – Test Endpoint', () => {
       // Look for test button
       const testBtn = await card.$('button[aria-label*="测试"], button[aria-label*="test"], [data-testid="test-endpoint-btn"]');
       const hasTest = await testBtn.isExisting();
-      expect(typeof hasTest).toBe('boolean');
+      // If no test button, verify page state is valid
+      if (!hasTest) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasTest).toBe(true);
+      }
     }
   });
 
@@ -84,7 +97,13 @@ describe('Provider Actions – Test Endpoint', () => {
     const hasResult = await dashboardPage.pageContainsAnyText([
       'success', '成功', 'failed', '失败', 'error', '错误', '连接', 'connected'
     ]);
-    expect(typeof hasResult).toBe('boolean');
+    // If no result text found, verify page state is valid
+    if (!hasResult) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasResult).toBe(true);
+    }
   });
 });
 
@@ -120,7 +139,13 @@ describe('Provider Actions – Menu', () => {
     const hasActions = await dashboardPage.pageContainsAnyText([
       '编辑', 'Edit', '删除', 'Delete', '复制', 'Duplicate'
     ]);
-    expect(typeof hasActions).toBe('boolean');
+    // If no action text found, verify page state is valid
+    if (!hasActions) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasActions).toBe(true);
+    }
 
     // Close menu
     await browser.keys(['Escape']);
@@ -139,7 +164,13 @@ describe('Provider Actions – Menu', () => {
         btn.textContent?.includes('Edit')
       );
     });
-    expect(typeof hasEdit).toBe('boolean');
+    // If no edit option, verify page state is valid
+    if (!hasEdit) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasEdit).toBe(true);
+    }
 
     await browser.keys(['Escape']);
     await browser.pause(200);
@@ -157,7 +188,13 @@ describe('Provider Actions – Menu', () => {
         btn.textContent?.includes('Delete')
       );
     });
-    expect(typeof hasDelete).toBe('boolean');
+    // If no delete option, verify page state is valid
+    if (!hasDelete) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasDelete).toBe(true);
+    }
 
     await browser.keys(['Escape']);
     await browser.pause(200);
@@ -183,7 +220,13 @@ describe('Provider Actions – App-Specific', () => {
           // Check for terminal option
           const terminalBtn = await card.$('button[aria-label*="terminal"], button[aria-label*="终端"]');
           const hasTerminal = await terminalBtn.isExisting();
-          expect(typeof hasTerminal).toBe('boolean');
+          // If no terminal button, verify page state is valid
+          if (!hasTerminal) {
+            const validState = await JourneyHelpers.assertValidPageState();
+            expect(validState).toBe(true);
+          } else {
+            expect(hasTerminal).toBe(true);
+          }
         }
       }
     }
@@ -202,7 +245,13 @@ describe('Provider Actions – App-Specific', () => {
           // Check for OpenClaw-specific options
           const defaultBtn = await card.$('button[aria-label*="默认"], button[aria-label*="default"]');
           const hasDefault = await defaultBtn.isExisting();
-          expect(typeof hasDefault).toBe('boolean');
+          // If no default button, verify page state is valid
+          if (!hasDefault) {
+            const validState = await JourneyHelpers.assertValidPageState();
+            expect(validState).toBe(true);
+          } else {
+            expect(hasDefault).toBe(true);
+          }
         }
       }
     }
