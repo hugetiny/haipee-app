@@ -9,6 +9,7 @@
 
 import { AgentId } from '../pages/AgentConfigPage';
 import { invokeIPC } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 const APP_IDS: AgentId[] = ['claude', 'codex', 'gemini', 'opencode', 'openclaw'];
 
@@ -102,7 +103,9 @@ describe('App Switching Flow', () => {
               return false;
             }, appId);
 
-            expect(typeof isActive).toBe('boolean');
+            // If we switched successfully, verify the page is in a valid state
+            const validState = await JourneyHelpers.assertValidPageState();
+            expect(validState).toBe(true);
           }
         } catch {
           console.log(`[test] Switch to ${appId} - UI may differ`);
@@ -131,9 +134,15 @@ describe('App Switching Flow', () => {
         // No overlap expected (unless manually configured the same)
         const overlap = [...claudeIds].filter((id) => codexIds.has(id));
         console.log(`[test] Provider overlap between Claude and Codex: ${overlap.length}`);
-      }
 
-      expect(typeof claudeProviders).toBe('object');
+        // Verify both returned valid arrays
+        expect(Array.isArray(claudeProviders)).toBe(true);
+        expect(Array.isArray(codexProviders)).toBe(true);
+      } else {
+        // IPC not available - verify page state is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      }
     });
 
     it('should maintain separate MCP configurations per app', async () => {
@@ -147,9 +156,14 @@ describe('App Switching Flow', () => {
           (s) => s.apps?.includes('claude') || !s.apps
         );
         console.log(`[test] MCP servers enabled for Claude: ${claudeEnabled.length}`);
-      }
 
-      expect(typeof claudeMcp).toBe('object');
+        // Verify we got a valid array
+        expect(Array.isArray(claudeMcp)).toBe(true);
+      } else {
+        // IPC not available - verify page state is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      }
     });
   });
 
@@ -197,8 +211,15 @@ describe('App Switching Flow', () => {
         return null;
       });
 
-      // Either Gemini is selected or the app remembers state
-      expect(typeof activeApp).toBe('string');
+      // Verify Gemini is still selected or verify page state is valid
+      if (activeApp) {
+        // App remembered some state - verify it's a non-empty string
+        expect(activeApp.length).toBeGreaterThan(0);
+      } else {
+        // No active app detected - verify page is still in a valid state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      }
     });
   });
 
@@ -244,7 +265,8 @@ describe('App Switching Flow', () => {
           );
         });
 
-        expect(typeof hasDashboard).toBe('boolean');
+        // Verify we found dashboard content or page is in valid state
+        expect(hasDashboard).toBe(true);
       } catch {
         console.log('[test] OpenClaw dashboard - UI may differ');
       }
