@@ -31,8 +31,8 @@ describe('OpenClaw Messaging – Gateway Connection', () => {
 
   it('should check if gateway service is running', async () => {
     const running = await openClawGatewayPage.isServiceRunning();
-    // Service running should be a boolean
-    expect(typeof running === 'boolean' || running === undefined).toBe(true);
+    // Service running should be a boolean or undefined (service not checkable)
+    expect(running === true || running === false || running === undefined).toBe(true);
   });
 });
 
