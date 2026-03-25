@@ -202,8 +202,6 @@ describe('Failover Queue – Auto Failover Toggle', () => {
         'get_auto_failover_enabled',
         { app_type: 'claude' }
       );
-      expect(typeof enabled).toBe('boolean');
-      // Explicitly check the boolean value
       expect(enabled === true || enabled === false).toBe(true);
     } catch {
       const validState = await JourneyHelpers.assertValidPageState();
