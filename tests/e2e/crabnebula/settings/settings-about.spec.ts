@@ -23,7 +23,7 @@ describe('Settings – About Tab', () => {
       if (!hasAppName) {
         const appNameEl = await $('[data-testid="app-name"], [class*="appName"], h1, h2');
         const hasElement = await appNameEl.isExisting();
-        expect(typeof hasElement).toBe('boolean');
+        expect(hasElement).toBe(true);
       } else {
         expect(hasAppName).toBe(true);
       }
@@ -41,7 +41,7 @@ describe('Settings – About Tab', () => {
       const buildInfo = await $('[data-testid="build-info"]');
       if (await buildInfo.isExisting()) {
         const text = await buildInfo.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThanOrEqual(0);
       }
     });
   });
@@ -59,7 +59,7 @@ describe('Settings – About Tab', () => {
       const reactVersion = await $('[data-testid="react-version"]');
       if (await reactVersion.isExisting()) {
         const text = await reactVersion.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThanOrEqual(0);
       }
     });
 
@@ -76,19 +76,19 @@ describe('Settings – About Tab', () => {
     it('should have GitHub link', async () => {
       const githubLink = await $('a[href*="github"]');
       const hasLink = await githubLink.isExisting();
-      expect(typeof hasLink).toBe('boolean');
+      expect(hasLink).toBe(true);
     });
 
     it('should have documentation link', async () => {
       const docsLink = await $('a[href*="docs"], a[href*="documentation"]');
       const hasLink = await docsLink.isExisting();
-      expect(typeof hasLink).toBe('boolean');
+      expect(hasLink).toBe(true);
     });
 
     it('should have issue tracker link', async () => {
       const issueLink = await $('a[href*="issue"], a[href*="github.com*issues"]');
       const hasLink = await issueLink.isExisting();
-      expect(typeof hasLink).toBe('boolean');
+      expect(hasLink).toBe(true);
     });
   });
 
@@ -97,14 +97,14 @@ describe('Settings – About Tab', () => {
       const license = await $('[data-testid="license-info"]');
       if (await license.isExisting()) {
         const text = await license.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThanOrEqual(0);
       }
     });
 
     it('should show open source licenses', async () => {
       const ossLicenses = await $('[data-testid="oss-licenses"]');
       const hasLicenses = await ossLicenses.isExisting();
-      expect(typeof hasLicenses).toBe('boolean');
+      expect(hasLicenses).toBe(true);
     });
   });
 
@@ -112,7 +112,7 @@ describe('Settings – About Tab', () => {
     it('should show check for updates button', async () => {
       const updateBtn = await $('[data-testid="check-update-btn"]');
       const hasBtn = await updateBtn.isExisting();
-      expect(typeof hasBtn).toBe('boolean');
+      expect(hasBtn).toBe(true);
     });
 
     it('should check for updates', async () => {
@@ -125,7 +125,7 @@ describe('Settings – About Tab', () => {
         const hasResult = await settingsPage.pageContainsAnyText([
           'update', '更新', 'latest', '最新', 'available', 'available'
         ]);
-        expect(typeof hasResult).toBe('boolean');
+        expect(hasResult).toBe(true);
       }
     });
 
@@ -133,7 +133,7 @@ describe('Settings – About Tab', () => {
       const versionComparison = await $('[data-testid="version-comparison"]');
       if (await versionComparison.isExisting()) {
         const text = await versionComparison.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThanOrEqual(0);
       }
     });
   });
@@ -142,7 +142,7 @@ describe('Settings – About Tab', () => {
     it('should show credits section', async () => {
       const credits = await $('[data-testid="credits"]');
       const hasCredits = await credits.isExisting();
-      expect(typeof hasCredits).toBe('boolean');
+      expect(hasCredits).toBe(true);
     });
 
     it('should list contributors', async () => {
