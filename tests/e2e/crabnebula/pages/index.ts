@@ -22,6 +22,7 @@ export { McpPage, mcpPage } from './McpPage';
 export { PromptsPage, promptsPage } from './PromptsPage';
 export { SkillsPage, skillsPage } from './SkillsPage';
 export { WebDavPage, webDavPage } from './WebDavPage';
+export { OnboardingPage, onboardingPage } from './OnboardingPage';
 
 // Type exports
 export type { ProviderFormData } from './DashboardPage';
