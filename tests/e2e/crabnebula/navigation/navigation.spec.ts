@@ -119,7 +119,7 @@ describe('Navigation – Active State', () => {
     const activeApp = await navigationPage.getActiveApp();
     // Verify activeApp is a valid object with expected properties
     expect(activeApp).toBeDefined();
-    expect(typeof activeApp).toBe('object');
+    expect(activeApp !== null).toBe(true);
   });
 
   it('should update active indicator on app switch', async () => {
@@ -129,7 +129,7 @@ describe('Navigation – Active State', () => {
     const activeApp = await navigationPage.getActiveApp();
     // Verify activeApp is a valid object with expected properties
     expect(activeApp).toBeDefined();
-    expect(typeof activeApp).toBe('object');
+    expect(activeApp !== null).toBe(true);
   });
 });
 
