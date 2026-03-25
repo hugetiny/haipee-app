@@ -4,6 +4,7 @@
  */
 
 import { agentConfigPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Agent Config – Common', () => {
   before(async () => {
@@ -29,7 +30,13 @@ describe('Agent Config – Common', () => {
       for (const agent of agents) {
         const btn = await $(`[data-testid="agent-selector-${agent}"]`);
         const hasBtn = await btn.isExisting();
-        expect(typeof hasBtn).toBe('boolean');
+        // Either agent button exists or app state is valid
+        if (!hasBtn) {
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
+        } else {
+          expect(hasBtn).toBe(true);
+        }
       }
     });
 
@@ -40,7 +47,9 @@ describe('Agent Config – Common', () => {
       await agentConfigPage.switchAgent('claude');
       await browser.pause(500);
 
-      expect(true).toBe(true);
+      // Verify switch action completed - app should be in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -48,7 +57,13 @@ describe('Agent Config – Common', () => {
     it('should display config tabs', async () => {
       const tabs = await $('[data-testid="agent-tabs"]');
       const hasTabs = await tabs.isExisting();
-      expect(typeof hasTabs).toBe('boolean');
+      // Either tabs exist or app state is valid
+      if (!hasTabs) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasTabs).toBe(true);
+      }
     });
 
     it('should show all tab options', async () => {
@@ -56,7 +71,13 @@ describe('Agent Config – Common', () => {
       for (const tab of tabIds) {
         const tabBtn = await $(`[data-testid="agent-tab-${tab}"]`);
         const hasTab = await tabBtn.isExisting();
-        expect(typeof hasTab).toBe('boolean');
+        // Either tab button exists or app state is valid
+        if (!hasTab) {
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
+        } else {
+          expect(hasTab).toBe(true);
+        }
       }
     });
 
@@ -67,7 +88,9 @@ describe('Agent Config – Common', () => {
       await agentConfigPage.switchTab('basic');
       await browser.pause(300);
 
-      expect(true).toBe(true);
+      // Verify switch action completed - app should be in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -81,7 +104,13 @@ describe('Agent Config – Common', () => {
       const hasContent = await agentConfigPage.pageContainsAnyText([
         '配置', 'Config', '设置', 'Settings'
       ]);
-      expect(typeof hasContent).toBe('boolean');
+      // Verify content appeared or app is in valid state
+      if (!hasContent) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasContent).toBe(true);
+      }
     });
   });
 });
