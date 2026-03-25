@@ -137,7 +137,7 @@ describe('First Launch Journey', () => {
         await browser.pause(300);
 
         const hasError = await JourneyHelpers.hasFormError();
-        expect(typeof hasError === 'boolean').toBe(true);
+        expect(hasError).toBe(true);
       } else {
         // No key input - verify valid state
         const validState = await JourneyHelpers.assertValidPageState();
@@ -162,7 +162,7 @@ describe('First Launch Journey', () => {
         return buttons.some(b => b.textContent?.includes('Test') || b.textContent?.includes('测试'));
       });
 
-      expect(typeof hasTestBtn === 'boolean').toBe(true);
+      expect(hasTestBtn).toBe(true);
     });
   });
 
