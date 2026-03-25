@@ -63,8 +63,8 @@ describe('Cross-App State Sync', () => {
       console.log(`[test] Claude providers: ${claudeNames.length}, Codex providers: ${codexNames.length}`);
 
       // Provider lists should be independent
-      expect(typeof claudeNames).toBe('object');
-      expect(typeof codexNames).toBe('object');
+      expect(Array.isArray(claudeNames)).toBe(true);
+      expect(Array.isArray(codexNames)).toBe(true);
     });
 
     it('should maintain separate provider configurations per app', async () => {
@@ -79,7 +79,8 @@ describe('Cross-App State Sync', () => {
         expect(Array.isArray(codexProviders)).toBe(true);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should not affect other apps when adding provider', async () => {
@@ -103,8 +104,8 @@ describe('Cross-App State Sync', () => {
       // Counts should be independent
       console.log(`[test] Claude: ${initialClaudeCount}, Gemini: ${geminiCount}`);
 
-      expect(typeof initialClaudeCount).toBe('number');
-      expect(typeof geminiCount).toBe('number');
+      expect(initialClaudeCount).toBeGreaterThanOrEqual(0);
+      expect(geminiCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should sync provider order within same app', async () => {
@@ -130,7 +131,8 @@ describe('Cross-App State Sync', () => {
         expect(initialNames[0]).toBe(afterNames[0]);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -155,8 +157,8 @@ describe('Cross-App State Sync', () => {
       console.log(`[test] Claude sessions: ${claudeCount}, Codex sessions: ${codexCount}`);
 
       // Session counts should be independent
-      expect(typeof claudeCount).toBe('number');
-      expect(typeof codexCount).toBe('number');
+      expect(claudeCount).toBeGreaterThanOrEqual(0);
+      expect(codexCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should isolate session messages between apps', async () => {
@@ -173,7 +175,8 @@ describe('Cross-App State Sync', () => {
         expect(overlap.length).toBe(0);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should not share active session across apps', async () => {
@@ -203,7 +206,8 @@ describe('Cross-App State Sync', () => {
         console.log(`[test] Claude active: ${claudeActive}, Codex active: ${codexActive}`);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should restore correct session when switching back', async () => {
@@ -292,7 +296,7 @@ describe('Cross-App State Sync', () => {
                document.body.textContent?.includes('供应商');
       });
 
-      expect(typeof hasChinese).toBe('boolean');
+      expect(hasChinese).toBe(true);
     });
 
     it('should share proxy settings across all apps', async () => {
@@ -309,7 +313,7 @@ describe('Cross-App State Sync', () => {
         return text.includes('Proxy') || text.includes('代理');
       });
 
-      expect(typeof hasProxyUI).toBe('boolean');
+      expect(hasProxyUI).toBe(true);
     });
 
     it('should persist settings changes across app switches', async () => {
@@ -355,10 +359,11 @@ describe('Cross-App State Sync', () => {
         const serversWithApps = servers.filter(s => s.apps && s.apps.length > 0);
         console.log(`[test] ${serversWithApps.length} servers with app-specific config`);
 
-        expect(typeof serversWithApps.length).toBe('number');
+        expect(serversWithApps.length).toBeGreaterThanOrEqual(0);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should toggle MCP server for specific app', async () => {
@@ -382,7 +387,8 @@ describe('Cross-App State Sync', () => {
         }
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should reflect MCP changes when switching apps', async () => {
@@ -405,8 +411,8 @@ describe('Cross-App State Sync', () => {
       console.log(`[test] Claude MCP: ${claudeServerCount}, Codex MCP: ${codexServerCount}`);
 
       // MCP server visibility may differ per app
-      expect(typeof claudeServerCount).toBe('number');
-      expect(typeof codexServerCount).toBe('number');
+      expect(claudeServerCount).toBeGreaterThanOrEqual(0);
+      expect(codexServerCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should preserve MCP toggle state across app switches', async () => {
@@ -433,10 +439,11 @@ describe('Cross-App State Sync', () => {
 
         // Check toggle state persisted
         const exists = await mcpPage.serverExists(serverNames[0]);
-        expect(typeof exists).toBe('boolean');
+        expect(exists).toBe(true);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -469,7 +476,8 @@ describe('Cross-App State Sync', () => {
         }
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should show different skills for different apps', async () => {
@@ -492,8 +500,8 @@ describe('Cross-App State Sync', () => {
       console.log(`[test] Claude skills: ${claudeSkillCount}, Codex skills: ${codexSkillCount}`);
 
       // Skill availability may differ per app
-      expect(typeof claudeSkillCount).toBe('number');
-      expect(typeof codexSkillCount).toBe('number');
+      expect(claudeSkillCount).toBeGreaterThanOrEqual(0);
+      expect(codexSkillCount).toBeGreaterThanOrEqual(0);
     });
 
     it('should preserve skill installation state across app switches', async () => {
@@ -523,10 +531,11 @@ describe('Cross-App State Sync', () => {
 
         // Verify skill state
         const exists = await skillsPage.skillExists(skillNames[0]);
-        expect(typeof exists).toBe('boolean');
+        expect(exists).toBe(true);
       }
 
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 });
