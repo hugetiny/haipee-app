@@ -12,6 +12,7 @@
 
 import { skillsPage } from '../pages/SkillsPage';
 import { invokeIPC } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Skills View', () => {
   before(async () => {
@@ -64,10 +65,12 @@ describe('Skills View', () => {
           });
         }
 
-        expect(true).toBe(true); // Navigation attempted
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true); // Navigation attempted and page is valid
       } catch {
         console.log('[test] Skills navigation - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -110,7 +113,8 @@ describe('Skills View', () => {
         expect(hasContent).toBe(true);
       } catch {
         console.log('[test] Skill list - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -122,7 +126,8 @@ describe('Skills View', () => {
         expect(names.length).toBeGreaterThanOrEqual(0);
       } else {
         console.log('[test] No skills - skip name display test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -146,10 +151,11 @@ describe('Skills View', () => {
               b.textContent?.includes('添加')
           );
         });
-        expect(typeof hasInstall).toBe('boolean');
+        expect(hasInstall).toBe(true);
       } catch {
         console.log('[test] Install button - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -174,14 +180,16 @@ describe('Skills View', () => {
               document.querySelector('[role="switch"]') !== null
             );
           });
-          expect(typeof hasAppToggles).toBe('boolean');
+          expect(hasAppToggles).toBe(true);
         } else {
           console.log('[test] No skills - skip app toggle test');
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
         console.log('[test] App toggles - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -199,14 +207,17 @@ describe('Skills View', () => {
 
           await skillsPage.toggleSkillApp(skills[0].name, 'claude');
           await browser.pause(300);
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         } else {
           console.log('[test] No skills - skip claude toggle test');
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
         console.log('[test] Skill app toggle - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -230,10 +241,11 @@ describe('Skills View', () => {
               b.textContent?.includes('删除')
           );
         });
-        expect(typeof hasUninstall).toBe('boolean');
+        expect(hasUninstall).toBe(true);
       } catch {
         console.log('[test] Uninstall skill - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -256,10 +268,11 @@ describe('Skills View', () => {
               b.textContent?.includes('备份')
           );
         });
-        expect(typeof hasBackup).toBe('boolean');
+        expect(hasBackup).toBe(true);
       } catch {
         console.log('[test] Backup option - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -280,10 +293,11 @@ describe('Skills View', () => {
               b.textContent?.includes('恢复')
           );
         });
-        expect(typeof hasRestore).toBe('boolean');
+        expect(hasRestore).toBe(true);
       } catch {
         console.log('[test] Restore option - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -306,10 +320,11 @@ describe('Skills View', () => {
               b.textContent?.includes('导入')
           );
         });
-        expect(typeof hasImport).toBe('boolean');
+        expect(hasImport).toBe(true);
       } catch {
         console.log('[test] Import from file - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -330,10 +345,11 @@ describe('Skills View', () => {
             text.includes('Import from')
           );
         });
-        expect(typeof hasImportFromApp).toBe('boolean');
+        expect(hasImportFromApp).toBe(true);
       } catch {
         console.log('[test] Import from app - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -355,10 +371,11 @@ describe('Skills View', () => {
             document.querySelector('input[placeholder*="Search"]') !== null
           );
         });
-        expect(typeof hasSearch).toBe('boolean');
+        expect(hasSearch).toBe(true);
       } catch {
         console.log('[test] Search skills - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
