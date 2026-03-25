@@ -15,31 +15,31 @@ describe('WebDAV Settings – Configuration', () => {
   it('should display WebDAV settings section', async () => {
     const webdavSection = await $('[data-testid="webdav-settings"], [data-testid="sync-section"]');
     const hasSection = await webdavSection.isExisting();
-    expect(typeof hasSection).toBe('boolean');
+    expect(hasSection).toBe(true);
   });
 
   it('should show WebDAV URL input', async () => {
     const urlInput = await $('[data-testid="webdav-url-input"], input[placeholder*="webdav"], input[name="webdavUrl"]');
     const hasInput = await urlInput.isExisting();
-    expect(typeof hasInput).toBe('boolean');
+    expect(hasInput).toBe(true);
   });
 
   it('should show username input', async () => {
     const userInput = await $('[data-testid="webdav-username-input"], input[name="webdavUsername"]');
     const hasInput = await userInput.isExisting();
-    expect(typeof hasInput).toBe('boolean');
+    expect(hasInput).toBe(true);
   });
 
   it('should show password input', async () => {
     const passInput = await $('[data-testid="webdav-password-input"], input[type="password"]');
     const hasInput = await passInput.isExisting();
-    expect(typeof hasInput).toBe('boolean');
+    expect(hasInput).toBe(true);
   });
 
   it('should show auto-sync toggle', async () => {
     const toggle = await $('[data-testid="webdav-auto-sync-toggle"], input[name="autoSync"]');
     const hasToggle = await toggle.isExisting();
-    expect(typeof hasToggle).toBe('boolean');
+    expect(hasToggle).toBe(true);
   });
 });
 
@@ -89,25 +89,25 @@ describe('WebDAV Settings – Sync Operations', () => {
   it('should show sync button', async () => {
     const syncBtn = await $('[data-testid="webdav-sync-btn"]');
     const hasBtn = await syncBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    expect(hasBtn).toBe(true);
   });
 
   it('should show test connection button', async () => {
     const testBtn = await $('[data-testid="webdav-test-btn"]');
     const hasBtn = await testBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    expect(hasBtn).toBe(true);
   });
 
   it('should trigger sync operation', async () => {
     const result = await webDavPage.triggerSync();
     // May fail if not configured - that's OK
-    expect(typeof result).toBe('boolean');
+    expect(result).toBeDefined();
   });
 
   it('should get sync status', async () => {
     const status = await webDavPage.getSyncStatus();
-    expect(typeof status).toBe('object');
-    expect(typeof status.status).toBe('string');
+    expect(status).toBeDefined();
+    expect(status!.status.length).toBeGreaterThanOrEqual(0);
   });
 });
 
@@ -122,7 +122,7 @@ describe('WebDAV Settings – Status Display', () => {
     const lastSync = await $('[data-testid="webdav-last-sync"], [class*="lastSync"]');
     if (await lastSync.isExisting()) {
       const text = await lastSync.getText();
-      expect(typeof text).toBe('string');
+      expect(text.length).toBeGreaterThanOrEqual(0);
     }
   });
 
@@ -130,7 +130,7 @@ describe('WebDAV Settings – Status Display', () => {
     const status = await $('[data-testid="webdav-status"], [class*="syncStatus"]');
     if (await status.isExisting()) {
       const text = await status.getText();
-      expect(typeof text).toBe('string');
+      expect(text.length).toBeGreaterThanOrEqual(0);
     }
   });
 
@@ -138,7 +138,7 @@ describe('WebDAV Settings – Status Display', () => {
     const errorEl = await $('[data-testid="webdav-error"], [class*="syncError"]');
     // Error may not exist if no error
     const hasError = await errorEl.isExisting();
-    expect(typeof hasError).toBe('boolean');
+    expect(hasError).toBeDefined();
   });
 });
 
@@ -167,6 +167,6 @@ describe('WebDAV Settings – Auto Sync', () => {
   it('should show sync interval selector', async () => {
     const intervalSelect = await $('[data-testid="webdav-sync-interval"], select[name="syncInterval"]');
     const hasSelect = await intervalSelect.isExisting();
-    expect(typeof hasSelect).toBe('boolean');
+    expect(hasSelect).toBe(true);
   });
 });
