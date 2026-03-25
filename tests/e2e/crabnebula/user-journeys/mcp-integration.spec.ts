@@ -100,7 +100,8 @@ describe('MCP Integration Journey', () => {
         return appToggles.length;
       });
 
-      expect(typeof toggleBtn === 'number').toBe(true);
+      // Note: toggleBtn count, should be >= 0
+      expect(toggleBtn).toBeGreaterThanOrEqual(0);
     });
   });
 
