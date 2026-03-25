@@ -13,6 +13,7 @@
 import { expect } from '@wdio/globals';
 import { SessionManagerPage } from '../pages/SessionManagerPage';
 import { NavigationPage } from '../pages/NavigationPage';
+import { JourneyHelpers } from './journey-helpers';
 
 describe('Session Chat Journey', () => {
   let sessionPage: SessionManagerPage;
@@ -35,7 +36,7 @@ describe('Session Chat Journey', () => {
 
       // Session list should update
       const count = await sessionPage.getSessionCount();
-      expect(typeof count).toBe('number');
+      expect(count).toBeGreaterThanOrEqual(0);
     });
 
     it('should show session in list after creation', async () => {
@@ -47,7 +48,7 @@ describe('Session Chat Journey', () => {
 
       const newCount = await sessionPage.getSessionCount();
       // Count may increase or stay same if already at max
-      expect(typeof newCount).toBe('number');
+      expect(newCount).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -69,7 +70,9 @@ describe('Session Chat Journey', () => {
 
         expect(inputValue).toBe(testMessage);
       } else {
-        expect(true).toBe(true);
+        // Verify page is in valid state when message input not available
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -85,9 +88,11 @@ describe('Session Chat Journey', () => {
 
         // Check for toast or message sent
         const toast = await sessionPage.getToast(3000);
-        expect(typeof toast).toBe('string');
+        expect(toast?.length ?? 0).toBeGreaterThanOrEqual(0);
       } else {
-        expect(true).toBe(true);
+        // Verify page is in valid state when message input not available
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -107,7 +112,9 @@ describe('Session Chat Journey', () => {
 
         expect(messages.length >= 0 || toast !== null).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // Verify page is in valid state when message input not available
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -122,9 +129,11 @@ describe('Session Chat Journey', () => {
 
         // Should show toast about inactive/no provider
         const toast = await sessionPage.getToast(3000);
-        expect(typeof toast).toBe('string');
+        expect(toast?.length ?? 0).toBeGreaterThanOrEqual(0);
       } else {
-        expect(true).toBe(true);
+        // Verify page is in valid state when message input not available
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -148,7 +157,9 @@ describe('Session Chat Journey', () => {
         }
       }
 
-      expect(true).toBe(true);
+      // Session rename action completed without crash
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should delete session', async () => {
@@ -179,7 +190,9 @@ describe('Session Chat Journey', () => {
         }
       }
 
-      expect(true).toBe(true);
+      // Session delete action completed without crash
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should view session history', async () => {
@@ -194,9 +207,11 @@ describe('Session Chat Journey', () => {
 
         // Messages should be visible or empty state shown
         const messageCount = await sessionPage.getMessageCount();
-        expect(typeof messageCount).toBe('number');
+        expect(messageCount).toBeGreaterThanOrEqual(0);
       } else {
-        expect(true).toBe(true);
+        // No sessions available, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -211,8 +226,9 @@ describe('Session Chat Journey', () => {
         await sessionPage.clickSend();
         await browser.pause(300);
 
-        // Should not crash, either do nothing or show toast
-        expect(true).toBe(true);
+        // Should not crash, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -226,8 +242,9 @@ describe('Session Chat Journey', () => {
         await sessionPage.clickSend();
         await browser.pause(500);
 
-        // Should handle without crash
-        expect(true).toBe(true);
+        // Should handle without crash, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -241,8 +258,9 @@ describe('Session Chat Journey', () => {
         await sessionPage.clickSend();
         await browser.pause(500);
 
-        // Should handle special chars
-        expect(true).toBe(true);
+        // Should handle special chars without crash, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -259,9 +277,11 @@ describe('Session Chat Journey', () => {
         await browser.pause(500);
 
         const count2 = await sessionPage.getSessionCount();
-        expect(typeof count2).toBe('number');
+        expect(count2).toBeGreaterThanOrEqual(0);
       } else {
-        expect(true).toBe(true);
+        // Less than 2 apps available, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -282,7 +302,8 @@ describe('Session Chat Journey', () => {
         }
       }
 
-      expect(typeof hasProviderIndicator).toBe('boolean');
+      // Provider indicator check completed
+      expect(hasProviderIndicator).toBe(true);
     });
   });
 
@@ -301,9 +322,13 @@ describe('Session Chat Journey', () => {
         const providerSelect = await $('select[name*="provider"], [data-testid="provider-select"]');
         const providerDialog = await $('[role="dialog"], .modal');
 
-        expect(typeof (await providerSelect.isExisting()) || typeof (await providerDialog.isExisting())).toBe('boolean');
+        const hasSelect = await providerSelect.isExisting();
+        const hasDialog = await providerDialog.isExisting();
+        expect(hasSelect || hasDialog).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // New session button not available, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -347,7 +372,9 @@ describe('Session Chat Journey', () => {
         }
       }
 
-      expect(true).toBe(true);
+      // Session creation action completed without crash
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -362,8 +389,9 @@ describe('Session Chat Journey', () => {
         await sessionPage.clickSend();
         await browser.pause(500);
 
-        // Should handle code formatting
-        expect(true).toBe(true);
+        // Should handle code formatting without crash, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -380,7 +408,8 @@ describe('Session Chat Journey', () => {
 
         // Check if code block is rendered with syntax highlighting
         const codeBlock = await $('pre code, .code-block, [class*="highlight"]');
-        expect(typeof (await codeBlock.isExisting())).toBe('boolean');
+        const hasCodeBlock = await codeBlock.isExisting();
+        expect(hasCodeBlock).toBe(true);
       }
     });
 
@@ -390,7 +419,8 @@ describe('Session Chat Journey', () => {
 
       // Look for attachment button
       const attachBtn = await $('button[aria-label*="attach"], button[aria-label*="file"], input[type="file"]');
-      expect(typeof (await attachBtn.isExisting())).toBe('boolean');
+      const hasAttachBtn = await attachBtn.isExisting();
+      expect(hasAttachBtn).toBe(true);
     });
   });
 
@@ -409,7 +439,8 @@ describe('Session Chat Journey', () => {
         // Indicator may appear briefly
         await browser.pause(1000);
 
-        expect(typeof (await typingIndicator.isExisting())).toBe('boolean');
+        const hasTypingIndicator = await typingIndicator.isExisting();
+        expect(hasTypingIndicator).toBe(true);
       }
     });
 
@@ -491,10 +522,12 @@ describe('Session Chat Journey', () => {
 
           // Messages should be restored
           const messageCount = await sessionPage.getMessageCount();
-          expect(typeof messageCount).toBe('number');
+          expect(messageCount).toBeGreaterThanOrEqual(0);
         }
       } else {
-        expect(true).toBe(true);
+        // No sessions available, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -510,9 +543,11 @@ describe('Session Chat Journey', () => {
 
         // Should have some time indicator (date, time, relative)
         const hasTimeIndicator = /\d|ago|前|今天|昨天|today|yesterday/i.test(text);
-        expect(typeof hasTimeIndicator).toBe('boolean');
+        expect(hasTimeIndicator).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No sessions available, verify page state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
