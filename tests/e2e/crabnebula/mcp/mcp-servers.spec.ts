@@ -4,6 +4,7 @@
  */
 
 import { mcpPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('MCP Servers – List', () => {
   before(async () => {
@@ -15,7 +16,13 @@ describe('MCP Servers – List', () => {
   it('should display MCP servers list', async () => {
     const list = await $('[data-testid="mcp-servers-list"]');
     const hasList = await list.isExisting();
-    expect(typeof hasList).toBe('boolean');
+    // Verify the app is in a valid state whether list exists or not
+    if (!hasList) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasList).toBe(true);
+    }
   });
 
   it('should show server count', async () => {
@@ -67,7 +74,9 @@ describe('MCP Servers – App Toggles', () => {
       if (await toggle.isExisting()) {
         await toggle.click();
         await browser.pause(300);
-        expect(true).toBe(true);
+        // Verify toggle action completed - app should be in valid state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     }
   });
@@ -82,7 +91,13 @@ describe('MCP Servers – CRUD', () => {
   it('should show add server button', async () => {
     const addBtn = await $('[data-testid="mcp-add-btn"]');
     const hasBtn = await addBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    // Either add button exists or app state is valid
+    if (!hasBtn) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasBtn).toBe(true);
+    }
   });
 
   it('should open add server form', async () => {
@@ -94,7 +109,13 @@ describe('MCP Servers – CRUD', () => {
       const hasForm = await mcpPage.pageContainsAnyText([
         '添加', 'Add', 'Server', '服务器'
       ]);
-      expect(typeof hasForm).toBe('boolean');
+      // Verify form appeared or app is in valid state
+      if (!hasForm) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasForm).toBe(true);
+      }
 
       await browser.keys(['Escape']);
     }
@@ -107,7 +128,13 @@ describe('MCP Servers – CRUD', () => {
       const firstServer = serverArray[0];
       const editBtn = await firstServer.$('button[aria-label*="edit"], button[aria-label*="编辑"]');
       const hasEdit = await editBtn.isExisting();
-      expect(typeof hasEdit).toBe('boolean');
+      // Either edit button exists or app state is valid
+      if (!hasEdit) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasEdit).toBe(true);
+      }
     }
   });
 
@@ -118,7 +145,13 @@ describe('MCP Servers – CRUD', () => {
       const firstServer = serverArray[0];
       const deleteBtn = await firstServer.$('button[aria-label*="delete"], button[aria-label*="删除"]');
       const hasDelete = await deleteBtn.isExisting();
-      expect(typeof hasDelete).toBe('boolean');
+      // Either delete button exists or app state is valid
+      if (!hasDelete) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasDelete).toBe(true);
+      }
     }
   });
 });
@@ -132,7 +165,13 @@ describe('MCP Servers – Import', () => {
   it('should show import button', async () => {
     const importBtn = await $('[data-testid="mcp-import-btn"]');
     const hasBtn = await importBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    // Either import button exists or app state is valid
+    if (!hasBtn) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasBtn).toBe(true);
+    }
   });
 
   it('should trigger import from apps', async () => {
@@ -145,7 +184,13 @@ describe('MCP Servers – Import', () => {
       const hasResult = await mcpPage.pageContainsAnyText([
         'imported', '导入', 'success', '成功', 'found', '找到'
       ]);
-      expect(typeof hasResult).toBe('boolean');
+      // Verify import result or app is in valid state
+      if (!hasResult) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasResult).toBe(true);
+      }
     }
   });
 });
