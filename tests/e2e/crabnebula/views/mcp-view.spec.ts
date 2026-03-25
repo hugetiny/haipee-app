@@ -12,6 +12,7 @@
 
 import { mcpPage } from '../pages/McpPage';
 import { invokeIPC, generateTestId } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('MCP View', () => {
   const testServers: string[] = [];
@@ -77,10 +78,12 @@ describe('MCP View', () => {
           });
         }
 
-        expect(true).toBe(true); // Navigation attempted
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true); // Navigation attempted and page is valid
       } catch {
         console.log('[test] MCP navigation - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -123,7 +126,8 @@ describe('MCP View', () => {
         expect(hasContent).toBe(true);
       } catch {
         console.log('[test] Server list - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -135,7 +139,8 @@ describe('MCP View', () => {
         expect(names.length).toBeGreaterThanOrEqual(0);
       } else {
         console.log('[test] No MCP servers - skip name display test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -159,10 +164,11 @@ describe('MCP View', () => {
               b.textContent?.includes('新建')
           );
         });
-        expect(typeof hasAddBtn).toBe('boolean');
+        expect(hasAddBtn).toBe(true);
       } catch {
         console.log('[test] Add server button - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -183,7 +189,8 @@ describe('MCP View', () => {
         await mcpPage.cancelServerForm();
       } catch {
         console.log('[test] Add server form - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -203,7 +210,8 @@ describe('MCP View', () => {
         expect(exists).toBe(true);
       } catch {
         console.log('[test] Create MCP server - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -226,10 +234,11 @@ describe('MCP View', () => {
               b.textContent?.toLowerCase().includes('edit')
           );
         });
-        expect(typeof hasEdit).toBe('boolean');
+        expect(hasEdit).toBe(true);
       } catch {
         console.log('[test] Edit server - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -254,14 +263,16 @@ describe('MCP View', () => {
               document.querySelector('[class*="toggle"]') !== null
             );
           });
-          expect(typeof hasToggle).toBe('boolean');
+          expect(hasToggle).toBe(true);
         } else {
           console.log('[test] No servers - skip toggle test');
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
         console.log('[test] Toggle server - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -277,14 +288,17 @@ describe('MCP View', () => {
 
           await mcpPage.toggleServer(testServers[0]);
           await browser.pause(300);
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         } catch {
           console.log('[test] Toggle server - UI may differ');
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } else {
         console.log('[test] No test servers - skip toggle test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -312,14 +326,16 @@ describe('MCP View', () => {
               document.querySelector('[data-app]') !== null
             );
           });
-          expect(typeof hasAppToggles).toBe('boolean');
+          expect(hasAppToggles).toBe(true);
         } else {
           console.log('[test] No servers - skip app toggle test');
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
         console.log('[test] App toggles - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -335,14 +351,17 @@ describe('MCP View', () => {
 
           await mcpPage.toggleServerApp(testServers[0], 'claude');
           await browser.pause(300);
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         } catch {
           console.log('[test] Toggle server app - UI may differ');
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } else {
         console.log('[test] No test servers - skip app toggle test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -366,10 +385,11 @@ describe('MCP View', () => {
           );
         });
 
-        expect(typeof hasJsonEditor).toBe('boolean');
+        expect(hasJsonEditor).toBe(true);
       } catch {
         console.log('[test] JSON editor - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -392,10 +412,11 @@ describe('MCP View', () => {
               b.textContent?.toLowerCase().includes('delete')
           );
         });
-        expect(typeof hasDelete).toBe('boolean');
+        expect(hasDelete).toBe(true);
       } catch {
         console.log('[test] Delete server - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
