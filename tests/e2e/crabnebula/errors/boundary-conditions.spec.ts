@@ -37,7 +37,6 @@ describe('Boundary Conditions - Empty States', () => {
 
     // Either empty state is shown or there are providers
     if (isEmpty) {
-      // Verify empty state message exists
       const hasEmptyText = await JourneyHelpers.pageContainsText('暂无') ||
                            await JourneyHelpers.pageContainsText('No provider') ||
                            await JourneyHelpers.pageContainsText('Empty');
@@ -58,7 +57,7 @@ describe('Boundary Conditions - Empty States', () => {
       const hasEmptyText = await JourneyHelpers.pageContainsText('暂无会话') ||
                            await JourneyHelpers.pageContainsText('No session') ||
                            await JourneyHelpers.pageContainsText('没有会话');
-      expect(typeof hasEmptyText).toBe('boolean');
+      expect(hasEmptyText).toBe(true);
     } else {
       expect(sessionCount).toBeGreaterThanOrEqual(0);
     }
@@ -73,9 +72,11 @@ describe('Boundary Conditions - Empty States', () => {
     if (hasInput) {
       await sessions.inputMessage('');
       const isDisabled = await sessions.isSendDisabled();
-      expect(typeof isDisabled).toBe('boolean');
+      expect(isDisabled).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // No input available - verify page is in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -89,7 +90,7 @@ describe('Boundary Conditions - Empty States', () => {
       return placeholders.length > 0;
     });
 
-    expect(typeof hasPlaceholder).toBe('boolean');
+    expect(hasPlaceholder).toBe(true);
   });
 });
 
@@ -120,7 +121,7 @@ describe('Boundary Conditions - Maximum Limits', () => {
 
     // Verify provider was created
     const exists = await dashboard.providerExists(testName.substring(0, 50));
-    expect(typeof exists).toBe('boolean');
+    expect(exists).toBe(true);
   });
 
   it('should handle maximum length API keys', async () => {
@@ -139,7 +140,7 @@ describe('Boundary Conditions - Maximum Limits', () => {
     await browser.pause(500);
 
     const exists = await dashboard.providerExists(testName);
-    expect(typeof exists).toBe('boolean');
+    expect(exists).toBe(true);
   });
 
   it('should handle very long base URLs', async () => {
@@ -159,7 +160,7 @@ describe('Boundary Conditions - Maximum Limits', () => {
     await browser.pause(500);
 
     const exists = await dashboard.providerExists(testName);
-    expect(typeof exists).toBe('boolean');
+    expect(exists).toBe(true);
   });
 
   it('should handle max message length in sessions', async () => {
@@ -191,7 +192,9 @@ describe('Boundary Conditions - Maximum Limits', () => {
         }
       }
     } else {
-      expect(true).toBe(true);
+      // No sessions available - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -250,7 +253,7 @@ describe('Boundary Conditions - Unicode Handling', () => {
     // Verify emoji handling
     const names = await dashboard.getVisibleProviderNames();
     const hasEmoji = names.some(n => n.includes('Test'));
-    expect(typeof hasEmoji).toBe('boolean');
+    expect(hasEmoji).toBe(true);
   });
 
   it('should handle RTL text in inputs', async () => {
@@ -268,7 +271,7 @@ describe('Boundary Conditions - Unicode Handling', () => {
     await browser.pause(500);
 
     const exists = await dashboard.providerExists('RTL');
-    expect(typeof exists).toBe('boolean');
+    expect(exists).toBe(true);
   });
 
   it('should handle special characters in inputs', async () => {
@@ -316,7 +319,9 @@ describe('Boundary Conditions - Unicode Handling', () => {
         }
       }
     } else {
-      expect(true).toBe(true);
+      // No sessions available - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -335,7 +340,7 @@ describe('Boundary Conditions - Unicode Handling', () => {
     await browser.pause(500);
 
     const exists = await dashboard.providerExists('ZWJ');
-    expect(typeof exists).toBe('boolean');
+    expect(exists).toBe(true);
   });
 });
 
@@ -369,7 +374,7 @@ describe('Boundary Conditions - Long-Running Operations', () => {
     // Check for loading indicator
     const loading = await $('[class*="animate-spin"], [data-testid="loading"], [aria-busy="true"]');
     const hasLoading = await loading.isExisting();
-    expect(typeof hasLoading).toBe('boolean');
+    expect(hasLoading).toBe(true);
 
     // Wait for response
     await browser.pause(6000);
@@ -393,7 +398,8 @@ describe('Boundary Conditions - Long-Running Operations', () => {
 
     // Wait for timeout (should show error toast)
     const toast = await JourneyHelpers.waitForToast(15000);
-    expect(typeof toast).toBe('string');
+    expect(toast).not.toBeNull();
+    expect(toast!.length).toBeGreaterThan(0);
   });
 
   it('should allow canceling long operations', async () => {
@@ -420,9 +426,11 @@ describe('Boundary Conditions - Long-Running Operations', () => {
         return false;
       });
 
-      expect(typeof cancelClicked).toBe('boolean');
+      expect(cancelClicked).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // No providers available - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -530,9 +538,13 @@ describe('Boundary Conditions - Rapid Interactions', () => {
       await JourneyHelpers.closeModal();
       await browser.pause(300);
 
-      expect(true).toBe(true);
+      // Verify app is still responsive after rapid clicks
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // No button found - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -560,7 +572,9 @@ describe('Boundary Conditions - Rapid Interactions', () => {
       // Close modal
       await JourneyHelpers.closeModal();
     } else {
-      expect(true).toBe(true);
+      // No input found - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -575,7 +589,8 @@ describe('Boundary Conditions - Rapid Interactions', () => {
 
     // Verify app is still responsive
     await dashboard.waitForReactReady();
-    expect(true).toBe(true);
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should handle rapid search input changes', async () => {
@@ -592,9 +607,13 @@ describe('Boundary Conditions - Rapid Interactions', () => {
       }
 
       await browser.pause(300);
-      expect(true).toBe(true);
+      // Verify app is still responsive after rapid input
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // No search input - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -613,10 +632,13 @@ describe('Boundary Conditions - Rapid Interactions', () => {
 
         // Verify app handled it gracefully
         await dashboard.waitForReactReady();
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     } else {
-      expect(true).toBe(true);
+      // No providers - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -651,12 +673,14 @@ describe('Boundary Conditions - Edge Cases', () => {
 
         // Check for validation error
         const hasError = await JourneyHelpers.hasFormError();
-        expect(typeof hasError).toBe('boolean');
+        expect(hasError).toBe(true);
       }
 
       await JourneyHelpers.closeModal();
     } else {
-      expect(true).toBe(true);
+      // No input found - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -676,7 +700,7 @@ describe('Boundary Conditions - Edge Cases', () => {
 
     // Verify provider was created with defaults
     const exists = await dashboard.providerExists(testName);
-    expect(typeof exists).toBe('boolean');
+    expect(exists).toBe(true);
   });
 
   it('should handle concurrent operations', async () => {
@@ -705,8 +729,8 @@ describe('Boundary Conditions - Edge Cases', () => {
     const exists1 = await dashboard.providerExists(testName1);
     const exists2 = await dashboard.providerExists(testName2);
 
-    expect(typeof exists1).toBe('boolean');
-    expect(typeof exists2).toBe('boolean');
+    expect(exists1).toBe(true);
+    expect(exists2).toBe(true);
   });
 
   // [MANUAL] Network condition tests require environment control
@@ -715,7 +739,8 @@ describe('Boundary Conditions - Edge Cases', () => {
     // Manual execution with network simulation tools required
     await dashboard.open();
     await JourneyHelpers.waitForLoading();
-    expect(true).toBe(true);
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   // [MANUAL] System resource tests require environment monitoring
@@ -724,13 +749,15 @@ describe('Boundary Conditions - Edge Cases', () => {
     // Manual execution required
     await dashboard.open();
     await JourneyHelpers.waitForLoading();
-    expect(true).toBe(true);
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   // [MANUAL] Crash tests require deliberate crash triggering
   it('[MANUAL] should recover from unexpected process termination', async () => {
     // This would kill and restart the process
     // Manual execution with process control required
-    expect(true).toBe(true);
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 });
