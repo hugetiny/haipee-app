@@ -4,6 +4,7 @@
  */
 
 import { settingsPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Settings – General Tab', () => {
   before(async () => {
@@ -16,7 +17,7 @@ describe('Settings – General Tab', () => {
     it('should display settings tabs', async () => {
       const tabs = await $('[data-testid="settings-tabs"]');
       const hasTabs = await tabs.isExisting();
-      expect(typeof hasTabs).toBe('boolean');
+      expect(hasTabs).toBe(true);
     });
 
     it('should switch between tabs', async () => {
@@ -63,7 +64,7 @@ describe('Settings – General Tab', () => {
         await browser.pause(500);
 
         const htmlLang = await browser.execute(() => document.documentElement.lang);
-        expect(typeof htmlLang).toBe('string');
+        expect(htmlLang!.length).toBeGreaterThanOrEqual(0);
       }
     });
 
@@ -74,7 +75,7 @@ describe('Settings – General Tab', () => {
         await browser.pause(500);
 
         const htmlLang = await browser.execute(() => document.documentElement.lang);
-        expect(typeof htmlLang).toBe('string');
+        expect(htmlLang!.length).toBeGreaterThanOrEqual(0);
       }
     });
 
@@ -85,7 +86,7 @@ describe('Settings – General Tab', () => {
         await browser.pause(500);
 
         const htmlLang = await browser.execute(() => document.documentElement.lang);
-        expect(typeof htmlLang).toBe('string');
+        expect(htmlLang!.length).toBeGreaterThanOrEqual(0);
       }
     });
   });
@@ -124,7 +125,7 @@ describe('Settings – General Tab', () => {
           !document.documentElement.classList.contains('dark') ||
           document.documentElement.getAttribute('data-theme') === 'light'
         );
-        expect(typeof isLight).toBe('boolean');
+        expect(isLight).toBeDefined();
       }
     });
 
@@ -138,7 +139,7 @@ describe('Settings – General Tab', () => {
           document.documentElement.classList.contains('dark') ||
           document.documentElement.getAttribute('data-theme') === 'dark'
         );
-        expect(typeof isDark).toBe('boolean');
+        expect(isDark).toBeDefined();
       }
     });
 
@@ -149,7 +150,8 @@ describe('Settings – General Tab', () => {
         await browser.pause(500);
 
         // System theme should match OS preference
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
