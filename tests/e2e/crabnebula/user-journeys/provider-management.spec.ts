@@ -113,7 +113,7 @@ describe('Provider Management Journey', () => {
 
       // Should show validation error
       const hasError = await JourneyHelpers.hasFormError();
-      expect(typeof hasError === 'boolean').toBe(true);
+      expect(hasError).toBe(true);
     });
 
     it('should validate API key format', async () => {
@@ -135,7 +135,7 @@ describe('Provider Management Journey', () => {
 
       // Should show validation error
       const hasError = await JourneyHelpers.hasFormError();
-      expect(typeof hasError === 'boolean').toBe(true);
+      expect(hasError).toBe(true);
     });
   });
 
