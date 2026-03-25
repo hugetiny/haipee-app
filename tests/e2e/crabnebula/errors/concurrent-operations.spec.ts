@@ -122,8 +122,8 @@ describe('Concurrent Operations - Provider Operations', () => {
         const exists2 = await dashboard.providerExists(name2);
 
         // First should still exist, second should be deleted
-        expect(typeof exists1).toBe('boolean');
-        expect(typeof exists2).toBe('boolean');
+        expect(exists1).toBe(true);
+        expect(exists2).toBe(false);
       }
     }
   });
@@ -145,10 +145,12 @@ describe('Concurrent Operations - Provider Operations', () => {
       // Verify state is consistent
       await browser.pause(500);
       const currentProvider = await dashboard.getCurrentProvider();
-      expect(typeof currentProvider).toBe('string');
+      expect(currentProvider).not.toBeNull();
+      expect(currentProvider!.length).toBeGreaterThan(0);
     } else {
-      // Create providers if none exist
-      expect(true).toBe(true);
+      // Create providers if none exist - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -179,7 +181,7 @@ describe('Concurrent Operations - Session Operations', () => {
 
     // Check if session view is accessible
     const sessionCount = await sessions.getSessionCount();
-    expect(typeof sessionCount).toBe('number');
+    expect(sessionCount).toBeGreaterThanOrEqual(0);
 
     // Navigate back
     await navigation.navigateToView('providers');
@@ -217,7 +219,7 @@ describe('Concurrent Operations - Session Operations', () => {
 
     // Session count should be consistent
     const finalCount = await sessions.getSessionCount();
-    expect(typeof finalCount).toBe('number');
+    expect(finalCount).toBeGreaterThanOrEqual(0);
   });
 
   it('should handle concurrent message sending attempts', async () => {
@@ -250,12 +252,16 @@ describe('Concurrent Operations - Session Operations', () => {
 
         // Verify app is still responsive
         const hasInput = await sessions.hasMessageInput();
-        expect(typeof hasInput).toBe('boolean');
+        expect(hasInput).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No message input - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     } else {
-      expect(true).toBe(true);
+      // No sessions - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -285,7 +291,7 @@ describe('Concurrent Operations - Settings Changes', () => {
     // Verify settings page loaded
     const settingsHeader = await $('h1, h2, [class*="settings"]');
     const hasSettings = await settingsHeader.isExisting();
-    expect(typeof hasSettings).toBe('boolean');
+    expect(hasSettings).toBe(true);
 
     // Navigate back
     await navigation.navigateToView('providers');
@@ -320,10 +326,12 @@ describe('Concurrent Operations - Settings Changes', () => {
       if (await toggleAfter.isExisting()) {
         const finalState = await toggleAfter.isSelected();
         // State might or might not persist - just verify it's accessible
-        expect(typeof finalState).toBe('boolean');
+        expect(finalState).toBe(initialState);
       }
     } else {
-      expect(true).toBe(true);
+      // No toggle - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -363,7 +371,7 @@ describe('Concurrent Operations - Navigation', () => {
     // Close any lingering dialogs
     await JourneyHelpers.closeModal();
 
-    expect(typeof sessionsHeader).toBe('boolean');
+    expect(sessionsHeader).toBe(true);
   });
 
   it('should handle rapid navigation between views', async () => {
@@ -378,7 +386,8 @@ describe('Concurrent Operations - Navigation', () => {
 
     // Verify we're on the last view
     await browser.pause(300);
-    expect(true).toBe(true);
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should handle navigation while loading', async () => {
@@ -400,9 +409,11 @@ describe('Concurrent Operations - Navigation', () => {
         return text.includes('设置') || text.includes('Settings');
       });
 
-      expect(typeof isOnSettings).toBe('boolean');
+      expect(isOnSettings).toBe(true);
     } else {
-      expect(true).toBe(true);
+      // No refresh button - verify page is valid
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -444,9 +455,9 @@ describe('Concurrent Operations - State Consistency', () => {
     const finalCount = await dashboard.getProviderCount();
 
     // Count should be consistent
-    expect(typeof initialCount).toBe('number');
-    expect(typeof afterCreateCount).toBe('number');
-    expect(typeof finalCount).toBe('number');
+    expect(initialCount).toBeGreaterThanOrEqual(0);
+    expect(afterCreateCount).toBeGreaterThanOrEqual(initialCount);
+    expect(finalCount).toBeGreaterThanOrEqual(0);
   });
 
   it('should handle concurrent updates to same provider', async () => {
@@ -500,7 +511,7 @@ describe('Concurrent Operations - State Consistency', () => {
 
     // Verify UI is still responsive
     const finalProviders = await dashboard.getVisibleProviderNames();
-    expect(typeof finalProviders.length).toBe('number');
+    expect(finalProviders.length).toBeGreaterThanOrEqual(0);
   });
 });
 
@@ -543,7 +554,7 @@ describe('Concurrent Operations - Race Conditions', () => {
 
     // Verify provider was created correctly
     const exists = await dashboard.providerExists(testName);
-    expect(typeof exists).toBe('boolean');
+    expect(exists).toBe(true);
   });
 
   it('should handle race condition in provider deletion', async () => {
@@ -587,7 +598,7 @@ describe('Concurrent Operations - Race Conditions', () => {
 
         // Check if provider exists (delete may or may not have completed)
         const exists = await dashboard.providerExists(testName);
-        expect(typeof exists).toBe('boolean');
+        expect(exists).toBe(false);
       }
     }
   });
@@ -633,7 +644,7 @@ describe('Concurrent Operations - Race Conditions', () => {
     // Check if provider was created (should only create one)
     await JourneyHelpers.waitForLoading();
     const exists = await dashboard.providerExists(testName);
-    expect(typeof exists).toBe('boolean');
+    expect(exists).toBe(true);
   });
 });
 
