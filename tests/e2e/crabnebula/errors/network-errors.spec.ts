@@ -41,7 +41,8 @@ describe('Network Error Handling', () => {
 
       // Should show timeout error
       const toast = await JourneyHelpers.waitForToast(8000);
-      expect(typeof toast).toBe('string');
+      expect(toast).not.toBeNull();
+      expect(toast!.length).toBeGreaterThan(0);
     });
 
     it('should handle connection refused', async () => {
@@ -60,7 +61,8 @@ describe('Network Error Handling', () => {
       await browser.pause(3000);
 
       const toast = await JourneyHelpers.waitForToast(5000);
-      expect(typeof toast).toBe('string');
+      expect(toast).not.toBeNull();
+      expect(toast!.length).toBeGreaterThan(0);
     });
 
     it('should handle DNS resolution failure', async () => {
@@ -79,7 +81,8 @@ describe('Network Error Handling', () => {
       await browser.pause(3000);
 
       const toast = await JourneyHelpers.waitForToast(5000);
-      expect(typeof toast).toBe('string');
+      expect(toast).not.toBeNull();
+      expect(toast!.length).toBeGreaterThan(0);
     });
 
     it('should handle SSL certificate errors', async () => {
@@ -98,7 +101,8 @@ describe('Network Error Handling', () => {
       await browser.pause(3000);
 
       const toast = await JourneyHelpers.waitForToast(5000);
-      expect(typeof toast).toBe('string');
+      expect(toast).not.toBeNull();
+      expect(toast!.length).toBeGreaterThan(0);
     });
 
     it('should handle proxy connection failures', async () => {
@@ -121,7 +125,9 @@ describe('Network Error Handling', () => {
         }
       }
 
-      expect(true).toBe(true);
+      // Verify page is in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -136,9 +142,13 @@ describe('Network Error Handling', () => {
         await dashboard.testProvider(providers[0]);
         await browser.pause(3000);
 
-        expect(true).toBe(true);
+        // Verify page is in valid state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No providers - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -169,9 +179,13 @@ describe('Network Error Handling', () => {
           await browser.pause(300);
         }
 
-        expect(true).toBe(true);
+        // Verify page is in valid state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No providers - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -192,7 +206,8 @@ describe('Network Error Handling', () => {
       await browser.pause(3000);
 
       const toast = await JourneyHelpers.waitForToast(5000);
-      expect(typeof toast).toBe('string');
+      expect(toast).not.toBeNull();
+      expect(toast!.length).toBeGreaterThan(0);
     });
 
     it('should handle unexpected status codes', async () => {
@@ -211,7 +226,8 @@ describe('Network Error Handling', () => {
       await browser.pause(3000);
 
       const toast = await JourneyHelpers.waitForToast(5000);
-      expect(typeof toast).toBe('string');
+      expect(toast).not.toBeNull();
+      expect(toast!.length).toBeGreaterThan(0);
     });
 
     it('should handle response streaming errors', async () => {
@@ -219,7 +235,9 @@ describe('Network Error Handling', () => {
       await dashboard.open();
       await JourneyHelpers.waitForLoading();
 
-      expect(true).toBe(true);
+      // Verify page is in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 
@@ -229,14 +247,18 @@ describe('Network Error Handling', () => {
       await dashboard.open();
       await JourneyHelpers.waitForLoading();
 
-      expect(true).toBe(true);
+      // Verify page is in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should respect maximum retry count', async () => {
       await dashboard.open();
       await JourneyHelpers.waitForLoading();
 
-      expect(true).toBe(true);
+      // Verify page is in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should allow manual retry', async () => {
@@ -251,9 +273,13 @@ describe('Network Error Handling', () => {
         await dashboard.testProvider(providers[0]);
         await browser.pause(1000);
 
-        expect(true).toBe(true);
+        // Verify page is in valid state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       } else {
-        expect(true).toBe(true);
+        // No providers - verify page is valid
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -263,7 +289,7 @@ describe('Network Error Handling', () => {
 
       // Look for retry indicator
       const retryIndicator = await $('[class*="retry"], [data-testid="retry-indicator"]');
-      expect(typeof (await retryIndicator.isExisting())).toBe('boolean');
+      expect(await retryIndicator.isExisting()).toBe(true);
     });
   });
 
@@ -271,7 +297,7 @@ describe('Network Error Handling', () => {
     it('should detect offline state', async () => {
       // Check offline detection
       const isOnline = await browser.execute(() => navigator.onLine);
-      expect(typeof isOnline).toBe('boolean');
+      expect(isOnline).toBe(true);
     });
 
     it('should queue operations offline', async () => {
@@ -279,14 +305,18 @@ describe('Network Error Handling', () => {
       await dashboard.open();
       await JourneyHelpers.waitForLoading();
 
-      expect(true).toBe(true);
+      // Verify page is in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should sync when back online', async () => {
       await dashboard.open();
       await JourneyHelpers.waitForLoading();
 
-      expect(true).toBe(true);
+      // Verify page is in valid state
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should show offline indicator', async () => {
@@ -295,7 +325,7 @@ describe('Network Error Handling', () => {
 
       // Look for offline status indicator
       const offlineIndicator = await $('[class*="offline"], [data-testid="offline-indicator"]');
-      expect(typeof (await offlineIndicator.isExisting())).toBe('boolean');
+      expect(await offlineIndicator.isExisting()).toBe(true);
     });
   });
 });
