@@ -71,7 +71,8 @@ describe('Data Portability Journey', () => {
         await exportBtn.click();
         await browser.pause(1000);
       }
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should export providers only', async () => {
@@ -90,7 +91,8 @@ describe('Data Portability Journey', () => {
         await providerCheckbox.click();
         await browser.pause(300);
       }
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should show export success toast', async () => {
@@ -145,7 +147,8 @@ describe('Data Portability Journey', () => {
         await importBtn.click();
         await browser.pause(500);
       }
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should show preview before import', async () => {
@@ -170,7 +173,8 @@ describe('Data Portability Journey', () => {
       }
 
       // Validation happens on file select
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should merge or replace on import', async () => {
@@ -210,7 +214,8 @@ describe('Data Portability Journey', () => {
         await migrateBtn.click();
         await browser.pause(1000);
       }
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should preserve data during migration', async () => {
@@ -239,7 +244,8 @@ describe('Data Portability Journey', () => {
         await backupBtn.click();
         await browser.pause(1000);
       }
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should restore from backup', async () => {
@@ -257,7 +263,8 @@ describe('Data Portability Journey', () => {
         await restoreBtn.click();
         await browser.pause(500);
       }
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('should show backup timestamp', async () => {
