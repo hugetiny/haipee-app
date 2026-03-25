@@ -56,6 +56,8 @@ export function AppSwitcher({
               key={app}
               type="button"
               title={appDisplayName[app]}
+              data-testid={`app-btn-${app}`}
+              data-active={isActive ? "true" : undefined}
               onClick={() => isInstalled && handleSwitch(app)}
               disabled={!isInstalled}
               className={cn(
@@ -90,6 +92,8 @@ export function AppSwitcher({
           <button
             key={app}
             type="button"
+            data-testid={`app-btn-${app}`}
+            data-active={isActive ? "true" : undefined}
             onClick={() => isInstalled && handleSwitch(app)}
             disabled={!isInstalled}
             className={cn(
