@@ -40,6 +40,7 @@ export function UsageSummaryCards({
         icon: Activity,
         color: "text-green-500",
         bg: "bg-green-500/10",
+        testId: undefined,
         subValue: null,
       },
       {
@@ -48,6 +49,7 @@ export function UsageSummaryCards({
         icon: DollarSign,
         color: "text-green-500",
         bg: "bg-green-500/10",
+        testId: undefined,
         subValue: null,
       },
       {
@@ -56,6 +58,7 @@ export function UsageSummaryCards({
         icon: Layers,
         color: "text-purple-500",
         bg: "bg-purple-500/10",
+        testId: "total-token-usage",
         subValue: (
           <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-3 pt-3 border-t border-border/50">
             <div className="flex justify-between items-center">
@@ -79,6 +82,7 @@ export function UsageSummaryCards({
         icon: Database,
         color: "text-orange-500",
         bg: "bg-orange-500/10",
+        testId: undefined,
         subValue: (
           <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-3 pt-3 border-t border-border/50">
             <div className="flex justify-between items-center">
@@ -140,7 +144,10 @@ export function UsageSummaryCards({
     >
       {stats.map((stat, i) => (
         <motion.div key={i} variants={item}>
-          <Card className="relative h-full overflow-hidden border border-border/50 bg-gradient-to-br from-card/50 to-background/50 backdrop-blur-xl hover:from-card/60 hover:to-background/60 transition-all shadow-sm">
+          <Card
+            className="relative h-full overflow-hidden border border-border/50 bg-gradient-to-br from-card/50 to-background/50 backdrop-blur-xl hover:from-card/60 hover:to-background/60 transition-all shadow-sm"
+            data-testid={stat.testId}
+          >
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-2">
                 <p className="text-sm font-medium text-muted-foreground">

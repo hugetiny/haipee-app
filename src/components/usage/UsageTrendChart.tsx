@@ -101,7 +101,7 @@ export function UsageTrendChart({
   };
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card/40 p-6 backdrop-blur-sm">
+    <div className="rounded-xl border border-border/50 bg-card/40 p-6 backdrop-blur-sm" data-testid="usage-chart">
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-lg font-semibold">
           {t("usage.trends", "使用趋势")}

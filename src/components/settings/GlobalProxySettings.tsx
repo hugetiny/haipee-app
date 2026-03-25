@@ -165,7 +165,8 @@ export function GlobalProxySettings() {
           }}
           onKeyDown={handleKeyDown}
           className="font-mono text-sm flex-1"
-          data-testid="proxy-url-input"
+          data-testid="global-proxy-url-input"
+          name="globalProxyUrl"
         />
         <Button
           variant="outline"
@@ -186,6 +187,7 @@ export function GlobalProxySettings() {
           disabled={!fullUrl || testMutation.isPending}
           onClick={handleTest}
           title={t("settings.globalProxy.test")}
+          data-testid="test-global-proxy-btn"
         >
           {testMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -199,6 +201,7 @@ export function GlobalProxySettings() {
           disabled={!url && !username && !password}
           onClick={handleClear}
           title={t("settings.globalProxy.clear")}
+          data-testid="clear-global-proxy-btn"
         >
           <X className="h-4 w-4" />
         </Button>

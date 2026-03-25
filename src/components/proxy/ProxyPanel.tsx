@@ -200,7 +200,7 @@ export function ProxyPanel({
         />
 
         {/* [2] Proxy service toggle — always visible */}
-        <div className="flex items-center justify-between rounded-xl border border-border bg-card/50 p-4 transition-colors hover:bg-muted/50">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card/50 p-4 transition-colors hover:bg-muted/50" data-testid="proxy-toggle">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background ring-1 ring-border">
               <Power className="h-4 w-4 text-green-500" />
@@ -211,7 +211,7 @@ export function ProxyPanel({
                   defaultValue: "代理服务",
                 })}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground" data-testid="proxy-status">
                 {isRunning
                   ? t("settings.advanced.proxy.running")
                   : t("settings.advanced.proxy.stopped")}
@@ -410,6 +410,7 @@ export function ProxyPanel({
                   defaultValue: "运行时间",
                 })}
                 value={formatUptime(status.uptime_seconds)}
+                testId="proxy-uptime"
               />
             </div>
           </div>
@@ -473,6 +474,7 @@ export function ProxyPanel({
                         defaultValue: "留空自动分配",
                       },
                     )}
+                    data-testid="proxy-port-input"
                   />
                   <p className="text-xs text-muted-foreground">
                     {t("proxy.settings.fields.listenPort.description", {
@@ -531,9 +533,10 @@ interface StatCardProps {
   label: string;
   value: string | number;
   variant?: "default" | "success" | "warning";
+  testId?: string;
 }
 
-function StatCard({ icon, label, value, variant = "default" }: StatCardProps) {
+function StatCard({ icon, label, value, variant = "default", testId }: StatCardProps) {
   const variantStyles = {
     default: "",
     success: "border-green-500/40 bg-green-500/5",
@@ -543,6 +546,7 @@ function StatCard({ icon, label, value, variant = "default" }: StatCardProps) {
   return (
     <div
       className={`rounded-lg border border-border bg-card/60 p-4 text-sm text-muted-foreground ${variantStyles[variant]}`}
+      data-testid={testId}
     >
       <div className="flex items-center gap-2 text-muted-foreground mb-2">
         {icon}

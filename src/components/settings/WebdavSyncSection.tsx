@@ -494,7 +494,7 @@ export function WebdavSyncSection({
   // ─── Render ─────────────────────────────────────────────
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4" data-testid="webdav-config">
       <header className="space-y-2">
         <h3 className="text-base font-semibold text-foreground">
           {t("settings.webdavSync.title")}
@@ -542,6 +542,7 @@ export function WebdavSyncSection({
               placeholder={t("settings.webdavSync.baseUrlPlaceholder")}
               className="text-xs flex-1"
               disabled={isLoading}
+              data-testid="webdav-url-input"
             />
           </div>
 
@@ -556,6 +557,7 @@ export function WebdavSyncSection({
               placeholder={t("settings.webdavSync.usernamePlaceholder")}
               className="text-xs flex-1"
               disabled={isLoading}
+              data-testid="webdav-username-input"
             />
           </div>
 
@@ -572,6 +574,7 @@ export function WebdavSyncSection({
               className="text-xs flex-1"
               autoComplete="off"
               disabled={isLoading}
+              data-testid="webdav-password-input"
             />
           </div>
 
@@ -630,6 +633,7 @@ export function WebdavSyncSection({
                 onCheckedChange={handleAutoSyncChange}
                 aria-label={t("settings.webdavSync.autoSync")}
                 disabled={isLoading}
+                data-testid="webdav-toggle"
               />
             </div>
           </div>
@@ -637,7 +641,7 @@ export function WebdavSyncSection({
 
         {/* Last sync time */}
         {lastSyncDisplay && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground" data-testid="webdav-sync-status">
             {t("settings.webdavSync.lastSync", { time: lastSyncDisplay })}
           </p>
         )}
@@ -710,6 +714,7 @@ export function WebdavSyncSection({
                 : t("settings.webdavSync.uploading")
             }
             idleLabel={t("settings.webdavSync.upload")}
+            data-testid="webdav-sync-btn"
           />
           <ActionButton
             type="button"

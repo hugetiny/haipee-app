@@ -52,6 +52,7 @@ export function UsageDashboard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className="space-y-8 pb-8"
+      data-testid="usage-stats"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">

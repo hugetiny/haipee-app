@@ -7,7 +7,7 @@ export function AuthCenterPanel() {
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="auth-settings">
       <section className="rounded-xl border border-border/60 bg-card/60 p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
