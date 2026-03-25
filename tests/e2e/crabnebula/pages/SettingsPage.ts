@@ -11,22 +11,32 @@ export class SettingsPage extends CrabNebulaBasePage {
   async open(): Promise<void> {
     await this.waitForReactReady();
 
-    // Try native WebDriver click first (most reliable in WKWebView)
+    // Strategy 1: Find button by testid and use JavaScript click (most reliable with Tooltip wrappers)
     let navigated = false;
     try {
       const btn = await $('[data-testid="settings-nav-btn"]');
       if (await btn.isExisting()) {
-        await btn.click();
-        navigated = true;
+        // Use JavaScript click to bypass Tooltip wrapper issues
+        navigated = await browser.execute(() => {
+          const btn = document.querySelector('[data-testid="settings-nav-btn"]');
+          if (btn) {
+            (btn as HTMLElement).click();
+            return true;
+          }
+          return false;
+        });
       }
     } catch { /* fall through */ }
 
+    // Strategy 2: Find by aria-label or title attribute
     if (!navigated) {
       navigated = await browser.execute(() => {
         const allButtons = Array.from(document.querySelectorAll('button[type="button"]'));
         for (const btn of allButtons) {
           const ariaLabel = btn.getAttribute('aria-label') || '';
-          if (ariaLabel.includes('设置') || ariaLabel.toLowerCase().includes('setting')) {
+          const title = btn.getAttribute('title') || '';
+          if (ariaLabel.includes('设置') || ariaLabel.toLowerCase().includes('setting') ||
+              title.includes('设置') || title.toLowerCase().includes('setting')) {
             (btn as HTMLElement).click();
             return true;
           }
