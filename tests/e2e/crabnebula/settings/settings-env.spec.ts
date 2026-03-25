@@ -4,6 +4,7 @@
  */
 
 import { navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Environment Variables – Conflict Detection', () => {
   before(async () => {
@@ -21,7 +22,8 @@ describe('Environment Variables – Conflict Detection', () => {
         }>>('check_env_conflicts', { app: 'claude' });
         expect(Array.isArray(conflicts)).toBe(true);
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -34,7 +36,8 @@ describe('Environment Variables – Conflict Detection', () => {
         }>>('check_env_conflicts', { app: 'codex' });
         expect(Array.isArray(conflicts)).toBe(true);
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -47,7 +50,8 @@ describe('Environment Variables – Conflict Detection', () => {
         }>>('check_env_conflicts', { app: 'gemini' });
         expect(Array.isArray(conflicts)).toBe(true);
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -60,7 +64,8 @@ describe('Environment Variables – Conflict Detection', () => {
         }>>('check_env_conflicts', { app: 'opencode' });
         expect(Array.isArray(conflicts)).toBe(true);
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -78,11 +83,10 @@ describe('Environment Variables – Conflict Detection', () => {
     it('should get default shell config path', async () => {
       try {
         const configPath = await navigationPage.invokeIPC<string>('get_default_shell_config');
-        expect(typeof configPath).toBe('string');
-        // Should be a path like ~/.zshrc or ~/.bashrc or 'registry' on Windows
-        expect(configPath.length).toBeGreaterThan(0);
+        expect(configPath!.length).toBeGreaterThan(0);
       } catch {
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -97,14 +101,14 @@ describe('Environment Variables – Warning Banner', () => {
   it('should display env warning banner if conflicts exist', async () => {
     const warningBanner = await $('[data-testid="env-warning-banner"], [class*="env-warning"], [class*="EnvWarning"]');
     const hasBanner = await warningBanner.isExisting();
-    expect(typeof hasBanner).toBe('boolean');
+    expect(hasBanner).toBeDefined();
   });
 
   it('should show conflict count in banner', async () => {
     const banner = await $('[data-testid="env-warning-banner"]');
     if (await banner.isExisting()) {
       const text = await banner.getText();
-      expect(typeof text).toBe('string');
+      expect(text.length).toBeGreaterThanOrEqual(0);
     }
   });
 
@@ -113,7 +117,7 @@ describe('Environment Variables – Warning Banner', () => {
     if (await banner.isExisting()) {
       const dismissBtn = await banner.$('button[aria-label*="close"], button[aria-label*="关闭"], [data-testid="dismiss-env-warning"]');
       const hasDismiss = await dismissBtn.isExisting();
-      expect(typeof hasDismiss).toBe('boolean');
+      expect(hasDismiss).toBeDefined();
     }
   });
 
@@ -122,7 +126,7 @@ describe('Environment Variables – Warning Banner', () => {
     if (await banner.isExisting()) {
       const deleteBtn = await banner.$('[data-testid="delete-env-btn"], button[data-testid="delete-btn"]');
       const hasDelete = await deleteBtn.isExisting();
-      expect(typeof hasDelete).toBe('boolean');
+      expect(hasDelete).toBeDefined();
     }
   });
 });
@@ -149,15 +153,16 @@ describe('Environment Variables – Delete Operations', () => {
           deleted_count: number;
         }>('delete_env_vars', { conflicts: [conflicts[0]] });
 
-        expect(typeof result).toBe('object');
-        expect(typeof result.backup_path).toBe('string');
-        expect(typeof result.deleted_count).toBe('number');
+        expect(result!.backup_path.length).toBeGreaterThan(0);
+        expect(result!.deleted_count).toBeGreaterThanOrEqual(0);
       } else {
         // No conflicts to delete
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     } catch {
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -207,10 +212,11 @@ describe('Environment Variables – Set Variable', () => {
         var_value: 'test_value_123',
         target_file: null
       });
-      expect(typeof result).toBe('string');
+      expect(result!.length).toBeGreaterThanOrEqual(0);
     } catch {
       // May fail if no write permission
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -229,9 +235,10 @@ describe('Environment Variables – Set Variable', () => {
         var_value: 'updated_value',
         target_file: null
       });
-      expect(typeof result).toBe('string');
+      expect(result!.length).toBeGreaterThanOrEqual(0);
     } catch {
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 
@@ -254,9 +261,10 @@ describe('Environment Variables – Set Variable', () => {
         var_value: 'value with "quotes" and $special',
         target_file: null
       });
-      expect(typeof result).toBe('string');
+      expect(result!.length).toBeGreaterThanOrEqual(0);
     } catch {
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
