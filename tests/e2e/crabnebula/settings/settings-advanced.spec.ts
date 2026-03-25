@@ -4,6 +4,7 @@
  */
 
 import { settingsPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Settings – Advanced Tab', () => {
   before(async () => {
@@ -17,7 +18,7 @@ describe('Settings – Advanced Tab', () => {
     it('should display remote connect toggle', async () => {
       const toggle = await $('[data-testid="remote-connect-toggle"]');
       const hasToggle = await toggle.isExisting();
-      expect(typeof hasToggle).toBe('boolean');
+      expect(hasToggle).toBe(true);
     });
 
     it('should show remote connect port input', async () => {
@@ -35,7 +36,8 @@ describe('Settings – Advanced Tab', () => {
         if (await switchEl.isExisting()) {
           await switchEl.click();
           await browser.pause(300);
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       }
     });
@@ -44,7 +46,7 @@ describe('Settings – Advanced Tab', () => {
       const status = await $('[data-testid="remote-connect-status"]');
       if (await status.isExisting()) {
         const text = await status.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThan(0);
       }
     });
   });
@@ -53,7 +55,7 @@ describe('Settings – Advanced Tab', () => {
     it('should display rectifier settings', async () => {
       const rectifier = await $('[data-testid="rectifier-config"]');
       const hasRectifier = await rectifier.isExisting();
-      expect(typeof hasRectifier).toBe('boolean');
+      expect(hasRectifier).toBe(true);
     });
 
     it('should configure rectifier enabled', async () => {
@@ -63,7 +65,8 @@ describe('Settings – Advanced Tab', () => {
         if (await switchEl.isExisting()) {
           await switchEl.click();
           await browser.pause(300);
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       }
     });
@@ -73,7 +76,7 @@ describe('Settings – Advanced Tab', () => {
     it('should show debug logging toggle', async () => {
       const debugToggle = await $('[data-testid="debug-logging-toggle"]');
       const hasToggle = await debugToggle.isExisting();
-      expect(typeof hasToggle).toBe('boolean');
+      expect(hasToggle).toBe(true);
     });
 
     it('should show log level selector', async () => {
@@ -121,7 +124,7 @@ describe('Settings – Advanced Tab', () => {
     it('should import settings', async () => {
       const importBtn = await $('[data-testid="import-settings-btn"]');
       const hasBtn = await importBtn.isExisting();
-      expect(typeof hasBtn).toBe('boolean');
+      expect(hasBtn).toBe(true);
     });
   });
 
@@ -129,7 +132,7 @@ describe('Settings – Advanced Tab', () => {
     it('should show reset to defaults button', async () => {
       const resetBtn = await $('[data-testid="reset-defaults-btn"]');
       const hasBtn = await resetBtn.isExisting();
-      expect(typeof hasBtn).toBe('boolean');
+      expect(hasBtn).toBe(true);
     });
 
     it('should reset settings with confirmation', async () => {
