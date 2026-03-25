@@ -5,6 +5,7 @@
 
 import { universalProviderPage, navigationPage } from '../pages';
 import { createTestProvider } from '../fixtures';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Universal Provider – List', () => {
   before(async () => {
@@ -47,7 +48,13 @@ describe('Universal Provider – CRUD', () => {
   it('should show add provider button', async () => {
     const addBtn = await $('[data-testid="universal-provider-add-btn"], [data-testid="add-provider-btn"]');
     const hasBtn = await addBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    // Either add button exists or app state is valid
+    if (!hasBtn) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasBtn).toBe(true);
+    }
   });
 
   it('should add a new universal provider', async () => {
@@ -63,7 +70,7 @@ describe('Universal Provider – CRUD', () => {
     if (!exists) {
       // Check that the app is still functional
       const providerCount = await universalProviderPage.getProviderCount();
-      expect(typeof providerCount).toBe('number');
+      expect(providerCount).toBeGreaterThanOrEqual(0);
     } else {
       expect(exists).toBe(true);
     }
@@ -76,7 +83,13 @@ describe('Universal Provider – CRUD', () => {
       const firstProvider = providerArray[0];
       const editBtn = await firstProvider.$('button[aria-label*="edit"], button[aria-label*="编辑"]');
       const hasEdit = await editBtn.isExisting();
-      expect(typeof hasEdit).toBe('boolean');
+      // Either edit button exists or app state is valid
+      if (!hasEdit) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasEdit).toBe(true);
+      }
     }
   });
 
@@ -87,7 +100,13 @@ describe('Universal Provider – CRUD', () => {
       const firstProvider = providerArray[0];
       const deleteBtn = await firstProvider.$('button[aria-label*="delete"], button[aria-label*="删除"]');
       const hasDelete = await deleteBtn.isExisting();
-      expect(typeof hasDelete).toBe('boolean');
+      // Either delete button exists or app state is valid
+      if (!hasDelete) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasDelete).toBe(true);
+      }
     }
   });
 });
@@ -101,21 +120,29 @@ describe('Universal Provider – Sync', () => {
   it('should show sync button', async () => {
     const syncBtn = await $('[data-testid="universal-sync-btn"]');
     const hasBtn = await syncBtn.isExisting();
-    expect(typeof hasBtn).toBe('boolean');
+    // Either sync button exists or app state is valid
+    if (!hasBtn) {
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
+    } else {
+      expect(hasBtn).toBe(true);
+    }
   });
 
   it('should trigger sync operation', async () => {
     await universalProviderPage.sync();
     await browser.pause(1000);
 
-    expect(true).toBe(true);
+    // Verify sync action completed - app should be in valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should show sync status', async () => {
     const syncStatus = await $('[data-testid="sync-status"]');
     if (await syncStatus.isExisting()) {
       const text = await syncStatus.getText();
-      expect(typeof text).toBe('string');
+      expect(text.length).toBeGreaterThan(0);
     }
   });
 });
@@ -146,7 +173,9 @@ describe('Universal Provider – App Toggles', () => {
       if (await toggle.isExisting()) {
         await toggle.click();
         await browser.pause(300);
-        expect(true).toBe(true);
+        // Verify toggle action completed - app should be in valid state
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     }
   });
