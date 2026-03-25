@@ -46,7 +46,7 @@ describe('Accessibility – Screen Reader Support', () => {
       return interactiveButtons.length === buttons.length;
     });
 
-    expect(typeof buttonsHaveLabels).toBe('boolean');
+    expect(buttonsHaveLabels).toBe(true);
   });
 
   it('should have correct role attributes', async () => {
@@ -147,7 +147,7 @@ describe('Accessibility – Screen Reader Support', () => {
       };
     });
 
-    expect(typeof focusState.hasActiveElement).toBe('boolean');
+    expect(focusState.hasActiveElement).toBe(true);
   });
 });
 
@@ -220,7 +220,7 @@ describe('Accessibility – Keyboard Navigation', () => {
     });
 
     // Most elements should have some form of focus indicator style
-    expect(typeof focusStyles).toBe('number');
+    expect(focusStyles).toBeGreaterThanOrEqual(0);
   });
 
   it('should maintain logical tab order', async () => {
@@ -288,7 +288,7 @@ describe('Accessibility – Keyboard Navigation', () => {
       await JourneyHelpers.closeModal();
     }
 
-    expect(typeof focusTrapped.hasModal).toBe('boolean');
+    expect(focusTrapped.hasModal).toBe(true);
   });
 });
 
@@ -328,7 +328,7 @@ describe('Accessibility – Color Contrast', () => {
       };
     });
 
-    expect(typeof contrastCheck.sampled).toBe('number');
+    expect(contrastCheck.sampled).toBeGreaterThanOrEqual(0);
   });
 
   it('should distinguish interactive elements from static content', async () => {
@@ -366,7 +366,7 @@ describe('Accessibility – Color Contrast', () => {
       };
     });
 
-    expect(typeof interactiveCheck.buttonsChecked).toBe('number');
+    expect(interactiveCheck.buttonsChecked).toBeGreaterThanOrEqual(0);
   });
 
   it('should make error states visible', async () => {
@@ -405,7 +405,7 @@ describe('Accessibility – Color Contrast', () => {
     });
 
     // Error handling patterns should exist (even if no current errors)
-    expect(typeof errorCheck.hasErrorSelectors).toBe('boolean');
+    expect(errorCheck.hasErrorSelectors).toBe(true);
   });
 
   it('should have visible focus indicators on all focusable elements', async () => {
@@ -447,7 +447,7 @@ describe('Accessibility – Color Contrast', () => {
       };
     });
 
-    expect(typeof focusIndicatorCheck.focusStyleRules).toBe('number');
+    expect(focusIndicatorCheck.focusStyleRules).toBeGreaterThanOrEqual(0);
   });
 });
 
@@ -489,7 +489,7 @@ describe('Accessibility – High Contrast Mode', () => {
       };
     });
 
-    expect(typeof highContrastCheck.visibleButtons).toBe('number');
+    expect(highContrastCheck.visibleButtons).toBeGreaterThanOrEqual(0);
   });
 
   it('should have borders and outlines in high contrast', async () => {
@@ -517,7 +517,7 @@ describe('Accessibility – High Contrast Mode', () => {
       };
     });
 
-    expect(typeof borderCheck.cardsWithBorders).toBe('number');
+    expect(borderCheck.cardsWithBorders).toBeGreaterThanOrEqual(0);
   });
 
   it('should have readable text in high contrast', async () => {
@@ -612,7 +612,7 @@ describe('Accessibility – Reduced Motion', () => {
       };
     });
 
-    expect(typeof motionCheck.prefersReducedMotion).toBe('boolean');
+    expect(motionCheck.prefersReducedMotion).toBe(false);
   });
 
   it('should disable transitions when reduced motion is requested', async () => {
@@ -636,7 +636,7 @@ describe('Accessibility – Reduced Motion', () => {
       };
     });
 
-    expect(typeof transitionCheck.animatedElementCount).toBe('number');
+    expect(transitionCheck.animatedElementCount).toBeGreaterThanOrEqual(0);
   });
 
   it('should keep essential animations functional', async () => {
@@ -663,6 +663,6 @@ describe('Accessibility – Reduced Motion', () => {
       };
     });
 
-    expect(typeof essentialAnimations.loadingIndicators).toBe('number');
+    expect(essentialAnimations.loadingIndicators).toBeGreaterThanOrEqual(0);
   });
 });
