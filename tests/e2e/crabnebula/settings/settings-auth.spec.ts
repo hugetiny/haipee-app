@@ -4,6 +4,7 @@
  */
 
 import { settingsPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Settings – Auth Tab', () => {
   before(async () => {
@@ -17,7 +18,7 @@ describe('Settings – Auth Tab', () => {
     it('should display auth settings section', async () => {
       const authSection = await $('[data-testid="auth-settings"]');
       const hasAuth = await authSection.isExisting();
-      expect(typeof hasAuth).toBe('boolean');
+      expect(hasAuth).toBe(true);
     });
 
     it('should show API key inputs for each provider', async () => {
@@ -26,7 +27,7 @@ describe('Settings – Auth Tab', () => {
       for (const provider of providers) {
         const keyInput = await $(`[data-testid="${provider}-api-key-input"]`);
         const hasInput = await keyInput.isExisting();
-        expect(typeof hasInput).toBe('boolean');
+        expect(hasInput).toBe(true);
       }
     });
 
@@ -35,7 +36,8 @@ describe('Settings – Auth Tab', () => {
       if (await toggleBtn.isExisting()) {
         await toggleBtn.click();
         await browser.pause(300);
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -51,7 +53,7 @@ describe('Settings – Auth Tab', () => {
         const hasError = await settingsPage.pageContainsAnyText([
           'invalid', '无效', 'format', '格式'
         ]);
-        expect(typeof hasError).toBe('boolean');
+        expect(hasError).toBe(true);
       }
     });
   });
@@ -61,7 +63,7 @@ describe('Settings – Auth Tab', () => {
       const usage = await $('[data-testid="token-usage"]');
       if (await usage.isExisting()) {
         const text = await usage.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThan(0);
       }
     });
 
@@ -79,7 +81,7 @@ describe('Settings – Auth Tab', () => {
       const statusItems = await $$('[data-testid="auth-status"]');
       for (const item of statusItems) {
         const text = await item.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThan(0);
       }
     });
 
@@ -93,7 +95,7 @@ describe('Settings – Auth Tab', () => {
         const hasResult = await settingsPage.pageContainsAnyText([
           'success', '成功', 'failed', '失败', 'connected'
         ]);
-        expect(typeof hasResult).toBe('boolean');
+        expect(hasResult).toBe(true);
       }
     });
   });
