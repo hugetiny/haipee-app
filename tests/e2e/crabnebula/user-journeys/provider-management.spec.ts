@@ -427,7 +427,7 @@ describe('Provider Management Journey', () => {
       await browser.pause(300);
 
       const hasError = await JourneyHelpers.hasFormError();
-      expect(typeof hasError).toBe('boolean');
+      expect(hasError).toBe(true);
     });
 
     it('should show error for duplicate name', async () => {
@@ -455,7 +455,7 @@ describe('Provider Management Journey', () => {
       await browser.pause(300);
 
       const hasError = await JourneyHelpers.hasFormError();
-      expect(typeof hasError).toBe('boolean');
+      expect(hasError).toBe(true);
     });
 
     it('should show error for invalid URL format', async () => {
@@ -472,7 +472,7 @@ describe('Provider Management Journey', () => {
       await browser.pause(300);
 
       const hasError = await JourneyHelpers.hasFormError();
-      expect(typeof hasError).toBe('boolean');
+      expect(hasError).toBe(true);
     });
   });
 });
