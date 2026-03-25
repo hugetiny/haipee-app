@@ -530,19 +530,22 @@ describe('Session State Persistence', () => {
       // This test requires manually crashing the app and restarting
       // Cannot be automated in E2E tests safely
       console.log('[test] MANUAL: Crash recovery test requires manual intervention');
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('[MANUAL] should show crash recovery dialog on restart', async () => {
       // This test requires simulating a crash scenario
       console.log('[test] MANUAL: Crash recovery dialog test requires manual intervention');
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
 
     it('[MANUAL] should preserve unsent message draft after crash', async () => {
       // This test requires crash simulation
       console.log('[test] MANUAL: Draft preservation test requires manual intervention');
-      expect(true).toBe(true);
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     });
   });
 });

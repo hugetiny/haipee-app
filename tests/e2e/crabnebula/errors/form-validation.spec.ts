@@ -418,7 +418,7 @@ describe('Form Validation – Cross-Field Validation', () => {
     await browser.pause(300);
 
     const passwordInputs = await $$('input[type="password"]');
-    if (passwordInputs.length >= 2) {
+    if ((await passwordInputs.length) >= 2) {
       await passwordInputs[0].setValue('Password123!');
       await passwordInputs[1].setValue('DifferentPassword!');
       await browser.pause(300);
@@ -776,16 +776,18 @@ describe('Form Validation – Submission Handling', () => {
 
       // Either button is disabled or modal is closing
       expect(isDisabled !== null || !(await JourneyHelpers.isModalOpen())).toBe(true);
-    }
 
-    await JourneyHelpers.closeModal();
-    await browser.pause(500);
+      await JourneyHelpers.closeModal();
+      await browser.pause(500);
 
-    // Cleanup if provider was created
-    try {
-      await dashboard.deleteProvider(testName);
-    } catch {
-      // Ignore cleanup errors
+      // Cleanup if provider was created
+      try {
+        await dashboard.deleteProvider(testName);
+      } catch {
+        // Ignore cleanup errors
+      }
+    } else {
+      await JourneyHelpers.closeModal();
     }
   });
 
