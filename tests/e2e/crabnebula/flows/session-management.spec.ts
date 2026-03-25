@@ -13,6 +13,7 @@
 
 import { SessionManagerPage } from '../pages/SessionManagerPage';
 import { invokeIPC } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Session Management Flow', () => {
   const sessionManagerPage = new SessionManagerPage();
@@ -115,8 +116,13 @@ describe('Session Management Flow', () => {
         );
       });
 
-      // Either details are shown or empty state
-      expect(typeof hasDetails).toBe('boolean');
+      // Either details are shown or page is in a valid state
+      if (!hasDetails) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasDetails).toBe(true);
+      }
     });
   });
 
@@ -131,7 +137,13 @@ describe('Session Management Flow', () => {
         );
       });
 
-      expect(typeof hasInput).toBe('boolean');
+      // Either we have an input or page is in a valid state
+      if (!hasInput) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasInput).toBe(true);
+      }
     });
 
     it('should allow typing message', async () => {
@@ -166,7 +178,13 @@ describe('Session Management Flow', () => {
         );
       });
 
-      expect(typeof hasSendBtn).toBe('boolean');
+      // Either we have a send button or page is in a valid state
+      if (!hasSendBtn) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasSendBtn).toBe(true);
+      }
     });
   });
 
@@ -180,7 +198,13 @@ describe('Session Management Flow', () => {
         );
       });
 
-      expect(typeof hasSearch).toBe('boolean');
+      // Either we have search or page is in a valid state
+      if (!hasSearch) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasSearch).toBe(true);
+      }
     });
 
     it('should filter sessions by search query', async () => {
@@ -217,7 +241,13 @@ describe('Session Management Flow', () => {
         );
       });
 
-      expect(typeof hasFilter).toBe('boolean');
+      // Either we have filter options or page is in a valid state
+      if (!hasFilter) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasFilter).toBe(true);
+      }
     });
   });
 
@@ -235,7 +265,13 @@ describe('Session Management Flow', () => {
       });
 
       // Delete option may or may not exist depending on UI state
-      expect(typeof hasDelete).toBe('boolean');
+      // Verify page is in a valid state regardless
+      if (!hasDelete) {
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
+      } else {
+        expect(hasDelete).toBe(true);
+      }
     });
   });
 
@@ -246,9 +282,12 @@ describe('Session Management Flow', () => {
       if (sessions) {
         console.log(`[test] Found ${sessions.length} sessions via IPC`);
         expect(Array.isArray(sessions)).toBe(true);
+        expect(sessions.length).toBeGreaterThanOrEqual(0);
       } else {
         console.log('[test] IPC not available - running in browser mock mode');
-        expect(true).toBe(true);
+        // Verify page is in a valid state as fallback
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
