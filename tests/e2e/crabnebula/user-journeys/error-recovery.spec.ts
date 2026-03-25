@@ -234,7 +234,7 @@ describe('Error Recovery Journey', () => {
       await browser.pause(300);
 
       const hasError = await JourneyHelpers.hasFormError();
-      expect(typeof hasError === 'boolean').toBe(true);
+      expect(hasError).toBe(true);
     });
 
     it('should show empty state when data load fails', async () => {
