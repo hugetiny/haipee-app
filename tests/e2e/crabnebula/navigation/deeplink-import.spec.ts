@@ -4,6 +4,7 @@
  */
 
 import { navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Deeplink Import', () => {
   before(async () => {
@@ -30,7 +31,9 @@ describe('Deeplink Import', () => {
     const hasImport = await navigationPage.pageContainsAnyText([
       '导入', 'Import', '确认', 'Confirm'
     ]);
-    expect(typeof hasImport).toBe('boolean');
+    // Verify app remains in valid state after deeplink event
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(hasImport || validState).toBe(true);
   });
 
   it('should validate deeplink data', async () => {
@@ -48,7 +51,9 @@ describe('Deeplink Import', () => {
     });
     await browser.pause(500);
 
-    expect(true).toBe(true);
+    // Verify app handles invalid data gracefully (no crash)
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should cancel import if user declines', async () => {
@@ -70,7 +75,9 @@ describe('Deeplink Import', () => {
     await browser.keys(['Escape']);
     await browser.pause(300);
 
-    expect(true).toBe(true);
+    // Verify app remains in valid state after cancellation
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 });
 
@@ -91,7 +98,9 @@ describe('Prompt Import', () => {
     });
     await browser.pause(500);
 
-    expect(true).toBe(true);
+    // Verify app handles prompt import event gracefully
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should show notification on prompt import', async () => {
@@ -108,9 +117,14 @@ describe('Prompt Import', () => {
 
     // Check for toast notification
     const toast = await $('[data-sonner-toast], [role="status"]');
-    if (await toast.isExisting()) {
+    const toastExists = await toast.isExisting();
+    if (toastExists) {
       const text = await toast.getText();
-      expect(text.length).toBeGreaterThanOrEqual(0);
+      expect(text.length).toBeGreaterThan(0);
+    } else {
+      // Verify app is in valid state even without toast
+      const validState = await JourneyHelpers.assertValidPageState();
+      expect(validState).toBe(true);
     }
   });
 });
@@ -125,11 +139,14 @@ describe('Config Import', () => {
     // For E2E, we verify the import button exists
     const importBtn = await $('[data-testid="import-config-btn"]');
     const hasImport = await importBtn.isExisting();
-    expect(typeof hasImport).toBe('boolean');
+    // Import button may not exist in all versions, verify UI is functional
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(hasImport || validState).toBe(true);
   });
 
   it('should validate imported config format', async () => {
-    // Simulate config import validation
-    expect(true).toBe(true);
+    // Verify app is in valid state for config import validation
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 });

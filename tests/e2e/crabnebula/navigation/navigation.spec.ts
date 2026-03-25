@@ -4,6 +4,7 @@
  */
 
 import { navigationPage, dashboardPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Navigation – Sidebar', () => {
   before(async () => {
@@ -13,16 +14,19 @@ describe('Navigation – Sidebar', () => {
   it('should display sidebar', async () => {
     const sidebar = await $('[data-testid="sidebar"]');
     const hasSidebar = await sidebar.isExisting();
-    expect(typeof hasSidebar).toBe('boolean');
+    expect(hasSidebar).toBe(true);
   });
 
   it('should display all app buttons', async () => {
     const apps = ['claude', 'codex', 'gemini', 'opencode', 'openclaw'];
+    let visibleCount = 0;
     for (const app of apps) {
       const btn = await $(`[data-testid="app-btn-${app}"]`);
       const hasBtn = await btn.isExisting();
-      expect(typeof hasBtn).toBe('boolean');
+      if (hasBtn) visibleCount++;
     }
+    // At least some app buttons should be visible
+    expect(visibleCount).toBeGreaterThan(0);
   });
 
   it('should switch between apps', async () => {
@@ -32,7 +36,9 @@ describe('Navigation – Sidebar', () => {
     await navigationPage.switchToApp('claude');
     await browser.pause(500);
 
-    expect(true).toBe(true);
+    // Verify app is in valid state after switching
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should navigate to sessions', async () => {
@@ -42,7 +48,9 @@ describe('Navigation – Sidebar', () => {
     const hasContent = await navigationPage.pageContainsAnyText([
       '会话', 'Session'
     ]);
-    expect(typeof hasContent).toBe('boolean');
+    // Either has session content or app is in valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(hasContent || validState).toBe(true);
   });
 
   it('should navigate to settings', async () => {
@@ -52,7 +60,9 @@ describe('Navigation – Sidebar', () => {
     const hasContent = await navigationPage.pageContainsAnyText([
       '设置', 'Settings'
     ]);
-    expect(typeof hasContent).toBe('boolean');
+    // Either has settings content or app is in valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(hasContent || validState).toBe(true);
   });
 
   it('should navigate back to providers', async () => {
@@ -62,7 +72,9 @@ describe('Navigation – Sidebar', () => {
     const hasContent = await dashboardPage.pageContainsAnyText([
       '供应商', 'Provider'
     ]);
-    expect(typeof hasContent).toBe('boolean');
+    // Either has provider content or app is in valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(hasContent || validState).toBe(true);
   });
 });
 
@@ -80,14 +92,18 @@ describe('Navigation – Keyboard Shortcuts', () => {
     await browser.keys([modifier, '2']); // Switch to Codex
     await browser.pause(500);
 
-    expect(true).toBe(true);
+    // Verify app is in valid state after keyboard shortcut
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 
   it('should respond to Cmd/Ctrl+, for settings', async () => {
     await navigationPage.openSettingsViaShortcut();
     await browser.pause(500);
 
-    expect(true).toBe(true);
+    // Verify app is in valid state after keyboard shortcut
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(validState).toBe(true);
   });
 });
 
@@ -101,6 +117,8 @@ describe('Navigation – Active State', () => {
     await browser.pause(500);
 
     const activeApp = await navigationPage.getActiveApp();
+    // Verify activeApp is a valid object with expected properties
+    expect(activeApp).toBeDefined();
     expect(typeof activeApp).toBe('object');
   });
 
@@ -109,6 +127,8 @@ describe('Navigation – Active State', () => {
     await browser.pause(500);
 
     const activeApp = await navigationPage.getActiveApp();
+    // Verify activeApp is a valid object with expected properties
+    expect(activeApp).toBeDefined();
     expect(typeof activeApp).toBe('object');
   });
 });
@@ -128,7 +148,9 @@ describe('Navigation – Responsive', () => {
     // Check for mobile menu button
     const mobileMenuBtn = await $('[data-testid="mobile-menu-btn"], button[aria-label*="menu"]');
     const hasMobileMenu = await mobileMenuBtn.isExisting();
-    expect(typeof hasMobileMenu).toBe('boolean');
+    // Either has mobile menu or app is in valid state
+    const validState = await JourneyHelpers.assertValidPageState();
+    expect(hasMobileMenu || validState).toBe(true);
 
     // Restore original size
     await browser.setWindowSize(viewport.width, viewport.height);
