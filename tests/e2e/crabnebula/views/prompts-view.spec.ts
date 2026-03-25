@@ -12,6 +12,7 @@
 
 import { promptsPage } from '../pages/PromptsPage';
 import { invokeIPC } from '../utils/test-helpers';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Prompts View', () => {
   const testPrompts: string[] = [];
@@ -75,10 +76,12 @@ describe('Prompts View', () => {
           });
         }
 
-        expect(true).toBe(true); // Navigation attempted
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true); // Navigation attempted and page is valid
       } catch {
         console.log('[test] Prompts navigation - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -119,7 +122,8 @@ describe('Prompts View', () => {
         expect(hasContent).toBe(true);
       } catch {
         console.log('[test] Prompt list - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -131,7 +135,8 @@ describe('Prompts View', () => {
         expect(names.length).toBeGreaterThanOrEqual(0);
       } else {
         console.log('[test] No prompts - skip name display test');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -155,10 +160,11 @@ describe('Prompts View', () => {
               b.textContent?.includes('新建')
           );
         });
-        expect(typeof hasAddBtn).toBe('boolean');
+        expect(hasAddBtn).toBe(true);
       } catch {
         console.log('[test] Add prompt button - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
 
@@ -179,7 +185,8 @@ describe('Prompts View', () => {
         await promptsPage.cancelPromptForm();
       } catch {
         console.log('[test] Add prompt form - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -200,13 +207,14 @@ describe('Prompts View', () => {
           );
         });
 
-        expect(typeof hasMarkdownEditor).toBe('boolean');
+        expect(hasMarkdownEditor).toBe(true);
 
         // Cancel to close form
         await promptsPage.cancelPromptForm();
       } catch {
         console.log('[test] Markdown editor - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -231,14 +239,16 @@ describe('Prompts View', () => {
               document.querySelector('[class*="toggle"]') !== null
             );
           });
-          expect(typeof hasToggle).toBe('boolean');
+          expect(hasToggle).toBe(true);
         } else {
           console.log('[test] No prompts - skip toggle test');
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       } catch {
         console.log('[test] Toggle prompt - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -261,10 +271,11 @@ describe('Prompts View', () => {
           );
         });
 
-        expect(typeof hasSearch).toBe('boolean');
+        expect(hasSearch).toBe(true);
       } catch {
         console.log('[test] Search prompts - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -288,10 +299,11 @@ describe('Prompts View', () => {
           );
         });
 
-        expect(typeof hasDelete).toBe('boolean');
+        expect(hasDelete).toBe(true);
       } catch {
         console.log('[test] Delete prompt - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
@@ -315,10 +327,11 @@ describe('Prompts View', () => {
           );
         });
 
-        expect(typeof hasImport).toBe('boolean');
+        expect(hasImport).toBe(true);
       } catch {
         console.log('[test] Import prompt - UI may differ');
-        expect(true).toBe(true);
+        const validState = await JourneyHelpers.assertValidPageState();
+        expect(validState).toBe(true);
       }
     });
   });
