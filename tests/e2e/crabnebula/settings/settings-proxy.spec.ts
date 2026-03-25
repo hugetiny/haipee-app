@@ -4,6 +4,7 @@
  */
 
 import { settingsPage, navigationPage } from '../pages';
+import { JourneyHelpers } from '../user-journeys/journey-helpers';
 
 describe('Settings – Proxy Tab', () => {
   before(async () => {
@@ -17,13 +18,13 @@ describe('Settings – Proxy Tab', () => {
     it('should display proxy settings section', async () => {
       const proxySection = await $('[data-testid="proxy-settings"]');
       const hasProxy = await proxySection.isExisting();
-      expect(typeof hasProxy).toBe('boolean');
+      expect(hasProxy).toBe(true);
     });
 
     it('should show proxy toggle', async () => {
       const proxyToggle = await $('[data-testid="proxy-toggle"]');
       const hasToggle = await proxyToggle.isExisting();
-      expect(typeof hasToggle).toBe('boolean');
+      expect(hasToggle).toBe(true);
     });
 
     it('should toggle proxy on/off', async () => {
@@ -33,7 +34,8 @@ describe('Settings – Proxy Tab', () => {
         if (await switchEl.isExisting()) {
           await switchEl.click();
           await browser.pause(300);
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       }
     });
@@ -59,7 +61,7 @@ describe('Settings – Proxy Tab', () => {
       const proxyUrl = await $('[data-testid="proxy-url-input"]');
       if (await proxyUrl.isExisting()) {
         const value = await proxyUrl.getValue();
-        expect(typeof value).toBe('string');
+        expect(value.length).toBeGreaterThanOrEqual(0);
       }
     });
   });
@@ -68,7 +70,7 @@ describe('Settings – Proxy Tab', () => {
     it('should show failover toggle', async () => {
       const failoverToggle = await $('[data-testid="failover-toggle"]');
       const hasToggle = await failoverToggle.isExisting();
-      expect(typeof hasToggle).toBe('boolean');
+      expect(hasToggle).toBe(true);
     });
 
     it('should toggle failover on/off', async () => {
@@ -78,7 +80,8 @@ describe('Settings – Proxy Tab', () => {
         if (await switchEl.isExisting()) {
           await switchEl.click();
           await browser.pause(300);
-          expect(true).toBe(true);
+          const validState = await JourneyHelpers.assertValidPageState();
+          expect(validState).toBe(true);
         }
       }
     });
@@ -97,7 +100,7 @@ describe('Settings – Proxy Tab', () => {
       const status = await $('[data-testid="proxy-status"]');
       if (await status.isExisting()) {
         const text = await status.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThan(0);
       }
     });
 
@@ -105,7 +108,7 @@ describe('Settings – Proxy Tab', () => {
       const uptime = await $('[data-testid="proxy-uptime"]');
       if (await uptime.isExisting()) {
         const text = await uptime.getText();
-        expect(typeof text).toBe('string');
+        expect(text.length).toBeGreaterThan(0);
       }
     });
   });
