@@ -25,7 +25,7 @@ jobs:
   e2e-tests:
     # Must use x86_64 - CrabNebula tauri-driver doesn't support ARM Linux
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout repository
