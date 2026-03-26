@@ -17,6 +17,7 @@
     "test:integration": "cargo test --manifest-path src-tauri/Cargo.toml && bun vitest run tests/integration",
     "test:e2e": "bunx wdio run wdio.crabnebula.conf.ts",
     "test:e2e:build": "bunx tauri build --debug --no-bundle -- --features automation",
+    "test:e2e:local": "MAX_INSTANCES=4 bun run test:e2e",
     "ai:dev": "bun scripts/ai-dev-loop/index.ts",
     "ai:dev:resume": "bun scripts/ai-dev-loop/index.ts --resume",
     "ai:dev:dry": "bun scripts/ai-dev-loop/index.ts --dry",

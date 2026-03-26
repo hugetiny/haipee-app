@@ -55,10 +55,12 @@ export const config = {
     './tests/e2e/crabnebula/platform/*.spec.ts',
   ],
 
-  maxInstances: 1,
+  // Parallel instances - configurable via MAX_INSTANCES env var
+  // Default: 1 for CI (stable), 4 for local (faster)
+  maxInstances: parseInt(process.env.MAX_INSTANCES || '1', 10),
 
   capabilities: [{
-    maxInstances: 1,
+    maxInstances: 1,  // Each browser instance runs one test
     'tauri:options': {
       application: applicationPath,
     },
