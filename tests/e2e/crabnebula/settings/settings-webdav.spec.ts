@@ -1,15 +1,45 @@
 /// <reference types="@wdio/globals/types" />
 /**
  * WebDAV Sync Tests - WebDAV synchronization settings and operations
+ * Note: WebDAV is located in Settings > Advanced > Cloud Sync accordion
  */
 
 import { webDavPage, navigationPage, settingsPage } from '../pages';
 
+/**
+ * Helper to navigate to WebDAV settings in Advanced tab
+ */
+async function openWebDavInAdvanced(): Promise<void> {
+  await navigationPage.waitForReactReady();
+  await settingsPage.open();
+  await browser.pause(500);
+
+  // Navigate to advanced tab
+  const advancedTab = await $('[data-testid="settings-tab-advanced"]');
+  if (await advancedTab.isExisting()) {
+    await advancedTab.click();
+    await browser.pause(500);
+  }
+
+  // Try to find and expand the cloudSync accordion by looking for WebDAV/Cloud Sync text
+  try {
+    const triggers = await $$('button[data-state="closed"]');
+    for (const trigger of triggers) {
+      const text = await trigger.getText();
+      if (text.includes('WebDAV') || text.includes('云同步') || text.includes('Cloud Sync') || text.includes('cloudSync')) {
+        await trigger.click();
+        await browser.pause(300);
+        break;
+      }
+    }
+  } catch {
+    // Accordion might already be open or selector not found
+  }
+}
+
 describe('WebDAV Settings – Configuration', () => {
   before(async () => {
-    await navigationPage.waitForReactReady();
-    await settingsPage.open();
-    await browser.pause(1000);
+    await openWebDavInAdvanced();
   });
 
   it('should display WebDAV settings section', async () => {
@@ -45,9 +75,7 @@ describe('WebDAV Settings – Configuration', () => {
 
 describe('WebDAV Settings – Input Validation', () => {
   before(async () => {
-    await navigationPage.waitForReactReady();
-    await settingsPage.open();
-    await browser.pause(1000);
+    await openWebDavInAdvanced();
   });
 
   it('should accept valid WebDAV URL', async () => {
@@ -81,9 +109,7 @@ describe('WebDAV Settings – Input Validation', () => {
 
 describe('WebDAV Settings – Sync Operations', () => {
   before(async () => {
-    await navigationPage.waitForReactReady();
-    await settingsPage.open();
-    await browser.pause(1000);
+    await openWebDavInAdvanced();
   });
 
   it('should show sync button', async () => {
@@ -113,9 +139,7 @@ describe('WebDAV Settings – Sync Operations', () => {
 
 describe('WebDAV Settings – Status Display', () => {
   before(async () => {
-    await navigationPage.waitForReactReady();
-    await settingsPage.open();
-    await browser.pause(1000);
+    await openWebDavInAdvanced();
   });
 
   it('should show last sync time if available', async () => {
@@ -144,9 +168,7 @@ describe('WebDAV Settings – Status Display', () => {
 
 describe('WebDAV Settings – Auto Sync', () => {
   before(async () => {
-    await navigationPage.waitForReactReady();
-    await settingsPage.open();
-    await browser.pause(1000);
+    await openWebDavInAdvanced();
   });
 
   it('should toggle auto-sync', async () => {
