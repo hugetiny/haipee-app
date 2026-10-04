@@ -186,15 +186,19 @@ class Aria2WebSocketClient {
       final wsUrl = _getWebSocketUrl();
       _logger.log(Level.info, '[Aria2WebSocket] Connecting to $wsUrl');
 
-      _channel = WebSocketChannel.connect(wsUrl);
+      final channel = WebSocketChannel.connect(wsUrl);
+      _channel = channel;
 
       // 监听消息
-      _channel!.stream.listen(
+      channel.stream.listen(
         _onMessage,
         onError: _onWebSocketError,
         onDone: _onWebSocketDone,
         cancelOnError: false,
       );
+
+      // 等待连接建立完成，避免连接失败时抛出未捕获的异步异常
+      await channel.ready;
 
       _updateConnectionState(Aria2ConnectionState.connected);
       _reconnectAttempts = 0;
@@ -207,10 +211,8 @@ class Aria2WebSocketClient {
       onConnected?.call();
     } catch (e, stackTrace) {
       _logger.log(
-        Level.error,
+        Level.warning,
         '[Aria2WebSocket] Connection failed: $e',
-        error: e,
-        stackTrace: stackTrace,
       );
       _updateConnectionState(Aria2ConnectionState.error);
       onError?.call(e);
@@ -327,7 +329,7 @@ class Aria2WebSocketClient {
   void _onWebSocketError(dynamic error) {
     if (_isDisposed) return;
 
-    _logger.log(Level.error, '[Aria2WebSocket] WebSocket error: $error');
+    _logger.log(Level.warning, '[Aria2WebSocket] WebSocket error: $error');
     _updateConnectionState(Aria2ConnectionState.error);
     onError?.call(error);
   }
@@ -382,7 +384,9 @@ class Aria2WebSocketClient {
 
     _reconnectTimer = Timer(delay, () {
       if (!_isDisposed) {
-        connect();
+        connect().catchError((e) {
+          // 捕获定时重连时的异常，避免未处理的全局异常
+        });
       }
     });
   }

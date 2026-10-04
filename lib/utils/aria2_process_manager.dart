@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/storage.dart';
@@ -156,7 +157,9 @@ class Aria2ProcessManager {
         if (e.message.contains('bind') || e.message.contains('address')) {
           _logger.log(Level.warning, '[Aria2ProcessManager] Port 6800 might be in use');
         }
-        rethrow;
+        _isRunning = false;
+        _aria2Process = null;
+        return false;
       }
 
       // Listen to stdout and stderr for logging
@@ -267,6 +270,17 @@ class Aria2ProcessManager {
       }
     } catch (e) {
       _logger.log(Level.warning, '[Aria2ProcessManager] Could not check for updated binary: $e');
+    }
+
+    // Check for bundled asset binary
+    try {
+      final bundledPath = await _extractBundledAssetBinary();
+      if (bundledPath != null) {
+        _logger.log(Level.info, '[Aria2ProcessManager] Using bundled asset binary: $bundledPath');
+        return bundledPath;
+      }
+    } catch (e) {
+      _logger.log(Level.debug, '[Aria2ProcessManager] Bundled asset binary not available: $e');
     }
 
     // Try to run aria2c directly (will work if it's in PATH)
@@ -393,6 +407,43 @@ class Aria2ProcessManager {
     }
 
     return null;
+  }
+
+  /// Extracts bundled aria2c binary from Flutter assets for desktop platforms.
+  Future<String?> _extractBundledAssetBinary() async {
+    try {
+      String assetPath;
+      String binaryName;
+      if (Platform.isWindows) {
+        assetPath = 'assets/bin/windows/aria2c.exe';
+        binaryName = 'aria2c.exe';
+      } else if (Platform.isMacOS) {
+        assetPath = 'assets/bin/macos/aria2c';
+        binaryName = 'aria2c';
+      } else if (Platform.isLinux) {
+        assetPath = 'assets/bin/linux/aria2c';
+        binaryName = 'aria2c';
+      } else {
+        return null;
+      }
+
+      final appDir = await getApplicationSupportDirectory();
+      final targetFile = File('${appDir.path}${Platform.pathSeparator}bin${Platform.pathSeparator}$binaryName');
+
+      if (!await targetFile.exists()) {
+        _logger.log(Level.info, '[Aria2ProcessManager] Extracting bundled asset binary: $assetPath');
+        await targetFile.parent.create(recursive: true);
+        final byteData = await rootBundle.load(assetPath);
+        await targetFile.writeAsBytes(byteData.buffer.asUint8List());
+      }
+      if (!Platform.isWindows) {
+        await Process.run('chmod', ['+x', targetFile.path]);
+      }
+      return targetFile.path;
+    } catch (e) {
+      _logger.log(Level.debug, '[Aria2ProcessManager] Extracting bundled asset failed or asset not found: $e');
+      return null;
+    }
   }
 
   /// Returns a list of common aria2c installation paths for different platforms.

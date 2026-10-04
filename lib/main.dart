@@ -10,6 +10,8 @@ import 'package:kazumi/utils/utils.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:kazumi/utils/aria2_process_manager.dart';
 import 'package:kazumi/utils/aria2_feature_manager.dart';
+import 'package:kazumi/utils/logger.dart';
+import 'package:logger/logger.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:kazumi/pages/error/storage_error_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -75,12 +77,16 @@ void main() async {
   await Request.setCookie();
 
   // Initialize aria2 feature manager to detect availability
-  await Aria2FeatureManager().initialize();
+  try {
+    await Aria2FeatureManager().initialize();
 
-  // Start aria2 process if available
-  if (Aria2FeatureManager().isAvailable) {
-    final aria2Manager = Aria2ProcessManager();
-    await aria2Manager.start();
+    // Start aria2 process if available
+    if (Aria2FeatureManager().isAvailable) {
+      final aria2Manager = Aria2ProcessManager();
+      await aria2Manager.start();
+    }
+  } catch (e) {
+    KazumiLogger().log(Level.warning, '[Main] Failed to start aria2: $e');
   }
 
   runApp(

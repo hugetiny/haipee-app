@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/modules/download/download_task.dart';
 import 'package:kazumi/utils/aria2_client.dart';
+import 'package:kazumi/utils/aria2_process_manager.dart';
 import 'package:kazumi/utils/aria2_websocket.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/logger.dart';
@@ -538,8 +539,18 @@ class DownloadController extends StateNotifier<DownloadState> {
       _adjustSyncStrategy();
     } catch (e) {
       _logger.log(Level.error, '[DownloadController] Refresh failed: $e');
+      
+      // 隐式自动检测并唤醒内置下载引擎
+      if (!Aria2ProcessManager().isRunning) {
+        Aria2ProcessManager().start().then((success) {
+          if (success) {
+            _connectWebSocket();
+          }
+        });
+      }
+
       state = state.copyWith(
-        errorMessage: 'aria2连接失败',
+        errorMessage: '下载服务启动中...',
         isConnected: false,
         needsRefresh: false,
       );
