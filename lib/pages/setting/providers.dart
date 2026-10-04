@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/services/network/bangumi_acceleration.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 
@@ -58,18 +59,27 @@ class ThemeNotifier extends Notifier<ThemeState> {
 
     // Load seedColor
     final String colorValue =
-        setting.get(SettingBoxKey.themeColor, defaultValue: 'default');
-    final Color seedColor = colorValue == 'default'
-        ? Colors.green
-        : Color(int.parse(colorValue, radix: 16));
+        setting.get(SettingBoxKey.themeColor, defaultValue: 'green');
+    final Color seedColor;
+    switch (colorValue) {
+      case 'purple':
+        seedColor = Colors.purple;
+        break;
+      case 'orange':
+        seedColor = Colors.orange;
+        break;
+      default:
+        seedColor = Colors.green;
+        break;
+    }
 
     // Load oledEnhance
     final bool oledEnhance =
         setting.get(SettingBoxKey.oledEnhance, defaultValue: false);
 
     return ThemeState(
-      useDynamicColor: useDynamicColor,
       themeMode: themeMode,
+      useDynamicColor: useDynamicColor,
       seedColor: seedColor,
       oledEnhance: oledEnhance,
     );
@@ -79,8 +89,8 @@ class ThemeNotifier extends Notifier<ThemeState> {
     state = state.copyWith(themeMode: mode);
   }
 
-  void setUseDynamicColor(bool useDynamicColor) {
-    state = state.copyWith(useDynamicColor: useDynamicColor);
+  void setUseDynamicColor(bool value) {
+    state = state.copyWith(useDynamicColor: value);
   }
 
   void setSeedColor(Color color) {
@@ -92,18 +102,49 @@ class ThemeNotifier extends Notifier<ThemeState> {
   }
 }
 
-/// 主题设置 Provider
-///
-/// 管理应用主题模式、动态取色、种子色和 OLED 增强。
-/// 支持跟随系统、浅色、深色三种主题模式。
-///
-/// 示例:
-/// ```dart
-/// final controller = ref.read(themeProvider.notifier);
-/// await controller.updateThemeMode(ThemeMode.dark);
-/// ```
 final themeProvider =
     NotifierProvider<ThemeNotifier, ThemeState>(ThemeNotifier.new);
+
+class WebDavState {
+  final bool initialized;
+  final bool enableGitProxy;
+
+  const WebDavState({
+    this.initialized = false,
+    this.enableGitProxy = false,
+  });
+
+  WebDavState copyWith({
+    bool? initialized,
+    bool? enableGitProxy,
+  }) {
+    return WebDavState(
+      initialized: initialized ?? this.initialized,
+      enableGitProxy: enableGitProxy ?? this.enableGitProxy,
+    );
+  }
+}
+
+class WebDavNotifier extends Notifier<WebDavState> {
+  @override
+  WebDavState build() {
+    final setting = GStorage.setting;
+    final enableGitProxy =
+        setting.get(SettingBoxKey.enableGitProxy, defaultValue: false);
+    return WebDavState(
+      initialized: true,
+      enableGitProxy: enableGitProxy,
+    );
+  }
+
+  Future<void> toggleGitProxy(bool value) async {
+    await GStorage.setting.put(SettingBoxKey.enableGitProxy, value);
+    state = state.copyWith(enableGitProxy: value);
+  }
+}
+
+final webDavProvider =
+    NotifierProvider<WebDavNotifier, WebDavState>(WebDavNotifier.new);
 
 class PlayerSettingsState {
   final double defaultPlaySpeed;
@@ -124,7 +165,7 @@ class PlayerSettingsState {
     this.androidEnableOpenSLES = true,
     this.lowMemoryMode = false,
     this.playResume = true,
-    this.showPlayerError = true,
+    this.showPlayerError = false,
     this.privateMode = false,
     this.playerDebugMode = false,
     this.playerDisableAnimations = false,
@@ -163,28 +204,28 @@ class PlayerSettingsState {
 class PlayerSettingsNotifier extends Notifier<PlayerSettingsState> {
   @override
   PlayerSettingsState build() {
-    // Initialize from persistent storage (Hive) to avoid mutating providers during widget build
     final setting = GStorage.setting;
-    final double defaultPlaySpeed =
-        (setting.get(SettingBoxKey.defaultPlaySpeed, defaultValue: 1.0) as num)
-            .toDouble();
-    final int defaultAspectRatioType = setting
-        .get(SettingBoxKey.defaultAspectRatioType, defaultValue: 1) as int;
-    final bool hAenable =
+
+    final defaultPlaySpeed =
+        setting.get(SettingBoxKey.defaultPlaySpeed, defaultValue: 1.0) as double;
+    final defaultAspectRatioType =
+        setting.get(SettingBoxKey.defaultAspectRatioType, defaultValue: 1) as int;
+    final hAenable =
         setting.get(SettingBoxKey.hAenable, defaultValue: true) as bool;
-    final bool androidEnableOpenSLES = setting
-        .get(SettingBoxKey.androidEnableOpenSLES, defaultValue: true) as bool;
-    final bool lowMemoryMode =
+    final androidEnableOpenSLES =
+        setting.get(SettingBoxKey.androidEnableOpenSLES, defaultValue: true)
+            as bool;
+    final lowMemoryMode =
         setting.get(SettingBoxKey.lowMemoryMode, defaultValue: false) as bool;
-    final bool playResume =
+    final playResume =
         setting.get(SettingBoxKey.playResume, defaultValue: true) as bool;
-    final bool showPlayerError =
-        setting.get(SettingBoxKey.showPlayerError, defaultValue: true) as bool;
-    final bool privateMode =
+    final showPlayerError =
+        setting.get(SettingBoxKey.showPlayerError, defaultValue: false) as bool;
+    final privateMode =
         setting.get(SettingBoxKey.privateMode, defaultValue: false) as bool;
-    final bool playerDebugMode =
+    final playerDebugMode =
         setting.get(SettingBoxKey.playerDebugMode, defaultValue: false) as bool;
-    final bool playerDisableAnimations =
+    final playerDisableAnimations =
         setting.get(SettingBoxKey.playerDisableAnimations, defaultValue: false)
             as bool;
 
@@ -257,11 +298,13 @@ class MetadataSettingsState {
     required this.bangumiEnabled,
     required this.tmdbEnabled,
     required this.manualLocaleTag,
+    required this.bangumiAcceleration,
   });
 
   final bool bangumiEnabled;
   final bool tmdbEnabled;
   final String? manualLocaleTag;
+  final BangumiAcceleration bangumiAcceleration;
 
   bool get followSystemLocale => manualLocaleTag == null;
 
@@ -272,6 +315,7 @@ class MetadataSettingsState {
     bool? bangumiEnabled,
     bool? tmdbEnabled,
     Object? manualLocaleTag = _manualLocaleSentinel,
+    BangumiAcceleration? bangumiAcceleration,
   }) {
     return MetadataSettingsState(
       bangumiEnabled: bangumiEnabled ?? this.bangumiEnabled,
@@ -279,6 +323,7 @@ class MetadataSettingsState {
       manualLocaleTag: manualLocaleTag == _manualLocaleSentinel
           ? this.manualLocaleTag
           : manualLocaleTag as String?,
+      bangumiAcceleration: bangumiAcceleration ?? this.bangumiAcceleration,
     );
   }
 }
@@ -306,6 +351,7 @@ class MetadataSettingsNotifier extends Notifier<MetadataSettingsState> {
       bangumiEnabled: bangumiEnabled,
       tmdbEnabled: tmdbEnabled,
       manualLocaleTag: manualLocaleTag,
+      bangumiAcceleration: BangumiAcceleration.current,
     );
   }
 
@@ -328,6 +374,11 @@ class MetadataSettingsNotifier extends Notifier<MetadataSettingsState> {
     state = state.copyWith(
       manualLocaleTag: storedValue.isEmpty ? null : storedValue,
     );
+  }
+
+  Future<void> setBangumiAcceleration(BangumiAcceleration value) async {
+    await GStorage.putSetting(SettingsKeys.bangumiAcceleration, value.name);
+    state = state.copyWith(bangumiAcceleration: value);
   }
 }
 
@@ -416,7 +467,7 @@ final localeSettingsProvider =
   LocaleSettingsNotifier.new,
 );
 
-/// ✅ Provider for show window button setting
+/// Provider for show window button setting
 final showWindowButtonProvider = StateProvider<bool>((ref) {
   final setting = GStorage.setting;
   return setting.get(SettingBoxKey.showWindowButton, defaultValue: false);

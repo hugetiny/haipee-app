@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/pages/setting/providers.dart';
 import 'package:kazumi/utils/storage.dart';

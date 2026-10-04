@@ -26,8 +26,10 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
     // 在下一帧自动同步导航索引，无需 addPostFrameCallback
     Future.microtask(() {
       if (mounted) {
-        final location = GoRouterState.of(context).uri.path;
-        ref.read(currentRouteProvider.notifier).updateRoute(location);
+        try {
+          final location = GoRouterState.of(context).uri.path;
+          ref.read(currentRouteProvider.notifier).updateRoute(location);
+        } catch (_) {}
       }
     });
   }
@@ -243,7 +245,9 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
     super.didChangeDependencies();
 
     // 使用 Riverpod 同步路由状态
-    final location = GoRouterState.of(context).uri.path;
-    ref.read(currentRouteProvider.notifier).updateRoute(location);
+    try {
+      final location = GoRouterState.of(context).uri.path;
+      ref.read(currentRouteProvider.notifier).updateRoute(location);
+    } catch (_) {}
   }
 }

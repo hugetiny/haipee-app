@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 4
-/// Strings: 2742 (685 per locale)
+/// Strings: 2754 (688 per locale)
 ///
-/// Built on 2026-10-04 at 08:12 UTC
+/// Built on 2026-10-04 at 10:19 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -583,6 +583,12 @@ class _TranslationsSettingsPlayerEnUs {
 	String get danmakuShieldInputHint => 'Enter a keyword or regular expression';
 	String get danmakuShieldDescription => 'Text starting and ending with "/" will be treated as regular expressions, e.g. "/\\d+/" blocks all numbers';
 	String get danmakuShieldCount => 'Added {count} keywords';
+	String get danmakuConvert => 'Conversion';
+	String get danmakuConvertTitle => 'Danmaku Simplified/Traditional Conversion';
+	String get danmakuConvertDesc => 'Takes effect upon next online load. Cached danmaku retains original text';
+	String get danmakuConvertNone => 'No conversion';
+	String get danmakuConvertSimplified => 'Convert to Simplified';
+	String get danmakuConvertTraditional => 'Convert to Traditional';
 	String get danmakuStyle => 'Danmaku Style';
 	String get danmakuDisplay => 'Danmaku Display';
 	String get danmakuArea => 'Danmaku Area';
@@ -5610,6 +5616,12 @@ class _TranslationsSettingsPlayerZhCn extends _TranslationsSettingsPlayerEnUs {
 	@override String get danmakuShieldInputHint => '输入关键词或正则表达式';
 	@override String get danmakuShieldDescription => '以"/"开头和结尾将视作正则表达式, 如"/\\d+/"表示屏蔽所有数字';
 	@override String get danmakuShieldCount => '已添加{count}个关键词';
+	@override String get danmakuConvert => '繁简转换';
+	@override String get danmakuConvertTitle => '弹幕繁简转换';
+	@override String get danmakuConvertDesc => '下次联网加载弹幕时生效，已缓存弹幕保留下载时的文字';
+	@override String get danmakuConvertNone => '不转换';
+	@override String get danmakuConvertSimplified => '转为简体';
+	@override String get danmakuConvertTraditional => '转为繁体';
 	@override String get danmakuStyle => '弹幕样式';
 	@override String get danmakuDisplay => '弹幕显示';
 	@override String get danmakuArea => '弹幕区域';
@@ -10472,6 +10484,12 @@ extension on AppTranslations {
 			case 'settings.player.danmakuShieldInputHint': return 'Enter a keyword or regular expression';
 			case 'settings.player.danmakuShieldDescription': return 'Text starting and ending with "/" will be treated as regular expressions, e.g. "/\\d+/" blocks all numbers';
 			case 'settings.player.danmakuShieldCount': return 'Added {count} keywords';
+			case 'settings.player.danmakuConvert': return 'Conversion';
+			case 'settings.player.danmakuConvertTitle': return 'Danmaku Simplified/Traditional Conversion';
+			case 'settings.player.danmakuConvertDesc': return 'Takes effect upon next online load. Cached danmaku retains original text';
+			case 'settings.player.danmakuConvertNone': return 'No conversion';
+			case 'settings.player.danmakuConvertSimplified': return 'Convert to Simplified';
+			case 'settings.player.danmakuConvertTraditional': return 'Convert to Traditional';
 			case 'settings.player.danmakuStyle': return 'Danmaku Style';
 			case 'settings.player.danmakuDisplay': return 'Danmaku Display';
 			case 'settings.player.danmakuArea': return 'Danmaku Area';
@@ -11859,6 +11877,12 @@ extension on _TranslationsZhCn {
 			case 'settings.player.danmakuShieldInputHint': return '输入关键词或正则表达式';
 			case 'settings.player.danmakuShieldDescription': return '以"/"开头和结尾将视作正则表达式, 如"/\\d+/"表示屏蔽所有数字';
 			case 'settings.player.danmakuShieldCount': return '已添加{count}个关键词';
+			case 'settings.player.danmakuConvert': return '繁简转换';
+			case 'settings.player.danmakuConvertTitle': return '弹幕繁简转换';
+			case 'settings.player.danmakuConvertDesc': return '下次联网加载弹幕时生效，已缓存弹幕保留下载时的文字';
+			case 'settings.player.danmakuConvertNone': return '不转换';
+			case 'settings.player.danmakuConvertSimplified': return '转为简体';
+			case 'settings.player.danmakuConvertTraditional': return '转为繁体';
 			case 'settings.player.danmakuStyle': return '弹幕样式';
 			case 'settings.player.danmakuDisplay': return '弹幕显示';
 			case 'settings.player.danmakuArea': return '弹幕区域';

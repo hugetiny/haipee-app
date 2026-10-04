@@ -209,7 +209,7 @@ class Aria2WebSocketClient {
       _startHeartbeat();
 
       onConnected?.call();
-    } catch (e, stackTrace) {
+    } catch (e) {
       _logger.log(
         Level.warning,
         '[Aria2WebSocket] Connection failed: $e',

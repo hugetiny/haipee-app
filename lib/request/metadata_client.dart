@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:kazumi/request/api.dart';
 import 'package:kazumi/request/request.dart';
 import 'package:kazumi/utils/api_credentials.dart';

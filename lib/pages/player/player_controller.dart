@@ -10,7 +10,7 @@ import 'package:kazumi/modules/danmaku/danmaku_module.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:kazumi/request/damaku.dart';
 import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:logger/logger.dart';
 import 'package:kazumi/utils/logger.dart';

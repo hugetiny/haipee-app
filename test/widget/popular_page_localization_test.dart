@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:kazumi/pages/menu/menu.dart';
 import 'package:kazumi/pages/popular/popular_controller.dart';
 import 'package:kazumi/pages/popular/popular_page.dart';
 import 'package:kazumi/pages/popular/providers.dart';
@@ -64,7 +65,7 @@ void main() {
         child: TranslationProvider(
           child: MaterialApp(
             navigatorObservers: [KazumiDialog.observer],
-            home: const PopularPage(),
+            home: const ScaffoldMenu(child: PopularPage()),
           ),
         ),
       ),
@@ -76,7 +77,7 @@ void main() {
     final enEmptyState = AppLocale.enUs.translations.library.common.emptyState;
     final enRetry = AppLocale.enUs.translations.library.common.retry;
 
-    expect(find.text(enAllTag), findsOneWidget);
+    expect(find.text(enAllTag), findsWidgets);
     expect(find.text(enEmptyState), findsOneWidget);
     expect(find.text(enRetry), findsOneWidget);
 
@@ -87,7 +88,7 @@ void main() {
     final zhEmptyState = AppLocale.zhCn.translations.library.common.emptyState;
     final zhRetry = AppLocale.zhCn.translations.library.common.retry;
 
-    expect(find.text(zhAllTag), findsOneWidget);
+    expect(find.text(zhAllTag), findsWidgets);
     expect(find.text(zhEmptyState), findsOneWidget);
     expect(find.text(zhRetry), findsOneWidget);
   });

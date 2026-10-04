@@ -2,13 +2,14 @@ import 'package:card_settings_ui/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/pages/menu/navigation_provider.dart';
 import 'package:kazumi/pages/layout/app_bar_config.dart';
 import 'package:kazumi/pages/setting/providers.dart';
 import 'package:kazumi/pages/webdav_editor/providers.dart';
+import 'package:kazumi/services/network/bangumi_acceleration.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
@@ -118,14 +119,12 @@ class _SettingPageState extends ConsumerState<SettingPage> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) {
-        if (didPop) {
-          return;
-        }
+        if (didPop) return;
         onBackPressed(context);
       },
       child: SettingsList(
-        maxWidth: 1000,
-        sections: [
+          maxWidth: 1000,
+          sections: [
             SettingsSection(
               title: Text(t.settings.general.title),
               tiles: [
@@ -193,6 +192,42 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                   description: Text(t.settings.metadata.enableBangumiDesc),
                   initialValue: metadataState.bangumiEnabled,
                 ),
+                if (metadataState.bangumiEnabled)
+                  SettingsTile.navigation(
+                    title: const Text('Bangumi 网络加速'),
+                    description: const Text('选择连接 Bangumi 服务的加速方式 (直连 / ECH / 镜像)'),
+                    value: Text(metadataState.bangumiAcceleration.label),
+                    onPressed: (context) {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (bottomSheetContext) {
+                          return SafeArea(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final mode in BangumiAcceleration.values)
+                                  ListTile(
+                                    title: Text(mode.label),
+                                    subtitle: Text(switch (mode) {
+                                      BangumiAcceleration.direct => '直接连接官方服务器',
+                                      BangumiAcceleration.ech => 'ECH (Encrypted Client Hello) 域名防嗅探加速',
+                                      BangumiAcceleration.mirror => '通过反向代理镜像站连接',
+                                    }),
+                                    trailing: metadataState.bangumiAcceleration == mode
+                                        ? const Icon(Icons.check)
+                                        : null,
+                                    onTap: () {
+                                      metadataController.setBangumiAcceleration(mode);
+                                      Navigator.pop(bottomSheetContext);
+                                    },
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 SettingsTile.switchTile(
                   onToggle: (value) async {
                     await metadataController.setTmdbEnabled(

@@ -10,6 +10,7 @@ import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/pages/player/player_controller.dart';
 import 'package:kazumi/pages/player/player_providers.dart';
+import 'package:kazumi/services/player/screenshot_candidate.dart';
 import 'package:kazumi/pages/player/player_state.dart';
 import 'package:kazumi/pages/settings/danmaku/danmaku_settings_sheet.dart';
 import 'package:kazumi/pages/video/providers.dart';
@@ -87,12 +88,43 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
 
   Future<void> _handleScreenshot() async {
     final t = context.t;
+    final videoState = ref.read(videoProvider);
     KazumiDialog.showToast(message: t.playback.toast.screenshotProcessing);
     try {
       Uint8List? screenshot =
           await playerController.screenshot(format: 'image/png');
-      final result = await SaverGallery.saveImage(screenshot!,
-          fileName: DateTime.timestamp().toString(), skipIfExists: false);
+      if (screenshot == null) {
+        throw Exception('截图数据为空');
+      }
+
+      final bangumiTitle = (videoState.bangumiItem?.nameCn.isNotEmpty == true)
+          ? videoState.bangumiItem!.nameCn
+          : (videoState.bangumiItem?.name ?? videoState.title);
+      final candidate = ScreenshotCandidate(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        bytes: screenshot,
+        title: bangumiTitle,
+        episode: videoState.title,
+        position: playerController.playerPosition,
+      );
+
+      if (Utils.isDesktop()) {
+        final exportService = ref.read(screenshotExportServiceProvider);
+        final destination = await exportService.chooseDestination();
+        if (destination != null) {
+          await exportService.write(candidate, destination);
+          KazumiDialog.showToast(message: t.playback.toast.screenshotSaved);
+          return;
+        } else {
+          return;
+        }
+      }
+
+      final result = await SaverGallery.saveImage(
+        screenshot,
+        fileName: 'Kazumi_${candidate.title}_${candidate.id}',
+        skipIfExists: false,
+      );
       if (result.isSuccess) {
         KazumiDialog.showToast(message: t.playback.toast.screenshotSaved);
       } else {

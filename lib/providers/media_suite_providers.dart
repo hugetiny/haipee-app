@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:kazumi/modules/metadata_sync/metadata_cache_repository.dart';
 import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
 import 'package:kazumi/modules/metadata_sync/metadata_sync_controller.dart';

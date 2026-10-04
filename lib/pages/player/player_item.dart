@@ -14,6 +14,7 @@ import 'package:kazumi/pages/player/player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/pages/player/player_providers.dart';
+import 'package:kazumi/services/player/audio_controller.dart';
 import 'package:kazumi/pages/player/player_state.dart';
 import 'package:kazumi/pages/video/video_controller.dart';
 import 'package:kazumi/pages/video/providers.dart';
@@ -26,7 +27,7 @@ import 'package:kazumi/pages/history/history_controller.dart';
 import 'package:kazumi/pages/history/providers.dart';
 import 'package:kazumi/pages/my/my_controller.dart';
 import 'package:kazumi/pages/my/providers.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/request/damaku.dart';
 import 'package:kazumi/modules/danmaku/danmaku_search_response.dart';
@@ -336,7 +337,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     await playerController.setPlaybackSpeed(speed);
     playerController.danmakuController.updateOption(
       playerController.danmakuController.option
-          .copyWith(duration: _duration ~/ speed),
+          .copyWith(duration: (_duration / speed).toDouble()),
     );
   }
 
@@ -478,7 +479,82 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
       }
       // 一起去看相关
       playerController.setSyncPlayCurrentPosition();
+      _syncAudioServiceState();
     });
+  }
+
+  AudioController get _audioController => ref.read(audioControllerProvider);
+
+  Future<void> _bindAudioService() async {
+    try {
+      final bangumi = videoPageController.bangumiItem;
+      await _audioController.bindCallbacks(
+        onPlay: () => playerController.play(),
+        onPause: () => playerController.pause(),
+        onSkipToNext: () async {
+          if (videoPageController.currentEpisode <
+              videoPageController.roadList[videoPageController.currentRoad].data.length) {
+            await widget.changeEpisode(videoPageController.currentEpisode + 1);
+          }
+        },
+        onSkipToPrevious: () async {
+          if (videoPageController.currentEpisode > 1) {
+            await widget.changeEpisode(videoPageController.currentEpisode - 1);
+          }
+        },
+        onSeek: (position) async {
+          await playerController.mediaPlayer?.seek(position);
+        },
+        artworkUrl: bangumi.images['large'] ?? bangumi.images['common'],
+      );
+      _syncAudioServiceState();
+    } catch (e) {
+      KazumiLogger().w('AudioController: failed to bind callbacks', error: e);
+    }
+  }
+
+  void _syncAudioServiceState() {
+    try {
+      final currentRoad = videoPageController.currentRoad;
+      final currentEpisode = videoPageController.currentEpisode;
+      if (videoPageController.roadList.isEmpty ||
+          currentRoad < 0 ||
+          currentRoad >= videoPageController.roadList.length) {
+        return;
+      }
+      final currentRoadData = videoPageController.roadList[currentRoad];
+      if (currentEpisode <= 0 || currentRoadData.data.isEmpty) return;
+
+      final duration = playerController.playerDuration;
+      if (duration <= Duration.zero) return;
+
+      final canSkipToPrevious = currentEpisode > 1;
+      final canSkipToNext = currentEpisode < currentRoadData.data.length;
+      final bangumi = videoPageController.bangumiItem;
+      final bangumiTitle = bangumi.nameCn.isNotEmpty ? bangumi.nameCn : bangumi.name;
+
+      unawaited(
+        _audioController.updateSession(
+          mediaId: '${bangumi.id}_${currentRoad}_$currentEpisode',
+          title: bangumiTitle,
+          album: videoPageController.currentPlugin.name,
+          artist: videoPageController.title,
+          duration: duration,
+          playing: playerController.playerPlaying,
+          loading: videoPageController.loading,
+          buffering: playerController.mediaPlayer?.state.buffering ?? false,
+          completed: playerController.completed,
+          updatePosition: playerController.playerPosition,
+          bufferedPosition: playerController.playerBuffer,
+          speed: playerController.playerSpeed,
+          queueIndex: currentEpisode - 1,
+          canSkipToNext: canSkipToNext,
+          canSkipToPrevious: canSkipToPrevious,
+        ),
+      );
+    } catch (e) {
+      KazumiLogger().w('AudioController: failed to sync state', error: e);
+    }
   }
 
   void showDanmakuSearchDialog(String keyword) async {
@@ -989,7 +1065,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
 
   @override
   void onWindowRestore() {
-    playerController.danmakuController.onClear();
+    playerController.danmakuController.clear();
   }
 
   @override
@@ -1056,6 +1132,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
           danmakuEnabled: defaultDanmakuEnabled,
         );
         displayVideoController();
+        _bindAudioService();
       }
     });
   }
@@ -1065,6 +1142,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     // Don't dispose player here
     // We need to reuse the player after episode is changed and player item is disposed
     // We dispose player after video page disposed
+    _audioController.deactivate();
     WidgetsBinding.instance.removeObserver(this);
     windowManager.removeListener(this);
     playerTimer?.cancel();
@@ -1181,7 +1259,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                               if (videoPageController.isFullscreen &&
                                   !Utils.isTablet()) {
                                 try {
-                                  playerController.danmakuController.onClear();
+                                  playerController.danmakuController.clear();
                                 } catch (_) {}
                                 Utils.exitFullScreen();
                                 videoPageController.isFullscreen =
@@ -1294,8 +1372,8 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                       area: danmakuArea,
                       opacity: _opacity,
                       fontSize: _fontSize,
-                      duration: _duration ~/ playerController.playerSpeed,
-                      showStroke: _border,
+                      duration: (_duration / playerController.playerSpeed).toDouble(),
+                      strokeWidth: _border ? 1.5 : 0.0,
                       fontWeight: _danmakuFontWeight,
                       massiveMode: _massiveMode,
                     ),

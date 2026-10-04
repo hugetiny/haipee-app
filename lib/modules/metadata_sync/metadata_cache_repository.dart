@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
 import 'package:kazumi/request/metadata_client.dart';
 import 'package:kazumi/utils/storage.dart';

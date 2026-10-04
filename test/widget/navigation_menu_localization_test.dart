@@ -27,19 +27,22 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
-    expect(find.text('Popular'), findsOneWidget);
-    expect(find.text('Timeline'), findsOneWidget);
-    expect(find.text('My'), findsOneWidget);
-    expect(find.text('Settings'), findsOneWidget);
+    final enTabs = AppLocale.enUs.translations.navigation.tabs;
+    expect(find.text(enTabs.popular), findsOneWidget);
+    expect(find.text(enTabs.timeline), findsOneWidget);
+    expect(find.text(enTabs.my), findsOneWidget);
+    expect(find.text(enTabs.settings), findsOneWidget);
 
     LocaleSettings.setLocale(AppLocale.zhCn);
     await tester.pumpAndSettle();
 
-    expect(find.text('热门番组'), findsOneWidget);
-    expect(find.text('时间表'), findsOneWidget);
-    expect(find.text('我的'), findsOneWidget);
-    expect(find.text('设置'), findsOneWidget);
+    final zhTabs = AppLocale.zhCn.translations.navigation.tabs;
+    expect(find.text(zhTabs.popular), findsOneWidget);
+    expect(find.text(zhTabs.timeline), findsOneWidget);
+    expect(find.text(zhTabs.my), findsOneWidget);
+    expect(find.text(zhTabs.settings), findsOneWidget);
 
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();

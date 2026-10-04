@@ -5,9 +5,9 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_webview_window
   dynamic_color
+  file_selector_linux
   flutter_volume_controller
   irondash_engine_context
-  media_kit_libs_linux
   media_kit_video
   screen_retriever_linux
   super_native_extensions

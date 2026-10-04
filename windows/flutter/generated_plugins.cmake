@@ -3,11 +3,12 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  audio_service_win
   connectivity_plus
   dynamic_color
+  file_selector_windows
   flutter_volume_controller
   irondash_engine_context
-  media_kit_libs_windows_video
   media_kit_video
   screen_pixel
   screen_retriever_windows

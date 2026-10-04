@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/modules/danmaku/danmaku_ch_convert.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/utils.dart';
 
@@ -20,6 +21,7 @@ class DanmakuSettingsState {
   final bool danmakuDanDanSource;
   final String danDanAppIdOverride;
   final String danDanApiKeyOverride;
+  final DanmakuChConvert danmakuChConvert;
 
   const DanmakuSettingsState({
     required this.danmakuArea,
@@ -38,6 +40,7 @@ class DanmakuSettingsState {
     required this.danmakuDanDanSource,
     required this.danDanAppIdOverride,
     required this.danDanApiKeyOverride,
+    required this.danmakuChConvert,
   });
 
   DanmakuSettingsState copyWith({
@@ -57,6 +60,7 @@ class DanmakuSettingsState {
     bool? danmakuDanDanSource,
     String? danDanAppIdOverride,
     String? danDanApiKeyOverride,
+    DanmakuChConvert? danmakuChConvert,
   }) {
     return DanmakuSettingsState(
       danmakuArea: danmakuArea ?? this.danmakuArea,
@@ -76,7 +80,9 @@ class DanmakuSettingsState {
       danmakuGamerSource: danmakuGamerSource ?? this.danmakuGamerSource,
       danmakuDanDanSource: danmakuDanDanSource ?? this.danmakuDanDanSource,
       danDanAppIdOverride: danDanAppIdOverride ?? this.danDanAppIdOverride,
-      danDanApiKeyOverride: danDanApiKeyOverride ?? this.danDanApiKeyOverride,
+      danDanApiKeyOverride:
+          danDanApiKeyOverride ?? this.danDanApiKeyOverride,
+      danmakuChConvert: danmakuChConvert ?? this.danmakuChConvert,
     );
   }
 }
@@ -125,6 +131,9 @@ class DanmakuSettingsNotifier extends Notifier<DanmakuSettingsState> {
                   defaultValue: '') as String?)
               ?.trim() ??
           ''),
+      danmakuChConvert: DanmakuChConvert.fromValue(
+        GStorage.getSetting(SettingsKeys.danmakuChConvert),
+      ),
     );
   }
 
@@ -205,6 +214,11 @@ class DanmakuSettingsNotifier extends Notifier<DanmakuSettingsState> {
       danDanAppIdOverride: appId,
       danDanApiKeyOverride: apiKey,
     );
+  }
+
+  Future<void> setDanmakuChConvert(DanmakuChConvert value) async {
+    await GStorage.putSetting(SettingsKeys.danmakuChConvert, value.value);
+    state = state.copyWith(danmakuChConvert: value);
   }
 }
 

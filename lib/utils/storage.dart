@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
@@ -14,6 +14,8 @@ import 'package:kazumi/modules/download/download_task.dart';
 import 'package:kazumi/utils/api_credentials.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:logger/logger.dart';
+import 'package:kazumi/services/storage/settings_keys.dart';
+export 'package:kazumi/services/storage/settings_keys.dart';
 
 class GStorage {
   /// Don't use favorites box, it's replaced by collectibles.
@@ -335,6 +337,58 @@ class GStorage {
     return (stored != null && stored.isNotEmpty)
         ? stored
         : ApiCredentials.danDanApiKey;
+  }
+
+  static T getSetting<T>(
+    SettingKey<T> key, {
+    SettingContext context = const SettingContext(),
+  }) {
+    final defaultValue = key.resolveDefault(context);
+    final storedValue = setting.get(key.name);
+    if (storedValue is T) {
+      return storedValue;
+    }
+    return defaultValue;
+  }
+
+  static Future<void> putSetting<T>(SettingKey<T> key, T value) async {
+    await setting.put(key.name, value);
+  }
+
+  static Stream<void> watchSettings(Iterable<SettingKey<Object?>> keys) {
+    final names = keys.map((key) => key.name).toSet();
+    return setting.watch().where((event) => names.contains(event.key)).map((_) {});
+  }
+
+  static List<String> getStringListSettingByName(
+    String key, {
+    List<String> defaultValue = const [],
+  }) {
+    final storedValue = setting.get(key);
+    if (storedValue is List) {
+      return storedValue.whereType<String>().toList();
+    }
+    return defaultValue;
+  }
+
+  static Future<void> putStringListSettingByName(
+    String key,
+    List<String> value,
+  ) async {
+    await setting.put(key, value);
+  }
+
+  static Future<void> resetSettings(Iterable<SettingKey<Object?>> keys) async {
+    await setting.deleteAll(keys.map((key) => key.name));
+    await setting.flush();
+  }
+
+  static Future<void> resetPlayerSettings() async {
+    await resetSettings(SettingsKeys.byGroup(SettingGroup.player));
+  }
+
+  static Future<void> resetDanmakuSettings() async {
+    await resetSettings(SettingsKeys.byGroup(SettingGroup.danmaku));
   }
 }
 

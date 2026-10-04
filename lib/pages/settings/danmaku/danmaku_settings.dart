@@ -6,6 +6,7 @@ import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:card_settings_ui/card_settings_ui.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:kazumi/modules/danmaku/danmaku_ch_convert.dart';
 import 'package:kazumi/pages/settings/danmaku/providers.dart';
 import 'package:kazumi/utils/utils.dart';
 
@@ -197,27 +198,24 @@ class DanmakuSettingsPage extends ConsumerWidget {
                   title: Text(sourcesTexts.dandan),
                   initialValue: danmakuSettings.danmakuDanDanSource,
                 ),
-              ],
-            ),
-            SettingsSection(
-              title: Text(playerTexts.danmakuCredentials),
-              tiles: [
                 SettingsTile.navigation(
-                  onPressed: (_) async {
-                    await _showDanDanCredentialDialog(
-                      context,
-                      ref,
-                      danmakuSettings.danDanAppIdOverride,
-                      danmakuSettings.danDanApiKeyOverride,
-                    );
-                  },
+                  onPressed: (_) => _showDanDanCredentialDialog(
+                    context,
+                    ref,
+                    danmakuSettings.danDanAppIdOverride,
+                    danmakuSettings.danDanApiKeyOverride,
+                  ),
                   title: Text(playerTexts.danmakuDanDanCredentials),
-                  description: Text(credentialSummary),
                   value: Text(_credentialModeLabel(
                     context,
                     danmakuSettings.danDanAppIdOverride,
                     danmakuSettings.danDanApiKeyOverride,
                   )),
+                  description: Text(
+                    credentialSummary,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -229,6 +227,56 @@ class DanmakuSettingsPage extends ConsumerWidget {
                     context.push(Routes.settingsDanmakuShield);
                   },
                   title: Text(playerTexts.danmakuKeywordShield),
+                ),
+              ],
+            ),
+            SettingsSection(
+              title: Text(playerTexts.danmakuConvert),
+              tiles: [
+                SettingsTile.navigation(
+                  onPressed: (_) {
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (bottomSheetContext) {
+                        return SafeArea(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (final mode in DanmakuChConvert.values)
+                                ListTile(
+                                  title: Text(switch (mode) {
+                                    DanmakuChConvert.none =>
+                                      playerTexts.danmakuConvertNone,
+                                    DanmakuChConvert.simplified =>
+                                      playerTexts.danmakuConvertSimplified,
+                                    DanmakuChConvert.traditional =>
+                                      playerTexts.danmakuConvertTraditional,
+                                  }),
+                                  trailing: danmakuSettings.danmakuChConvert == mode
+                                      ? const Icon(Icons.check)
+                                      : null,
+                                  onTap: () {
+                                    ref
+                                        .read(danmakuSettingsProvider.notifier)
+                                        .setDanmakuChConvert(mode);
+                                    Navigator.pop(bottomSheetContext);
+                                  },
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  title: Text(playerTexts.danmakuConvertTitle),
+                  description: Text(playerTexts.danmakuConvertDesc),
+                  value: Text(switch (danmakuSettings.danmakuChConvert) {
+                    DanmakuChConvert.none => playerTexts.danmakuConvertNone,
+                    DanmakuChConvert.simplified =>
+                      playerTexts.danmakuConvertSimplified,
+                    DanmakuChConvert.traditional =>
+                      playerTexts.danmakuConvertTraditional,
+                  }),
                 ),
               ],
             ),
