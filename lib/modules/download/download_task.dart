@@ -99,21 +99,43 @@ class DownloadTask extends HiveObject {
         : null;
 
     String url = '';
-    String? fileName;
+    String? bestVideoPath;
+    int maxVideoLength = -1;
+    String? fallbackPath;
+
     if (aria2Status['files'] != null && aria2Status['files'] is List) {
       final List<dynamic> files = aria2Status['files'] as List<dynamic>;
-      if (files.isNotEmpty && files[0] is Map) {
-        final Map<String, dynamic> firstFile =
-            files[0] as Map<String, dynamic>;
-        if (firstFile['uris'] != null && firstFile['uris'] is List) {
-          final List<dynamic> uris = firstFile['uris'] as List<dynamic>;
-          if (uris.isNotEmpty && uris[0] is Map) {
-            url = (uris[0] as Map<String, dynamic>)['uri']?.toString() ?? '';
+      for (final f in files) {
+        if (f is Map) {
+          final String path = f['path']?.toString() ?? '';
+          final int length =
+              int.tryParse(f['length']?.toString() ?? '0') ?? 0;
+          if (path.isNotEmpty) {
+            fallbackPath ??= path;
+            final lower = path.toLowerCase();
+            final isVideo = lower.endsWith('.mp4') ||
+                lower.endsWith('.mkv') ||
+                lower.endsWith('.avi') ||
+                lower.endsWith('.flv') ||
+                lower.endsWith('.ts') ||
+                lower.endsWith('.mov') ||
+                lower.endsWith('.webm');
+            if (isVideo && length > maxVideoLength) {
+              maxVideoLength = length;
+              bestVideoPath = path;
+            }
+          }
+          if (url.isEmpty && f['uris'] != null && f['uris'] is List) {
+            final uris = f['uris'] as List<dynamic>;
+            if (uris.isNotEmpty && uris[0] is Map) {
+              url = (uris[0] as Map<String, dynamic>)['uri']?.toString() ?? '';
+            }
           }
         }
-        fileName = firstFile['path'] as String?;
       }
     }
+
+    final String? fileName = bestVideoPath ?? fallbackPath;
 
     return DownloadTask(
       gid: gid,

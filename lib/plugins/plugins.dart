@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:kazumi/modules/search/plugin_search_module.dart';
 import 'package:kazumi/modules/roads/road_module.dart';
@@ -49,6 +50,11 @@ class Plugin {
     required this.chapterResult,
     required this.referer,
   });
+
+  bool get isMacCms =>
+      type.toLowerCase() == 'maccms' ||
+      type.toLowerCase() == 'applecms' ||
+      searchURL.contains('/api.php/provide/vod');
 
   factory Plugin.fromJson(Map<String, dynamic> json) {
     return Plugin(
@@ -120,6 +126,10 @@ class Plugin {
 
   Future<PluginSearchResponse> queryBangumi(String keyword,
       {bool shouldRethrow = false}) async {
+    if (isMacCms) {
+      return _queryMacCmsBangumi(keyword, shouldRethrow: shouldRethrow);
+    }
+
     String queryURL = searchURL.replaceAll('@keyword', keyword);
     dynamic resp;
     List<SearchItem> searchItems = [];
@@ -185,8 +195,67 @@ class Plugin {
     return pluginSearchResponse;
   }
 
+  /// 苹果 CMS V10 标准 JSON 采集接口搜索
+  Future<PluginSearchResponse> _queryMacCmsBangumi(String keyword,
+      {bool shouldRethrow = false}) async {
+    String queryURL;
+    if (searchURL.isNotEmpty) {
+      queryURL = searchURL.replaceAll('@keyword', Uri.encodeComponent(keyword));
+    } else {
+      queryURL = baseUrl.endsWith('/')
+          ? '${baseUrl}api.php/provide/vod/?ac=videolist&at=json&wd=${Uri.encodeComponent(keyword)}'
+          : '$baseUrl/api.php/provide/vod/?ac=videolist&at=json&wd=${Uri.encodeComponent(keyword)}';
+    }
+    if (!queryURL.contains('at=json')) {
+      queryURL += queryURL.contains('?') ? '&at=json' : '?at=json';
+    }
+
+    final httpHeaders = {
+      'referer': '$baseUrl/',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': Utils.getRandomAcceptedLanguage(),
+      'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Kazumi/Player)',
+    };
+
+    final resp = await Request().get(
+      queryURL,
+      options: Options(headers: httpHeaders),
+      shouldRethrow: shouldRethrow,
+      extra: {'customError': ''},
+    );
+
+    List<SearchItem> searchItems = [];
+    dynamic data = resp.data;
+    if (data is String) {
+      try {
+        data = jsonDecode(data);
+      } catch (_) {}
+    }
+
+    if (data is Map && data['list'] is List) {
+      final list = data['list'] as List;
+      for (final item in list) {
+        if (item is Map) {
+          final vodName = item['vod_name']?.toString().trim() ?? '';
+          final vodId = item['vod_id']?.toString().trim() ?? '';
+          if (vodName.isNotEmpty && vodId.isNotEmpty) {
+            final detailSrc = '/api.php/provide/vod/?ac=detail&at=json&ids=$vodId';
+            searchItems.add(SearchItem(name: vodName, src: detailSrc));
+            KazumiLogger().log(Level.info, '$name [MacCMS] $vodName $detailSrc');
+          }
+        }
+      }
+    }
+
+    return PluginSearchResponse(pluginName: name, data: searchItems);
+  }
+
   Future<List<Road>> querychapterRoads(String url,
       {CancelToken? cancelToken}) async {
+    if (isMacCms || url.contains('/api.php/provide/vod')) {
+      return _queryMacCmsChapterRoads(url, cancelToken: cancelToken);
+    }
+
     List<Road> roadList = [];
     // 预处理
     if (!url.contains('https')) {
@@ -237,6 +306,88 @@ class Plugin {
         } catch (_) {}
       });
     } catch (_) {}
+    return roadList;
+  }
+
+  /// 苹果 CMS V10 标准 JSON 选集与线路解析
+  Future<List<Road>> _queryMacCmsChapterRoads(String url,
+      {CancelToken? cancelToken}) async {
+    List<Road> roadList = [];
+    String queryURL = url;
+    if (!queryURL.startsWith('http://') && !queryURL.startsWith('https://')) {
+      queryURL = baseUrl.endsWith('/')
+          ? baseUrl + (queryURL.startsWith('/') ? queryURL.substring(1) : queryURL)
+          : '$baseUrl/$queryURL';
+    }
+    if (!queryURL.contains('at=json')) {
+      queryURL += queryURL.contains('?') ? '&at=json' : '?at=json';
+    }
+
+    final httpHeaders = {
+      'referer': '$baseUrl/',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': Utils.getRandomAcceptedLanguage(),
+      'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Kazumi/Player)',
+    };
+
+    try {
+      final resp = await Request().get(
+        queryURL,
+        options: Options(headers: httpHeaders),
+        cancelToken: cancelToken,
+      );
+      dynamic data = resp.data;
+      if (data is String) {
+        try {
+          data = jsonDecode(data);
+        } catch (_) {}
+      }
+
+      if (data is Map && data['list'] is List && (data['list'] as List).isNotEmpty) {
+        final vod = data['list'][0] as Map;
+        final rawFrom = vod['vod_play_from']?.toString() ?? '';
+        final rawUrls = vod['vod_play_url']?.toString() ?? '';
+
+        final playFromList = rawFrom.split(RegExp(r'\$\$\$|\$\$'));
+        final playUrlList = rawUrls.split(RegExp(r'\$\$\$|\$\$'));
+
+        for (int i = 0; i < playUrlList.length; i++) {
+          final fromName = (i < playFromList.length && playFromList[i].trim().isNotEmpty)
+              ? playFromList[i].trim()
+              : '线路 ${i + 1}';
+          final epParts = playUrlList[i].split('#');
+
+          final List<String> chapterUrlList = [];
+          final List<String> chapterNameList = [];
+
+          for (final ep in epParts) {
+            final trimmed = ep.trim();
+            if (trimmed.isEmpty) continue;
+            final dollarParts = trimmed.split('\$');
+            if (dollarParts.length >= 2) {
+              final epName = dollarParts[0].trim();
+              final epUrl = dollarParts.sublist(1).join('\$').trim();
+              chapterNameList.add(epName.isEmpty ? '第${chapterNameList.length + 1}集' : epName);
+              chapterUrlList.add(epUrl);
+            } else if (trimmed.isNotEmpty) {
+              chapterNameList.add('第${chapterNameList.length + 1}集');
+              chapterUrlList.add(trimmed);
+            }
+          }
+
+          if (chapterUrlList.isNotEmpty) {
+            roadList.add(Road(
+              name: fromName,
+              data: chapterUrlList,
+              identifier: chapterNameList,
+            ));
+          }
+        }
+      }
+    } catch (e, stack) {
+      KazumiLogger().log(Level.error, 'MacCMS 解析选集失败: $e', stackTrace: stack);
+    }
+
     return roadList;
   }
 }

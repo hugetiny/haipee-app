@@ -116,6 +116,20 @@ class Aria2ProcessManager {
       // Get the download directory
       final Directory downloadsDir = await _getDownloadsDirectory();
 
+      // 公共优质动漫与通用 BT Tracker 列表（显著提升 Peer 发现与磁力链元数据获取速度）
+      const defaultTrackers = [
+        'udp://tracker.opentrackr.org:1337/announce',
+        'udp://open.demonii.com:1337/announce',
+        'udp://open.stealth.si:80/announce',
+        'udp://tracker.torrent.eu.org:451/announce',
+        'udp://explodie.org:6969/announce',
+        'udp://tracker.coppersurfer.tk:6969/announce',
+        'http://tracker.openbittorrent.com:80/announce',
+        'udp://tracker.leechers-paradise.org:6969/announce',
+        'udp://p4p.arenabg.com:1337/announce',
+        'udp://tracker.internetwarriors.net:1337/announce',
+      ];
+
       // Build aria2 command arguments
       final List<String> args = [
         '--enable-rpc',
@@ -133,6 +147,15 @@ class Aria2ProcessManager {
         '--http-accept-gzip=true',
         '--allow-overwrite=true',
         '--auto-file-renaming=true',
+        // BT 传输强化与边下边播优先下载首尾分片
+        '--enable-dht=true',
+        '--bt-enable-lpd=true',
+        '--enable-peer-exchange=true',
+        '--bt-max-peers=128',
+        '--bt-prioritize-piece=head=20M,tail=10M',
+        '--bt-save-metadata=true',
+        '--seed-time=0',
+        '--bt-tracker=${defaultTrackers.join(',')}',
       ];
 
       // iOS: Use platform channel with bundled binary (self-signed builds only)
@@ -189,7 +212,7 @@ class Aria2ProcessManager {
         _logger.log(Level.error, '[Aria2ProcessManager] Failed to start process: $e');
         // Check if port might be in use
         if (e.message.contains('bind') || e.message.contains('address')) {
-          _logger.log(Level.warning, '[Aria2ProcessManager] Port 6800 might be in use');
+          _logger.log(Level.warning, '[Aria2ProcessManager] Port $_activePort might be in use');
         }
         _isRunning = false;
         _aria2Process = null;

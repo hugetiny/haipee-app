@@ -47,6 +47,34 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     );
   }
 
+  void _streamPlayTask(BuildContext context, DownloadTask task) {
+    final path = task.filePath ?? task.fileName;
+    if (path == null || path.isEmpty) {
+      KazumiDialog.showToast(message: '正在分配本地空间与元数据，请稍候');
+      return;
+    }
+
+    final file = File(path);
+    if (!file.existsSync()) {
+      KazumiDialog.showToast(message: '文件正在高速缓冲首部，请稍候点击');
+      return;
+    }
+
+    if (task.completedLength < 10 * 1024 * 1024 && !task.isComplete) {
+      KazumiDialog.showToast(message: '已缓冲 ${_formatFileSize(task.completedLength)}，正在加速首尾关键帧');
+    }
+
+    context.push(
+      Routes.localPlayer,
+      extra: LocalVideoPlayArgs(
+        filePath: file.absolute.path,
+        title: task.title,
+        bangumiId: task.bangumiId,
+        episode: task.episodeNumber,
+      ),
+    );
+  }
+
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -1174,6 +1202,27 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    if (task.isComplete) ...[
+                      FilledButton.icon(
+                        onPressed: () => _playTask(context, task),
+                        icon: const Icon(Icons.play_arrow, size: 18),
+                        label: const Text('播放'),
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ] else if (task.isActive || task.isPaused) ...[
+                      FilledButton.tonalIcon(
+                        onPressed: () => _streamPlayTask(context, task),
+                        icon: const Icon(Icons.play_circle_outline, size: 18),
+                        label: const Text('边下边播'),
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     if (task.isActive)
                       TextButton.icon(
                         onPressed: () => controller.pauseDownload(task.gid),

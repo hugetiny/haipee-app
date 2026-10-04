@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
 import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
 import 'package:kazumi/pages/download/providers.dart';
+import 'package:kazumi/router_constants.dart';
 
 class TorrentSearchSheet extends ConsumerStatefulWidget {
   final String initialKeyword;
@@ -98,6 +100,52 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('添加下载失败: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleStreamPlay(TorrentItem item) async {
+    final magnet = item.magnetUrl;
+    if (magnet.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('未找到有效的下载链接')),
+      );
+      return;
+    }
+
+    try {
+      final downloadCtrl = ref.read(downloadControllerProvider.notifier);
+      final downloadTitle = item.displayTitle == item.title
+          ? item.title
+          : '${widget.initialKeyword} - ${item.displayTitle}';
+
+      await downloadCtrl.addUris(
+        [magnet],
+        title: downloadTitle,
+        bangumiId: widget.bangumiId,
+        episodeNumber: int.tryParse(item.episode ?? ''),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('已启动首尾关键帧优先缓冲: $downloadTitle'),
+            action: SnackBarAction(
+              label: '查看下载/播放',
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.push(Routes.download);
+              },
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('启动边下边播失败: $e')),
         );
       }
     }
@@ -416,6 +464,19 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                   },
                 ),
                 const SizedBox(width: 4),
+                // 边下边播快捷动作
+                FilledButton.tonalIcon(
+                  onPressed: () => _handleStreamPlay(item),
+                  icon: const Icon(Icons.play_circle_outline, size: 16),
+                  label: const Text('边下边播'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
                 // 核心大动作：一键下载
                 FilledButton.icon(
                   onPressed: () => _handleDownload(item),

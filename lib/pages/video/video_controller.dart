@@ -162,6 +162,24 @@ class VideoPageController extends Notifier<VideoPageState> {
     KazumiLogger().log(Level.info, '跳转到$chapterName');
     var urlItem = state.roadList[currentRoad].data[episode - 1];
     final plugin = currentPlugin;
+
+    // 检查是否为直链视频（如 HLS .m3u8、.mp4 直链）或插件显式关闭了 Webview
+    final lowerUrl = urlItem.toLowerCase();
+    final isDirectStream = !plugin.useWebview ||
+        lowerUrl.endsWith('.m3u8') ||
+        lowerUrl.contains('.m3u8?') ||
+        lowerUrl.endsWith('.mp4') ||
+        lowerUrl.contains('.mp4?') ||
+        lowerUrl.endsWith('.flv') ||
+        lowerUrl.contains('.flv?');
+
+    if (isDirectStream) {
+      KazumiLogger().log(Level.info, '免嗅探直接视频流，直通播放器: $urlItem');
+      loading = false;
+      webviewController.videoParserEventController.add((urlItem, offset));
+      return;
+    }
+
     if (!urlItem.contains(plugin.baseUrl) &&
         !urlItem.contains(plugin.baseUrl.replaceAll('https', 'http'))) {
       urlItem = plugin.baseUrl + urlItem;
