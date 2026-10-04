@@ -760,6 +760,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.3.2"
+  group_button:
+    dependency: transitive
+    description:
+      name: group_button
+      sha256: "0610fcf28ed122bfb4b410fce161a390f7f2531d55d1d65c5375982001415940"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.3.4"
   hive_ce:
     dependency: "direct main"
     description:
@@ -1536,6 +1544,22 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.27.3"
+  share_plus:
+    dependency: transitive
+    description:
+      name: share_plus
+      sha256: "223873d106614442ea6f20db5a038685cc5b32a2fba81cdecaefbbae0523f7fa"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "12.0.2"
+  share_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: share_plus_platform_interface
+      sha256: "88023e53a13429bd65d8e85e11a9b484f49d4c190abbd96c7932b74d6927cc9a"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "6.1.0"
   shared_preferences:
     dependency: transitive
     description:
@@ -1757,6 +1781,38 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.4.2"
+  talker:
+    dependency: transitive
+    description:
+      name: talker
+      sha256: "57b160b70123fdb28cc1035987e4718bce5715c724a40ff74d6466d1559de68a"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.1.20"
+  talker_dio_logger:
+    dependency: "direct main"
+    description:
+      name: talker_dio_logger
+      sha256: c2ab184171bdc3f45a8791c57a7746d095398d5e18a505c042b41a30af244bc4
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.1.20"
+  talker_flutter:
+    dependency: "direct main"
+    description:
+      name: talker_flutter
+      sha256: "54cbbf852101721664faf4a05639fd2fdefdc37178327990abea00390690d4bc"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.1.16"
+  talker_logger:
+    dependency: transitive
+    description:
+      name: talker_logger
+      sha256: b24550d115f209a1b84a697d65f5ec0fa9eb483735c802f18077692fa83cb5f8
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "5.1.20"
   term_glyph:
     dependency: transitive
     description:

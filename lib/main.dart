@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:kazumi/app_widget.dart';
 import 'package:path_provider/path_provider.dart';
@@ -19,6 +20,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Hook Flutter and platform errors to Talker
+  FlutterError.onError = (details) {
+    KazumiLogger().talker.handle(details.exception, details.stack);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    KazumiLogger().talker.handle(error, stack);
+    return true;
+  };
+
   MediaKit.ensureInitialized();
   if (Platform.isAndroid || Platform.isIOS) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);

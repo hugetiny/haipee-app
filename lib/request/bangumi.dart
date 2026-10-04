@@ -19,16 +19,21 @@ class BangumiHTTP {
         Api.bangumiAPINextDomain + Api.bangumiCalendar,
       );
       final jsonData = res.data;
-      for (int i = 1; i <= 7; i++) {
-        List<BangumiItem> bangumiList = [];
-        final jsonList = jsonData['$i'];
-        for (dynamic jsonItem in jsonList) {
-          try {
-            BangumiItem bangumiItem = BangumiItem.fromJson(jsonItem['subject']);
-            bangumiList.add(bangumiItem);
-          } catch (_) {}
+      if (jsonData is Map) {
+        for (int i = 1; i <= 7; i++) {
+          List<BangumiItem> bangumiList = [];
+          final jsonList = jsonData['$i'];
+          if (jsonList is Iterable) {
+            for (dynamic jsonItem in jsonList) {
+              try {
+                BangumiItem bangumiItem =
+                    BangumiItem.fromJson(jsonItem['subject']);
+                bangumiList.add(bangumiItem);
+              } catch (_) {}
+            }
+          }
+          bangumiCalendar.add(bangumiList);
         }
-        bangumiCalendar.add(bangumiList);
       }
     } catch (e) {
       KazumiLogger()
@@ -63,10 +68,14 @@ class BangumiHTTP {
         data: params,
       );
       final jsonData = res.data;
-      final jsonList = jsonData['data'];
-      for (dynamic jsonItem in jsonList) {
-        if (jsonItem is Map<String, dynamic>) {
-          bangumiList.add(BangumiItem.fromJson(jsonItem));
+      if (jsonData is Map) {
+        final jsonList = jsonData['data'];
+        if (jsonList is Iterable) {
+          for (dynamic jsonItem in jsonList) {
+            if (jsonItem is Map<String, dynamic>) {
+              bangumiList.add(BangumiItem.fromJson(jsonItem));
+            }
+          }
         }
       }
     } catch (e) {
@@ -100,8 +109,7 @@ class BangumiHTTP {
         'sort': 'rank',
         "filter": {
           "type": [2],
-          "tag": ["日本"],
-          "rank": [">$rank", "<=1050"],
+          "rank": [">$rank", "<=99999"],
           "nsfw": false
         },
       };
@@ -123,10 +131,14 @@ class BangumiHTTP {
         data: params,
       );
       final jsonData = res.data;
-      final jsonList = jsonData['data'];
-      for (dynamic jsonItem in jsonList) {
-        if (jsonItem is Map<String, dynamic>) {
-          bangumiList.add(BangumiItem.fromJson(jsonItem));
+      if (jsonData is Map) {
+        final jsonList = jsonData['data'];
+        if (jsonList is Iterable) {
+          for (dynamic jsonItem in jsonList) {
+            if (jsonItem is Map<String, dynamic>) {
+              bangumiList.add(BangumiItem.fromJson(jsonItem));
+            }
+          }
         }
       }
     } catch (e) {
@@ -150,10 +162,15 @@ class BangumiHTTP {
         data: params,
       );
       final jsonData = res.data;
-      final jsonList = jsonData['data'];
-      for (dynamic jsonItem in jsonList) {
-        if (jsonItem is Map<String, dynamic>) {
-          bangumiList.add(BangumiItem.fromJson(jsonItem['subject']));
+      if (jsonData is Map) {
+        final jsonList = jsonData['data'];
+        if (jsonList is Iterable) {
+          for (dynamic jsonItem in jsonList) {
+            if (jsonItem is Map<String, dynamic> &&
+                jsonItem['subject'] is Map<String, dynamic>) {
+              bangumiList.add(BangumiItem.fromJson(jsonItem['subject']));
+            }
+          }
         }
       }
     } catch (e) {
@@ -187,17 +204,21 @@ class BangumiHTTP {
         data: params,
       );
       final jsonData = res.data;
-      final jsonList = jsonData['data'];
-      for (dynamic jsonItem in jsonList) {
-        if (jsonItem is Map<String, dynamic>) {
-          try {
-            BangumiItem bangumiItem = BangumiItem.fromJson(jsonItem);
-            if (bangumiItem.nameCn != '') {
-              bangumiList.add(bangumiItem);
+      if (jsonData is Map) {
+        final jsonList = jsonData['data'];
+        if (jsonList is Iterable) {
+          for (dynamic jsonItem in jsonList) {
+            if (jsonItem is Map<String, dynamic>) {
+              try {
+                BangumiItem bangumiItem = BangumiItem.fromJson(jsonItem);
+                if (bangumiItem.nameCn != '') {
+                  bangumiList.add(bangumiItem);
+                }
+              } catch (e) {
+                KazumiLogger().log(
+                    Level.error, 'Resolve search results failed ${e.toString()}');
+              }
             }
-          } catch (e) {
-            KazumiLogger().log(
-                Level.error, 'Resolve search results failed ${e.toString()}');
           }
         }
       }
