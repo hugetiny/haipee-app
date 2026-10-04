@@ -1,3 +1,4 @@
+import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'dart:io';
 import 'dart:ui';
 import 'package:kazumi/utils/utils.dart';
@@ -131,6 +132,22 @@ class _InfoPageState extends ConsumerState<InfoPage>
                       ),
                     ),
                     actions: [
+                      EmbeddedNativeControlArea(
+                        child: IconButton(
+                          tooltip: '搜索高清BT/磁力下载',
+                          onPressed: () {
+                            final searchKeyword = infoController.bangumiItem.nameCn.isNotEmpty
+                                ? infoController.bangumiItem.nameCn
+                                : infoController.bangumiItem.name;
+                            TorrentSearchSheet.show(
+                              context,
+                              initialKeyword: searchKeyword,
+                              bangumiId: infoController.bangumiItem.id.toString(),
+                            );
+                          },
+                          icon: const Icon(Icons.download_for_offline_outlined),
+                        ),
+                      ),
                       EmbeddedNativeControlArea(
                         child: IconButton(
                           tooltip: metadataTexts.refresh,

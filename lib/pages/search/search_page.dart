@@ -1,3 +1,4 @@
+import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/bean/card/bangumi_card.dart';
@@ -130,6 +131,19 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       appBar: SysAppBar(
         backgroundColor: Colors.transparent,
         title: Text(t.navigation.actions.search),
+        actions: [
+          IconButton(
+            tooltip: '全网BT/磁力直搜 (Mikan/Nyaa)',
+            icon: const Icon(Icons.cloud_download_outlined),
+            onPressed: () {
+              final kw = searchController.text.trim();
+              TorrentSearchSheet.show(
+                context,
+                initialKeyword: kw,
+              );
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: showSortSwitcher,
@@ -148,6 +162,19 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                   <WidgetStatesConstraint, double>{WidgetState.any: 0},
                 ),
                 viewElevation: 0,
+                viewTrailing: [
+                  IconButton(
+                    tooltip: '全网BT/磁力直搜 (Mikan/Nyaa)',
+                    icon: const Icon(Icons.travel_explore_rounded),
+                    onPressed: () {
+                      final kw = searchController.text.trim();
+                      TorrentSearchSheet.show(
+                        context,
+                        initialKeyword: kw,
+                      );
+                    },
+                  ),
+                ],
                 viewLeading: IconButton(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.arrow_back),
@@ -232,6 +259,15 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                                 type: 'init');
                           },
                           text: t.library.common.retry,
+                        ),
+                        GeneralErrorButton(
+                          onPressed: () {
+                            TorrentSearchSheet.show(
+                              context,
+                              initialKeyword: searchController.text.trim(),
+                            );
+                          },
+                          text: '搜全网BT/磁力 (Mikan/Nyaa)',
                         ),
                       ],
                     ),
