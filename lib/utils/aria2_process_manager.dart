@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
@@ -16,6 +17,34 @@ class Aria2ProcessManager {
   static final Aria2ProcessManager _instance = Aria2ProcessManager._internal();
   factory Aria2ProcessManager() => _instance;
   Aria2ProcessManager._internal();
+
+  static int? _activePort;
+  static String? _activeSecret;
+
+  /// 当前动态分配的本地安全端口（如果为 null 则回退 6800）
+  static int? get activePort => _activePort;
+
+  /// 当前动态分配的本地高熵密钥
+  static String? get activeSecret => _activeSecret;
+
+  /// 分配一个本地私有空闲端口，彻底避免端口抢占与冲突
+  static Future<int> findAvailablePort() async {
+    try {
+      final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      final port = server.port;
+      await server.close();
+      return port;
+    } catch (_) {
+      return 6800;
+    }
+  }
+
+  /// 生成 32 位高熵随机密钥
+  static String generateSecureSecret() {
+    final rand = Random.secure();
+    final bytes = List<int>.generate(16, (_) => rand.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, "0")).join();
+  }
 
   Process? _aria2Process;
   bool _isRunning = false;
@@ -74,8 +103,15 @@ class Aria2ProcessManager {
 
     try {
       final setting = GStorage.setting;
-      final String secret = setting.get(SettingBoxKey.aria2Secret, defaultValue: '') as String;
+      final String customSecret = (setting.get(SettingBoxKey.aria2Secret, defaultValue: '') as String).trim();
       final int maxConcurrent = setting.get(SettingBoxKey.aria2MaxConcurrentDownloads, defaultValue: 2) as int;
+
+      // 动态分配私有高位端口与安全密钥
+      final assignedPort = await findAvailablePort();
+      final effectiveSecret = customSecret.isNotEmpty ? customSecret : generateSecureSecret();
+
+      _activePort = assignedPort;
+      _activeSecret = effectiveSecret;
 
       // Get the download directory
       final Directory downloadsDir = await _getDownloadsDirectory();
@@ -83,8 +119,10 @@ class Aria2ProcessManager {
       // Build aria2 command arguments
       final List<String> args = [
         '--enable-rpc',
-        '--rpc-listen-all=true',
-        '--rpc-listen-port=6800',
+        '--rpc-listen-all=false', // 严格仅限本地 127.0.0.1，绝不向局域网暴露
+        '--rpc-allow-origin-all=false',
+        '--rpc-listen-port=$assignedPort',
+        '--rpc-secret=$effectiveSecret',
         '--dir=${downloadsDir.path}',
         '--max-concurrent-downloads=$maxConcurrent',
         '--continue=true',
@@ -96,10 +134,6 @@ class Aria2ProcessManager {
         '--allow-overwrite=true',
         '--auto-file-renaming=true',
       ];
-
-      if (secret.isNotEmpty) {
-        args.add('--rpc-secret=$secret');
-      }
 
       // iOS: Use platform channel with bundled binary (self-signed builds only)
       if (Platform.isIOS) {
@@ -146,7 +180,7 @@ class Aria2ProcessManager {
 
       _logger.log(Level.info, '[Aria2ProcessManager] Starting aria2c from: $aria2Path');
       _logger.log(Level.info, '[Aria2ProcessManager] Download directory: ${downloadsDir.path}');
-      _logger.log(Level.info, '[Aria2ProcessManager] RPC port: 6800');
+      _logger.log(Level.info, '[Aria2ProcessManager] RPC port: $_activePort');
 
       try {
         _aria2Process = await Process.start(aria2Path, args);
@@ -209,6 +243,8 @@ class Aria2ProcessManager {
       _aria2Process!.kill();
       _aria2Process = null;
       _isRunning = false;
+      _activePort = null;
+      _activeSecret = null;
     } else {
       // If we don't have a tracked process, just mark as not running
       _logger.log(Level.info, '[Aria2ProcessManager] No tracked aria2 process to stop');

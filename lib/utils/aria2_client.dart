@@ -1,3 +1,4 @@
+import 'package:kazumi/utils/aria2_process_manager.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -106,12 +107,23 @@ class Aria2Client {
 
   factory Aria2Client.fromSettings() {
     final setting = GStorage.setting;
-    final String endpoint = (setting.get(SettingBoxKey.aria2Endpoint,
+    String endpoint = (setting.get(SettingBoxKey.aria2Endpoint,
             defaultValue: _defaultEndpoint) as String)
         .trim();
-    final String secret =
+    String secret =
         (setting.get(SettingBoxKey.aria2Secret, defaultValue: '') as String)
             .trim();
+
+    // 如果是本地回环且存在动态分配的活跃私有端口，无缝对齐
+    final dynamicPort = Aria2ProcessManager.activePort;
+    final dynamicSecret = Aria2ProcessManager.activeSecret;
+    if (dynamicPort != null && (endpoint.contains('127.0.0.1') || endpoint.contains('localhost'))) {
+      final uri = Uri.parse(endpoint.isEmpty ? _defaultEndpoint : endpoint);
+      endpoint = uri.replace(port: dynamicPort).toString();
+      if (secret.isEmpty && dynamicSecret != null) {
+        secret = dynamicSecret;
+      }
+    }
     final int timeoutSeconds =
         setting.get(SettingBoxKey.aria2TimeoutSeconds, defaultValue: 15) as int;
     final dynamic concurrencyRaw = setting.get(

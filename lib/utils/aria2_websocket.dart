@@ -1,3 +1,4 @@
+import 'package:kazumi/utils/aria2_process_manager.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -125,10 +126,16 @@ class Aria2WebSocketClient {
 
   /// 获取 WebSocket URL
   Uri _getWebSocketUrl() {
-    final httpEndpoint = GStorage.setting.get(
+    String httpEndpoint = (GStorage.setting.get(
       SettingBoxKey.aria2Endpoint,
       defaultValue: 'http://127.0.0.1:6800/jsonrpc',
-    ) as String;
+    ) as String).trim();
+
+    final dynamicPort = Aria2ProcessManager.activePort;
+    if (dynamicPort != null && (httpEndpoint.contains('127.0.0.1') || httpEndpoint.contains('localhost'))) {
+      final uri = Uri.parse(httpEndpoint);
+      httpEndpoint = uri.replace(port: dynamicPort).toString();
+    }
 
     // 将 http:// 替换为 ws://，https:// 替换为 wss://
     String wsUrl = httpEndpoint
@@ -149,11 +156,12 @@ class Aria2WebSocketClient {
 
   /// 获取 RPC secret
   String? _getSecret() {
-    final secret = GStorage.setting.get(
+    final secret = (GStorage.setting.get(
       SettingBoxKey.aria2Secret,
       defaultValue: '',
-    ) as String;
-    return secret.isEmpty ? null : secret;
+    ) as String).trim();
+    if (secret.isNotEmpty) return secret;
+    return Aria2ProcessManager.activeSecret;
   }
 
   /// 更新连接状态
