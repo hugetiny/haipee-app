@@ -70,6 +70,7 @@ dependencies:
   scrollview_observer: ^1.22.0
   saver_gallery: ^4.1.0
   html: any
+  xml: ^6.5.0
   material_color_utilities: any
   material_new_shapes: ^1.0.0
   path: any
