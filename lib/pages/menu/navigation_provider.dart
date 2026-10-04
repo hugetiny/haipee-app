@@ -77,12 +77,14 @@ class NavigationBarController extends Notifier<NavigationBarStateData> {
         return 0;
       case Routes.timeline:
         return 1;
-      case Routes.my:
+      case Routes.resource:
         return 2;
       case Routes.download:
         return 3;
-      case Routes.settings:
+      case Routes.my:
         return 4;
+      case Routes.settings:
+        return 5;
       default:
         return null; // 非主导航路由，不更新索引
     }
@@ -96,10 +98,12 @@ class NavigationBarController extends Notifier<NavigationBarStateData> {
       case 1:
         return Routes.timeline;
       case 2:
-        return Routes.my;
+        return Routes.resource;
       case 3:
         return Routes.download;
       case 4:
+        return Routes.my;
+      case 5:
         return Routes.settings;
       default:
         return Routes.popular;

@@ -12,6 +12,9 @@ class Routes {
   /// 追番时间表页
   static const String timeline = '/tab/timeline';
 
+  /// 资源搜索页（一级菜单）
+  static const String resource = '/tab/resource';
+
   /// 我的收藏页
   static const String my = '/tab/my';
 

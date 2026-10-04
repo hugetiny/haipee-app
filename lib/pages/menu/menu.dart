@@ -39,7 +39,7 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
     final navigationState = ref.watch(navigationProvider);
     final navigationController = ref.read(navigationProvider.notifier);
 
-    // ✅ 在 build 方法顶层使用 ref.listen
+    // 在 build 方法顶层使用 ref.listen
     // 监听路由变化，自动同步导航索引
     ref.listen<String>(currentRouteProvider, (previous, next) {
       navigationController.syncWithRoute(next);
@@ -98,15 +98,20 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
                   icon: const Icon(Icons.timeline_outlined),
                   label: t.navigation.tabs.timeline,
                 ),
-                NavigationDestination(
-                  selectedIcon: const Icon(Icons.person),
-                  icon: const Icon(Icons.person_outline),
-                  label: t.navigation.tabs.my,
+                const NavigationDestination(
+                  selectedIcon: Icon(Icons.travel_explore),
+                  icon: Icon(Icons.travel_explore_outlined),
+                  label: '资源搜索',
                 ),
                 NavigationDestination(
                   selectedIcon: const Icon(Icons.download),
                   icon: const Icon(Icons.download_outlined),
                   label: t.navigation.tabs.download,
+                ),
+                NavigationDestination(
+                  selectedIcon: const Icon(Icons.person),
+                  icon: const Icon(Icons.person_outline),
+                  label: t.navigation.tabs.my,
                 ),
                 NavigationDestination(
                   selectedIcon: const Icon(Icons.settings),
@@ -185,15 +190,20 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
                     icon: const Icon(Icons.timeline_outlined),
                     label: Text(t.navigation.tabs.timeline),
                   ),
-                  NavigationRailDestination(
-                    selectedIcon: const Icon(Icons.person),
-                    icon: const Icon(Icons.person_outline),
-                    label: Text(t.navigation.tabs.my),
+                  const NavigationRailDestination(
+                    selectedIcon: Icon(Icons.travel_explore),
+                    icon: Icon(Icons.travel_explore_outlined),
+                    label: Text('资源搜索'),
                   ),
                   NavigationRailDestination(
                     selectedIcon: const Icon(Icons.download),
                     icon: const Icon(Icons.download_outlined),
                     label: Text(t.navigation.tabs.download),
+                  ),
+                  NavigationRailDestination(
+                    selectedIcon: const Icon(Icons.person),
+                    icon: const Icon(Icons.person_outline),
+                    label: Text(t.navigation.tabs.my),
                   ),
                   NavigationRailDestination(
                     selectedIcon: const Icon(Icons.settings),

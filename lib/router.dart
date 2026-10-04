@@ -1,6 +1,7 @@
 import 'package:kazumi/pages/player/local_player_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kazumi/pages/resource/resource_search_page.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/pages/about/about_page.dart';
@@ -33,8 +34,8 @@ import 'package:kazumi/pages/logs/logs_page.dart';
 import 'package:kazumi/pages/history/history_page.dart';
 import 'package:kazumi/pages/download/download_page.dart';
 import 'package:kazumi/request/api.dart';
-import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 
 /// 全局路由配置
@@ -105,15 +106,21 @@ final GoRouter router = GoRouter(
           ),
         ),
         GoRoute(
-          path: Routes.my,
+          path: Routes.resource,
           pageBuilder: (context, state) => const NoTransitionPage(
-            child: MyPage(),
+            child: ResourceSearchPage(),
           ),
         ),
         GoRoute(
           path: Routes.download,
           pageBuilder: (context, state) => const NoTransitionPage(
             child: DownloadPage(),
+          ),
+        ),
+        GoRoute(
+          path: Routes.my,
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: MyPage(),
           ),
         ),
         GoRoute(
