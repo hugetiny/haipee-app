@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/modules/comments/comment_item.dart';
 import 'package:kazumi/pages/video/video_controller.dart';
 import 'package:kazumi/pages/video/video_state.dart';
+import 'package:kazumi/providers/riverpod_compat.dart';
 import 'package:kazumi/request/bangumi.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:logger/logger.dart';
@@ -17,16 +18,19 @@ import 'package:logger/logger.dart';
 /// await controller.changeEpisode(episodeIndex, roadIndex);
 /// ```
 final videoProvider =
-    NotifierProvider.autoDispose<VideoPageController, VideoPageState>(
+    NotifierProvider<VideoPageController, VideoPageState>(
   VideoPageController.new,
 );
 
 /// AsyncNotifier for episode comments
 /// Provides cleaner async state management for loading comments
-class EpisodeCommentsNotifier extends AutoDisposeFamilyAsyncNotifier<
-    List<EpisodeCommentItem>, (int, int)> {
+class EpisodeCommentsNotifier
+    extends AsyncNotifier<List<EpisodeCommentItem>> {
+  EpisodeCommentsNotifier(this.arg);
+  final (int, int) arg;
+
   @override
-  Future<List<EpisodeCommentItem>> build((int, int) arg) async {
+  Future<List<EpisodeCommentItem>> build() async {
     final (bangumiId, episode) = arg;
 
     try {
@@ -58,13 +62,13 @@ class EpisodeCommentsNotifier extends AutoDisposeFamilyAsyncNotifier<
   /// Refresh comments
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => build(arg));
+    state = await AsyncValue.guard(build);
   }
 }
 
-final episodeCommentsProvider = AsyncNotifierProvider.autoDispose
-    .family<EpisodeCommentsNotifier, List<EpisodeCommentItem>, (int, int)>(
-  EpisodeCommentsNotifier.new,
+final episodeCommentsProvider = AsyncNotifierProvider.family<
+    EpisodeCommentsNotifier, List<EpisodeCommentItem>, (int, int)>(
+  (arg) => EpisodeCommentsNotifier(arg),
 );
 
 // ✅ Episode Comments Sheet UI State
@@ -79,7 +83,7 @@ final currentRoadProvider = StateProvider.autoDispose<int>((ref) => 0);
 
 /// Provider for current episode number (replaces EpisodeInfo InheritedWidget)
 /// This is computed from videoState and used by EpisodeCommentsSheet
-final currentEpisodeNumberProvider = Provider.autoDispose<int>((ref) {
+final currentEpisodeNumberProvider = Provider<int>((ref) {
   final videoState = ref.watch(videoProvider);
   return videoState.currentEpisode;
 });

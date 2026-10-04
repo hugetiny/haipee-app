@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/providers/riverpod_compat.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:kazumi/pages/webview/webview_controller.dart';
 

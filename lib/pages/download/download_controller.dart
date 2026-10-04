@@ -85,9 +85,12 @@ class DownloadState {
       (activeTasks.isNotEmpty || waitingTasks.isNotEmpty);
 }
 
-class DownloadController extends StateNotifier<DownloadState> {
-  DownloadController() : super(const DownloadState()) {
-    _initialize();
+class DownloadController extends Notifier<DownloadState> {
+  @override
+  DownloadState build() {
+    ref.onDispose(_cleanup);
+    Future.microtask(() => _initialize());
+    return const DownloadState();
   }
 
   Timer? _syncTimer;
@@ -1117,8 +1120,7 @@ class DownloadController extends StateNotifier<DownloadState> {
     await refreshDownloads();
   }
 
-  @override
-  void dispose() {
+  void _cleanup() {
     _logger.log(Level.info, '[DownloadController] Disposing...');
 
     // 取消所有定时器
@@ -1138,7 +1140,5 @@ class DownloadController extends StateNotifier<DownloadState> {
     // 清理缓存
     _optimisticTaskCache.clear();
     _pendingOperations.clear();
-
-    super.dispose();
   }
 }

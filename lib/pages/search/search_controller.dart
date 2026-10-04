@@ -34,7 +34,7 @@ class SearchPageState {
   }
 }
 
-class SearchPageController extends AutoDisposeNotifier<SearchPageState> {
+class SearchPageController extends Notifier<SearchPageState> {
   final Box setting = GStorage.setting;
   final Box searchHistoryBox = GStorage.searchHistory;
 

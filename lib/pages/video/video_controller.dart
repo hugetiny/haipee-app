@@ -20,7 +20,7 @@ import 'package:kazumi/utils/parse_failure_helper.dart';
 
 import 'video_state.dart';
 
-class VideoPageController extends AutoDisposeNotifier<VideoPageState> {
+class VideoPageController extends Notifier<VideoPageState> {
   late final PluginsController pluginsController;
   late final WebviewItemController<dynamic> webviewController;
 

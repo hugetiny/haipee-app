@@ -23,13 +23,16 @@ export 'package:kazumi/pages/info/info_ui_state.dart';
 /// await controller.queryBangumiInfoByID(12345);
 /// ```
 final bangumiInfoProvider =
-    NotifierProvider.autoDispose<InfoController, InfoState>(InfoController.new);
+    NotifierProvider<InfoController, InfoState>(InfoController.new);
 
 // ✅ Bangumi Comments Provider (支持分页)
 class BangumiCommentsNotifier
-    extends AutoDisposeFamilyAsyncNotifier<List<CommentItem>, (int, int)> {
+    extends AsyncNotifier<List<CommentItem>> {
+  BangumiCommentsNotifier(this.arg);
+  final (int, int) arg;
+
   @override
-  Future<List<CommentItem>> build((int, int) arg) async {
+  Future<List<CommentItem>> build() async {
     final (bangumiId, offset) = arg;
 
     try {
@@ -53,20 +56,23 @@ class BangumiCommentsNotifier
   /// Refresh comments
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => build(arg));
+    state = await AsyncValue.guard(build);
   }
 }
 
-final bangumiCommentsProvider = AsyncNotifierProvider.autoDispose
-    .family<BangumiCommentsNotifier, List<CommentItem>, (int, int)>(
-  BangumiCommentsNotifier.new,
+final bangumiCommentsProvider = AsyncNotifierProvider.family<
+    BangumiCommentsNotifier, List<CommentItem>, (int, int)>(
+  (arg) => BangumiCommentsNotifier(arg),
 );
 
 // ✅ Bangumi Characters Provider
 class BangumiCharactersNotifier
-    extends AutoDisposeFamilyAsyncNotifier<List<CharacterItem>, int> {
+    extends AsyncNotifier<List<CharacterItem>> {
+  BangumiCharactersNotifier(this.bangumiId);
+  final int bangumiId;
+
   @override
-  Future<List<CharacterItem>> build(int bangumiId) async {
+  Future<List<CharacterItem>> build() async {
     try {
       final result = await BangumiHTTP.getCharatersByBangumiID(bangumiId);
       final characters = result.charactersList;
@@ -103,20 +109,23 @@ class BangumiCharactersNotifier
   /// Refresh characters
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => build(arg));
+    state = await AsyncValue.guard(build);
   }
 }
 
-final bangumiCharactersProvider = AsyncNotifierProvider.autoDispose
-    .family<BangumiCharactersNotifier, List<CharacterItem>, int>(
-  BangumiCharactersNotifier.new,
+final bangumiCharactersProvider = AsyncNotifierProvider.family<
+    BangumiCharactersNotifier, List<CharacterItem>, int>(
+  (bangumiId) => BangumiCharactersNotifier(bangumiId),
 );
 
 // ✅ Bangumi Staff Provider
 class BangumiStaffsNotifier
-    extends AutoDisposeFamilyAsyncNotifier<List<StaffFullItem>, int> {
+    extends AsyncNotifier<List<StaffFullItem>> {
+  BangumiStaffsNotifier(this.bangumiId);
+  final int bangumiId;
+
   @override
-  Future<List<StaffFullItem>> build(int bangumiId) async {
+  Future<List<StaffFullItem>> build() async {
     try {
       final result = await BangumiHTTP.getBangumiStaffByID(bangumiId);
       final staff = result.data;
@@ -136,11 +145,11 @@ class BangumiStaffsNotifier
   /// Refresh staff
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => build(arg));
+    state = await AsyncValue.guard(build);
   }
 }
 
-final bangumiStaffsProvider = AsyncNotifierProvider.autoDispose
-    .family<BangumiStaffsNotifier, List<StaffFullItem>, int>(
-  BangumiStaffsNotifier.new,
+final bangumiStaffsProvider = AsyncNotifierProvider.family<
+    BangumiStaffsNotifier, List<StaffFullItem>, int>(
+  (bangumiId) => BangumiStaffsNotifier(bangumiId),
 );

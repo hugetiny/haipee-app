@@ -33,7 +33,7 @@ class InfoState with _$InfoState {
   }) = _InfoState;
 }
 
-class InfoController extends AutoDisposeNotifier<InfoState> {
+class InfoController extends Notifier<InfoState> {
   late final CollectController collectController;
   late final MetadataSyncController _metadataSyncController;
 

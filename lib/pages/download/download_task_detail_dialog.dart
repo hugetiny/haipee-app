@@ -8,8 +8,8 @@ import 'package:open_filex/open_filex.dart';
 
 /// 任务详情对话框状态 Provider (family pattern for specific task)
 final taskDetailStateProvider =
-    StateNotifierProvider.family<TaskDetailNotifier, TaskDetailState, String>(
-  (ref, gid) => TaskDetailNotifier(gid),
+    NotifierProvider.family<TaskDetailNotifier, TaskDetailState, String>(
+  (gid) => TaskDetailNotifier(gid),
 );
 
 /// 任务详情状态
@@ -38,10 +38,13 @@ class TaskDetailState {
 }
 
 /// 任务详情状态管理器
-class TaskDetailNotifier extends StateNotifier<TaskDetailState> {
-  TaskDetailNotifier(this.gid) : super(const TaskDetailState());
+class TaskDetailNotifier extends Notifier<TaskDetailState> {
+  TaskDetailNotifier(this.gid);
 
   final String gid;
+
+  @override
+  TaskDetailState build() => const TaskDetailState();
 
   Future<void> checkFileExists(String? filePath) async {
     if (filePath == null || filePath.isEmpty) {

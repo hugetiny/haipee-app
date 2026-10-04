@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/providers/riverpod_compat.dart';
 
 /// AppBar 配置模型
 class AppBarConfig {

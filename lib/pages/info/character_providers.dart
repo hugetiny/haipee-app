@@ -6,10 +6,12 @@ import 'package:kazumi/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 // ✅ Character Detail Provider
-class CharacterDetailNotifier
-    extends AutoDisposeFamilyAsyncNotifier<CharacterFullItem, int> {
+class CharacterDetailNotifier extends AsyncNotifier<CharacterFullItem> {
+  CharacterDetailNotifier(this.characterId);
+  final int characterId;
+
   @override
-  Future<CharacterFullItem> build(int characterId) async {
+  Future<CharacterFullItem> build() async {
     try {
       final character =
           await BangumiHTTP.getCharacterByCharacterID(characterId);
@@ -29,20 +31,23 @@ class CharacterDetailNotifier
   /// Refresh character detail
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => build(arg));
+    state = await AsyncValue.guard(build);
   }
 }
 
-final characterDetailProvider = AsyncNotifierProvider.autoDispose
-    .family<CharacterDetailNotifier, CharacterFullItem, int>(
-  CharacterDetailNotifier.new,
+final characterDetailProvider = AsyncNotifierProvider.family<
+    CharacterDetailNotifier, CharacterFullItem, int>(
+  (characterId) => CharacterDetailNotifier(characterId),
 );
 
 // ✅ Character Comments Provider
 class CharacterCommentsNotifier
-    extends AutoDisposeFamilyAsyncNotifier<List<CharacterCommentItem>, int> {
+    extends AsyncNotifier<List<CharacterCommentItem>> {
+  CharacterCommentsNotifier(this.characterId);
+  final int characterId;
+
   @override
-  Future<List<CharacterCommentItem>> build(int characterId) async {
+  Future<List<CharacterCommentItem>> build() async {
     try {
       final result =
           await BangumiHTTP.getCharacterCommentsByCharacterID(characterId);
@@ -63,11 +68,11 @@ class CharacterCommentsNotifier
   /// Refresh comments
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => build(arg));
+    state = await AsyncValue.guard(build);
   }
 }
 
-final characterCommentsProvider = AsyncNotifierProvider.autoDispose
-    .family<CharacterCommentsNotifier, List<CharacterCommentItem>, int>(
-  CharacterCommentsNotifier.new,
+final characterCommentsProvider = AsyncNotifierProvider.family<
+    CharacterCommentsNotifier, List<CharacterCommentItem>, int>(
+  (characterId) => CharacterCommentsNotifier(characterId),
 );

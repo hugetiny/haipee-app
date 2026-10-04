@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/providers/riverpod_compat.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/utils/utils.dart';

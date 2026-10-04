@@ -28,7 +28,7 @@ class PluginEditorUIState {
 }
 
 /// 插件编辑器 UI 状态 Notifier
-class PluginEditorUINotifier extends AutoDisposeNotifier<PluginEditorUIState> {
+class PluginEditorUINotifier extends Notifier<PluginEditorUIState> {
   @override
   PluginEditorUIState build() => const PluginEditorUIState();
 
@@ -47,7 +47,7 @@ class PluginEditorUINotifier extends AutoDisposeNotifier<PluginEditorUIState> {
 
 /// 插件编辑器 UI Provider
 final pluginEditorUIProvider =
-    NotifierProvider.autoDispose<PluginEditorUINotifier, PluginEditorUIState>(
+    NotifierProvider<PluginEditorUINotifier, PluginEditorUIState>(
   PluginEditorUINotifier.new,
 );
 
@@ -79,7 +79,7 @@ class PluginShopUIState {
 }
 
 /// 插件商店 UI 状态 Notifier
-class PluginShopUINotifier extends AutoDisposeNotifier<PluginShopUIState> {
+class PluginShopUINotifier extends Notifier<PluginShopUIState> {
   @override
   PluginShopUIState build() => const PluginShopUIState();
 
@@ -98,7 +98,7 @@ class PluginShopUINotifier extends AutoDisposeNotifier<PluginShopUIState> {
 
 /// 插件商店 UI Provider
 final pluginShopUIProvider =
-    NotifierProvider.autoDispose<PluginShopUINotifier, PluginShopUIState>(
+    NotifierProvider<PluginShopUINotifier, PluginShopUIState>(
   PluginShopUINotifier.new,
 );
 
@@ -126,8 +126,7 @@ class PluginSelectionState {
 }
 
 /// 插件多选状态 Notifier
-class PluginSelectionNotifier
-    extends AutoDisposeNotifier<PluginSelectionState> {
+class PluginSelectionNotifier extends Notifier<PluginSelectionState> {
   @override
   PluginSelectionState build() => const PluginSelectionState();
 
@@ -163,6 +162,6 @@ class PluginSelectionNotifier
 
 /// 插件多选状态 Provider
 final pluginSelectionProvider =
-    NotifierProvider.autoDispose<PluginSelectionNotifier, PluginSelectionState>(
+    NotifierProvider<PluginSelectionNotifier, PluginSelectionState>(
   PluginSelectionNotifier.new,
 );

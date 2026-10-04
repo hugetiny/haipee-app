@@ -18,7 +18,7 @@ class DisplaySettingsState {
 }
 
 class DisplaySettingsNotifier
-    extends AutoDisposeAsyncNotifier<DisplaySettingsState> {
+    extends AsyncNotifier<DisplaySettingsState> {
   @override
   Future<DisplaySettingsState> build() async {
     List<DisplayMode> modes = [];
@@ -50,7 +50,7 @@ class DisplaySettingsNotifier
   }
 }
 
-final displaySettingsProvider = AsyncNotifierProvider.autoDispose<
+final displaySettingsProvider = AsyncNotifierProvider<
     DisplaySettingsNotifier, DisplaySettingsState>(
   DisplaySettingsNotifier.new,
 );

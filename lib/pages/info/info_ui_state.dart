@@ -28,7 +28,7 @@ class InfoUIState {
 }
 
 /// 番剧详情页 UI 状态 Notifier
-class InfoUINotifier extends AutoDisposeNotifier<InfoUIState> {
+class InfoUINotifier extends Notifier<InfoUIState> {
   @override
   InfoUIState build() => const InfoUIState();
 

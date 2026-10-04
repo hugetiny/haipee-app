@@ -13,6 +13,7 @@ import 'package:flutter/gestures.dart';
 import 'package:kazumi/pages/player/player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/providers/riverpod_compat.dart';
 import 'package:kazumi/pages/player/player_providers.dart';
 import 'package:kazumi/services/player/audio_controller.dart';
 import 'package:kazumi/pages/player/player_state.dart';

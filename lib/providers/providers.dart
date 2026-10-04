@@ -13,6 +13,7 @@
 // ```
 
 // ==================== 核心功能 Providers ====================
+export 'package:kazumi/providers/riverpod_compat.dart';
 export 'package:kazumi/pages/popular/providers.dart'; // popularProvider
 export 'package:kazumi/pages/timeline/providers.dart'; // timelineProvider
 export 'package:kazumi/pages/my/providers.dart'; // collectionsProvider, favoritesShowDeleteProvider, favoritesSyncingProvider

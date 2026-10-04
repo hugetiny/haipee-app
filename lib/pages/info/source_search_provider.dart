@@ -104,21 +104,22 @@ class SourceSearchState {
   }
 }
 
-final sourceSearchProvider = AutoDisposeNotifierProviderFamily<
+final sourceSearchProvider = NotifierProvider.family<
     SourceSearchController, SourceSearchState, String>(
-  SourceSearchController.new,
+  (keyword) => SourceSearchController(keyword),
 );
 
 class SourceSearchController
-    extends AutoDisposeFamilyNotifier<SourceSearchState, String> {
-  late final String _keyword;
+    extends Notifier<SourceSearchState> {
+  SourceSearchController(this._keyword);
+  final String _keyword;
   late String _activeKeyword;
   late final PluginsController _pluginsController;
   ProviderSubscription<PluginsState>? _pluginSubscription;
   bool _isDisposed = false;
 
   @override
-  SourceSearchState build(String keyword) {
+  SourceSearchState build() {
     _isDisposed = false;
     ref.onDispose(() {
       _isDisposed = true;
@@ -126,8 +127,7 @@ class SourceSearchController
       _pluginSubscription = null;
     });
 
-    _keyword = keyword;
-    _activeKeyword = keyword;
+    _activeKeyword = _keyword;
     _pluginsController = ref.read(pluginsProvider.notifier);
 
     final pluginState = ref.read(pluginsProvider);

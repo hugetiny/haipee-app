@@ -14,6 +14,7 @@ import 'package:kazumi/utils/logger.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/providers/riverpod_compat.dart';
 import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/router.dart';
 import 'package:kazumi/pages/setting/providers.dart';

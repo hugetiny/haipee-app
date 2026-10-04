@@ -5,9 +5,9 @@ import 'package:kazumi/utils/aria2_websocket.dart';
 
 /// 下载控制器 Provider
 final downloadControllerProvider =
-    StateNotifierProvider<DownloadController, DownloadState>((ref) {
-  return DownloadController();
-});
+    NotifierProvider<DownloadController, DownloadState>(
+  DownloadController.new,
+);
 
 /// Aria2 WebSocket 事件流 Provider
 /// 用于实时监听下载事件
