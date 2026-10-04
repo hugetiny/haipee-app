@@ -449,6 +449,21 @@ class PlayerController extends Notifier<PlayerState> {
     }
   }
 
+  Future<void> getDanDanmakuByTitle(String title, int episode) async {
+    KazumiLogger().log(Level.info, '尝试根据标题获取弹幕: $title, 集数: $episode');
+    try {
+      state = state.copyWith(danDanmakus: {});
+      final bId = await DanmakuRequest.getBangumiIDByTitle(title);
+      if (bId > 0) {
+        bangumiID = bId;
+        final res = await DanmakuRequest.getDanDanmaku(bId, episode);
+        addDanmakus(res);
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '根据标题获取弹幕错误: ${e.toString()}');
+    }
+  }
+
   Future<void> getDanDanmakuByEpisodeID(int episodeID) async {
     KazumiLogger().log(Level.info, '尝试获取弹幕 $episodeID');
     try {

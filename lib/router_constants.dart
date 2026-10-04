@@ -24,6 +24,7 @@ class Routes {
   // ==================== 功能路由 ====================
   /// 视频播放页
   static const String video = '/video';
+  static const String localPlayer = '/player/local';
 
   /// 番剧详情页
   static const String info = '/info';

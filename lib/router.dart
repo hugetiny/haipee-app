@@ -1,3 +1,4 @@
+import 'package:kazumi/pages/player/local_player_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kazumi/router_constants.dart';
@@ -120,6 +121,12 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.history,
       builder: (context, state) => const HistoryPage(),
+    ),
+    GoRoute(
+      path: Routes.localPlayer,
+      builder: (context, state) => LocalPlayerPage(
+        args: state.extra as LocalVideoPlayArgs,
+      ),
     ),
     GoRoute(
       path: Routes.video,

@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:kazumi/router_constants.dart';
+import 'package:kazumi/pages/player/local_player_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +23,30 @@ class DownloadPage extends ConsumerStatefulWidget {
 
 class _DownloadPageState extends ConsumerState<DownloadPage>
     with SingleTickerProviderStateMixin {
+  void _playTask(BuildContext context, DownloadTask task) {
+    final path = task.filePath ?? task.fileName;
+    if (path == null || path.isEmpty) {
+      KazumiDialog.showToast(message: '未找到视频文件路径');
+      return;
+    }
+
+    final file = File(path);
+    if (!file.existsSync()) {
+      KazumiDialog.showToast(message: '视频文件不存在: $path');
+      return;
+    }
+
+    context.push(
+      Routes.localPlayer,
+      extra: LocalVideoPlayArgs(
+        filePath: file.absolute.path,
+        title: task.title,
+        bangumiId: task.bangumiId,
+        episode: task.episodeNumber,
+      ),
+    );
+  }
+
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -913,11 +940,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                           }
                         : null,
                     onOpenFile: task.isComplete && task.fileName != null
-                        ? () {
-                            KazumiDialog.showToast(
-                                message: t.downloads.page.toast
-                                    .fileLocation(path: task.fileName!));
-                          }
+                        ? () => _playTask(context, task)
                         : null,
                   ),
                 );
