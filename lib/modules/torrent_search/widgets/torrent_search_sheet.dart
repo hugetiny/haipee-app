@@ -339,78 +339,44 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final sourceBadgeColor = item.source == TorrentSourceType.mikan
-        ? Colors.pink.shade700
-        : item.source == TorrentSourceType.nyaa
-            ? Colors.blue.shade700
-            : Colors.teal.shade700;
-
     final sourceName = item.source == TorrentSourceType.mikan
         ? '蜜柑'
         : item.source == TorrentSourceType.nyaa
             ? 'Nyaa'
             : 'Torznab';
 
-    return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
+    return Card.outlined(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 第一行：展示集数大标签 + 来源 Badge + 做种数
+            // 第一行：展示集数标签 + 来源 Badge + 做种数
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    item.displayTitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
+                Text(
+                  item.displayTitle,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: sourceBadgeColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    sourceName,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: sourceBadgeColor,
-                    ),
-                  ),
+                Badge(
+                  label: Text(sourceName),
+                  backgroundColor: colorScheme.secondaryContainer,
+                  textColor: colorScheme.onSecondaryContainer,
                 ),
                 const Spacer(),
                 if (item.seeders > 0)
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.arrow_upward, size: 13, color: Colors.green.shade600),
+                      Icon(Icons.arrow_upward, size: 14, color: colorScheme.primary),
                       Text(
                         '${item.seeders}',
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: theme.textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: Colors.green.shade600,
+                          color: colorScheme.primary,
                         ),
                       ),
                     ],
@@ -424,10 +390,8 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
               item.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12.5,
+              style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurface,
-                height: 1.3,
               ),
             ),
             const SizedBox(height: 8),
@@ -440,9 +404,8 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                     item.simplifiedSubtitle.isNotEmpty
                         ? item.simplifiedSubtitle
                         : item.fileSize,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: colorScheme.outline,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -471,9 +434,6 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                   label: const Text('边下边播'),
                   style: FilledButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -484,9 +444,6 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                   label: const Text('下载'),
                   style: FilledButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
                   ),
                 ),
               ],

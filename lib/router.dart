@@ -94,23 +94,33 @@ final GoRouter router = GoRouter(
       routes: [
         GoRoute(
           path: Routes.popular,
-          builder: (context, state) => const PopularPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PopularPage(),
+          ),
         ),
         GoRoute(
           path: Routes.timeline,
-          builder: (context, state) => const TimelinePage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: TimelinePage(),
+          ),
         ),
         GoRoute(
           path: Routes.my,
-          builder: (context, state) => const MyPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: MyPage(),
+          ),
         ),
         GoRoute(
           path: Routes.download,
-          builder: (context, state) => const DownloadPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: DownloadPage(),
+          ),
         ),
         GoRoute(
           path: Routes.settings,
-          builder: (context, state) => const SettingPage(),
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: SettingPage(),
+          ),
         ),
       ],
     ),

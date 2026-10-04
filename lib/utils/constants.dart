@@ -26,15 +26,31 @@ const SliderThemeData sliderTheme2024 = SliderThemeData(
   showValueIndicator: ShowValueIndicator.onDrag,
 );
 
+/// 无额外动画的页面过渡构建器，消除桌面端与快速切换时的残影与拖拽感
+class NoAnimationPageTransitionsBuilder extends PageTransitionsBuilder {
+  const NoAnimationPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
+  }
+}
+
 /// The page transition method defined here is managed by Flutter and used by
 /// the app-wide router configuration to ensure consistent transitions.
 const PageTransitionsTheme pageTransitionsTheme2024 = PageTransitionsTheme(
   builders: {
-    TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+    TargetPlatform.android: ZoomPageTransitionsBuilder(),
     TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-    TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-    TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-    TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+    TargetPlatform.linux: NoAnimationPageTransitionsBuilder(),
+    TargetPlatform.macOS: NoAnimationPageTransitionsBuilder(),
+    TargetPlatform.windows: NoAnimationPageTransitionsBuilder(),
   },
 );
 

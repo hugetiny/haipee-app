@@ -397,6 +397,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                 color: Theme.of(context).colorScheme.surface,
                 child: TabBar(
                   controller: _tabController,
+                  onTap: (_) => setState(() {}),
                   tabs: [
                     Tab(
                       text: t.downloads.page.tabs
@@ -419,28 +420,33 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
               // Search and sort options
               _buildSearchAndSort(context, downloadController),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Downloading tab
-                    _buildDownloadingList(
-                      context,
-                      downloadState,
-                      downloadController,
-                    ),
-                    // Completed tab
-                    _buildCompletedList(
-                      context,
-                      downloadState,
-                      downloadController,
-                    ),
-                    // All tab
-                    _buildAllList(
-                      context,
-                      downloadState,
-                      downloadController,
-                    ),
-                  ],
+                child: AnimatedBuilder(
+                  animation: _tabController,
+                  builder: (context, _) {
+                    return IndexedStack(
+                      index: _tabController.index,
+                      children: [
+                        // Downloading tab
+                        _buildDownloadingList(
+                          context,
+                          downloadState,
+                          downloadController,
+                        ),
+                        // Completed tab
+                        _buildCompletedList(
+                          context,
+                          downloadState,
+                          downloadController,
+                        ),
+                        // All tab
+                        _buildAllList(
+                          context,
+                          downloadState,
+                          downloadController,
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -468,110 +474,44 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   }
 
   Widget _buildStatisticsBanner(BuildContext context, DownloadState state) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primaryContainer,
-            Theme.of(context).colorScheme.secondaryContainer,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).dividerColor,
-            width: 1,
-          ),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: colorScheme.surfaceContainerHigh,
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color:
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.download,
-              size: 24,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          Icon(
+            Icons.downloading,
+            size: 20,
+            color: colorScheme.primary,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.speed,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatSpeed(state.totalDownloadSpeed),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
-                          ),
-                    ),
-                    const SizedBox(width: 16),
-                    Icon(
-                      Icons.task_alt,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      t.downloads.page.statistics
-                          .tasks(count: state.totalDownloading),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
-                          ),
-                    ),
-                  ],
+          const SizedBox(width: 8),
+          Text(
+            _formatSpeed(state.totalDownloadSpeed),
+            style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
                 ),
-                if (state.estimatedRemainingSeconds > 0) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest
-                            .withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        t.downloads.page.statistics.eta(
-                            time: _formatDuration(
-                                state.estimatedRemainingSeconds)),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer
-                                  .withValues(alpha: 0.8),
-                            ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
           ),
+          const SizedBox(width: 16),
+          Text(
+            t.downloads.page.statistics
+                .tasks(count: state.totalDownloading),
+            style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const Spacer(),
+          if (state.estimatedRemainingSeconds > 0)
+            Text(
+              t.downloads.page.statistics.eta(
+                  time: _formatDuration(
+                      state.estimatedRemainingSeconds)),
+              style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+            ),
         ],
       ),
     );
@@ -580,92 +520,63 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   Widget _buildSearchAndSort(
       BuildContext context, DownloadController controller) {
     final uiState = ref.watch(downloadPageUIProvider);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).dividerColor,
-            width: 0.5,
-          ),
-        ),
-      ),
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: t.downloads.page.search.placeholder,
-                  hintStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  suffixIcon: uiState.searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            ref.read(downloadPageUIProvider.notifier).clearSearch();
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: t.downloads.page.search.placeholder,
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: uiState.searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          ref.read(downloadPageUIProvider.notifier).clearSearch();
+                        },
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
                 ),
-                onChanged: (value) {
-                  // TextController listener 会自动更新 Provider
-                },
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: PopupMenuButton<String>(
-              icon: Icon(
-                Icons.sort,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
-              tooltip: t.downloads.page.sort.label,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onSelected: (value) {
-                final notifier = ref.read(downloadPageUIProvider.notifier);
-                final currentState = ref.read(downloadPageUIProvider);
-                if (currentState.sortBy == value) {
-                  notifier.updateSort(value, ascending: !currentState.sortAscending);
-                } else {
-                  notifier.updateSort(value, ascending: false);
-                }
-              },
-              itemBuilder: (context) => [
-                _buildSortMenuItem(
-                    context, uiState, 'created', t.downloads.page.sort.created),
-                _buildSortMenuItem(context, uiState, 'name', t.downloads.page.sort.name),
-                _buildSortMenuItem(context, uiState, 'size', t.downloads.page.sort.size),
-                _buildSortMenuItem(
-                    context, uiState, 'speed', t.downloads.page.sort.speed),
-                _buildSortMenuItem(
-                    context, uiState, 'progress', t.downloads.page.sort.progress),
-              ],
-            ),
+          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.sort),
+            tooltip: t.downloads.page.sort.label,
+            onSelected: (value) {
+              final notifier = ref.read(downloadPageUIProvider.notifier);
+              final currentState = ref.read(downloadPageUIProvider);
+              if (currentState.sortBy == value) {
+                notifier.updateSort(value, ascending: !currentState.sortAscending);
+              } else {
+                notifier.updateSort(value, ascending: false);
+              }
+            },
+            itemBuilder: (context) => [
+              _buildSortMenuItem(
+                  context, uiState, 'created', t.downloads.page.sort.created),
+              _buildSortMenuItem(context, uiState, 'name', t.downloads.page.sort.name),
+              _buildSortMenuItem(context, uiState, 'size', t.downloads.page.sort.size),
+              _buildSortMenuItem(
+                  context, uiState, 'speed', t.downloads.page.sort.speed),
+              _buildSortMenuItem(
+                  context, uiState, 'progress', t.downloads.page.sort.progress),
+            ],
           ),
         ],
       ),

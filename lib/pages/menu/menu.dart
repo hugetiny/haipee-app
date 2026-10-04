@@ -209,13 +209,7 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
             ),
           ),
           Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16.0),
-                bottomLeft: Radius.circular(16.0),
-              ),
-              child: widget.child ?? const SizedBox.shrink(),
-            ),
+            child: widget.child ?? const SizedBox.shrink(),
           ),
         ],
       ),
