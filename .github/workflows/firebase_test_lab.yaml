@@ -31,6 +31,18 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Free Runner Disk Space
+        run: |
+          echo "=== Freeing Disk Space on GitHub Runner ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          echo "=== Disk Space After Cleanup ==="
+          df -h
+        shell: bash
+
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -52,18 +64,20 @@ jobs:
 
       - name: Build Android Release APK with Sentry & TestLab Flags
         run: |
-          echo "Building universal Release APK with Sentry Telemetry..."
+          echo "Building arm64 Release APK with Sentry Telemetry..."
           flutter build apk --release \
+            --target-platform android-arm64 \
             --android-skip-build-dependency-validation \
             --dart-define=SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
             --dart-define=FIREBASE_TEST_LAB=true
+          ls -la build/app/outputs/flutter-apk/
         shell: bash
 
       - name: Upload APK Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: kazumi-release-testlab-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/*.apk
           retention-days: 7
 
       - name: Check Google Cloud Credentials
@@ -106,15 +120,19 @@ jobs:
             DEVICE_ARGS="$DEVICE_ARGS --device model=oriole,version=32,locale=zh_CN,orientation=portrait"
           fi
 
+          APK_FILE=$(ls build/app/outputs/flutter-apk/*.apk | head -n 1)
+          echo "Target APK: $APK_FILE"
+
           echo "Launching Firebase Test Lab Robo crawl on project: $PROJECT_ID..."
           gcloud firebase test android run \
             --type robo \
-            --app build/app/outputs/flutter-apk/app-release.apk \
+            --app "$APK_FILE" \
             --project "$PROJECT_ID" \
             $DEVICE_ARGS \
             --timeout "$TIMEOUT" \
             --client-details matrixLabel="Kazumi GitHub Actions CI" \
             --no-record-video false 2>&1 | tee test_lab_output.log
+
 
           TEST_EXIT_CODE=${PIPESTATUS[0]}
           echo "Test Lab completed with exit code: $TEST_EXIT_CODE"
