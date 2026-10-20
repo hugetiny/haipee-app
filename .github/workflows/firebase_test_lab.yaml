@@ -131,7 +131,7 @@ jobs:
             $DEVICE_ARGS \
             --timeout "$TIMEOUT" \
             --client-details matrixLabel="Kazumi GitHub Actions CI" \
-            --no-record-video false 2>&1 | tee test_lab_output.log
+            --record-video 2>&1 | tee test_lab_output.log
 
 
           TEST_EXIT_CODE=${PIPESTATUS[0]}
