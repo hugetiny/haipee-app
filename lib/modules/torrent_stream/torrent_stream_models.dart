@@ -52,6 +52,7 @@ class TorrentInfo {
 /// Real-time playback stream buffering statistics and active speed metrics.
 class StreamInfo {
   final int id;
+  final String url;
   final int activePeers;
   final int downloadRate;
   final int bufferPieces;
@@ -60,6 +61,7 @@ class StreamInfo {
 
   const StreamInfo({
     this.id = 0,
+    this.url = '',
     this.activePeers = 0,
     this.downloadRate = 0,
     this.bufferPieces = 0,
@@ -73,10 +75,38 @@ class BtConfig {
   final int? maxConnections;
   final int? downloadRateLimit;
   final int? uploadRateLimit;
+  final int? cacheSize;
+  final int? readerReadAhead;
+  final int? preloadCache;
+  final int? connectionsLimit;
+  final int? torrentDisconnectTimeout;
+  final bool? forceEncrypt;
+  final bool? disableTcp;
+  final bool? disableUtp;
+  final bool? disableUpload;
+  final bool? disableDht;
+  final bool? disableUpnp;
+  final bool? enableIpv6;
+  final int? peersListenPort;
+  final bool? responsiveMode;
 
   const BtConfig({
     this.maxConnections,
     this.downloadRateLimit,
     this.uploadRateLimit,
+    this.cacheSize,
+    this.readerReadAhead,
+    this.preloadCache,
+    this.connectionsLimit,
+    this.torrentDisconnectTimeout,
+    this.forceEncrypt,
+    this.disableTcp,
+    this.disableUtp,
+    this.disableUpload,
+    this.disableDht,
+    this.disableUpnp,
+    this.enableIpv6,
+    this.peersListenPort,
+    this.responsiveMode,
   });
 }
