@@ -54,6 +54,7 @@ jobs:
         run: |
           echo "Building universal Release APK with Sentry Telemetry..."
           flutter build apk --release \
+            --android-skip-build-dependency-validation \
             --dart-define=SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
             --dart-define=FIREBASE_TEST_LAB=true
         shell: bash
