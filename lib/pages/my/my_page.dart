@@ -1,4 +1,4 @@
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,7 +23,7 @@ class _MyPageState extends ConsumerState<MyPage> {
       return;
     }
     ref.read(navigationProvider.notifier).updateSelectedIndex(0);
-    context.go(Routes.popular);
+    context.go(Routes.media);
   }
 
   void _updateAppBarConfig() {
@@ -56,7 +56,6 @@ class _MyPageState extends ConsumerState<MyPage> {
         _onBackPressed(context);
       },
       child: SettingsList(
-        maxWidth: 1000,
         sections: [
           SettingsSection(
             title: Text(t.library.my.sections.video),

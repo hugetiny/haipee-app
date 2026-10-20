@@ -1,25 +1,31 @@
 import 'dart:io' show Platform; 
 import 'package:flutter/material.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 
 /// 统一外观的 AppBar 封装：普通页面使用它替代直接 new AppBar
 class KazumiAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? title;
   final Widget? leading;
+  final double? leadingWidth;
   final List<Widget>? actions;
   final bool transparent;
   final bool centerTitle;
   final double height;
   final bool enableDragOnDesktop;
+  final bool requireOffset;
 
   const KazumiAppBar({
     super.key,
     this.title,
     this.leading,
+    this.leadingWidth,
     this.actions,
     this.transparent = false,
     this.centerTitle = false,
     this.height = 40,
     this.enableDragOnDesktop = false,
+    this.requireOffset = true,
   });
 
   @override
@@ -40,6 +46,34 @@ class KazumiAppBar extends StatelessWidget implements PreferredSizeWidget {
       titleArea = Row(children: [Expanded(child: titleArea)]);
     }
 
+    Widget? effectiveLeading = leading;
+    if (effectiveLeading == null && Navigator.canPop(context)) {
+      effectiveLeading = const AppBackButton();
+    }
+
+    final bool requireLeadingOffset =
+        requireOffset || Navigator.canPop(context) || (effectiveLeading is AppBackButton);
+
+    double? effectiveLeadingWidth = leadingWidth;
+    if (effectiveLeading != null) {
+      effectiveLeading = DesktopWindowControlsSafeArea.wrapLeading(
+        effectiveLeading,
+        requireOffset: requireLeadingOffset,
+      );
+      effectiveLeadingWidth = DesktopWindowControlsSafeArea.leadingWidth(
+        leadingWidth,
+        requireOffset: requireLeadingOffset,
+      );
+    } else if (DesktopWindowControlsSafeArea.shouldAvoid(requireOffset: requireOffset)) {
+      effectiveLeading = const SizedBox(
+        width: DesktopWindowControlsSafeArea.kMacOsTrafficLightsWidth,
+      );
+      effectiveLeadingWidth = DesktopWindowControlsSafeArea.leadingWidth(
+        leadingWidth ?? 0.0,
+        requireOffset: requireOffset,
+      );
+    }
+
     return AppBar(
       backgroundColor: bgColor,
       elevation: transparent ? 0 : 0.5,
@@ -48,7 +82,8 @@ class KazumiAppBar extends StatelessWidget implements PreferredSizeWidget {
       iconTheme: IconThemeData(color: fgColor, size: 22),
       centerTitle: centerTitle,
       title: titleArea,
-      leading: leading,
+      leading: effectiveLeading,
+      leadingWidth: effectiveLeadingWidth,
       actions: actions,
       toolbarHeight: height,
       surfaceTintColor: Colors.transparent,

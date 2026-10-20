@@ -44,9 +44,10 @@ class _BangumiInfoCardVState extends ConsumerState<BangumiInfoCardV> {
             '  评分透视:',
           ),
           SizedBox(height: 16),
-          AspectRatio(
-            aspectRatio: 2,
-            child: BarChart(
+          Expanded(
+            child: AspectRatio(
+              aspectRatio: 2,
+              child: BarChart(
               duration: Duration(milliseconds: 80),
               BarChartData(
                 // alignment: BarChartAlignment.spaceEvenly,
@@ -120,6 +121,7 @@ class _BangumiInfoCardVState extends ConsumerState<BangumiInfoCardV> {
               ),
             ),
           ),
+          ),
         ],
       ),
     );
@@ -148,9 +150,8 @@ class _BangumiInfoCardVState extends ConsumerState<BangumiInfoCardV> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 300,
-      constraints: BoxConstraints(maxWidth: 950),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -176,12 +177,65 @@ class _BangumiInfoCardVState extends ConsumerState<BangumiInfoCardV> {
                       return Hero(
                         transitionOnUserGestures: true,
                         tag: widget.bangumiItem.id,
-                        child: NetworkImgLayer(
-                          src: widget.bangumiItem.images['large'] ?? '',
-                          width: maxWidth,
-                          height: maxHeight,
-                          fadeInDuration: const Duration(milliseconds: 0),
-                          fadeOutDuration: const Duration(milliseconds: 0),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            NetworkImgLayer(
+                              src: widget.bangumiItem.images['large'] ?? '',
+                              width: maxWidth,
+                              height: maxHeight,
+                              fadeInDuration: const Duration(milliseconds: 0),
+                              fadeOutDuration: const Duration(milliseconds: 0),
+                            ),
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 5.5, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.75),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    width: 0.5,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black45,
+                                      blurRadius: 3,
+                                      offset: Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFF09199),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'Bangumi',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.2,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }),
@@ -191,89 +245,93 @@ class _BangumiInfoCardVState extends ConsumerState<BangumiInfoCardV> {
                 Flexible(
                   child: Skeletonizer(
                     enabled: widget.isLoading,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '放送开始:',
-                            ),
-                            Text(
-                              widget.bangumiItem.airDate == ''
-                                  ? '2000-11-11' // Skeleton Loader 占位符
-                                  : widget.bangumiItem.airDate,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              '${widget.bangumiItem.votes} 人评分:',
-                            ),
-                            if (widget.isLoading)
-                              // Skeleton Loader 占位符
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topLeft,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                '10.0 ********',
+                                '放送开始:',
+                              ),
+                              Text(
+                                widget.bangumiItem.airDate == ''
+                                    ? '2000-11-11' // Skeleton Loader 占位符
+                                    : widget.bangumiItem.airDate,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
-                            if (!widget.isLoading)
-                              Row(
-                                children: [
-                                  Text(
-                                    '${widget.bangumiItem.ratingScore}',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  RatingBarIndicator(
-                                    itemCount: 5,
-                                    rating: widget.bangumiItem.ratingScore
-                                            .toDouble() /
-                                        2,
-                                    itemBuilder: (context, index) => Icon(
-                                      Icons.star_rounded,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
-                                    itemSize: 20.0,
-                                  ),
-                                ],
+                              SizedBox(height: 8),
+                              Text(
+                                '${widget.bangumiItem.votes} 人评分:',
                               ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Bangumi Ranked:',
-                            ),
-                            Text(
-                              '#${widget.bangumiItem.rank}',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
+                              if (widget.isLoading)
+                                // Skeleton Loader 占位符
+                                Text(
+                                  '10.0 ********',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              if (!widget.isLoading)
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${widget.bangumiItem.ratingScore}',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    RatingBarIndicator(
+                                      itemCount: 5,
+                                      rating: widget.bangumiItem.ratingScore
+                                              .toDouble() /
+                                          2,
+                                      itemBuilder: (context, index) => Icon(
+                                        Icons.star_rounded,
+                                        color:
+                                            Theme.of(context).colorScheme.primary,
+                                      ),
+                                      itemSize: 20.0,
+                                    ),
+                                  ],
+                                ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Bangumi Ranked:',
                               ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          width: 120,
-                          height: 40,
-                          child: CollectButton.extend(
-                            bangumiItem: widget.bangumiItem,
+                              Text(
+                                '#${widget.bangumiItem.rank}',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          SizedBox(
+                            width: 120,
+                            height: 40,
+                            child: CollectButton.extend(
+                              bangumiItem: widget.bangumiItem,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

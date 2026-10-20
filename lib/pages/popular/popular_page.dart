@@ -15,6 +15,7 @@ import 'package:logger/logger.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/pages/layout/app_bar_config.dart';
+import 'package:kazumi/bean/widget/responsive/responsive.dart';
 
 class PopularPage extends ConsumerStatefulWidget {
   const PopularPage({super.key});
@@ -127,66 +128,51 @@ class _PopularPageState extends ConsumerState<PopularPage>
         if (didPop) return;
         onBackPressed(context);
       },
-      child: Stack(
+      child: Column(
         children: [
-          Column(
-            children: [
-              // 加载进度条
-              AnimatedOpacity(
-                opacity: state.isLoadingMore ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: state.isLoadingMore
-                    ? const LinearProgressIndicator(minHeight: 4)
-                    : const SizedBox(height: 4),
-              ),
-              // 内容区域
-              Expanded(
-                child: state.isTimeOut
-                    ? Center(
-                        child: SizedBox(
-                          height: 400,
-                          child: GeneralErrorWidget(
-                            errMsg: context.t.library.common.emptyState,
-                            actions: [
-                              GeneralErrorButton(
-                                onPressed: () {
-                                  if (state.trendList.isEmpty) {
-                                    popularController.queryBangumiByTrend();
-                                  } else {
-                                    popularController.queryBangumiByTag();
-                                  }
-                                },
-                                text: context.t.library.common.retry,
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : ListView(
-                        controller: scrollController,
-                        padding: const EdgeInsets.fromLTRB(
-                            StyleString.cardSpace, 8, StyleString.cardSpace, 0),
-                        children: [
-                          contentGrid(
-                            (state.currentTag == '')
-                                ? state.trendList
-                                : state.bangumiList,
+          // 加载进度条
+          AnimatedOpacity(
+            opacity: state.isLoadingMore ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 300),
+            child: state.isLoadingMore
+                ? const LinearProgressIndicator(minHeight: 4)
+                : const SizedBox(height: 4),
+          ),
+          // 内容区域
+          Expanded(
+            child: state.isTimeOut
+                ? Center(
+                    child: SizedBox(
+                      height: 400,
+                      child: GeneralErrorWidget(
+                        errMsg: context.t.library.common.emptyState,
+                        actions: [
+                          GeneralErrorButton(
+                            onPressed: () {
+                              if (state.trendList.isEmpty) {
+                                popularController.queryBangumiByTrend();
+                              } else {
+                                popularController.queryBangumiByTag();
+                              }
+                            },
+                            text: context.t.library.common.retry,
                           ),
                         ],
                       ),
-              ),
-            ],
-          ),
-          // FloatingActionButton
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: FloatingActionButton(
-              onPressed: () => scrollController.animateTo(0,
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.easeOut),
-              child: const Icon(Icons.arrow_upward),
-            ),
+                    ),
+                  )
+                : ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.fromLTRB(
+                        StyleString.cardSpace, 8, StyleString.cardSpace, 0),
+                    children: [
+                      contentGrid(
+                        (state.currentTag == '')
+                            ? state.trendList
+                            : state.bangumiList,
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -194,25 +180,18 @@ class _PopularPageState extends ConsumerState<PopularPage>
   }
 
   Widget contentGrid(bangumiList) {
-    int crossCount = 3;
-    if (MediaQuery.sizeOf(context).width > LayoutBreakpoint.compact['width']!) {
-      crossCount = 5;
-    }
-    if (MediaQuery.sizeOf(context).width > LayoutBreakpoint.medium['width']!) {
-      crossCount = 6;
-    }
-
-    return GridView.builder(
+    return AdaptiveGrid(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(8),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        mainAxisSpacing: StyleString.cardSpace - 2,
-        crossAxisSpacing: StyleString.cardSpace,
-        crossAxisCount: crossCount,
-        mainAxisExtent: MediaQuery.of(context).size.width / crossCount / 0.65 +
-            MediaQuery.textScalerOf(context).scale(32.0),
-      ),
+      smallMobileColumns: 2,
+      mobileColumns: 3,
+      tabletColumns: 5,
+      desktopColumns: 6,
+      mainAxisSpacing: StyleString.cardSpace - 2,
+      crossAxisSpacing: StyleString.cardSpace,
+      extentBuilder: (columnWidth) =>
+          columnWidth / 0.65 + MediaQuery.textScalerOf(context).scale(32.0),
       itemCount: bangumiList!.isNotEmpty ? bangumiList!.length : 10,
       itemBuilder: (BuildContext context, int index) {
         return bangumiList!.isNotEmpty
@@ -235,7 +214,12 @@ class _PopularPageState extends ConsumerState<PopularPage>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(isTrend ? t.library.popular.allTag : state.currentTag),
+            Flexible(
+              child: Text(
+                isTrend ? t.library.popular.allTag : state.currentTag,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             const SizedBox(width: 4),
             const Icon(Icons.keyboard_arrow_down),
           ],
@@ -249,12 +233,11 @@ class _PopularPageState extends ConsumerState<PopularPage>
   List<Widget> buildActions() {
     final t = context.t;
     final actions = <Widget>[
-      if (MediaQuery.of(context).orientation == Orientation.portrait)
-        IconButton(
-          tooltip: t.navigation.actions.search,
-          onPressed: () => context.push(Routes.search),
-          icon: const Icon(Icons.search),
-        ),
+      IconButton(
+        tooltip: t.navigation.actions.search,
+        onPressed: () => context.push(Routes.search),
+        icon: const Icon(Icons.search),
+      ),
       IconButton(
         tooltip: t.navigation.actions.history,
         onPressed: () => context.push(Routes.history),

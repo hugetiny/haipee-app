@@ -178,6 +178,41 @@ class SettingsKeys {
     0.0,
     group: SettingGroup.danmaku,
   );
+  static const autoSkipOpEd = SettingKey<bool>(
+    _SettingBoxKey.autoSkipOpEd,
+    false,
+    group: SettingGroup.player,
+  );
+  static const debridProvider = SettingKey<String>(
+    _SettingBoxKey.debridProvider,
+    'none',
+    group: SettingGroup.player,
+  );
+  static const debridApiKey = SettingKey<String>(
+    _SettingBoxKey.debridApiKey,
+    '',
+    group: SettingGroup.player,
+  );
+  static const prowlarrEndpoint = SettingKey<String>(
+    _SettingBoxKey.prowlarrEndpoint,
+    '',
+    group: SettingGroup.download,
+  );
+  static const prowlarrApiKey = SettingKey<String>(
+    _SettingBoxKey.prowlarrApiKey,
+    '',
+    group: SettingGroup.download,
+  );
+  static const prowlarrEnabled = SettingKey<bool>(
+    _SettingBoxKey.prowlarrEnabled,
+    false,
+    group: SettingGroup.download,
+  );
+  static const defaultTorrentStreamEngine = SettingKey<String>(
+    _SettingBoxKey.defaultTorrentStreamEngine,
+    'aria2',
+    group: SettingGroup.download,
+  );
   static const danmakuEnabledByDefault = SettingKey<bool>(
     _SettingBoxKey.danmakuEnabledByDefault,
     false,
@@ -256,6 +291,11 @@ class SettingsKeys {
   static const enableGitProxy = SettingKey<bool>(
     _SettingBoxKey.enableGitProxy,
     true,
+    group: SettingGroup.proxy,
+  );
+  static const gitProxyUrl = SettingKey<String>(
+    _SettingBoxKey.gitProxyUrl,
+    'https://ghfast.top/',
     group: SettingGroup.proxy,
   );
   static const enableBangumiProxy = SettingKey<bool>(
@@ -602,6 +642,7 @@ class SettingsKeys {
     oledEnhance,
     displayMode,
     enableGitProxy,
+    gitProxyUrl,
     enableBangumiProxy,
     imageAcceleration,
     bangumiAcceleration,
@@ -719,6 +760,7 @@ class _SettingBoxKey {
       oledEnhance = 'oledEnhance',
       displayMode = 'displayMode',
       enableGitProxy = 'enableGitProxy',
+      gitProxyUrl = 'gitProxyUrl',
       enableBangumiProxy = 'enableBangumiProxy',
       enableSystemProxy = 'enableSystemProxy',
       defaultStartupPage = 'defaultStartupPage',
@@ -764,5 +806,12 @@ class _SettingBoxKey {
       brightnessVolumeGesture = 'brightnessVolumeGesture',
       historySyncDeviceId = 'historySyncDeviceId',
       historySyncSequence = 'historySyncSequence',
-      historySyncSnapshotInitialized = 'historySyncSnapshotInitialized';
+      historySyncSnapshotInitialized = 'historySyncSnapshotInitialized',
+      prowlarrEndpoint = 'prowlarrEndpoint',
+      prowlarrApiKey = 'prowlarrApiKey',
+      prowlarrEnabled = 'prowlarrEnabled',
+      defaultTorrentStreamEngine = 'defaultTorrentStreamEngine',
+      autoSkipOpEd = 'autoSkipOpEd',
+      debridProvider = 'debridProvider',
+      debridApiKey = 'debridApiKey';
 }

@@ -4,11 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/modules/danmaku/danmaku_ch_convert.dart';
 import 'package:kazumi/pages/settings/danmaku/providers.dart';
 import 'package:kazumi/utils/utils.dart';
+import 'package:kazumi/utils/storage.dart';
 
 class DanmakuSettingsPage extends ConsumerWidget {
   const DanmakuSettingsPage({super.key});
@@ -33,9 +34,12 @@ class DanmakuSettingsPage extends ConsumerWidget {
   String _credentialModeLabel(
       BuildContext context, String appId, String apiKey) {
     final playerTexts = context.t.settings.player;
-    return appId.isEmpty && apiKey.isEmpty
+    if (appId.isNotEmpty || apiKey.isNotEmpty) {
+      return playerTexts.danmakuCredentialModeCustom;
+    }
+    return GStorage.hasValidDanDanCredentials()
         ? playerTexts.danmakuCredentialModeBuiltIn
-        : playerTexts.danmakuCredentialModeCustom;
+        : playerTexts.danmakuCredentialNotConfigured;
   }
 
   Future<void> _showDanDanCredentialDialog(
@@ -147,7 +151,6 @@ class DanmakuSettingsPage extends ConsumerWidget {
       child: Scaffold(
         appBar: SysAppBar(title: Text(playerTexts.danmakuSettings)),
         body: SettingsList(
-          maxWidth: 1000,
           sections: [
             SettingsSection(
               title: Text(playerTexts.danmaku),

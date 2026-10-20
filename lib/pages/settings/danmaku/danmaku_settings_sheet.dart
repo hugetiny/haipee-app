@@ -5,7 +5,7 @@ import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/pages/settings/danmaku/danmaku_shield_settings.dart';
 import 'package:kazumi/pages/settings/danmaku/providers.dart';
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 
 class DanmakuSettingsSheet extends ConsumerStatefulWidget {
   final DanmakuController danmakuController;

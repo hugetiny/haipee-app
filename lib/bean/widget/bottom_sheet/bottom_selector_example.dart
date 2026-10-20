@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/bean/widget/bottom_sheet/bottom_selector.dart';
 
 /// 底部选择器示例页面
@@ -50,8 +51,8 @@ class _BottomSelectorExampleState extends State<BottomSelectorExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('底部选择器示例'),
+      appBar: const SysAppBar(
+        title: Text('底部选择器示例'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

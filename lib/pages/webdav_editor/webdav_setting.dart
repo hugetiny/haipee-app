@@ -1,4 +1,4 @@
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,7 +33,6 @@ class WebDavSettingsPage extends ConsumerWidget {
         body: !state.initialized
             ? const Center(child: CircularProgressIndicator())
             : SettingsList(
-                maxWidth: 1000,
                 sections: [
                   SettingsSection(
                     title: Text(t.settings.webdav.section.webdav),

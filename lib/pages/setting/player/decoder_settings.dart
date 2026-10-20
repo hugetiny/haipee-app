@@ -1,4 +1,4 @@
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/providers/riverpod_compat.dart';
@@ -25,7 +25,6 @@ class DecoderSettings extends ConsumerWidget {
         title: Text('硬件解码器'),
       ),
       body: SettingsList(
-        maxWidth: 1000,
         sections: [
           SettingsSection(
             title: const Text('选择不受支持的解码器将回退到软件解码'),

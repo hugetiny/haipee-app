@@ -4,9 +4,9 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 4
-/// Strings: 2754 (688 per locale)
+/// Strings: 2774 (693 per locale)
 ///
-/// Built on 2026-10-04 at 10:19 UTC
+/// Built on 2026-10-20 at 03:50 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -677,10 +677,13 @@ class _TranslationsNavigationTabsEnUs {
 	final AppTranslations _root; // ignore: unused_field
 
 	// Translations
-	String get popular => 'Home';
+	String get popular => 'Popular';
+	String get catalog => 'Catalog';
+	String get media => 'Online Video';
+	String get resource => 'Resources';
 	String get timeline => 'Timeline';
-	String get my => 'My';
-	String get download => 'Download';
+	String get my => 'Media Library';
+	String get download => 'Downloads';
 	String get settings => 'Settings';
 }
 
@@ -1091,7 +1094,9 @@ class _TranslationsDownloadsPageTabsEnUs {
 
 	// Translations
 	String downloading({required Object count}) => 'Downloading (${count})';
+	String paused({required Object count}) => 'Paused (${count})';
 	String completed({required Object count}) => 'Completed (${count})';
+	String failed({required Object count}) => 'Failed (${count})';
 	String get all => 'All';
 }
 
@@ -1159,7 +1164,9 @@ class _TranslationsDownloadsPageEmptyEnUs {
 
 	// Translations
 	String get downloading => 'No active downloads';
+	String get paused => 'No paused downloads';
 	String get completed => 'No completed downloads yet';
+	String get failed => 'No failed downloads';
 	String get all => 'Download list is empty';
 	String get hint => 'Click the new button above to add downloads';
 }
@@ -3288,8 +3295,11 @@ class _TranslationsNavigationTabsJaJp extends _TranslationsNavigationTabsEnUs {
 
 	// Translations
 	@override String get popular => '人気';
+	@override String get catalog => 'カテゴリ';
+	@override String get media => 'オンライン動画';
+	@override String get resource => 'リソース';
 	@override String get timeline => 'タイムライン';
-	@override String get my => 'マイ';
+	@override String get my => 'メディアライブラリ';
 	@override String get download => 'ダウンロード';
 	@override String get settings => '設定';
 }
@@ -5710,10 +5720,13 @@ class _TranslationsNavigationTabsZhCn extends _TranslationsNavigationTabsEnUs {
 	@override final _TranslationsZhCn _root; // ignore: unused_field
 
 	// Translations
-	@override String get popular => '首页';
+	@override String get popular => '热门';
+	@override String get catalog => '资源分类';
+	@override String get media => '在线视频';
+	@override String get resource => '全网资源';
 	@override String get timeline => '时间表';
-	@override String get my => '我的';
-	@override String get download => '下载';
+	@override String get my => '媒体库';
+	@override String get download => '任务与下载';
 	@override String get settings => '设置';
 }
 
@@ -6124,7 +6137,9 @@ class _TranslationsDownloadsPageTabsZhCn extends _TranslationsDownloadsPageTabsE
 
 	// Translations
 	@override String downloading({required Object count}) => '下载中 (${count})';
+	@override String paused({required Object count}) => '已暂停 (${count})';
 	@override String completed({required Object count}) => '已完成 (${count})';
+	@override String failed({required Object count}) => '下载失败 (${count})';
 	@override String get all => '全部';
 }
 
@@ -6192,7 +6207,9 @@ class _TranslationsDownloadsPageEmptyZhCn extends _TranslationsDownloadsPageEmpt
 
 	// Translations
 	@override String get downloading => '当前没有下载任务';
+	@override String get paused => '没有已暂停的下载任务';
 	@override String get completed => '还没有已完成的下载';
+	@override String get failed => '没有下载失败的任务';
 	@override String get all => '下载列表为空';
 	@override String get hint => '点击上方的新建按钮添加下载任务';
 }
@@ -8320,10 +8337,13 @@ class _TranslationsNavigationTabsZhTw extends _TranslationsNavigationTabsEnUs {
 	@override final _TranslationsZhTw _root; // ignore: unused_field
 
 	// Translations
-	@override String get popular => '熱門番劇';
+	@override String get popular => '熱門';
+	@override String get catalog => '資源分類';
+	@override String get media => '線上影片';
+	@override String get resource => '全網資源';
 	@override String get timeline => '時間表';
-	@override String get my => '我的';
-	@override String get download => '下載';
+	@override String get my => '媒體庫';
+	@override String get download => '任務與下載';
 	@override String get settings => '設定';
 }
 
@@ -10219,7 +10239,9 @@ extension on AppTranslations {
 			case 'downloads.page.downloadSettings': return 'Download Settings';
 			case 'downloads.page.refresh': return 'Refresh';
 			case 'downloads.page.tabs.downloading': return ({required Object count}) => 'Downloading (${count})';
+			case 'downloads.page.tabs.paused': return ({required Object count}) => 'Paused (${count})';
 			case 'downloads.page.tabs.completed': return ({required Object count}) => 'Completed (${count})';
+			case 'downloads.page.tabs.failed': return ({required Object count}) => 'Failed (${count})';
 			case 'downloads.page.tabs.all': return 'All';
 			case 'downloads.page.actions.selectAll': return 'Select All';
 			case 'downloads.page.actions.resume': return 'Resume';
@@ -10242,7 +10264,9 @@ extension on AppTranslations {
 			case 'downloads.page.sort.speed': return 'Download Speed';
 			case 'downloads.page.sort.progress': return 'Progress';
 			case 'downloads.page.empty.downloading': return 'No active downloads';
+			case 'downloads.page.empty.paused': return 'No paused downloads';
 			case 'downloads.page.empty.completed': return 'No completed downloads yet';
+			case 'downloads.page.empty.failed': return 'No failed downloads';
 			case 'downloads.page.empty.all': return 'Download list is empty';
 			case 'downloads.page.empty.hint': return 'Click the new button above to add downloads';
 			case 'downloads.page.status.active': return 'Downloading';
@@ -10630,10 +10654,13 @@ extension on AppTranslations {
 			case 'exitDialog.cancel': return 'Cancel';
 			case 'tray.showWindow': return 'Show Window';
 			case 'tray.exit': return 'Exit Kazumi';
-			case 'navigation.tabs.popular': return 'Home';
+			case 'navigation.tabs.popular': return 'Popular';
+			case 'navigation.tabs.catalog': return 'Catalog';
+			case 'navigation.tabs.media': return 'Online Video';
+			case 'navigation.tabs.resource': return 'Resources';
 			case 'navigation.tabs.timeline': return 'Timeline';
-			case 'navigation.tabs.my': return 'My';
-			case 'navigation.tabs.download': return 'Download';
+			case 'navigation.tabs.my': return 'Media Library';
+			case 'navigation.tabs.download': return 'Downloads';
 			case 'navigation.tabs.settings': return 'Settings';
 			case 'navigation.actions.search': return 'Search';
 			case 'navigation.actions.history': return 'History';
@@ -11281,8 +11308,11 @@ extension on _TranslationsJaJp {
 			case 'tray.showWindow': return 'ウィンドウを表示';
 			case 'tray.exit': return 'Kazumiを終了';
 			case 'navigation.tabs.popular': return '人気';
+			case 'navigation.tabs.catalog': return 'カテゴリ';
+			case 'navigation.tabs.media': return 'オンライン動画';
+			case 'navigation.tabs.resource': return 'リソース';
 			case 'navigation.tabs.timeline': return 'タイムライン';
-			case 'navigation.tabs.my': return 'マイ';
+			case 'navigation.tabs.my': return 'メディアライブラリ';
 			case 'navigation.tabs.download': return 'ダウンロード';
 			case 'navigation.tabs.settings': return '設定';
 			case 'navigation.actions.search': return '検索';
@@ -11612,7 +11642,9 @@ extension on _TranslationsZhCn {
 			case 'downloads.page.downloadSettings': return '下载设置';
 			case 'downloads.page.refresh': return '刷新';
 			case 'downloads.page.tabs.downloading': return ({required Object count}) => '下载中 (${count})';
+			case 'downloads.page.tabs.paused': return ({required Object count}) => '已暂停 (${count})';
 			case 'downloads.page.tabs.completed': return ({required Object count}) => '已完成 (${count})';
+			case 'downloads.page.tabs.failed': return ({required Object count}) => '下载失败 (${count})';
 			case 'downloads.page.tabs.all': return '全部';
 			case 'downloads.page.actions.selectAll': return '全选';
 			case 'downloads.page.actions.resume': return '继续';
@@ -11635,7 +11667,9 @@ extension on _TranslationsZhCn {
 			case 'downloads.page.sort.speed': return '下载速度';
 			case 'downloads.page.sort.progress': return '进度';
 			case 'downloads.page.empty.downloading': return '当前没有下载任务';
+			case 'downloads.page.empty.paused': return '没有已暂停的下载任务';
 			case 'downloads.page.empty.completed': return '还没有已完成的下载';
+			case 'downloads.page.empty.failed': return '没有下载失败的任务';
 			case 'downloads.page.empty.all': return '下载列表为空';
 			case 'downloads.page.empty.hint': return '点击上方的新建按钮添加下载任务';
 			case 'downloads.page.status.active': return '下载中';
@@ -12023,10 +12057,13 @@ extension on _TranslationsZhCn {
 			case 'exitDialog.cancel': return '取消';
 			case 'tray.showWindow': return '显示窗口';
 			case 'tray.exit': return '退出 Kazumi';
-			case 'navigation.tabs.popular': return '首页';
+			case 'navigation.tabs.popular': return '热门';
+			case 'navigation.tabs.catalog': return '资源分类';
+			case 'navigation.tabs.media': return '在线视频';
+			case 'navigation.tabs.resource': return '全网资源';
 			case 'navigation.tabs.timeline': return '时间表';
-			case 'navigation.tabs.my': return '我的';
-			case 'navigation.tabs.download': return '下载';
+			case 'navigation.tabs.my': return '媒体库';
+			case 'navigation.tabs.download': return '任务与下载';
 			case 'navigation.tabs.settings': return '设置';
 			case 'navigation.actions.search': return '搜索';
 			case 'navigation.actions.history': return '历史记录';
@@ -12673,10 +12710,13 @@ extension on _TranslationsZhTw {
 			case 'exitDialog.cancel': return '取消';
 			case 'tray.showWindow': return '顯示視窗';
 			case 'tray.exit': return '結束 Kazumi';
-			case 'navigation.tabs.popular': return '熱門番劇';
+			case 'navigation.tabs.popular': return '熱門';
+			case 'navigation.tabs.catalog': return '資源分類';
+			case 'navigation.tabs.media': return '線上影片';
+			case 'navigation.tabs.resource': return '全網資源';
 			case 'navigation.tabs.timeline': return '時間表';
-			case 'navigation.tabs.my': return '我的';
-			case 'navigation.tabs.download': return '下載';
+			case 'navigation.tabs.my': return '媒體庫';
+			case 'navigation.tabs.download': return '任務與下載';
 			case 'navigation.tabs.settings': return '設定';
 			case 'navigation.actions.search': return '搜尋';
 			case 'navigation.actions.history': return '歷史紀錄';

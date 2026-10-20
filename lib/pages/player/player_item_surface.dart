@@ -6,6 +6,26 @@ import 'package:kazumi/pages/player/player_providers.dart';
 class PlayerItemSurface extends ConsumerWidget {
   const PlayerItemSurface({super.key});
 
+  static bool isAudioUrl(String url) {
+    const audioExts = [
+      '.mp3',
+      '.flac',
+      '.wav',
+      '.ape',
+      '.dsd',
+      '.alac',
+      '.ogg',
+      '.m4a',
+      '.aac',
+      '.opus',
+      '.wma',
+      '.dsf',
+      '.dff',
+    ];
+    final clean = url.split('?').first.split('#').first.toLowerCase();
+    return audioExts.any((ext) => clean.endsWith(ext));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playerController = ref.watch(playerProvider.notifier);

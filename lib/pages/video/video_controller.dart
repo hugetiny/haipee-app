@@ -16,6 +16,7 @@ import 'package:kazumi/pages/webview/webview_controller.dart';
 import 'package:kazumi/pages/webview/providers.dart';
 import 'package:logger/logger.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:kazumi/modules/playback/media_selector.dart';
 import 'package:kazumi/utils/parse_failure_helper.dart';
 
 import 'video_state.dart';
@@ -41,11 +42,15 @@ class VideoPageController extends Notifier<VideoPageState> {
 
   BangumiItem get bangumiItem {
     final item = state.bangumiItem;
-    if (item == null) {
-      throw StateError('bangumiItem is not set');
+    if (item != null) {
+      return item;
     }
-    return item;
+    return BangumiItem.dummy(
+      title: state.title.isNotEmpty ? state.title : '未知视频',
+    );
   }
+
+  BangumiItem? get bangumiItemOrNull => state.bangumiItem;
 
   set bangumiItem(BangumiItem value) {
     state = state.copyWith(bangumiItem: value);
@@ -129,11 +134,13 @@ class VideoPageController extends Notifier<VideoPageState> {
 
   Plugin get currentPlugin {
     final plugin = state.currentPlugin;
-    if (plugin == null) {
-      throw StateError('currentPlugin is not set');
+    if (plugin != null) {
+      return plugin;
     }
-    return plugin;
+    return Plugin.fromTemplate();
   }
+
+  Plugin? get currentPluginOrNull => state.currentPlugin;
 
   set currentPlugin(Plugin plugin) {
     state = state.copyWith(currentPlugin: plugin);
@@ -160,6 +167,20 @@ class VideoPageController extends Notifier<VideoPageState> {
     historyOffset = offset;
     final chapterName = state.roadList[currentRoad].identifier[episode - 1];
     KazumiLogger().log(Level.info, '跳转到$chapterName');
+
+    if (state.bangumiItem != null) {
+      final resolution = MediaSelector.resolve(
+        rawIndex: episode,
+        identifier: chapterName,
+        roadName: state.roadList[currentRoad].name,
+        bangumiTotalEpisodes: state.bangumiItem?.totalEpisodes,
+      );
+      unawaited(queryBangumiEpisodeCommentsByID(
+        state.bangumiItem!.id,
+        resolution.bangumiEpisode,
+      ));
+    }
+
     var urlItem = state.roadList[currentRoad].data[episode - 1];
     final plugin = currentPlugin;
 
@@ -182,8 +203,23 @@ class VideoPageController extends Notifier<VideoPageState> {
 
     if (!urlItem.contains(plugin.baseUrl) &&
         !urlItem.contains(plugin.baseUrl.replaceAll('https', 'http'))) {
-      urlItem = plugin.baseUrl + urlItem;
+      if (plugin.baseUrl.endsWith('/') && urlItem.startsWith('/')) {
+        urlItem = plugin.baseUrl + urlItem.substring(1);
+      } else if (!plugin.baseUrl.endsWith('/') && !urlItem.startsWith('/')) {
+        urlItem = '${plugin.baseUrl}/$urlItem';
+      } else {
+        urlItem = plugin.baseUrl + urlItem;
+      }
     }
+    // 规范化 URL 路径，清理意外的双斜杠（保留协议头 ://）
+    urlItem = urlItem.replaceAllMapped(
+      RegExp(r'^((?:https?:)?//[^/]+)(/.*)$'),
+      (match) {
+        final host = match.group(1)!;
+        final path = match.group(2)!.replaceAll(RegExp(r'/+'), '/');
+        return '$host$path';
+      },
+    );
     await webviewController.loadUrl(
       urlItem,
       plugin.useNativePlayer,

@@ -123,6 +123,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
 
   double lastPlayerSpeed = 1.0;
   int episodeNum = 0;
+  int? _lastEmittedSecond;
 
   ProviderSubscription<bool>? _fullscreenSubscription;
 
@@ -188,19 +189,10 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
   }
 
   void handleDanmaku() {
+    _lastEmittedSecond = null;
     playerController.danmakuController.clear();
-    // if true, turn off danmaku.
-    if (playerController.danmakuOn) {
-      playerController.danmakuOn = false;
-      return;
-    }
-    // if false and empty, show dialog.
-    if (playerController.danDanmakus.isEmpty) {
-      showDanmakuSwitch();
-      return;
-    }
-    // turn on danmaku.
-    playerController.danmakuOn = true;
+    // 弹幕开关纯粹切换：有即显示，无即不显示，严禁弹窗强行模糊搜寻
+    playerController.danmakuOn = !playerController.danmakuOn;
   }
 
   Future<void> _uploadHistoryToWebDav() async {
@@ -213,6 +205,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
   }
 
   void _handleFullscreenChange(BuildContext context) async {
+    _lastEmittedSecond = null;
     playerController.lockPanel = false;
     playerController.danmakuController.clear();
 
@@ -381,49 +374,57 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
       playerController.duration = playerController.playerDuration;
       playerController.completed = playerController.playerCompleted;
       // 弹幕相关
-      if (playerController.currentPosition.inMicroseconds != 0 &&
-          playerController.playerPlaying == true &&
+      final currentSec = playerController.currentPosition.inSeconds;
+      if (playerController.playerPlaying == true &&
           playerController.danmakuOn == true) {
-        playerController.danDanmakus[playerController.currentPosition.inSeconds]
-            ?.asMap()
-            .forEach((idx, danmaku) async {
-          if (!_danmakuColor) {
-            danmaku.color = Colors.white;
+        if (_lastEmittedSecond != currentSec) {
+          _lastEmittedSecond = currentSec;
+          final currentDanmakus = playerController.danDanmakus[currentSec];
+          if (currentDanmakus != null && currentDanmakus.isNotEmpty) {
+            final isBiliNative = playerController.activeBiliCid != null &&
+                playerController.activeBiliCid! > 0;
+            currentDanmakus.asMap().forEach((idx, danmaku) async {
+              if (!_danmakuColor) {
+                danmaku.color = Colors.white;
+              }
+              // 对于 B站 原生视频 (activeBiliCid > 0)，以官方 CID 原生弹幕为准，严禁被第三方 DanDanPlay 弹幕源开关屏蔽
+              if (!isBiliNative) {
+                if (!_danmakuBiliBiliSource &&
+                    danmaku.source.contains('BiliBili')) {
+                  return;
+                }
+                if (!_danmakuGamerSource && danmaku.source.contains('Gamer')) {
+                  return;
+                }
+                if (!_danmakuDanDanSource &&
+                    !(danmaku.source.contains('BiliBili') ||
+                        danmaku.source.contains('Gamer'))) {
+                  return;
+                }
+              }
+              await Future.delayed(
+                  Duration(
+                      milliseconds: idx * 1000 ~/ currentDanmakus.length),
+                  () => mounted &&
+                          playerController.playerPlaying &&
+                          !playerController.playerBuffering &&
+                          playerController.danmakuOn &&
+                          !myController.isDanmakuBlocked(danmaku.message)
+                      ? playerController.danmakuController.addDanmaku(
+                          DanmakuContentItem(
+                            danmaku.message,
+                            color: danmaku.color,
+                            type: danmaku.type == 4
+                                ? DanmakuItemType.bottom
+                                : (danmaku.type == 5
+                                    ? DanmakuItemType.top
+                                    : DanmakuItemType.scroll),
+                          ),
+                        )
+                      : null);
+            });
           }
-          if (!_danmakuBiliBiliSource && danmaku.source.contains('BiliBili')) {
-            return;
-          }
-          if (!_danmakuGamerSource && danmaku.source.contains('Gamer')) {
-            return;
-          }
-          if (!_danmakuDanDanSource &&
-              !(danmaku.source.contains('BiliBili') ||
-                  danmaku.source.contains('Gamer'))) {
-            return;
-          }
-          await Future.delayed(
-              Duration(
-                  milliseconds: idx *
-                      1000 ~/
-                      playerController
-                          .danDanmakus[
-                              playerController.currentPosition.inSeconds]!
-                          .length),
-              () => mounted &&
-                      playerController.playerPlaying &&
-                      !playerController.playerBuffering &&
-                      playerController.danmakuOn &&
-                      !myController.isDanmakuBlocked(danmaku.message)
-                  ? playerController.danmakuController.addDanmaku(
-                      DanmakuContentItem(danmaku.message,
-                          color: danmaku.color,
-                          type: danmaku.type == 4
-                              ? DanmakuItemType.bottom
-                              : (danmaku.type == 5
-                                  ? DanmakuItemType.top
-                                  : DanmakuItemType.scroll)))
-                  : null);
-        });
+        }
       }
       // 音量相关
       if (!playerController.volumeSeeking) {
@@ -448,28 +449,47 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
       // 历史记录相关
       if (playerController.playerPlaying && !videoPageController.loading) {
         if (!WebDav().isHistorySyncing) {
-          historyController.updateHistory(
-              videoPageController.currentEpisode,
-              videoPageController.currentRoad,
-              videoPageController.currentPlugin.name,
-              videoPageController.bangumiItem,
-              playerController.playerPosition,
-              videoPageController.src,
-              videoPageController.roadList[videoPageController.currentRoad]
-                  .identifier[videoPageController.currentEpisode - 1]);
+          final roadList = videoPageController.roadList;
+          final currentRoad = videoPageController.currentRoad;
+          final currentEpisode = videoPageController.currentEpisode;
+          if (roadList.isNotEmpty &&
+              currentRoad >= 0 &&
+              currentRoad < roadList.length &&
+              currentEpisode > 0 &&
+              currentEpisode - 1 < roadList[currentRoad].identifier.length) {
+            historyController.updateHistory(
+                currentEpisode,
+                currentRoad,
+                videoPageController.currentPlugin.name,
+                videoPageController.bangumiItem,
+                playerController.playerPosition,
+                videoPageController.src,
+                roadList[currentRoad].identifier[currentEpisode - 1]);
+            unawaited(playerController.syncVideoQualityMetrics());
+          }
         }
       }
       // 自动播放下一集
       if (playerController.completed &&
+          videoPageController.roadList.isNotEmpty &&
+          videoPageController.currentRoad >= 0 &&
+          videoPageController.currentRoad <
+              videoPageController.roadList.length &&
+          videoPageController.currentEpisode > 0 &&
           videoPageController.currentEpisode <
               videoPageController
                   .roadList[videoPageController.currentRoad].data.length &&
           !videoPageController.loading) {
+        final currentRoadData =
+            videoPageController.roadList[videoPageController.currentRoad];
+        final nextIdentifier = (videoPageController.currentEpisode <
+                currentRoadData.identifier.length)
+            ? currentRoadData.identifier[videoPageController.currentEpisode]
+            : '${videoPageController.currentEpisode + 1}';
         KazumiDialog.showToast(
           message: context.t.playback.toast.loadingEpisode.replaceFirst(
             '{identifier}',
-            videoPageController.roadList[videoPageController.currentRoad]
-                .identifier[videoPageController.currentEpisode],
+            nextIdentifier,
           ),
         );
         try {
@@ -484,7 +504,16 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     });
   }
 
-  AudioController get _audioController => ref.read(audioControllerProvider);
+  AudioController? _cachedAudioController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cachedAudioController = ref.read(audioControllerProvider);
+  }
+
+  AudioController get _audioController =>
+      _cachedAudioController ?? ref.read(audioControllerProvider);
 
   Future<void> _bindAudioService() async {
     try {
@@ -493,8 +522,14 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
         onPlay: () => playerController.play(),
         onPause: () => playerController.pause(),
         onSkipToNext: () async {
-          if (videoPageController.currentEpisode <
-              videoPageController.roadList[videoPageController.currentRoad].data.length) {
+          final roadList = videoPageController.roadList;
+          final currentRoad = videoPageController.currentRoad;
+          if (roadList.isNotEmpty &&
+              currentRoad >= 0 &&
+              currentRoad < roadList.length &&
+              videoPageController.currentEpisode > 0 &&
+              videoPageController.currentEpisode <
+                  roadList[currentRoad].data.length) {
             await widget.changeEpisode(videoPageController.currentEpisode + 1);
           }
         },
@@ -597,7 +632,8 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                 try {
                   danmakuEpisodeResponse =
                       await DanmakuRequest.getDanDanEpisodesByDanDanBangumiID(
-                          danmakuInfo.animeId);
+                          danmakuInfo.animeId,
+                          silent: false);
                 } catch (error) {
                   KazumiDialog.dismiss();
                   KazumiDialog.showToast(
@@ -645,6 +681,11 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
 
   // 弹幕查询
   void showDanmakuSwitch() {
+    if (playerController.activeBiliCid != null &&
+        playerController.activeBiliCid! > 0) {
+      KazumiDialog.showToast(message: '当前为哔哩哔哩原生视频，以官方 CID 弹幕为准，无需外部模糊匹配');
+      return;
+    }
     final t = context.t;
     KazumiDialog.show(
       builder: (context) {
@@ -1143,7 +1184,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     // Don't dispose player here
     // We need to reuse the player after episode is changed and player item is disposed
     // We dispose player after video page disposed
-    _audioController.deactivate();
+    _cachedAudioController?.deactivate();
     WidgetsBinding.instance.removeObserver(this);
     windowManager.removeListener(this);
     playerTimer?.cancel();

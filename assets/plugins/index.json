@@ -1,0 +1,209 @@
+[
+  {
+    "name": "量子影视",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Maccms JSON 官方源",
+    "baseURL": "https://cj.lziapi.com/",
+    "lastUpdate": 1792392000000
+  },
+  {
+    "name": "非凡影视",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Maccms JSON 官方源",
+    "baseURL": "https://cj.ffzyapi.com/",
+    "lastUpdate": 1792392000000
+  },
+  {
+    "name": "暴风影视",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Maccms JSON 官方源",
+    "baseURL": "https://bfzyapi.com/",
+    "lastUpdate": 1792392000000
+  },
+  {
+    "name": "金鹰影视",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Maccms JSON 官方源",
+    "baseURL": "https://jyzyapi.com/",
+    "lastUpdate": 1792392000000
+  },
+  {
+    "name": "bilibili",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Kazumi Official",
+    "baseURL": "https://www.bilibili.com/",
+    "lastUpdate": 1792392000000
+  },
+  {
+    "name": "douyin",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Kazumi Official",
+    "baseURL": "https://www.douyin.com/",
+    "lastUpdate": 1792392000000
+  },
+  {
+    "name": "7sefun",
+    "version": "1.3",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.7sefun.top/",
+    "lastUpdate": 1786362131000
+  },
+  {
+    "name": "aafun",
+    "version": "1.2",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.moonci.com/",
+    "lastUpdate": 1787289623000
+  },
+  {
+    "name": "AGE",
+    "version": "1.5",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.agedm.io/",
+    "lastUpdate": 1758092260000
+  },
+  {
+    "name": "akianime",
+    "version": "1.4",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.akianime.cc/",
+    "lastUpdate": 1786942825000
+  },
+  {
+    "name": "baimao",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.baimaodm.com/",
+    "lastUpdate": 1769573721000
+  },
+  {
+    "name": "dalvdm",
+    "version": "1.2",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.sbdl.cc/",
+    "lastUpdate": 1792049112000
+  },
+  {
+    "name": "DM84",
+    "version": "1.4",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://dm84.tv/",
+    "lastUpdate": 1770015775000
+  },
+  {
+    "name": "ezdmw",
+    "version": "1.2",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://m.ezdmw.org/",
+    "lastUpdate": 1786883419000
+  },
+  {
+    "name": "giriGiriLove",
+    "version": "2.5",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://ani.girigirilove.com/",
+    "lastUpdate": 1791988046000
+  },
+  {
+    "name": "LMM",
+    "version": "2.3",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.lmm85.com/",
+    "lastUpdate": 1792049112000
+  },
+  {
+    "name": "mgnacg",
+    "version": "1.2",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.mgnacg.com/",
+    "lastUpdate": 1792059072000
+  },
+  {
+    "name": "moonci",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.moonci.com/",
+    "lastUpdate": 1787975634000
+  },
+  {
+    "name": "mutefun",
+    "version": "1.4",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.2kdm.com/",
+    "lastUpdate": 1792059072000
+  },
+  {
+    "name": "MXdm",
+    "version": "2.4",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.dcc3.com/",
+    "lastUpdate": 1790853597000
+  },
+  {
+    "name": "sorani",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://www.sorani.net/",
+    "lastUpdate": 1783910492000
+  },
+  {
+    "name": "xfdmneo",
+    "version": "1.1",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://dm1.xfdm.pro/",
+    "lastUpdate": 1772964002000
+  },
+  {
+    "name": "xfdmnext",
+    "version": "1.1",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "",
+    "baseURL": "https://next.xifanacg.com/",
+    "lastUpdate": 1790868808000
+  }
+]

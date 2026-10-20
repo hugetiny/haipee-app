@@ -62,6 +62,7 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
   @override
   void dispose() {
     tabController?.dispose();
+    tabController = null;
     super.dispose();
   }
 
@@ -71,7 +72,7 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
       return;
     }
     ref.read(navigationProvider.notifier).updateSelectedIndex(0);
-    context.go(Routes.popular);
+    context.go(Routes.media);
   }
 
   void _updateAppBarConfig() {
@@ -505,12 +506,25 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
     );
 
     List<Widget> gridViewList = [];
+    final double width = MediaQuery.sizeOf(context).width;
     int crossCount = 1;
-    if (MediaQuery.sizeOf(context).width > LayoutBreakpoint.compact['width']!) {
+    if (width > LayoutBreakpoint.compact['width']!) {
       crossCount = 2;
     }
-    if (MediaQuery.sizeOf(context).width > LayoutBreakpoint.medium['width']!) {
+    if (width > LayoutBreakpoint.medium['width']!) {
       crossCount = 3;
+    }
+    if (width > 1300) {
+      crossCount = 4;
+    }
+    if (width > 1800) {
+      crossCount = 5;
+    }
+    if (width > 2300) {
+      crossCount = 6;
+    }
+    if (width > 2800) {
+      crossCount = (width / 420.0).floor().clamp(6, 10);
     }
     double cardHeight =
         Utils.isDesktop() ? 160 : (Utils.isTablet() ? 140 : 120);

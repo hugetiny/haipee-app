@@ -1,0 +1,23 @@
+{
+  "api": "9",
+  "type": "bilibili",
+  "name": "bilibili",
+  "version": "1.0",
+  "muliSources": true,
+  "useWebview": false,
+  "useNativePlayer": true,
+  "usePost": false,
+  "useLegacyParser": false,
+  "adBlocker": false,
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "baseURL": "https://www.bilibili.com/",
+  "searchURL": "https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=@keyword",
+  "searchMode": "bilibili",
+  "chapterMode": "bilibili",
+  "searchList": "",
+  "searchName": "",
+  "searchResult": "",
+  "chapterRoads": "",
+  "chapterResult": "",
+  "referer": "https://www.bilibili.com/"
+}

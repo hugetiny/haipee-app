@@ -216,7 +216,7 @@ class _InitPageState extends ConsumerState<InitPage> {
 
   void _goHome() {
     if (!mounted) return;
-    context.go(Routes.popular);
+    context.go(Routes.media);
   }
 
   @override

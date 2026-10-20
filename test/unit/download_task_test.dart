@@ -143,5 +143,51 @@ void main() {
       expect(activeTask.isDownloading, true);
       expect(waitingTask.isDownloading, true);
     });
+
+    test('should correctly classify media and non-media files (e.g. rar should not be playable)', () {
+      final rarTask = DownloadTask(
+        gid: 'rar-gid',
+        url: 'https://store8.gofile.io/download/web/2e3f4aac-b07d-4a79-9ff7-f3128c5580b5/Romance_of_the_Three_Kingdoms_14.part7.rar',
+        title: 'Romance_of_the_Three_Kingdoms_14.part7.rar',
+        fileName: '/Users/a12/Downloads/Romance_of_the_Three_Kingdoms_14.part7.rar',
+        status: 'complete',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      expect(rarTask.isArchive, isTrue);
+      expect(rarTask.isVideo, isFalse);
+      expect(rarTask.isAudio, isFalse);
+      expect(rarTask.isPlayable, isFalse);
+      expect(rarTask.fileTypeDisplay, '压缩包');
+      expect(rarTask.displayTitle, 'Romance_of_the_Three_Kingdoms_14.part7.rar');
+
+      final mp4Task = DownloadTask(
+        gid: 'mp4-gid',
+        url: 'http://example.com/video.mp4',
+        title: 'video.mp4',
+        fileName: '/downloads/video.mp4',
+        status: 'complete',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      expect(mp4Task.isVideo, isTrue);
+      expect(mp4Task.isPlayable, isTrue);
+      expect(mp4Task.fileTypeDisplay, '视频');
+
+      final zipTask = DownloadTask(
+        gid: 'zip-gid',
+        url: 'http://example.com/archive.zip',
+        title: 'archive.zip',
+        status: 'complete',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      expect(zipTask.isArchive, isTrue);
+      expect(zipTask.isVideo, isFalse);
+      expect(zipTask.isPlayable, isFalse);
+    });
   });
 }

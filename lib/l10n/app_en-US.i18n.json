@@ -32,7 +32,9 @@
       "refresh": "Refresh",
       "tabs": {
         "downloading": "Downloading ($count)",
+        "paused": "Paused ($count)",
         "completed": "Completed ($count)",
+        "failed": "Failed ($count)",
         "all": "All"
       },
       "actions": {
@@ -65,7 +67,9 @@
       },
       "empty": {
         "downloading": "No active downloads",
+        "paused": "No paused downloads",
         "completed": "No completed downloads yet",
+        "failed": "No failed downloads",
         "all": "Download list is empty",
         "hint": "Click the new button above to add downloads"
       },
@@ -636,10 +640,13 @@
   },
   "navigation": {
     "tabs": {
-      "popular": "Home",
+      "popular": "Popular",
+      "catalog": "Catalog",
+      "media": "Online Video",
+      "resource": "Resources",
       "timeline": "Timeline",
-      "my": "My",
-      "download": "Download",
+      "my": "Media Library",
+      "download": "Downloads",
       "settings": "Settings"
     },
     "actions": {

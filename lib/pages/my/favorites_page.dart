@@ -14,6 +14,7 @@ import 'package:kazumi/pages/my/providers.dart';
 import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:kazumi/bean/widget/responsive/responsive.dart';
 
 class FavoritesPage extends ConsumerStatefulWidget {
   const FavoritesPage({super.key});
@@ -51,7 +52,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
       return;
     }
     ref.read(navigationProvider.notifier).updateSelectedIndex(0);
-    context.go(Routes.popular);
+    context.go(Routes.media);
   }
 
   @override
@@ -78,8 +79,6 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
       },
       child: Scaffold(
         appBar: SysAppBar(
-          needTopOffset: false,
-          toolbarHeight: 104,
           bottom: TabBar(
             controller: tabController,
             tabs: _buildTabs(favoritesTexts.tabs),
@@ -181,84 +180,96 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
       );
     }
 
-    final crossCount = _resolveCrossCount(MediaQuery.sizeOf(context).width);
-
     // ✅ Watch showDelete state from Riverpod provider
     final showDelete = ref.watch(favoritesShowDeleteProvider);
 
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            StyleString.cardSpace,
-            StyleString.cardSpace,
-            StyleString.cardSpace,
-            0,
-          ),
-          sliver: SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              mainAxisSpacing: StyleString.cardSpace - 2,
-              crossAxisSpacing: StyleString.cardSpace,
-              crossAxisCount: crossCount,
-              mainAxisExtent: _resolveMainAxisExtent(context, crossCount),
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (BuildContext context, int index) {
-                final bangumi = filtered[index];
-                return Stack(
-                  children: [
-                    BangumiCardV(
-                      bangumiItem: bangumi.bangumiItem,
-                      canTap: !showDelete,
-                    ),
-                    if (showDelete)
-                      Positioned(
-                        right: 5,
-                        bottom: 5,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer,
-                            shape: BoxShape.circle,
-                          ),
-                          child: CollectButton(
-                            bangumiItem: bangumi.bangumiItem,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSecondaryContainer,
-                          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        final crossCount = _resolveCrossCount(availableWidth);
+
+        return CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                StyleString.cardSpace,
+                StyleString.cardSpace,
+                StyleString.cardSpace,
+                0,
+              ),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  mainAxisSpacing: StyleString.cardSpace - 2,
+                  crossAxisSpacing: StyleString.cardSpace,
+                  crossAxisCount: crossCount,
+                  mainAxisExtent: _resolveMainAxisExtent(
+                    context,
+                    crossCount,
+                    availableWidth: availableWidth,
+                  ),
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    final bangumi = filtered[index];
+                    return Stack(
+                      children: [
+                        BangumiCardV(
+                          bangumiItem: bangumi.bangumiItem,
+                          canTap: !showDelete,
                         ),
-                      ),
-                  ],
-                );
-              },
-              childCount: filtered.length,
+                        if (showDelete)
+                          Positioned(
+                            right: 5,
+                            bottom: 5,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .secondaryContainer,
+                                shape: BoxShape.circle,
+                              ),
+                              child: CollectButton(
+                                bangumiItem: bangumi.bangumiItem,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSecondaryContainer,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                  childCount: filtered.length,
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
   int _resolveCrossCount(double width) {
-    if (width < 480) {
-      return 2;
-    }
-    if (width < LayoutBreakpoint.compact['width']!) {
-      return 3;
-    }
-    if (width < LayoutBreakpoint.medium['width']!) {
-      return 5;
-    }
-    return 6;
+    return AdaptiveGrid.calculateColumns(
+      width,
+      smallMobile: 2,
+      mobile: 3,
+      tablet: 5,
+      desktop: 6,
+    );
   }
 
-  double _resolveMainAxisExtent(BuildContext context, int crossCount) {
-    final width = MediaQuery.of(context).size.width;
-    final cardWidth = width / crossCount;
+  double _resolveMainAxisExtent(
+    BuildContext context,
+    int crossCount, {
+    required double availableWidth,
+  }) {
+    final width = availableWidth -
+        StyleString.cardSpace * 2 -
+        (crossCount - 1) * StyleString.cardSpace;
+    final cardWidth = (width / crossCount).clamp(0.0, double.infinity);
     return cardWidth / 0.65 + MediaQuery.textScalerOf(context).scale(32.0);
   }
 }

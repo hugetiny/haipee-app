@@ -106,13 +106,39 @@ class Aria2Client {
             );
 
   factory Aria2Client.fromSettings() {
-    final setting = GStorage.setting;
-    String endpoint = (setting.get(SettingBoxKey.aria2Endpoint,
-            defaultValue: _defaultEndpoint) as String)
-        .trim();
-    String secret =
-        (setting.get(SettingBoxKey.aria2Secret, defaultValue: '') as String)
-            .trim();
+    String endpoint = _defaultEndpoint;
+    String secret = '';
+    int timeoutSeconds = 15;
+    int maxConcurrentDownloads = _defaultMaxConcurrentDownloads;
+
+    try {
+      final setting = GStorage.setting;
+      endpoint = (setting.get(SettingBoxKey.aria2Endpoint,
+              defaultValue: _defaultEndpoint) as String)
+          .trim();
+      secret =
+          (setting.get(SettingBoxKey.aria2Secret, defaultValue: '') as String)
+              .trim();
+
+      timeoutSeconds =
+          setting.get(SettingBoxKey.aria2TimeoutSeconds, defaultValue: 15) as int;
+      final dynamic concurrencyRaw = setting.get(
+        SettingBoxKey.aria2MaxConcurrentDownloads,
+        defaultValue: _defaultMaxConcurrentDownloads,
+      );
+      maxConcurrentDownloads = _normalizeMaxConcurrent(
+        _parseMaxConcurrent(
+          concurrencyRaw,
+          fallback: _defaultMaxConcurrentDownloads,
+        ),
+      );
+      if (!setting.containsKey(SettingBoxKey.aria2MaxConcurrentDownloads)) {
+        unawaited(setting.put(
+          SettingBoxKey.aria2MaxConcurrentDownloads,
+          maxConcurrentDownloads,
+        ));
+      }
+    } catch (_) {}
 
     // 如果是本地回环且存在动态分配的活跃私有端口，无缝对齐
     final dynamicPort = Aria2ProcessManager.activePort;
@@ -123,24 +149,6 @@ class Aria2Client {
       if (secret.isEmpty && dynamicSecret != null) {
         secret = dynamicSecret;
       }
-    }
-    final int timeoutSeconds =
-        setting.get(SettingBoxKey.aria2TimeoutSeconds, defaultValue: 15) as int;
-    final dynamic concurrencyRaw = setting.get(
-      SettingBoxKey.aria2MaxConcurrentDownloads,
-      defaultValue: _defaultMaxConcurrentDownloads,
-    );
-    final int maxConcurrentDownloads = _normalizeMaxConcurrent(
-      _parseMaxConcurrent(
-        concurrencyRaw,
-        fallback: _defaultMaxConcurrentDownloads,
-      ),
-    );
-    if (!setting.containsKey(SettingBoxKey.aria2MaxConcurrentDownloads)) {
-      unawaited(setting.put(
-        SettingBoxKey.aria2MaxConcurrentDownloads,
-        maxConcurrentDownloads,
-      ));
     }
 
     return Aria2Client(
@@ -153,7 +161,7 @@ class Aria2Client {
 
   static const String _jsonRpcVersion = '2.0';
   static const String _defaultEndpoint = 'http://127.0.0.1:6800/jsonrpc';
-  static const List<String> _defaultStatusKeys = <String>[
+  static const List<String> defaultStatusKeys = <String>[
     'gid',
     'status',
     'totalLength',
@@ -165,7 +173,11 @@ class Aria2Client {
     'errorMessage',
     'files',
     'bittorrent',
+    'following',
+    'followedBy',
+    'dir',
   ];
+  static const List<String> _defaultStatusKeys = defaultStatusKeys;
   static const int _defaultMaxConcurrentDownloads = 2;
 
   final Dio _dio;
@@ -311,6 +323,21 @@ class Aria2Client {
   Future<bool> purgeCompleted() async {
     final dynamic result = await _call('aria2.purgeDownloadResult');
     return result == 'OK';
+  }
+
+  Future<dynamic> changeOption(String gid, Map<String, dynamic> options) async {
+    return await _call('aria2.changeOption', params: <dynamic>[gid, options]);
+  }
+
+  /// Get global statistics (overall downloadSpeed, uploadSpeed, numActive, etc.)
+  Future<Map<String, dynamic>> getGlobalStat() async {
+    try {
+      final dynamic result = await _call('aria2.getGlobalStat');
+      if (result is Map) {
+        return Map<String, dynamic>.from(result);
+      }
+    } catch (_) {}
+    return <String, dynamic>{};
   }
 
   /// Test if the aria2 RPC endpoint is accessible and responding correctly.
@@ -574,11 +601,15 @@ class Aria2Client {
             break;
         }
 
+        final isExpectedTransient = error.type == DioExceptionType.connectionError ||
+            error.type == DioExceptionType.badResponse ||
+            (error.message?.contains('Connection refused') ?? false);
+
         _logger.log(
-          Level.error,
+          isExpectedTransient ? Level.warning : Level.error,
           '[Aria2Client] $method request failed: $message',
-          error: error,
-          stackTrace: stackTrace,
+          error: isExpectedTransient ? null : error,
+          stackTrace: isExpectedTransient ? null : stackTrace,
         );
         throw Aria2RpcException(message);
       }

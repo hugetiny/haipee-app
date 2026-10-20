@@ -1,10 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:kazumi/request/config/api_endpoints.dart';
 import 'package:kazumi/request/core/bangumi_transport.dart';
 import 'package:kazumi/request/core/dio_logger_interceptor.dart';
+import 'package:kazumi/request/core/git_proxy_interceptor.dart';
 import 'package:kazumi/request/core/network_config.dart';
-import 'package:kazumi/services/logging/logger.dart';
-import 'package:kazumi/services/storage/storage.dart';
 import 'package:kazumi/utils/http_headers.dart';
 
 class DioFactory {
@@ -39,7 +37,6 @@ class DioFactory {
   static Dio get rulesRepoDio => _rulesRepoDio ??= _create(
     NetworkConfig.fromSettings(),
     defaultHeaders: {'user-agent': getRandomUA()},
-    interceptors: [_RulesMirrorInterceptor()],
   );
 
   static Dio get pluginDio => _pluginDio ??= _create(
@@ -92,34 +89,11 @@ class DioFactory {
       ),
     );
     dio.httpClientAdapter = config.createAdapter();
+    dio.interceptors.add(GitProxyInterceptor());
     dio.interceptors.addAll(interceptors);
     if (config.enableLog) {
       dio.interceptors.add(DioLoggerInterceptor());
     }
     return dio;
-  }
-}
-
-class _RulesMirrorInterceptor extends Interceptor {
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    final enableGitProxy = GStorage.getSetting(SettingsKeys.enableGitProxy);
-    if (!enableGitProxy) {
-      handler.next(options);
-      return;
-    }
-
-    final url = options.uri.toString();
-    if (!url.startsWith(ApiEndpoints.pluginShop)) {
-      handler.next(options);
-      return;
-    }
-
-    final mirrored =
-        ApiEndpoints.pluginShopMirror +
-        url.substring(ApiEndpoints.pluginShop.length);
-    KazumiLogger().d('Rules mirror: $mirrored');
-    options.path = mirrored;
-    handler.next(options);
   }
 }

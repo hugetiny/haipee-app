@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:kazumi/bean/appbar/drag_to_move_bar.dart' as dtb;
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
 import 'package:kazumi/bean/widget/collect_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
 import 'package:kazumi/pages/player/player_controller.dart';
 import 'package:kazumi/pages/player/player_providers.dart';
@@ -392,11 +394,12 @@ class _SmallestPlayerItemPanelState
     );
 
     return EmbeddedNativeControlArea(
-      child: Row(
+      child: DesktopWindowControlsSafeArea(
+        requireOffset: !videoState.isFullscreen,
+        child: Row(
         children: [
-          IconButton(
+          AppBackButton(
             color: Colors.white,
-            icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () {
               widget.onBackPressed(context);
             },
@@ -528,7 +531,13 @@ class _SmallestPlayerItemPanelState
                   ),
                 ),
                 child: _buildMenuItem(
-                    title: t.playback.controls.superResolution.label),
+                    title: playerState.superResolutionType == 1
+                        ? t.playback.controls.superResolution.label
+                        : '${t.playback.controls.superResolution.label} (${switch (playerState.superResolutionType) {
+                            2 => t.playback.controls.superResolution.balanced,
+                            3 => t.playback.controls.superResolution.quality,
+                            _ => t.playback.controls.superResolution.off,
+                          }})'),
               ),
               SubmenuButton(
                 menuChildren: [
@@ -571,11 +580,13 @@ class _SmallestPlayerItemPanelState
                 child:
                     _buildMenuItem(title: t.playback.controls.syncplay.label),
               ),
-              MenuItemButton(
-                onPressed: widget.showDanmakuSwitch,
-                child: _buildMenuItem(
-                    title: t.playback.controls.menu.danmakuToggle),
-              ),
+              if (playerController.activeBiliCid == null ||
+                  playerController.activeBiliCid! <= 0)
+                MenuItemButton(
+                  onPressed: widget.showDanmakuSwitch,
+                  child: _buildMenuItem(
+                      title: t.playback.controls.menu.danmakuToggle),
+                ),
               MenuItemButton(
                 onPressed: () {
                   showModalBottomSheet(
@@ -627,7 +638,8 @@ class _SmallestPlayerItemPanelState
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildMenuItem({

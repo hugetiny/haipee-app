@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
@@ -26,6 +27,7 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
   final TextEditingController _timeoutController = TextEditingController();
   final TextEditingController _maxConcurrentController =
       TextEditingController();
+  String _downloadDirectory = '';
 
   final KazumiLogger _logger = KazumiLogger();
 
@@ -33,7 +35,9 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
   void initState() {
     super.initState();
     _loadSettings();
-    _checkAria2Status();
+    Future.microtask(() {
+      if (mounted) _checkAria2Status();
+    });
   }
 
   void _checkAria2Status() {
@@ -83,6 +87,115 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
       defaultValue: 2,
     ) as int)
         .toString();
+    _downloadDirectory = (setting.get(
+      SettingBoxKey.downloadDirectory,
+      defaultValue: '',
+    ) as String);
+  }
+
+  /// 调起系统原生文件夹选择器让用户直接挑选下载目录（无需手动输入文本）
+  Future<void> _pickDownloadDirectory() async {
+    try {
+      final selectedPath = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: '选择默认下载目录',
+        initialDirectory:
+            _downloadDirectory.isNotEmpty ? _downloadDirectory : null,
+      );
+
+      if (selectedPath != null && selectedPath.trim().isNotEmpty) {
+        final cleanPath = selectedPath.trim();
+        await GStorage.setting.put(SettingBoxKey.downloadDirectory, cleanPath);
+        if (!mounted) return;
+        setState(() {
+          _downloadDirectory = cleanPath;
+        });
+        KazumiDialog.showToast(message: '默认下载目录已更新为:\n$cleanPath');
+      }
+    } catch (e) {
+      _logger.log(Level.warning, '选择下载目录失败: $e');
+      if (mounted) {
+        KazumiDialog.showToast(message: '选择目录失败: $e');
+      }
+    }
+  }
+
+  /// 恢复系统默认下载目录
+  Future<void> _resetDownloadDirectory() async {
+    try {
+      await GStorage.setting.delete(SettingBoxKey.downloadDirectory);
+      if (!mounted) return;
+      setState(() {
+        _downloadDirectory = '';
+      });
+      KazumiDialog.showToast(message: '已恢复系统默认下载目录');
+    } catch (e) {
+      if (mounted) {
+        KazumiDialog.showToast(message: '重置目录失败: $e');
+      }
+    }
+  }
+
+  /// 在访达 / 资源管理器中打开当前下载目录
+  Future<void> _openFolderInSystem() async {
+    final path = _downloadDirectory.trim();
+    if (path.isEmpty) return;
+    try {
+      if (Platform.isMacOS) {
+        await Process.run('open', [path]);
+      } else if (Platform.isWindows) {
+        await Process.run('explorer.exe', [path]);
+      } else if (Platform.isLinux) {
+        await Process.run('xdg-open', [path]);
+      }
+    } catch (e) {
+      _logger.log(Level.warning, '打开目录失败: $e');
+    }
+  }
+
+  /// 高级用户手动输入下载目录对话框
+  void _showEditDownloadDirectoryDialog() {
+    final controller = TextEditingController(text: _downloadDirectory);
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('设置默认下载目录'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: '输入下载目录路径',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final newDir = controller.text.trim();
+              if (newDir.isNotEmpty) {
+                await GStorage.setting.put(SettingBoxKey.downloadDirectory, newDir);
+                if (!mounted) return;
+                setState(() {
+                  _downloadDirectory = newDir;
+                });
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('下载目录已更新'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _saveSettings() async {
@@ -410,6 +523,10 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final downloadSettings = ref.watch(downloadSettingsProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final textFieldWidth = (screenWidth < 500)
+        ? (screenWidth * 0.35).clamp(80.0, 130.0)
+        : 300.0;
 
     return Scaffold(
       appBar: SysAppBar(
@@ -423,8 +540,59 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
         ],
       ),
       body: SettingsList(
-        maxWidth: 1000,
         sections: [
+          SettingsSection(
+            title: const Text('下载目录'),
+            tiles: [
+              SettingsTile(
+                title: const Text('默认下载目录'),
+                description: Text(
+                  _downloadDirectory.isNotEmpty
+                      ? _downloadDirectory
+                      : '系统默认下载目录 (Downloads)',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                leading: const Icon(Icons.folder_open),
+                onPressed: (_) => _pickDownloadDirectory(),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FilledButton.tonalIcon(
+                      icon: const Icon(Icons.folder_open_outlined, size: 16),
+                      label: const Text('选择目录'),
+                      style: FilledButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                      onPressed: _pickDownloadDirectory,
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: '手动输入路径',
+                      onPressed: _showEditDownloadDirectoryDialog,
+                    ),
+                    if (_downloadDirectory.isNotEmpty) ...[
+                      if (Platform.isMacOS ||
+                          Platform.isWindows ||
+                          Platform.isLinux)
+                        IconButton(
+                          icon: const Icon(Icons.launch_outlined),
+                          tooltip: '在文件管理器中打开',
+                          onPressed: _openFolderInSystem,
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.restore_outlined),
+                        tooltip: '恢复系统默认',
+                        onPressed: _resetDownloadDirectory,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
           SettingsSection(
             title: const Text('aria2 设置'),
             tiles: [
@@ -433,7 +601,7 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
                 description: const Text('aria2 JSON-RPC 端点'),
                 leading: const Icon(Icons.link),
                 trailing: SizedBox(
-                  width: 300,
+                  width: textFieldWidth,
                   child: TextField(
                     controller: _endpointController,
                     decoration: const InputDecoration(
@@ -449,7 +617,7 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
                 description: const Text('aria2 RPC 密钥，留空表示无密钥'),
                 leading: const Icon(Icons.vpn_key),
                 trailing: SizedBox(
-                  width: 300,
+                  width: textFieldWidth,
                   child: TextField(
                     controller: _secretController,
                     decoration: const InputDecoration(
@@ -566,23 +734,43 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ElevatedButton.icon(
-                        onPressed: _checkAria2Status,
-                        icon: const Icon(Icons.refresh, size: 16),
-                        label: const Text('检查'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: downloadSettings.isRestartingAria2 ? null : _restartAria2,
-                        icon: downloadSettings.isRestartingAria2
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.restart_alt, size: 16),
-                        label: const Text('重启'),
-                      ),
+                      if (screenWidth < 450)
+                        IconButton(
+                          onPressed: _checkAria2Status,
+                          icon: const Icon(Icons.refresh, size: 20),
+                          tooltip: '检查',
+                        )
+                      else
+                        ElevatedButton.icon(
+                          onPressed: _checkAria2Status,
+                          icon: const Icon(Icons.refresh, size: 16),
+                          label: const Text('检查'),
+                        ),
+                      const SizedBox(width: 4),
+                      if (screenWidth < 450)
+                        IconButton(
+                          onPressed: downloadSettings.isRestartingAria2 ? null : _restartAria2,
+                          icon: downloadSettings.isRestartingAria2
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.restart_alt, size: 20),
+                          tooltip: '重启',
+                        )
+                      else
+                        ElevatedButton.icon(
+                          onPressed: downloadSettings.isRestartingAria2 ? null : _restartAria2,
+                          icon: downloadSettings.isRestartingAria2
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.restart_alt, size: 16),
+                          label: const Text('重启'),
+                        ),
                     ],
                   ),
                 ),

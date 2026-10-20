@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/plugins/plugins_controller.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
+import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:kazumi/pages/plugin_editor/widgets/plugin_dry_run_dialog.dart';
 import 'package:kazumi/plugins/plugins_providers.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 
@@ -57,213 +60,297 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
     muliSources = plugin.muliSources;
     useWebview = plugin.useWebview;
 
-    // ✅ Initialize providers with plugin values
-    // Since this is initState, we can safely set the initial state of the provider
-    // before the widget is built and starts watching it.
-    ref
-        .read(pluginEditorUIProvider.notifier)
-        .setUseNativePlayer(plugin.useNativePlayer);
-    ref.read(pluginEditorUIProvider.notifier).setUsePost(plugin.usePost);
-    ref
-        .read(pluginEditorUIProvider.notifier)
-        .setUseLegacyParser(plugin.useLegacyParser);
+    // ✅ Initialize providers with plugin values after the build phase
+    Future.microtask(() {
+      if (mounted) {
+        ref
+            .read(pluginEditorUIProvider.notifier)
+            .setUseNativePlayer(plugin.useNativePlayer);
+        ref.read(pluginEditorUIProvider.notifier).setUsePost(plugin.usePost);
+        ref
+            .read(pluginEditorUIProvider.notifier)
+            .setUseLegacyParser(plugin.useLegacyParser);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    apiController.dispose();
+    typeController.dispose();
+    nameController.dispose();
+    versionController.dispose();
+    userAgentController.dispose();
+    baseURLController.dispose();
+    searchURLController.dispose();
+    searchListController.dispose();
+    searchNameController.dispose();
+    searchResultController.dispose();
+    chapterRoadsController.dispose();
+    chapterResultController.dispose();
+    refererController.dispose();
+    super.dispose();
+  }
+
+  void _savePlugin() {
+    final Plugin plugin = widget.plugin;
+    plugin.api = apiController.text.trim().isEmpty
+        ? (widget.plugin.api.isEmpty ? '4' : widget.plugin.api)
+        : apiController.text.trim();
+    plugin.type = typeController.text.trim().isEmpty
+        ? (widget.plugin.type.isEmpty ? 'xpath' : widget.plugin.type)
+        : typeController.text.trim();
+    plugin.name = nameController.text.trim().isEmpty
+        ? widget.plugin.name
+        : nameController.text.trim();
+    plugin.version = versionController.text.trim();
+    plugin.userAgent = userAgentController.text;
+    plugin.baseUrl = baseURLController.text.trim();
+    plugin.searchURL = searchURLController.text.trim();
+    plugin.searchList = searchListController.text.trim();
+    plugin.searchName = searchNameController.text.trim();
+    plugin.searchResult = searchResultController.text.trim();
+    plugin.chapterRoads = chapterRoadsController.text.trim();
+    plugin.chapterResult = chapterResultController.text.trim();
+    plugin.muliSources = muliSources;
+    plugin.useWebview = useWebview;
+    // ✅ Read values from providers
+    plugin.useNativePlayer =
+        ref.read(pluginEditorUIProvider).useNativePlayer;
+    plugin.usePost = ref.read(pluginEditorUIProvider).usePost;
+    plugin.useLegacyParser =
+        ref.read(pluginEditorUIProvider).useLegacyParser;
+    plugin.referer = refererController.text;
+    pluginsController.updatePlugin(plugin);
+    KazumiDialog.showToast(message: '已保存规则: ${plugin.name}');
+    Navigator.of(context).pop();
+  }
+
+  Widget _buildFieldTile({
+    required TextEditingController controller,
+    required String label,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          isDense: true,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final Plugin plugin = widget.plugin;
     final editorTexts = context.t.settings.plugins.editor;
 
     return Scaffold(
       appBar: SysAppBar(
         title: Text(editorTexts.title),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: SizedBox(
-            width: (MediaQuery.of(context).size.width > 1000) ? 1000 : null,
-            child: Column(
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.name,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: versionController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.version,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: baseURLController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.baseUrl,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: searchURLController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.searchUrl,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: searchListController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.searchList,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: searchNameController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.searchName,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: searchResultController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.searchResult,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: chapterRoadsController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.chapterRoads,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: chapterResultController,
-                  decoration: InputDecoration(
-                    labelText: editorTexts.fields.chapterResult,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ExpansionTile(
-                  title: Text(editorTexts.advanced.title),
-                  children: [
-                    // ✅ Use provider for useLegacyParser
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final useLegacyParser = ref.watch(pluginEditorUIProvider
-                            .select((s) => s.useLegacyParser));
-                        return SwitchListTile(
-                          title: Text(editorTexts.advanced.legacyParser.title),
-                          subtitle:
-                              Text(editorTexts.advanced.legacyParser.subtitle),
-                          value: useLegacyParser,
-                          onChanged: (bool value) {
-                            ref
-                                .read(pluginEditorUIProvider.notifier)
-                                .setUseLegacyParser(value);
-                          },
-                        );
-                      },
-                    ),
-                    // ✅ Use provider for usePost
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final usePost = ref.watch(
-                            pluginEditorUIProvider.select((s) => s.usePost));
-                        return SwitchListTile(
-                          title: Text(editorTexts.advanced.httpPost.title),
-                          subtitle:
-                              Text(editorTexts.advanced.httpPost.subtitle),
-                          value: usePost,
-                          onChanged: (bool value) {
-                            ref
-                                .read(pluginEditorUIProvider.notifier)
-                                .setUsePost(value);
-                          },
-                        );
-                      },
-                    ),
-                    // ✅ Use provider for useNativePlayer
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final useNativePlayer = ref.watch(pluginEditorUIProvider
-                            .select((s) => s.useNativePlayer));
-                        return SwitchListTile(
-                          title: Text(editorTexts.advanced.nativePlayer.title),
-                          subtitle:
-                              Text(editorTexts.advanced.nativePlayer.subtitle),
-                          value: useNativePlayer,
-                          onChanged: (bool value) {
-                            ref
-                                .read(pluginEditorUIProvider.notifier)
-                                .setUseNativePlayer(value);
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: userAgentController,
-                      decoration: InputDecoration(
-                        labelText: editorTexts.fields.userAgent,
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: refererController,
-                      decoration: InputDecoration(
-                        labelText: editorTexts.fields.referer,
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+        actions: [
+          IconButton(
+            tooltip: '测试抓取 (Dry-Run)',
+            icon: const Icon(Icons.play_arrow_outlined),
+            onPressed: () {
+              final testPlugin = Plugin(
+                api: apiController.text.trim().isEmpty
+                    ? (widget.plugin.api.isEmpty ? '4' : widget.plugin.api)
+                    : apiController.text.trim(),
+                type: typeController.text.trim().isEmpty
+                    ? (widget.plugin.type.isEmpty ? 'xpath' : widget.plugin.type)
+                    : typeController.text.trim(),
+                name: nameController.text.trim().isEmpty
+                    ? widget.plugin.name
+                    : nameController.text.trim(),
+                version: versionController.text.trim(),
+                muliSources: muliSources,
+                useWebview: useWebview,
+                useNativePlayer:
+                    ref.read(pluginEditorUIProvider).useNativePlayer,
+                usePost: ref.read(pluginEditorUIProvider).usePost,
+                useLegacyParser:
+                    ref.read(pluginEditorUIProvider).useLegacyParser,
+                userAgent: userAgentController.text,
+                baseUrl: baseURLController.text.trim(),
+                searchURL: searchURLController.text.trim(),
+                searchList: searchListController.text.trim(),
+                searchName: searchNameController.text.trim(),
+                searchResult: searchResultController.text.trim(),
+                chapterRoads: chapterRoadsController.text.trim(),
+                chapterResult: chapterResultController.text.trim(),
+                referer: refererController.text,
+                searchMode: widget.plugin.searchMode,
+                searchApiConfig: widget.plugin.searchApiConfig,
+                chapterMode: widget.plugin.chapterMode,
+                chapterApiConfig: widget.plugin.chapterApiConfig,
+                adBlocker: widget.plugin.adBlocker,
+              );
+              PluginDryRunDialog.show(context, testPlugin);
+            },
           ),
-        ),
+          IconButton(
+            tooltip: '保存规则',
+            icon: const Icon(Icons.save_outlined),
+            onPressed: _savePlugin,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SettingsList(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        sections: [
+          SettingsSection(
+            title: const Text('基本信息'),
+            tiles: [
+              _buildFieldTile(
+                controller: nameController,
+                label: editorTexts.fields.name,
+              ),
+              _buildFieldTile(
+                controller: versionController,
+                label: editorTexts.fields.version,
+              ),
+              _buildFieldTile(
+                controller: typeController,
+                label: '规则类型 (如 xpath, maccms, anime)',
+              ),
+              _buildFieldTile(
+                controller: apiController,
+                label: 'API 级别 (如 4)',
+              ),
+              _buildFieldTile(
+                controller: baseURLController,
+                label: editorTexts.fields.baseUrl,
+              ),
+            ],
+          ),
+          SettingsSection(
+            title: const Text('搜索与列表规则 (XPath)'),
+            tiles: [
+              _buildFieldTile(
+                controller: searchURLController,
+                label: editorTexts.fields.searchUrl,
+              ),
+              _buildFieldTile(
+                controller: searchListController,
+                label: editorTexts.fields.searchList,
+              ),
+              _buildFieldTile(
+                controller: searchNameController,
+                label: editorTexts.fields.searchName,
+              ),
+              _buildFieldTile(
+                controller: searchResultController,
+                label: editorTexts.fields.searchResult,
+              ),
+            ],
+          ),
+          SettingsSection(
+            title: const Text('剧集与线路规则 (XPath)'),
+            tiles: [
+              _buildFieldTile(
+                controller: chapterRoadsController,
+                label: editorTexts.fields.chapterRoads,
+              ),
+              _buildFieldTile(
+                controller: chapterResultController,
+                label: editorTexts.fields.chapterResult,
+              ),
+            ],
+          ),
+          SettingsSection(
+            title: Text(editorTexts.advanced.title),
+            tiles: [
+              SettingsTile.switchTile(
+                title: const Text('多线路支持'),
+                description: const Text('该规则提供多个解析线路'),
+                initialValue: muliSources,
+                onToggle: (bool? value) {
+                  setState(() {
+                    muliSources = value ?? true;
+                  });
+                },
+              ),
+              SettingsTile.switchTile(
+                title: const Text('WebView 解析'),
+                description: const Text('通过无头 WebView 渲染嗅探解析页面'),
+                initialValue: useWebview,
+                onToggle: (bool? value) {
+                  setState(() {
+                    useWebview = value ?? false;
+                  });
+                },
+              ),
+              Consumer(
+                builder: (context, ref, child) {
+                  final useNativePlayer = ref.watch(pluginEditorUIProvider
+                      .select((s) => s.useNativePlayer));
+                  return SettingsTile.switchTile(
+                    title: Text(editorTexts.advanced.nativePlayer.title),
+                    description:
+                        Text(editorTexts.advanced.nativePlayer.subtitle),
+                    initialValue: useNativePlayer,
+                    onToggle: (bool? value) {
+                      ref
+                          .read(pluginEditorUIProvider.notifier)
+                          .setUseNativePlayer(value ?? false);
+                    },
+                  );
+                },
+              ),
+              Consumer(
+                builder: (context, ref, child) {
+                  final usePost = ref.watch(
+                      pluginEditorUIProvider.select((s) => s.usePost));
+                  return SettingsTile.switchTile(
+                    title: Text(editorTexts.advanced.httpPost.title),
+                    description: Text(editorTexts.advanced.httpPost.subtitle),
+                    initialValue: usePost,
+                    onToggle: (bool? value) {
+                      ref
+                          .read(pluginEditorUIProvider.notifier)
+                          .setUsePost(value ?? false);
+                    },
+                  );
+                },
+              ),
+              Consumer(
+                builder: (context, ref, child) {
+                  final useLegacyParser = ref.watch(pluginEditorUIProvider
+                      .select((s) => s.useLegacyParser));
+                  return SettingsTile.switchTile(
+                    title: Text(editorTexts.advanced.legacyParser.title),
+                    description:
+                        Text(editorTexts.advanced.legacyParser.subtitle),
+                    initialValue: useLegacyParser,
+                    onToggle: (bool? value) {
+                      ref
+                          .read(pluginEditorUIProvider.notifier)
+                          .setUseLegacyParser(value ?? false);
+                    },
+                  );
+                },
+              ),
+              _buildFieldTile(
+                controller: userAgentController,
+                label: editorTexts.fields.userAgent,
+              ),
+              _buildFieldTile(
+                controller: refererController,
+                label: editorTexts.fields.referer,
+              ),
+            ],
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
+        tooltip: '保存规则',
+        onPressed: _savePlugin,
         child: const Icon(Icons.save),
-        onPressed: () async {
-          plugin.api = apiController.text;
-          plugin.type = typeController.text;
-          plugin.name = nameController.text;
-          plugin.version = versionController.text;
-          plugin.userAgent = userAgentController.text;
-          plugin.baseUrl = baseURLController.text;
-          plugin.searchURL = searchURLController.text;
-          plugin.searchList = searchListController.text;
-          plugin.searchName = searchNameController.text;
-          plugin.searchResult = searchResultController.text;
-          plugin.chapterRoads = chapterRoadsController.text;
-          plugin.chapterResult = chapterResultController.text;
-          plugin.muliSources = muliSources;
-          plugin.useWebview = useWebview;
-          // ✅ Read values from providers
-          plugin.useNativePlayer =
-              ref.read(pluginEditorUIProvider).useNativePlayer;
-          plugin.usePost = ref.read(pluginEditorUIProvider).usePost;
-          plugin.useLegacyParser =
-              ref.read(pluginEditorUIProvider).useLegacyParser;
-          plugin.referer = refererController.text;
-          pluginsController.updatePlugin(plugin);
-          Navigator.of(context).pop();
-        },
       ),
     );
   }

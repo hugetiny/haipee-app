@@ -1,0 +1,57 @@
+id: torrentscsv
+name: Torrents.csv
+description: "Torrents.csv 是一个去中心化、基于 CSV 仓储构建的公共 BT 资源聚合索引站。"
+language: en-US
+type: public
+encoding: UTF-8
+links:
+  - https://torrents-csv.com/
+
+caps:
+  categorymappings:
+    - { id: 1, cat: 2000, desc: "Movies" }
+    - { id: 2, cat: 5000, desc: "TV" }
+    - { id: 3, cat: 1000, desc: "Music" }
+    - { id: 4, cat: 4050, desc: "Games" }
+    - { id: 5, cat: 4000, desc: "Software" }
+    - { id: 6, cat: 3000, desc: "Books" }
+    - { id: 7, cat: 8000, desc: "Other" }
+
+search:
+  paths:
+    - path: "service/search?size=100&q={{ .Keywords }}"
+      response:
+        type: json
+
+  rows:
+    selector: "torrents"
+
+  fields:
+    title:
+      selector: "name"
+      filters:
+        - name: trim
+    infohash:
+      selector: "infohash"
+      filters:
+        - name: trim
+    details:
+      selector: "infohash"
+      filters:
+        - name: prepend
+          args: "https://torrents-csv.com/?q="
+    magnet:
+      selector: "infohash"
+      filters:
+        - name: append
+          args: "&dn={{ .Result.title }}&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A6969%2Fannounce"
+        - name: prepend
+          args: "magnet:?xt=urn:btih:"
+    size:
+      selector: "size_bytes"
+    seeders:
+      selector: "seeders"
+    leechers:
+      selector: "leechers"
+    date:
+      selector: "created_unix"

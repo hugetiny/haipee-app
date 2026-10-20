@@ -73,18 +73,20 @@ class NavigationBarController extends Notifier<NavigationBarStateData> {
   /// 根据路由路径获取对应的导航索引
   int? _getIndexFromRoute(String path) {
     switch (path) {
+      case Routes.onlineVideo:
       case Routes.popular:
         return 0;
-      case Routes.timeline:
-        return 1;
       case Routes.resource:
+        return 1;
+      case Routes.media:
+      case Routes.my:
+      case Routes.timeline:
         return 2;
       case Routes.download:
         return 3;
-      case Routes.my:
-        return 4;
       case Routes.settings:
-        return 5;
+      case Routes.settingsRoot:
+        return 4;
       default:
         return null; // 非主导航路由，不更新索引
     }
@@ -94,19 +96,17 @@ class NavigationBarController extends Notifier<NavigationBarStateData> {
   String getRouteFromIndex(int index) {
     switch (index) {
       case 0:
-        return Routes.popular;
+        return Routes.onlineVideo;
       case 1:
-        return Routes.timeline;
-      case 2:
         return Routes.resource;
+      case 2:
+        return Routes.media;
       case 3:
         return Routes.download;
       case 4:
-        return Routes.my;
-      case 5:
         return Routes.settings;
       default:
-        return Routes.popular;
+        return Routes.onlineVideo;
     }
   }
 }
@@ -131,7 +131,7 @@ final navigationProvider =
 /// 用于监听路由变化，自动同步导航状态
 class CurrentRouteNotifier extends Notifier<String> {
   @override
-  String build() => Routes.popular;
+  String build() => Routes.onlineVideo;
 
   void updateRoute(String path) {
     if (state != path) {

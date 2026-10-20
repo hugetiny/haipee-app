@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,7 +15,14 @@ bool get _supportsDragAndDrop => !kIsWeb && !Platform.isWindows;
 /// 新建下载对话框
 /// 支持：URL 输入、种子文件选择、种子文件拖拽、磁力链接
 class AddDownloadDialog extends ConsumerStatefulWidget {
-  const AddDownloadDialog({super.key});
+  final String? initialUrl;
+  final String? initialFileName;
+
+  const AddDownloadDialog({
+    super.key,
+    this.initialUrl,
+    this.initialFileName,
+  });
 
   @override
   ConsumerState<AddDownloadDialog> createState() => _AddDownloadDialogState();
@@ -24,6 +32,11 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _urlController = TextEditingController();
+  final TextEditingController _fileNameController = TextEditingController();
+  final TextEditingController _cookieController = TextEditingController();
+  final TextEditingController _refererController = TextEditingController();
+  final TextEditingController _userAgentController = TextEditingController();
+  final TextEditingController _headersController = TextEditingController();
   final TextEditingController _savePathController = TextEditingController();
   final KazumiLogger _logger = KazumiLogger();
 
@@ -40,12 +53,74 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    if (widget.initialUrl != null && widget.initialUrl!.isNotEmpty) {
+      _urlController.text = widget.initialUrl!;
+    }
+    if (widget.initialFileName != null && widget.initialFileName!.isNotEmpty) {
+      _fileNameController.text = widget.initialFileName!;
+    }
+    _urlController.addListener(_onUrlChanged);
+    if (_urlController.text.isNotEmpty) {
+      _onUrlChanged();
+    }
+  }
+
+  void _onUrlChanged() {
+    final text = _urlController.text.trim();
+    if (_fileNameController.text.isEmpty && text.isNotEmpty) {
+      _tryAutoDetectFilename(text);
+    }
+    if (text.contains('gofile.io')) {
+      if (_refererController.text.isEmpty) {
+        _refererController.text = 'https://gofile.io/';
+      }
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _tryAutoDetectFilename(String text) {
+    final lines = text.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (lines.length == 1) {
+      try {
+        final uri = Uri.parse(lines.first);
+        final segs = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+        if (segs.isNotEmpty) {
+          final last = Uri.decodeComponent(segs.last);
+          if (last.contains('.') && !last.startsWith('?')) {
+            _fileNameController.text = last;
+          }
+        }
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _pasteFromClipboard() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      if (data?.text != null && data!.text!.trim().isNotEmpty) {
+        final text = data.text!.trim();
+        if (_urlController.text.isEmpty) {
+          _urlController.text = text;
+        } else {
+          _urlController.text = '${_urlController.text}\n$text';
+        }
+        _tryAutoDetectFilename(text);
+      }
+    } catch (e) {
+      _logger.log(Level.warning, '[AddDownloadDialog] Clipboard error: $e');
+    }
   }
 
   @override
   void dispose() {
+    _urlController.removeListener(_onUrlChanged);
     _tabController.dispose();
     _urlController.dispose();
+    _fileNameController.dispose();
+    _cookieController.dispose();
+    _refererController.dispose();
+    _userAgentController.dispose();
+    _headersController.dispose();
     _savePathController.dispose();
     // 释放ValueNotifier资源
     _torrentFileNotifier.dispose();
@@ -130,23 +205,74 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // URL 输入提示
-          Text(
-            '支持 HTTP/HTTPS/FTP/磁力链接',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '支持 HTTP/HTTPS/FTP/磁力链接',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              TextButton.icon(
+                onPressed: _pasteFromClipboard,
+                icon: const Icon(Icons.paste, size: 16),
+                label: const Text('粘贴剪贴板'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
                 ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // URL 输入框
           TextField(
             controller: _urlController,
-            maxLines: 5,
-            decoration: InputDecoration(
+            maxLines: 4,
+            decoration: const InputDecoration(
               hintText:
                   '输入下载链接，每行一个\n支持：\n- HTTP/HTTPS 链接\n- FTP 链接\n- 磁力链接（magnet:?xt=...）',
-              border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.link),
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.link),
+            ),
+          ),
+          if (_urlController.text.contains('gofile.io')) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Color(0xFF0A84FF), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '检测到 gofile.io 链接：已自动填充 Referer。若下载返回几 KB 的重定向页面导致鉴权失败，请在下方“高级选项”中填入 Cookie 或使用包含下载 Token 的直接链接。',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.primary,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          // 自定义文件名（单任务时可用）
+          TextField(
+            controller: _fileNameController,
+            decoration: const InputDecoration(
+              labelText: '保存文件名（可选）',
+              hintText: '例如: my_archive.rar（留空自动解析）',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.drive_file_rename_outline),
+              helperText: '仅在添加单个链接时生效，留空则自动从 URL 或服务器头获取',
             ),
           ),
           const SizedBox(height: 16),
@@ -310,6 +436,54 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
                       icon: const Icon(Icons.folder_open),
                       onPressed: _pickSavePath,
                     ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Cookie
+                TextField(
+                  controller: _cookieController,
+                  decoration: const InputDecoration(
+                    labelText: 'Cookie（网盘鉴权/登录凭证，可选）',
+                    hintText: '例如: accountToken=... 或 cf_clearance=...',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.cookie_outlined),
+                    helperText: '适用于需要登录或鉴权的网盘直链（如 gofile.io、123云盘等）',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Referer
+                TextField(
+                  controller: _refererController,
+                  decoration: const InputDecoration(
+                    labelText: 'Referer（防盗链来源，可选）',
+                    hintText: '例如: https://gofile.io/',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.link_outlined),
+                    helperText: '部分网盘直链需要校验来源页面',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // User-Agent
+                TextField(
+                  controller: _userAgentController,
+                  decoration: const InputDecoration(
+                    labelText: 'User-Agent（浏览器标识，可选）',
+                    hintText: '留空默认使用内置 Chrome 标识',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.devices_outlined),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // 其他自定义请求头
+                TextField(
+                  controller: _headersController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: '其他自定义请求头（可选）',
+                    hintText: '每行一个，例如:\nAuthorization: Bearer xxx',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.http),
+                    helperText: '可自定义其他任意 HTTP Header',
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -477,6 +651,37 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
     if (_savePathController.text.isNotEmpty) {
       options['dir'] = _savePathController.text;
     }
+    final customName = _fileNameController.text.trim();
+    if (customName.isNotEmpty && urls.length == 1) {
+      options['out'] = customName;
+    }
+
+    final headersList = <String>[];
+    final cookie = _cookieController.text.trim();
+    if (cookie.isNotEmpty) {
+      headersList.add('Cookie: $cookie');
+    }
+    final referer = _refererController.text.trim();
+    if (referer.isNotEmpty) {
+      headersList.add('Referer: $referer');
+    }
+    final ua = _userAgentController.text.trim();
+    if (ua.isNotEmpty) {
+      options['user-agent'] = ua;
+      headersList.add('User-Agent: $ua');
+    }
+    if (_headersController.text.trim().isNotEmpty) {
+      final headers = _headersController.text
+          .split('\n')
+          .map((h) => h.trim())
+          .where((h) => h.isNotEmpty && h.contains(':'))
+          .toList();
+      headersList.addAll(headers);
+    }
+    if (headersList.isNotEmpty) {
+      options['header'] = headersList;
+    }
+
     options['max-connection-per-server'] = _connectionsNotifier.value;
     options['split'] = _splitNotifier.value;
 

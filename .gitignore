@@ -14,6 +14,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+prowlarr_indexers/
 
 # Archives & credentials
 *.apk
@@ -145,3 +146,8 @@ packages/
 # Windows build dependencies cache
 build_resources/
 pubspec.lock
+
+# Native desktop binaries & external libraries
+macos/Frameworks/
+third_party/
+assets/bin/macos/torrserver

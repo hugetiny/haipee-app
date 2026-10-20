@@ -7,19 +7,13 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:kazumi/utils/logger.dart';
+import 'package:logger/logger.dart' show Level;
 
 class ApiInterceptor extends Interceptor {
   static Box setting = GStorage.setting;
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // Github mirror
-    if (options.path.contains('github')) {
-      bool enableGitProxy =
-          setting.get(SettingBoxKey.enableGitProxy, defaultValue: false);
-      if (enableGitProxy) {
-        options.path = Api.gitMirror + options.path;
-      }
-    }
     if (options.path.contains(Api.dandanAPIDomain)) {
       var timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       final String appId = GStorage.readDanDanAppId();
@@ -48,15 +42,27 @@ class ApiInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     String url = err.requestOptions.uri.toString();
-    if (!url.contains('heartBeat') &&
-        err.requestOptions.extra['customError'] != '') {
-      if (err.requestOptions.extra['customError'] == null) {
+    final dynamic customError = err.requestOptions.extra['customError'];
+    final bool isSilent = err.requestOptions.extra['silent'] == true ||
+        customError == '' ||
+        customError == false;
+    final bool showToast = err.requestOptions.extra['showToast'] == true;
+
+    // Standardize error handling: silently record into unified logging architecture
+    KazumiLogger().log(
+      Level.warning,
+      '网络请求失败 [${err.type}]: $url (${err.message ?? ""})',
+      error: err,
+    );
+
+    if (!url.contains('heartBeat') && !isSilent && showToast) {
+      if (customError is String && customError.isNotEmpty) {
         KazumiDialog.showToast(
-          message: await dioError(err),
+          message: customError,
         );
       } else {
         KazumiDialog.showToast(
-          message: err.requestOptions.extra['customError'],
+          message: await dioError(err),
         );
       }
     }

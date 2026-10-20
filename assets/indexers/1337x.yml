@@ -1,0 +1,56 @@
+---
+id: 1337x
+name: 1337x
+description: "1337x is a public torrent site that provides a directory of torrent files and magnet links."
+language: en-US
+type: public
+encoding: UTF-8
+links:
+  - https://1337x.to/
+  - https://1337x.st/
+  - https://1337x.ws/
+
+caps:
+  categorymappings:
+    - {id: Movies, cat: 2000, desc: "Movies"}
+    - {id: TV, cat: 5000, desc: "TV"}
+    - {id: Games, cat: 4050, desc: "Games"}
+    - {id: Music, cat: 1000, desc: "Music"}
+    - {id: Apps, cat: 4000, desc: "Applications"}
+    - {id: Anime, cat: 5070, desc: "Anime"}
+    - {id: Documentaries, cat: 5080, desc: "Documentaries"}
+    - {id: Other, cat: 7000, desc: "Other"}
+
+  modes:
+    search: [q]
+
+search:
+  paths:
+    - path: "{{ if .Keywords }}search/{{ .Keywords }}/1/{{ else }}popular-week{{ end }}"
+
+  rows:
+    selector: table.table-list > tbody > tr
+
+  fields:
+    category:
+      selector: td.coll-1 a:first-child
+      attribute: href
+      filters:
+        - name: regexp
+          args: "/sub/\\d+/([^/]+)/"
+    title:
+      selector: td.coll-1 a:nth-child(2)
+    details:
+      selector: td.coll-1 a:nth-child(2)
+      attribute: href
+    size:
+      selector: td.coll-4
+      filters:
+        - name: regexp
+          args: "([\\d\\.]+\\s+[KMGTP]?i?B)"
+    seeders:
+      selector: td.coll-2
+    leechers:
+      selector: td.coll-3
+    date:
+      selector: td.coll-date

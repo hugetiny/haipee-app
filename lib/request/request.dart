@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
 import 'package:kazumi/request/core/bangumi_transport.dart';
+import 'package:kazumi/request/core/dio_logger_interceptor.dart';
+import 'package:kazumi/request/core/git_proxy_interceptor.dart';
 import 'package:kazumi/request/core/network_config.dart';
 import 'package:kazumi/request/interceptor.dart';
 import 'package:kazumi/utils/utils.dart';
@@ -43,25 +45,33 @@ class Request {
       baseUrl: '',
       connectTimeout: const Duration(milliseconds: 12000),
       receiveTimeout: const Duration(milliseconds: 12000),
-      headers: {},
+      headers: {
+        'user-agent': Utils.getRandomUA(),
+      },
+    );
+
+    final defaultAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final HttpClient client = HttpClient();
+        client.badCertificateCallback = (cert, host, port) => true;
+        client.findProxy = HttpClient.findProxyFromEnvironment;
+        return client;
+      },
     );
 
     dio = Dio(options);
     dio.httpClientAdapter = BangumiEchAdapter(
-      fallback: dio.httpClientAdapter,
+      fallback: defaultAdapter,
       config: NetworkConfig(),
     );
 
     // 拦截器
+    dio.interceptors.add(GitProxyInterceptor());
     dio.interceptors.add(BangumiAccelerationInterceptor());
     dio.interceptors.add(ApiInterceptor());
 
-    // 日志拦截器 输出请求、响应内容
-    dio.interceptors.add(LogInterceptor(
-      request: false,
-      requestHeader: false,
-      responseHeader: false,
-    ));
+    // 统一日志拦截器，直接对接 Talker / AppLog
+    dio.interceptors.add(DioLoggerInterceptor());
 
     dio.transformer = BackgroundTransformer();
     dio.options.validateStatus = (int? status) {
@@ -75,12 +85,13 @@ class Request {
     ResponseType resType = ResponseType.json;
     options ??= Options();
     if (extra != null) {
-      resType = extra!['resType'] ?? ResponseType.json;
+      resType = extra['resType'] ?? ResponseType.json;
       if (extra['ua'] != null) {
         options.headers = {'user-agent': headerUa(type: extra['ua'])};
       }
-      if (extra['customError'] != null) {
-        options.extra = {'customError': extra['customError']};
+      options.extra ??= <String, dynamic>{};
+      if (extra is Map) {
+        options.extra!.addAll(Map<String, dynamic>.from(extra));
       }
     }
     options.responseType = resType;
@@ -115,6 +126,13 @@ class Request {
       extra,
       bool shouldRethrow = false}) async {
     Response response;
+    options ??= Options();
+    if (extra != null) {
+      options.extra ??= <String, dynamic>{};
+      if (extra is Map) {
+        options.extra!.addAll(Map<String, dynamic>.from(extra));
+      }
+    }
     try {
       response = await dio.post(
         url,

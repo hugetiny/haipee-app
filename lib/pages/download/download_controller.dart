@@ -3,7 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/modules/download/download_task.dart';
+import 'package:kazumi/modules/download/download_file_utils.dart';
+import 'package:kazumi/modules/download/gofile_helper.dart';
+import 'package:kazumi/modules/torrent_stream/torrent_tracker_service.dart';
 import 'package:kazumi/utils/aria2_client.dart';
+import 'package:kazumi/utils/aria2_feature_manager.dart';
 import 'package:kazumi/utils/aria2_process_manager.dart';
 import 'package:kazumi/utils/aria2_websocket.dart';
 import 'package:kazumi/utils/storage.dart';
@@ -13,57 +17,97 @@ import 'package:logger/logger.dart';
 class DownloadState {
   final List<DownloadTask> activeTasks;
   final List<DownloadTask> waitingTasks;
+  final List<DownloadTask> pausedTasks;
   final List<DownloadTask> completedTasks;
+  final List<DownloadTask> failedTasks;
   final bool isLoading;
   final String? errorMessage;
   final bool isConnected;
   final Aria2ConnectionState wsConnectionState;
   final DateTime? lastSyncTime;
   final bool needsRefresh;
+  final int globalDownloadSpeed;
+  final int globalUploadSpeed;
 
   const DownloadState({
     this.activeTasks = const [],
     this.waitingTasks = const [],
+    this.pausedTasks = const [],
     this.completedTasks = const [],
+    this.failedTasks = const [],
     this.isLoading = false,
     this.errorMessage,
     this.isConnected = false,
     this.wsConnectionState = Aria2ConnectionState.disconnected,
     this.lastSyncTime,
     this.needsRefresh = false,
+    this.globalDownloadSpeed = 0,
+    this.globalUploadSpeed = 0,
   });
+
+  static const Object _undefined = Object();
 
   DownloadState copyWith({
     List<DownloadTask>? activeTasks,
     List<DownloadTask>? waitingTasks,
+    List<DownloadTask>? pausedTasks,
     List<DownloadTask>? completedTasks,
+    List<DownloadTask>? failedTasks,
     bool? isLoading,
-    String? errorMessage,
+    Object? errorMessage = _undefined,
     bool? isConnected,
     Aria2ConnectionState? wsConnectionState,
     DateTime? lastSyncTime,
     bool? needsRefresh,
+    int? globalDownloadSpeed,
+    int? globalUploadSpeed,
   }) {
     return DownloadState(
       activeTasks: activeTasks ?? this.activeTasks,
       waitingTasks: waitingTasks ?? this.waitingTasks,
+      pausedTasks: pausedTasks ?? this.pausedTasks,
       completedTasks: completedTasks ?? this.completedTasks,
+      failedTasks: failedTasks ?? this.failedTasks,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      errorMessage: identical(errorMessage, _undefined)
+          ? this.errorMessage
+          : errorMessage as String?,
       isConnected: isConnected ?? this.isConnected,
       wsConnectionState: wsConnectionState ?? this.wsConnectionState,
       lastSyncTime: lastSyncTime ?? this.lastSyncTime,
       needsRefresh: needsRefresh ?? this.needsRefresh,
+      globalDownloadSpeed: globalDownloadSpeed ?? this.globalDownloadSpeed,
+      globalUploadSpeed: globalUploadSpeed ?? this.globalUploadSpeed,
     );
   }
 
   int get totalDownloading => activeTasks.length + waitingTasks.length;
+  int get totalPaused => pausedTasks.length;
   int get totalCompleted => completedTasks.length;
-  int get totalFailed => completedTasks.where((t) => t.isError).length;
+  int get totalFailed => failedTasks.length;
+  int get totalAll =>
+      activeTasks.length +
+      waitingTasks.length +
+      pausedTasks.length +
+      completedTasks.length +
+      failedTasks.length;
 
   // Calculate total download speed
   int get totalDownloadSpeed {
-    return activeTasks.fold(0, (sum, task) => sum + task.downloadSpeed);
+    final activeSpeed =
+        activeTasks.fold(0, (sum, task) => sum + task.downloadSpeed);
+    return globalDownloadSpeed > activeSpeed
+        ? globalDownloadSpeed
+        : activeSpeed;
+  }
+
+  // Calculate total upload speed
+  int get totalUploadSpeed {
+    final activeUpload =
+        activeTasks.fold(0, (sum, task) => sum + task.uploadSpeed);
+    return globalUploadSpeed > activeUpload
+        ? globalUploadSpeed
+        : activeUpload;
   }
 
   // Calculate total remaining bytes
@@ -86,8 +130,11 @@ class DownloadState {
 }
 
 class DownloadController extends Notifier<DownloadState> {
+  bool _isDisposed = false;
+
   @override
   DownloadState build() {
+    _isDisposed = false;
     ref.onDispose(_cleanup);
     Future.microtask(() => _initialize());
     return const DownloadState();
@@ -124,8 +171,11 @@ class DownloadController extends Notifier<DownloadState> {
 
   Future<void> _initialize() async {
     try {
-      _aria2Client = Aria2Client.fromSettings();
       await _loadFromStorage();
+      if (Aria2FeatureManager().isAvailable && !Aria2ProcessManager().isRunning) {
+        await Aria2ProcessManager().start();
+      }
+      _aria2Client = Aria2Client.fromSettings();
       await refreshDownloads();
       _connectWebSocket();
       _startSmartSync();
@@ -146,6 +196,7 @@ class DownloadController extends Notifier<DownloadState> {
         onEvent: _handleWebSocketEvent,
         onBatchEvents: _handleBatchWebSocketEvents,
         onConnected: () {
+          if (_isDisposed || !ref.mounted) return;
           _logger.log(Level.info, '[DownloadController] WebSocket connected');
           state = state.copyWith(
             wsConnectionState: Aria2ConnectionState.connected,
@@ -157,6 +208,7 @@ class DownloadController extends Notifier<DownloadState> {
         onDisconnected: () {
           _logger.log(
               Level.warning, '[DownloadController] WebSocket disconnected');
+          if (_isDisposed || !ref.mounted) return;
           state = state.copyWith(
             wsConnectionState: Aria2ConnectionState.disconnected,
           );
@@ -172,6 +224,7 @@ class DownloadController extends Notifier<DownloadState> {
       // 监听连接状态变化
       _wsStateSubscription =
           _wsClient!.connectionStateStream.listen((newState) {
+        if (_isDisposed || !ref.mounted) return;
         state = state.copyWith(wsConnectionState: newState);
 
         // Broadcast to external stream
@@ -285,7 +338,9 @@ class DownloadController extends Notifier<DownloadState> {
     final allTasks = [
       ...state.activeTasks,
       ...state.waitingTasks,
+      ...state.pausedTasks,
       ...state.completedTasks,
+      ...state.failedTasks,
     ];
 
     final taskIndex = allTasks.indexWhere((t) => t.gid == gid);
@@ -328,7 +383,9 @@ class DownloadController extends Notifier<DownloadState> {
     final allTasks = [
       ...state.activeTasks,
       ...state.waitingTasks,
+      ...state.pausedTasks,
       ...state.completedTasks,
+      ...state.failedTasks,
     ];
 
     // 应用缓存的乐观更新
@@ -339,22 +396,30 @@ class DownloadController extends Notifier<DownloadState> {
     // 重新分配到对应的列表
     final active = <DownloadTask>[];
     final waiting = <DownloadTask>[];
+    final paused = <DownloadTask>[];
     final completed = <DownloadTask>[];
+    final failed = <DownloadTask>[];
 
     for (var task in updatedTasks) {
       if (task.isActive) {
         active.add(task);
-      } else if (task.isWaiting || task.isPaused) {
+      } else if (task.isWaiting) {
         waiting.add(task);
-      } else {
+      } else if (task.isPaused) {
+        paused.add(task);
+      } else if (task.isComplete) {
         completed.add(task);
+      } else if (task.isError) {
+        failed.add(task);
       }
     }
 
     state = state.copyWith(
       activeTasks: active,
       waitingTasks: waiting,
+      pausedTasks: paused,
       completedTasks: completed,
+      failedTasks: failed,
     );
   }
 
@@ -363,7 +428,9 @@ class DownloadController extends Notifier<DownloadState> {
     state = state.copyWith(
       activeTasks: state.activeTasks.where((t) => t.gid != gid).toList(),
       waitingTasks: state.waitingTasks.where((t) => t.gid != gid).toList(),
+      pausedTasks: state.pausedTasks.where((t) => t.gid != gid).toList(),
       completedTasks: state.completedTasks.where((t) => t.gid != gid).toList(),
+      failedTasks: state.failedTasks.where((t) => t.gid != gid).toList(),
     );
     _optimisticTaskCache.remove(gid);
   }
@@ -373,20 +440,35 @@ class DownloadController extends Notifier<DownloadState> {
       final box = GStorage.downloadTasks;
       final List<DownloadTask> tasks = [];
       for (var key in box.keys) {
-        final task = box.get(key);
+        var task = box.get(key);
         if (task is DownloadTask) {
+          if (task.isComplete) {
+            final validation = DownloadFileUtils.validateDownloadedContent(task);
+            if (!validation.isValid) {
+              task = task.copyWith(
+                status: 'error',
+                errorMessage: validation.errorMessage ?? '下载内容为重定向网页或鉴权失败，文件可能已失效',
+                errorCode: 24,
+              );
+              box.put(key, task);
+            }
+          }
           tasks.add(task);
         }
       }
 
       final active = tasks.where((t) => t.isActive).toList();
-      final waiting = tasks.where((t) => t.isWaiting || t.isPaused).toList();
-      final completed = tasks.where((t) => t.isComplete || t.isError).toList();
+      final waiting = tasks.where((t) => t.isWaiting).toList();
+      final paused = tasks.where((t) => t.isPaused).toList();
+      final completed = tasks.where((t) => t.isComplete).toList();
+      final failed = tasks.where((t) => t.isError).toList();
 
       state = state.copyWith(
         activeTasks: active,
         waitingTasks: waiting,
+        pausedTasks: paused,
         completedTasks: completed,
+        failedTasks: failed,
       );
     } catch (e) {
       _logger.log(
@@ -458,18 +540,32 @@ class DownloadController extends Notifier<DownloadState> {
   }
 
   Future<void> refreshDownloads() async {
-    _aria2Client ??= Aria2Client.fromSettings();
+    if (_isDisposed || !ref.mounted) return;
+
+    final activePort = Aria2ProcessManager.activePort;
+    if (_aria2Client == null ||
+        (activePort != null && _aria2Client!.endpoint.port != activePort)) {
+      _aria2Client = Aria2Client.fromSettings();
+    }
 
     try {
       final activeResults = await _aria2Client!.tellActive();
+      if (_isDisposed || !ref.mounted) return;
+
       final waitingResults = await _aria2Client!.tellWaiting(0, 100);
+      if (_isDisposed || !ref.mounted) return;
+
       final stoppedResults = await _aria2Client!.tellStopped(0, 100);
+      if (_isDisposed || !ref.mounted) return;
 
       final List<DownloadTask> activeTasks = [];
       final List<DownloadTask> waitingTasks = [];
+      final List<DownloadTask> pausedTasks = [];
       final List<DownloadTask> completedTasks = [];
+      final List<DownloadTask> failedTasks = [];
 
       final box = GStorage.downloadTasks;
+      if (!box.isOpen) return;
 
       // 处理活动任务
       for (var result in activeResults) {
@@ -489,7 +585,7 @@ class DownloadController extends Notifier<DownloadState> {
         }
       }
 
-      // 处理等待任务
+      // 处理等待任务 (包含 paused 任务)
       for (var result in waitingResults) {
         if (result is Map<String, dynamic>) {
           final gid = result['gid'] as String?;
@@ -501,25 +597,58 @@ class DownloadController extends Notifier<DownloadState> {
               bangumiId: existingTask?.bangumiId,
               episodeNumber: existingTask?.episodeNumber,
             );
-            waitingTasks.add(task);
+            if (task.isPaused) {
+              pausedTasks.add(task);
+            } else {
+              waitingTasks.add(task);
+            }
             await box.put(gid, task);
           }
         }
       }
 
-      // 处理已停止/完成任务
+      int globalDown = 0;
+      int globalUp = 0;
+      try {
+        final gStat = await _aria2Client!.getGlobalStat();
+        globalDown =
+            int.tryParse(gStat['downloadSpeed']?.toString() ?? '0') ?? 0;
+        globalUp =
+            int.tryParse(gStat['uploadSpeed']?.toString() ?? '0') ?? 0;
+      } catch (_) {}
+
+      // 处理已停止任务 (complete / error / paused)
       for (var result in stoppedResults) {
         if (result is Map<String, dynamic>) {
           final gid = result['gid'] as String?;
           if (gid != null) {
             DownloadTask? existingTask = box.get(gid);
-            final task = DownloadTask.fromAria2Status(
+            var task = DownloadTask.fromAria2Status(
               result,
               title: existingTask?.title,
               bangumiId: existingTask?.bangumiId,
               episodeNumber: existingTask?.episodeNumber,
             );
-            completedTasks.add(task);
+            if (task.isComplete) {
+              final validation =
+                  DownloadFileUtils.validateDownloadedContent(task);
+              if (!validation.isValid) {
+                task = task.copyWith(
+                  status: 'error',
+                  errorMessage: validation.errorMessage ??
+                      '下载内容为重定向网页或鉴权失败，文件可能已失效',
+                  errorCode: 24,
+                );
+                failedTasks.add(task);
+                await box.put(gid, task);
+                continue;
+              }
+              completedTasks.add(task);
+            } else if (task.isError) {
+              failedTasks.add(task);
+            } else if (task.isPaused) {
+              pausedTasks.add(task);
+            }
             await box.put(gid, task);
           }
         }
@@ -528,29 +657,45 @@ class DownloadController extends Notifier<DownloadState> {
       // 清理乐观更新缓存
       _optimisticTaskCache.clear();
 
+      if (_isDisposed || !ref.mounted) return;
+
       state = state.copyWith(
         activeTasks: activeTasks,
         waitingTasks: waitingTasks,
+        pausedTasks: pausedTasks,
         completedTasks: completedTasks,
+        failedTasks: failedTasks,
         isConnected: true,
         errorMessage: null,
         lastSyncTime: DateTime.now(),
         needsRefresh: false,
+        globalDownloadSpeed: globalDown,
+        globalUploadSpeed: globalUp,
       );
 
       // 根据任务状态调整同步策略
       _adjustSyncStrategy();
     } catch (e) {
-      _logger.log(Level.error, '[DownloadController] Refresh failed: $e');
-      
+      if (_isDisposed || !ref.mounted) return;
+
+      _logger.log(Level.warning, '[DownloadController] Refresh skipped: $e');
+
+      // 降级：从本地持久化存储加载任务，确保离线或服务唤醒期间历史下载依然可见
+      await _loadFromStorage();
+
       // 隐式自动检测并唤醒内置下载引擎
       if (!Aria2ProcessManager().isRunning) {
         Aria2ProcessManager().start().then((success) {
+          if (_isDisposed || !ref.mounted) return;
           if (success) {
+            _aria2Client = Aria2Client.fromSettings();
             _connectWebSocket();
+            refreshDownloads();
           }
         });
       }
+
+      if (_isDisposed || !ref.mounted) return;
 
       state = state.copyWith(
         errorMessage: '下载服务启动中...',
@@ -570,38 +715,13 @@ class DownloadController extends Notifier<DownloadState> {
     int? episodeNumber,
     Map<String, dynamic>? options,
   }) async {
-    _aria2Client ??= Aria2Client.fromSettings();
-
-    try {
-      final gid = await _aria2Client!.addUri([url], options: options);
-      if (gid != null) {
-        final task = DownloadTask(
-          gid: gid,
-          url: url,
-          title: title ?? url,
-          status: 'waiting',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          bangumiId: bangumiId,
-          episodeNumber: episodeNumber,
-        );
-
-        await GStorage.downloadTasks.put(gid, task);
-
-        // 乐观添加到等待列表
-        state = state.copyWith(
-          waitingTasks: [...state.waitingTasks, task],
-        );
-
-        // 如果 WebSocket 未连接，立即刷新
-        if (state.wsConnectionState != Aria2ConnectionState.connected) {
-          await refreshDownloads();
-        }
-      }
-    } catch (e) {
-      _logger.log(Level.error, '[DownloadController] Add download failed: $e');
-      state = state.copyWith(errorMessage: '添加下载失败: $e');
-    }
+    await addUris(
+      [url],
+      title: title,
+      bangumiId: bangumiId,
+      episodeNumber: episodeNumber,
+      options: options,
+    );
   }
 
   /// Add multiple URLs as separate download tasks
@@ -619,12 +739,88 @@ class DownloadController extends Notifier<DownloadState> {
     try {
       for (var url in urls) {
         try {
-          final gid = await _aria2Client!.addUri([url], options: options);
+          String targetUrl = url;
+          if (url.startsWith('magnet:?')) {
+            try {
+              targetUrl = await TorrentTrackerService.instance
+                  .rewriteMagnetWithDoh(url)
+                  .timeout(const Duration(seconds: 2));
+            } catch (_) {
+              targetUrl = TorrentTrackerService.instance.injectTrackers(url);
+            }
+          }
+
+          final taskOptions = Map<String, dynamic>.from(options ?? {});
+
+          // Smart headers & filename detection for HTTP/HTTPS URLs
+          if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+            if (!taskOptions.containsKey('user-agent')) {
+              taskOptions['user-agent'] =
+                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+            }
+            if (!taskOptions.containsKey('check-certificate')) {
+              taskOptions['check-certificate'] = 'false';
+            }
+
+            // If URL has a clean file name at the end of path, set 'out' option if not provided
+            if (!taskOptions.containsKey('out')) {
+              final uri = Uri.tryParse(targetUrl);
+              if (uri != null && uri.pathSegments.isNotEmpty) {
+                final lastSegment = uri.pathSegments.last;
+                if (lastSegment.contains('.') && !lastSegment.endsWith('.')) {
+                  final decoded = Uri.decodeComponent(lastSegment).trim();
+                  if (decoded.isNotEmpty) {
+                    taskOptions['out'] = decoded;
+                  }
+                }
+              }
+            }
+
+            // Gofile or web-share detection: automatically resolve token, cookie, and direct link
+            if (GofileHelper().isGofileUrl(targetUrl)) {
+              try {
+                final gofileInfo = await GofileHelper().resolve(targetUrl);
+                if (gofileInfo != null) {
+                  targetUrl = gofileInfo.downloadUrl;
+                  if (!taskOptions.containsKey('out')) {
+                    taskOptions['out'] = gofileInfo.fileName;
+                  }
+                  final headersList = <String>[];
+                  if (taskOptions['header'] is List) {
+                    headersList.addAll((taskOptions['header'] as List).map((e) => e.toString()));
+                  } else if (taskOptions['header'] != null) {
+                    headersList.add(taskOptions['header'].toString());
+                  }
+                  if (!headersList.any((h) => h.toLowerCase().startsWith('cookie:'))) {
+                    headersList.add('Cookie: accountToken=${gofileInfo.token}');
+                  }
+                  if (!headersList.any((h) => h.toLowerCase().startsWith('referer:'))) {
+                    headersList.add('Referer: https://gofile.io/');
+                  }
+                  taskOptions['header'] = headersList;
+                }
+              } catch (e) {
+                _logger.log(Level.warning, '[DownloadController] Gofile resolve error: $e');
+              }
+            }
+          }
+
+          final gid = await _aria2Client!.addUri([targetUrl], options: taskOptions);
           if (gid != null) {
+            String initialTitle = title ?? '';
+            if (initialTitle.isEmpty) {
+              if (taskOptions['out'] != null) {
+                initialTitle = taskOptions['out'].toString();
+              } else {
+                initialTitle = url;
+              }
+            }
+
             final task = DownloadTask(
               gid: gid,
               url: url,
-              title: title ?? url,
+              title: initialTitle,
+              fileName: taskOptions['out']?.toString(),
               status: 'waiting',
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
@@ -709,6 +905,54 @@ class DownloadController extends Notifier<DownloadState> {
     }
   }
 
+  /// Add torrent from in-memory byte array
+  Future<void> addTorrentBytes(
+    List<int> bytes, {
+    String? title,
+    String? originalUrl,
+    String? bangumiId,
+    int? episodeNumber,
+    Map<String, dynamic>? options,
+  }) async {
+    _aria2Client ??= Aria2Client.fromSettings();
+
+    try {
+      final base64String = base64Encode(bytes);
+
+      final gid = await _aria2Client!.addTorrent(
+        base64String,
+        options: options,
+      );
+
+      if (gid != null) {
+        final task = DownloadTask(
+          gid: gid,
+          url: originalUrl ?? 'torrent://bytes',
+          title: title ?? 'Torrent Download',
+          status: 'waiting',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          bangumiId: bangumiId,
+          episodeNumber: episodeNumber,
+        );
+
+        await GStorage.downloadTasks.put(gid, task);
+
+        state = state.copyWith(
+          waitingTasks: [...state.waitingTasks, task],
+        );
+
+        if (state.wsConnectionState != Aria2ConnectionState.connected) {
+          await refreshDownloads();
+        }
+      }
+    } catch (e) {
+      _logger.log(Level.error, '[DownloadController] Add torrent bytes failed: $e');
+      state = state.copyWith(errorMessage: '添加种子下载失败: $e');
+      rethrow;
+    }
+  }
+
   Future<void> pauseDownload(String gid) async {
     if (_aria2Client == null) return;
     if (_pendingOperations.contains(gid)) return;
@@ -760,18 +1004,26 @@ class DownloadController extends Notifier<DownloadState> {
     }
   }
 
-  Future<void> removeDownload(String gid, {bool force = false}) async {
+  Future<void> removeDownload(String gid, {bool force = false, bool deleteFile = false}) async {
     if (_aria2Client == null) return;
     if (_pendingOperations.contains(gid)) return;
 
     _pendingOperations.add(gid);
+
+    final box = GStorage.downloadTasks;
+    final existingTask = box.get(gid) as DownloadTask?;
 
     // 乐观更新：立即从 UI 中移除任务
     _optimisticRemoveTask(gid);
 
     try {
       await _aria2Client!.remove(gid, force: force);
-      await GStorage.downloadTasks.delete(gid);
+      await box.delete(gid);
+
+      if (deleteFile && existingTask != null) {
+        await DownloadFileUtils.deleteDownloadedFile(existingTask.filePath ?? existingTask.fileName);
+      }
+
       // WebSocket 会收到事件并触发刷新
       if (state.wsConnectionState != Aria2ConnectionState.connected) {
         await refreshDownloads();
@@ -786,7 +1038,7 @@ class DownloadController extends Notifier<DownloadState> {
     }
   }
 
-  Future<void> clearCompleted() async {
+  Future<void> clearCompleted({bool deleteFiles = false}) async {
     if (_aria2Client == null) return;
 
     try {
@@ -796,8 +1048,11 @@ class DownloadController extends Notifier<DownloadState> {
       final keysToDelete = <String>[];
       for (var key in box.keys) {
         final task = box.get(key);
-        if (task is DownloadTask && (task.isComplete || task.isError)) {
+        if (task is DownloadTask && task.isComplete) {
           keysToDelete.add(key);
+          if (deleteFiles) {
+            await DownloadFileUtils.deleteDownloadedFile(task.filePath ?? task.fileName);
+          }
         }
       }
 
@@ -855,8 +1110,7 @@ class DownloadController extends Notifier<DownloadState> {
     if (_aria2Client == null) return;
 
     try {
-      final pausedTasks =
-          state.completedTasks.where((t) => t.isPaused).toList();
+      final pausedTasks = List<DownloadTask>.from(state.pausedTasks);
 
       // 乐观批量更新
       for (var task in pausedTasks) {
@@ -884,22 +1138,29 @@ class DownloadController extends Notifier<DownloadState> {
     }
   }
 
-  /// Delete all tasks (both active and completed)
-  Future<void> deleteAll({bool force = true}) async {
+  /// Delete all tasks (both active, paused, failed, and completed)
+  Future<void> deleteAll({bool force = true, bool deleteFiles = false}) async {
     if (_aria2Client == null) return;
 
     try {
+      final allTasks = getAllTasks();
+
       // 乐观清空所有任务
       state = state.copyWith(
         activeTasks: [],
         waitingTasks: [],
+        pausedTasks: [],
         completedTasks: [],
+        failedTasks: [],
       );
 
       // Remove all active downloads
-      for (var task in [...state.activeTasks, ...state.waitingTasks]) {
+      for (var task in allTasks) {
         try {
           await _aria2Client!.remove(task.gid, force: force);
+          if (deleteFiles) {
+            await DownloadFileUtils.deleteDownloadedFile(task.filePath ?? task.fileName);
+          }
         } catch (e) {
           _logger.log(Level.warning,
               '[DownloadController] Failed to remove ${task.gid}: $e');
@@ -988,7 +1249,7 @@ class DownloadController extends Notifier<DownloadState> {
   }
 
   /// Delete selected downloads
-  Future<void> deleteSelected(List<String> gids, {bool force = true}) async {
+  Future<void> deleteSelected(List<String> gids, {bool force = true, bool deleteFiles = false}) async {
     if (_aria2Client == null) return;
 
     try {
@@ -1000,8 +1261,13 @@ class DownloadController extends Notifier<DownloadState> {
       // 执行实际操作
       for (var gid in gids) {
         try {
+          final box = GStorage.downloadTasks;
+          final existingTask = box.get(gid) as DownloadTask?;
           await _aria2Client!.remove(gid, force: force);
-          await GStorage.downloadTasks.delete(gid);
+          await box.delete(gid);
+          if (deleteFiles && existingTask != null) {
+            await DownloadFileUtils.deleteDownloadedFile(existingTask.filePath ?? existingTask.fileName);
+          }
         } catch (e) {
           _logger.log(
               Level.warning, '[DownloadController] Failed to delete $gid: $e');
@@ -1057,7 +1323,9 @@ class DownloadController extends Notifier<DownloadState> {
     return [
       ...state.activeTasks,
       ...state.waitingTasks,
+      ...state.pausedTasks,
       ...state.completedTasks,
+      ...state.failedTasks,
     ];
   }
 
@@ -1120,7 +1388,13 @@ class DownloadController extends Notifier<DownloadState> {
     await refreshDownloads();
   }
 
+  /// 直接从本地持久化存储重载任务（用于离线状态或无头集成测试）
+  Future<void> loadFromStorage() async {
+    await _loadFromStorage();
+  }
+
   void _cleanup() {
+    _isDisposed = true;
     _logger.log(Level.info, '[DownloadController] Disposing...');
 
     // 取消所有定时器

@@ -1,4 +1,4 @@
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/providers/riverpod_compat.dart';
@@ -37,7 +37,6 @@ class SuperResolutionSettings extends ConsumerWidget {
         title: Text(t.settings.player.superResolutionTitle),
       ),
       body: SettingsList(
-        maxWidth: 1000,
         sections: [
           SettingsSection(
             title: Text(t.settings.player.superResolutionHint),

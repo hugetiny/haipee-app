@@ -5,6 +5,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/request/api.dart';
+import 'package:kazumi/request/core/git_proxy_interceptor.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/utils.dart';
@@ -62,7 +63,9 @@ class AutoUpdater {
 
   factory AutoUpdater() => _instance;
 
-  AutoUpdater._internal();
+  AutoUpdater._internal() {
+    _dio.interceptors.add(GitProxyInterceptor());
+  }
 
   final Dio _dio = Dio();
 

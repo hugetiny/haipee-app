@@ -117,13 +117,16 @@ class MikanSource implements TorrentSource {
           magnetUrl: magnetUrl ?? torrentUrl ?? '',
           torrentUrl: torrentUrl,
           fileSize: friendlySize,
+          sizeBytes: rawLength ?? 0,
           publishDate: friendlyDate,
+          rawPublishDate: pubDateRaw,
           source: TorrentSourceType.mikan,
           cleanedTitle: parsedMeta.cleanedTitle,
           episode: parsedMeta.episode,
           subgroup: parsedMeta.subgroup,
           resolution: parsedMeta.resolution,
           language: parsedMeta.language,
+          customCategory: TorrentCategory.video,
         ));
       }
 

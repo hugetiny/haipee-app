@@ -67,7 +67,8 @@ class WebviewAndroidItemControllerImpel
     logEventController.add('🔍 开始解析: $url');
 
     await webviewController?.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
-    loadingMonitorTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    loadingMonitorTimer =
+        Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (isVideoSourceLoaded || isIframeLoaded) {
         timer.cancel();
       } else {
@@ -81,6 +82,7 @@ class WebviewAndroidItemControllerImpel
           // Mark as loaded (failed) to stop loading state
           isIframeLoaded = true;
           videoLoadingEventController.add(false);
+          await unloadPage();
 
           logEventController.add('clear');
           logEventController.add('❌ 解析视频资源超时');
@@ -136,6 +138,7 @@ class WebviewAndroidItemControllerImpel
                 isIframeLoaded = true;
                 isVideoSourceLoaded = true;
                 videoLoadingEventController.add(false);
+                logEventController.add('clear');
                 logEventController.add(
                     'Loading video source ${Utils.decodeVideoSource(encodedUrl)}');
                 unloadPage();
@@ -152,6 +155,7 @@ class WebviewAndroidItemControllerImpel
             String message = args[0].toString();
             logEventController.add('Callback received: $message');
             if (message.contains('http') && !isVideoSourceLoaded) {
+              logEventController.add('clear');
               logEventController.add('Loading video source: $message');
               isIframeLoaded = true;
               isVideoSourceLoaded = true;
@@ -252,9 +256,85 @@ class WebviewAndroidItemControllerImpel
         };
       """;
 
-      const String videoTagParserScript = """
+      final String videoTagParserScript = """
         window.flutter_inappwebview.callHandler('LogBridge', 'VideoTagParser script loaded: ' + window.location.href);
+
+        function decodeMacCMS(rawUrl, encrypt) {
+          if (!rawUrl || typeof rawUrl !== 'string') return '';
+          var u = rawUrl.trim();
+          try {
+            if (encrypt == 1) {
+              u = unescape(u);
+            } else if (encrypt == 2) {
+              u = unescape(atob(u));
+            }
+          } catch (e) {}
+
+          if (!u.startsWith('http') && !u.startsWith('//')) {
+            try {
+              var b = unescape(atob(u));
+              if (b.includes('http') || b.includes('.m3u8') || b.includes('.mp4')) {
+                u = b;
+              }
+            } catch (e) {}
+          }
+
+          try {
+            if (u.includes('%')) {
+              u = decodeURIComponent(u);
+            }
+          } catch (e) {
+            try {
+              u = unescape(u);
+            } catch (_) {}
+          }
+          return u;
+        }
+
+        try {
+          const medias = document.querySelectorAll('video, audio');
+          for (let m = 0; m < medias.length; m++) {
+            medias[m].muted = true;
+            medias[m].volume = 0;
+          }
+        } catch(e) {}
+        if (!window.__kazumi_mute_listener) {
+          window.__kazumi_mute_listener = true;
+          document.addEventListener('play', function(e) {
+            try {
+              if (e.target && (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO')) {
+                e.target.muted = true;
+                e.target.volume = 0;
+              }
+            } catch(_) {}
+          }, true);
+        }
+
+        function checkMacCMS() {
+          try {
+            if (window.player_aaaa && window.player_aaaa.url) {
+              let u = decodeMacCMS(window.player_aaaa.url, window.player_aaaa.encrypt);
+              if (u.indexOf('.m3u8') !== -1 || u.indexOf('.mp4') !== -1 || u.indexOf('.flv') !== -1) {
+                window.flutter_inappwebview.callHandler('LogBridge', 'player_aaaa direct media found: ' + u);
+                window.flutter_inappwebview.callHandler('VideoBridgeDebug', u);
+                return true;
+              } else if (window.MacPlayerConfig && window.MacPlayerConfig.player_list) {
+                let from = window.player_aaaa.from;
+                let pObj = window.MacPlayerConfig.player_list[from];
+                if (pObj && pObj.parse) {
+                  let target = pObj.parse + encodeURIComponent(u);
+                  window.flutter_inappwebview.callHandler('LogBridge', 'MacPlayerConfig target iframe: ' + target);
+                  window.flutter_inappwebview.callHandler('IframeRedirectBridge', target);
+                  return true;
+                }
+              }
+            }
+          } catch(e) {}
+          return false;
+        }
+
         const _observer = new MutationObserver((mutations) => {
+          if (checkMacCMS()) return;
           window.flutter_inappwebview.callHandler('LogBridge', 'Scanning for video elements...');
           for (const mutation of mutations) {
             if (mutation.type === "attributes" && mutation.target.nodeName === "VIDEO") {
@@ -276,7 +356,7 @@ class WebviewAndroidItemControllerImpel
         function processVideoElement(video) {
           window.flutter_inappwebview.callHandler('LogBridge', 'Scanning video element for source URL');
           let src = video.getAttribute('src');
-          if (src && src.trim() !== '' && !src.startsWith('blob:') && !src.includes('googleads')) {
+          if (src && src.trim() !== '' && !src.startsWith('blob:') && !src.includes('googleads') && !src.includes('groupvideo') && !src.includes('photo.qq.com')) {
             _observer.disconnect();
             window.flutter_inappwebview.callHandler('LogBridge', 'VIDEO source found: ' + src);
             window.flutter_inappwebview.callHandler('VideoBridgeDebug', src);
@@ -285,7 +365,7 @@ class WebviewAndroidItemControllerImpel
           const sources = video.getElementsByTagName('source');
           for (let source of sources) {
             src = source.getAttribute('src');
-            if (src && src.trim() !== '' && !src.startsWith('blob:') && !src.includes('googleads')) {
+            if (src && src.trim() !== '' && !src.startsWith('blob:') && !src.includes('googleads') && !src.includes('groupvideo') && !src.includes('photo.qq.com')) {
               _observer.disconnect();
               window.flutter_inappwebview.callHandler('LogBridge', 'VIDEO source found (source tag): ' + src);
               window.flutter_inappwebview.callHandler('VideoBridgeDebug', src);
@@ -295,6 +375,7 @@ class WebviewAndroidItemControllerImpel
         }
 
         function setupVideoProcessing() {
+          if (checkMacCMS()) return;
           for (const video of document.querySelectorAll("video")) {
             if (processVideoElement(video)) return;
           }

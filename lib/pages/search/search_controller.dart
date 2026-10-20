@@ -9,12 +9,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class SearchPageState {
   final bool isLoading;
   final bool isTimeOut;
+  final String keyword;
   final List<BangumiItem> bangumiList;
   final List<SearchHistory> searchHistories;
 
   const SearchPageState({
     this.isLoading = false,
     this.isTimeOut = false,
+    this.keyword = '',
     this.bangumiList = const [],
     this.searchHistories = const [],
   });
@@ -22,12 +24,14 @@ class SearchPageState {
   SearchPageState copyWith({
     bool? isLoading,
     bool? isTimeOut,
+    String? keyword,
     List<BangumiItem>? bangumiList,
     List<SearchHistory>? searchHistories,
   }) {
     return SearchPageState(
       isLoading: isLoading ?? this.isLoading,
       isTimeOut: isTimeOut ?? this.isTimeOut,
+      keyword: keyword ?? this.keyword,
       bangumiList: bangumiList ?? this.bangumiList,
       searchHistories: searchHistories ?? this.searchHistories,
     );
@@ -90,7 +94,10 @@ class SearchPageController extends Notifier<SearchPageState> {
             await searchHistoryBox.delete(history.key);
           }
         }
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        int timestamp = DateTime.now().millisecondsSinceEpoch;
+        while (searchHistoryBox.containsKey(timestamp.toString())) {
+          timestamp++;
+        }
         await searchHistoryBox.put(
           timestamp.toString(),
           SearchHistory(normalizedInput, timestamp),

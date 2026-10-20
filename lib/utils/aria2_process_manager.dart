@@ -84,25 +84,35 @@ class Aria2ProcessManager {
       }
     }
 
-    // Desktop: Check if aria2 process is already running (system-wide check)
+    // Desktop: Check if aria2 process is already running and responsive
     else {
-      // First check our own tracked process
-      if (_isRunning && _aria2Process != null) {
-        _logger.log(Level.info, '[Aria2ProcessManager] aria2 is already running (tracked process)');
-        return true;
+      // First check our own tracked process and ensure port is still responding
+      if (_isRunning && _aria2Process != null && _activePort != null) {
+        if (await pingPort(_activePort!)) {
+          _logger.log(Level.info, '[Aria2ProcessManager] aria2 is already running and responsive on port $_activePort');
+          return true;
+        }
+        _isRunning = false;
+        _aria2Process = null;
       }
 
-      // Check if any aria2c process is running system-wide
-      final isSystemRunning = await _isAria2RunningSystemWide();
-      if (isSystemRunning) {
-        _logger.log(Level.info, '[Aria2ProcessManager] aria2 is already running system-wide, will reuse existing process');
+      // Check if standard port 6800 is already active and responding
+      if (await pingPort(6800)) {
+        _logger.log(Level.info, '[Aria2ProcessManager] System-wide aria2 is running on port 6800, reusing it');
         _isRunning = true;
         return true;
       }
+
+      // Clean up orphaned Kazumi aria2c processes from previous hot restarts or unclean exits
+      await _cleanupOrphanedKazumiProcesses();
     }
 
     try {
       final setting = GStorage.setting;
+      if (!setting.isOpen) {
+        _logger.log(Level.warning, '[Aria2ProcessManager] Setting box is closed, aborting start');
+        return false;
+      }
       final String customSecret = (setting.get(SettingBoxKey.aria2Secret, defaultValue: '') as String).trim();
       final int maxConcurrent = setting.get(SettingBoxKey.aria2MaxConcurrentDownloads, defaultValue: 2) as int;
 
@@ -147,6 +157,11 @@ class Aria2ProcessManager {
         '--http-accept-gzip=true',
         '--allow-overwrite=true',
         '--auto-file-renaming=true',
+        '--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        '--check-certificate=false',
+        '--content-disposition-default-utf8=true',
+        '--remote-time=true',
+        '--conditional-get=true',
         // BT 传输强化与边下边播优先下载首尾分片
         '--enable-dht=true',
         '--bt-enable-lpd=true',
@@ -241,6 +256,22 @@ class Aria2ProcessManager {
         _aria2Process = null;
       });
 
+      // 等待 RPC 端口绑定就绪（最多等待 2 秒）
+      bool isPortReady = false;
+      for (int i = 0; i < 20; i++) {
+        if (await pingPort(assignedPort)) {
+          isPortReady = true;
+          break;
+        }
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      if (!isPortReady) {
+        _logger.log(Level.warning, '[Aria2ProcessManager] aria2 process started but RPC port $assignedPort not responsive yet');
+      } else {
+        _logger.log(Level.info, '[Aria2ProcessManager] aria2 RPC port $assignedPort is ready and accepting connections');
+      }
+
       _logger.log(Level.info, '[Aria2ProcessManager] aria2 started successfully');
       return true;
     } catch (e, stackTrace) {
@@ -249,6 +280,28 @@ class Aria2ProcessManager {
       _aria2Process = null;
       return false;
     }
+  }
+
+  /// 探测指定本地端口是否正在监听响应
+  static Future<bool> pingPort(int port) async {
+    try {
+      final socket = await Socket.connect('127.0.0.1', port, timeout: const Duration(milliseconds: 250));
+      await socket.close();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 清理先前残留的 Kazumi 内置 aria2c 孤儿进程
+  Future<void> _cleanupOrphanedKazumiProcesses() async {
+    try {
+      if (!Platform.isWindows && !Platform.isIOS && !Platform.isAndroid) {
+        // 仅精准杀死 Kazumi 内部应用数据目录或 bin 下的 aria2c，避免误杀系统级用户进程
+        await Process.run('pkill', ['-f', 'bin/aria2c']);
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+    } catch (_) {}
   }
 
   /// Stops the aria2 process if it's running.
@@ -269,45 +322,13 @@ class Aria2ProcessManager {
       _activePort = null;
       _activeSecret = null;
     } else {
-      // If we don't have a tracked process, just mark as not running
-      _logger.log(Level.info, '[Aria2ProcessManager] No tracked aria2 process to stop');
+      await _cleanupOrphanedKazumiProcesses();
       _isRunning = false;
+      _activePort = null;
+      _activeSecret = null;
     }
   }
 
-  /// Checks if aria2c is running system-wide (for desktop platforms).
-  Future<bool> _isAria2RunningSystemWide() async {
-    try {
-      if (Platform.isWindows) {
-        // Use tasklist to check for aria2c.exe
-        final result = await Process.run(
-          'tasklist',
-          ['/FI', 'IMAGENAME eq aria2c.exe', '/FO', 'CSV', '/NH'],
-        );
-        if (result.exitCode == 0) {
-          final output = result.stdout.toString().trim();
-          // If output contains aria2c.exe, it's running
-          if (output.isNotEmpty && output.contains('aria2c.exe')) {
-            _logger.log(Level.info, '[Aria2ProcessManager] Found running aria2c.exe process');
-            return true;
-          }
-        }
-      } else {
-        // Use pgrep or ps for Unix-like systems
-        final result = await Process.run('pgrep', ['aria2c']);
-        if (result.exitCode == 0) {
-          final output = result.stdout.toString().trim();
-          if (output.isNotEmpty) {
-            _logger.log(Level.info, '[Aria2ProcessManager] Found running aria2c process');
-            return true;
-          }
-        }
-      }
-    } catch (e) {
-      _logger.log(Level.debug, '[Aria2ProcessManager] Could not check for running aria2 process: $e');
-    }
-    return false;
-  }
 
   /// Restarts the aria2 process.
   Future<bool> restart() async {
@@ -537,6 +558,25 @@ class Aria2ProcessManager {
 
   /// Gets the appropriate downloads directory for the current platform.
   Future<Directory> _getDownloadsDirectory() async {
+    // 优先使用用户在设置中自定义的下载目录
+    try {
+      final customDir = (GStorage.setting.get(
+        SettingBoxKey.downloadDirectory,
+        defaultValue: '',
+      ) as String).trim();
+      if (customDir.isNotEmpty) {
+        final dir = Directory(customDir);
+        if (!await dir.exists()) {
+          await dir.create(recursive: true);
+        }
+        if (await dir.exists()) {
+          return dir;
+        }
+      }
+    } catch (e) {
+      _logger.log(Level.warning, '[Aria2ProcessManager] Could not get custom download directory: $e');
+    }
+
     if (Platform.isAndroid) {
       // On Android, use external storage downloads directory
       final Directory? externalDir = await getExternalStorageDirectory();

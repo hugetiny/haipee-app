@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/modules/download/download_task.dart';
+import 'package:kazumi/modules/download/download_file_utils.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:open_filex/open_filex.dart';
 
 /// 任务详情对话框状态 Provider (family pattern for specific task)
 final taskDetailStateProvider =
@@ -97,27 +97,6 @@ class _DownloadTaskDetailDialogState
   }
 
   DownloadTask get task => widget.task;
-
-  Future<void> _openFile() async {
-    final filePath = task.filePath;
-    final detailState = ref.read(taskDetailStateProvider(task.gid));
-
-    if (!detailState.fileExists || filePath == null || filePath.isEmpty) {
-      KazumiDialog.showToast(message: '文件不存在或路径无效');
-      return;
-    }
-
-    try {
-      final result = await OpenFilex.open(filePath);
-      if (result.type != ResultType.done) {
-        KazumiDialog.showToast(message: '无法打开文件: ${result.message}');
-      }
-    } on PlatformException catch (e) {
-      KazumiDialog.showToast(message: '打开文件失败: ${e.message}');
-    } catch (e) {
-      KazumiDialog.showToast(message: '打开文件时发生错误');
-    }
-  }
 
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
@@ -326,9 +305,51 @@ class _DownloadTaskDetailDialogState
 
                     // Error info
                     if (task.isError) ...[
+                      if (task.isRedirectOrAuthError) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded,
+                                  color: Colors.red, size: 24),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '下载内容为重定向网页或鉴权失败，文件可能已失效',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '文件内容实际为网页或鉴权错误，未获得真实资源。请重新添加任务并提供网盘 Cookie / Referer，或检查链接。',
+                                      style: TextStyle(
+                                          color: Colors.red.shade700,
+                                          fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       _buildSection(
                         '错误信息',
-                        task.errorMessage ?? '未知错误',
+                        task.readableErrorMessage,
                         isError: true,
                       ),
                       if (task.errorCode != null) ...[
@@ -393,14 +414,34 @@ class _DownloadTaskDetailDialogState
                     ),
                     const SizedBox(width: 8),
                   ],
-                  // Use Riverpod state instead of ValueNotifier
+                  // Completed actions
                   if (task.isComplete && !detailState.isChecking && detailState.fileExists) ...[
-                    FilledButton.icon(
-                      icon: const Icon(Icons.folder_open),
+                    if (task.isPlayable && widget.onOpenFile != null) ...[
+                      FilledButton.icon(
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('播放'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          widget.onOpenFile?.call();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    FilledButton.tonalIcon(
+                      icon: const Icon(Icons.file_open),
                       label: const Text('打开文件'),
                       onPressed: () async {
                         Navigator.of(context).pop();
-                        await _openFile();
+                        await DownloadFileUtils.openFile(task.filePath);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.folder_open),
+                      label: const Text('所在文件夹'),
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await DownloadFileUtils.openContainingFolder(task.filePath);
                       },
                     ),
                     const SizedBox(width: 8),

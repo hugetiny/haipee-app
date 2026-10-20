@@ -30,8 +30,8 @@ void main() {
     await tester.pumpAndSettle();
 
     final enTabs = AppLocale.enUs.translations.navigation.tabs;
-    expect(find.text(enTabs.popular), findsOneWidget);
-    expect(find.text(enTabs.timeline), findsOneWidget);
+    expect(find.text(enTabs.media), findsOneWidget);
+    expect(find.text(enTabs.resource), findsOneWidget);
     expect(find.text(enTabs.my), findsOneWidget);
     expect(find.text(enTabs.settings), findsOneWidget);
 
@@ -39,8 +39,8 @@ void main() {
     await tester.pumpAndSettle();
 
     final zhTabs = AppLocale.zhCn.translations.navigation.tabs;
-    expect(find.text(zhTabs.popular), findsOneWidget);
-    expect(find.text(zhTabs.timeline), findsOneWidget);
+    expect(find.text(zhTabs.media), findsOneWidget);
+    expect(find.text(zhTabs.resource), findsOneWidget);
     expect(find.text(zhTabs.my), findsOneWidget);
     expect(find.text(zhTabs.settings), findsOneWidget);
 

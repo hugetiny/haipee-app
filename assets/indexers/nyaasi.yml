@@ -1,0 +1,105 @@
+---
+id: nyaasi
+name: Nyaa.si
+description: "Nyaa.si is a public torrent site focused on East Asian media including anime, manga, and music."
+language: en-US
+type: public
+encoding: UTF-8
+links:
+  - https://nyaa.si/
+
+caps:
+  categorymappings:
+    - {id: 1_0, cat: 5070, desc: "Anime"}
+    - {id: 1_1, cat: 5070, desc: "Anime - Anime Music Video"}
+    - {id: 1_2, cat: 5070, desc: "Anime - English-translated"}
+    - {id: 1_3, cat: 5070, desc: "Anime - Non-English-translated"}
+    - {id: 1_4, cat: 5070, desc: "Anime - Raw"}
+    - {id: 2_0, cat: 1000, desc: "Audio"}
+    - {id: 2_1, cat: 1000, desc: "Audio - Lossless"}
+    - {id: 2_2, cat: 1000, desc: "Audio - Lossy"}
+    - {id: 3_0, cat: 3000, desc: "Literature"}
+    - {id: 3_1, cat: 3000, desc: "Literature - English-translated"}
+    - {id: 3_2, cat: 3000, desc: "Literature - Non-English-translated"}
+    - {id: 3_3, cat: 3000, desc: "Literature - Raw"}
+    - {id: 4_0, cat: 5000, desc: "Live Action"}
+    - {id: 4_1, cat: 5000, desc: "Live Action - English-translated"}
+    - {id: 4_2, cat: 5000, desc: "Live Action - Idol/Promotional Video"}
+    - {id: 4_3, cat: 5000, desc: "Live Action - Non-English-translated"}
+    - {id: 4_4, cat: 5000, desc: "Live Action - Raw"}
+    - {id: 5_0, cat: 7000, desc: "Pictures"}
+    - {id: 5_1, cat: 7000, desc: "Pictures - Graphics"}
+    - {id: 5_2, cat: 7000, desc: "Pictures - Photos"}
+    - {id: 6_0, cat: 4000, desc: "Software"}
+    - {id: 6_1, cat: 4000, desc: "Software - Applications"}
+    - {id: 6_2, cat: 4050, desc: "Software - Games"}
+
+  modes:
+    search: [q]
+
+settings:
+  - name: sort
+    type: select
+    label: 排序依据
+    default: seeders
+    options:
+      id: 日期
+      seeders: 做种数
+      downloads: 下载数
+      size: 体积
+  - name: order
+    type: select
+    label: 排序方向
+    default: desc
+    options:
+      desc: 降序
+      asc: 升序
+
+search:
+  paths:
+    - path: /
+  inputs:
+    q: "{{ .Keywords }}"
+    f: "0"
+    c: "{{ if .Categories }}{{ range .Categories }}{{ . }}{{ end }}{{ else }}0_0{{ end }}"
+    s: "{{ .Config.sort }}"
+    o: "{{ .Config.order }}"
+
+  rows:
+    selector: table.torrent-list > tbody > tr
+
+  fields:
+    category:
+      selector: td:nth-child(1) a
+      attribute: href
+      filters:
+        - name: querystring
+          args: c
+    title:
+      selector: td:nth-child(2) a:last-child
+      attribute: title
+    details:
+      selector: td:nth-child(2) a:last-child
+      attribute: href
+    download:
+      selector: a[href$=".torrent"]
+      attribute: href
+    magnet:
+      selector: a[href^="magnet:"]
+      attribute: href
+    size:
+      selector: td:nth-child(4)
+    date:
+      selector: td:nth-child(5)
+    seeders:
+      selector: td:nth-child(6)
+    leechers:
+      selector: td:nth-child(7)
+    grabs:
+      selector: td:nth-child(8)
+    downloadvolumefactor:
+      case:
+        tr.success: 0
+        "*": 1
+    uploadvolumefactor:
+      text: 1

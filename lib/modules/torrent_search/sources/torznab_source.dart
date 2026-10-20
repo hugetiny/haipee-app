@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:kazumi/modules/cardigann/cardigann_torznab.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
 import 'package:kazumi/modules/torrent_search/parser/anime_title_parser.dart';
 import 'package:kazumi/modules/torrent_search/sources/torrent_source.dart';
@@ -70,6 +71,12 @@ class TorznabSource implements TorrentSource {
         int seeders = 0;
         int leechers = 0;
         int? rawSize;
+        String? catStr;
+
+        final catElem = item.findElements('category').firstOrNull?.innerText.trim();
+        if (catElem != null && catElem.isNotEmpty) {
+          catStr = catElem;
+        }
 
         // 解析 torznab 扩展属性 <torznab:attr name="..." value="..."/>
         for (final child in item.children.whereType<XmlElement>()) {
@@ -85,6 +92,8 @@ class TorznabSource implements TorrentSource {
               leechers = (peers > seeders) ? (peers - seeders) : 0;
             } else if (attrName == 'size' && attrVal != null) {
               rawSize = int.tryParse(attrVal);
+            } else if (attrName == 'category' && attrVal != null && attrVal.isNotEmpty) {
+              catStr = attrVal;
             }
           }
         }
@@ -121,12 +130,25 @@ class TorznabSource implements TorrentSource {
         final pubDateRaw = item.findElements('pubDate').firstOrNull?.innerText.trim() ?? '';
         final parsedMeta = AnimeTitleParser.parse(title);
 
+        TorrentCategory? customCat;
+        if (catStr != null && catStr.isNotEmpty) {
+          final catNum = int.tryParse(catStr);
+          if (catNum != null) {
+            final mapped = TorznabCategories.toTorrentCategory(catNum);
+            if (mapped != TorrentCategory.all) {
+              customCat = mapped;
+            }
+          }
+        }
+
         result.add(TorrentItem(
           title: title,
           magnetUrl: magnetUrl ?? torrentUrl ?? '',
           torrentUrl: torrentUrl,
           fileSize: _formatSize(rawSize),
+          sizeBytes: rawSize ?? 0,
           publishDate: _formatDate(pubDateRaw),
+          rawPublishDate: pubDateRaw,
           source: TorrentSourceType.torznab,
           seeders: seeders,
           leechers: leechers,
@@ -135,6 +157,7 @@ class TorznabSource implements TorrentSource {
           subgroup: parsedMeta.subgroup,
           resolution: parsedMeta.resolution,
           language: parsedMeta.language,
+          customCategory: customCat,
         ));
       }
 

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/modules/comments/comment_item.dart';
+import 'package:kazumi/modules/playback/media_selector.dart';
 import 'package:kazumi/pages/video/video_controller.dart';
 import 'package:kazumi/pages/video/video_state.dart';
 import 'package:kazumi/providers/riverpod_compat.dart';
@@ -82,8 +83,24 @@ final webviewLogLinesProvider =
 final currentRoadProvider = StateProvider.autoDispose<int>((ref) => 0);
 
 /// Provider for current episode number (replaces EpisodeInfo InheritedWidget)
-/// This is computed from videoState and used by EpisodeCommentsSheet
+/// This is computed from videoState via MediaSelector for accurate Bangumi alignment
 final currentEpisodeNumberProvider = Provider<int>((ref) {
   final videoState = ref.watch(videoProvider);
+  if (videoState.roadList.isEmpty ||
+      videoState.currentRoad >= videoState.roadList.length) {
+    return videoState.currentEpisode;
+  }
+  final currentRoadData = videoState.roadList[videoState.currentRoad];
+  final curEp = videoState.currentEpisode;
+  if (curEp > 0 && curEp <= currentRoadData.identifier.length) {
+    final identifier = currentRoadData.identifier[curEp - 1];
+    final resolution = MediaSelector.resolve(
+      rawIndex: curEp,
+      identifier: identifier,
+      roadName: currentRoadData.name,
+      bangumiTotalEpisodes: videoState.bangumiItem?.totalEpisodes,
+    );
+    return resolution.bangumiEpisode;
+  }
   return videoState.currentEpisode;
 });

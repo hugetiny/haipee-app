@@ -1,9 +1,11 @@
+import 'package:kazumi/request/core/git_proxy_interceptor.dart';
+
 class Api {
   /// 当前版本
   static const String version = '1.8.2';
 
   /// 规则API级别
-  static const int apiLevel = 4;
+  static const int apiLevel = 10;
 
   /// 项目主页
   static const String projectUrl = "https://kazumi.app/";
@@ -22,8 +24,8 @@ class Api {
   static const String latestApp =
       'https://api.github.com/repos/Predidit/Kazumi/releases/latest';
 
-  /// Github镜像
-  static const String gitMirror = 'https://ghfast.top/';
+  /// Github镜像 (动态读取用户配置的生效代理地址)
+  static String get gitMirror => GitProxyInterceptor.getEffectiveProxyUrl();
 
   /// 弹弹官网
   static const String dandanIndex = 'https://www.dandanplay.com/';

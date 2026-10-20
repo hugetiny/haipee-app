@@ -1,4 +1,4 @@
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
@@ -42,7 +42,6 @@ class LanguageSettings extends ConsumerWidget {
         title: Text(t.settings.general.language),
       ),
       body: SettingsList(
-        maxWidth: 1000,
         sections: [
           SettingsSection(
             title: Text(t.settings.general.languageDesc),

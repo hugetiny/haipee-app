@@ -499,10 +499,13 @@
     },
     "navigation": {
         "tabs": {
-            "popular": "熱門番劇",
+            "popular": "熱門",
+            "catalog": "資源分類",
+            "media": "線上影片",
+            "resource": "全網資源",
             "timeline": "時間表",
-            "my": "我的",
-            "download": "下載",
+            "my": "媒體庫",
+            "download": "任務與下載",
             "settings": "設定"
         },
         "actions": {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'kazumi_app_bar_actions.dart';
 
 /// 播放页覆盖在视频之上的顶栏，视觉与普通页 AppBar 一致，但以 overlay 形式显隐
@@ -25,19 +27,22 @@ class KazumiTopOverlayBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-  final bg = fullscreenAware
-    ? Colors.black.withValues(alpha: 0.0)
-    : Colors.black.withValues(alpha: 0.2);
+    final bg = fullscreenAware
+        ? Colors.black.withValues(alpha: 0.0)
+        : Colors.black.withValues(alpha: 0.2);
 
-    return Container(
-      height: height,
-      padding: EdgeInsets.only(top: requireOffset ? MediaQuery.paddingOf(context).top : 0),
-      color: bg,
-      child: Row(
+    return DesktopWindowControlsSafeArea(
+      requireOffset: requireOffset,
+      child: Container(
+        height: height,
+        padding: EdgeInsets.only(
+            top: requireOffset ? MediaQuery.paddingOf(context).top : 0),
+        color: bg,
+        child: Row(
         children: [
           if (showBack)
-            IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+            AppBackButton(
+              color: Colors.white,
               onPressed: onBack,
             ),
           Expanded(child: Align(
@@ -50,6 +55,7 @@ class KazumiTopOverlayBar extends StatelessWidget {
           if (actions != null) actions!,
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

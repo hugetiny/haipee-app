@@ -26,12 +26,19 @@ class BangumiAccelerationInterceptor extends Interceptor {
           options.queryParameters = {};
           options.extra[_echRequestKey] = true;
         case BangumiAcceleration.mirror:
-          options.path =
-              ApiEndpoints.bangumiMirrorDomain +
-              uri.path +
-              (uri.hasQuery ? '?${uri.query}' : '');
-          options.queryParameters = {};
-          KazumiLogger().d('Bangumi mirror: ${options.path}');
+          final String? mirrorPath = switch (uri.path) {
+            ApiEndpoints.bangumiTrendsNext =>
+              ApiEndpoints.bangumiMirrorPopularSubjects,
+            _ => null,
+          };
+          if (mirrorPath != null) {
+            options.path =
+                ApiEndpoints.bangumiMirrorDomain +
+                mirrorPath +
+                (uri.hasQuery ? '?${uri.query}' : '');
+            options.queryParameters = {};
+            KazumiLogger().d('Bangumi mirror: ${options.path}');
+          }
       }
     }
     handler.next(options);

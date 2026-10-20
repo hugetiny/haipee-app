@@ -55,6 +55,54 @@ class BangumiItem {
     required this.info,
   });
 
+  /// 动态构造安全的回退/非番剧元数据对象 (如 Bilibili、抖音、自定义 Web 规则源或直链)
+  factory BangumiItem.dummy({
+    int? id,
+    String title = '未知视频',
+    String image = '',
+  }) {
+    final effectiveTitle = title.trim().isNotEmpty ? title.trim() : '未知视频';
+    final computedId = (id != null && id > 0)
+        ? id
+        : (effectiveTitle.hashCode.abs() % 2147483640 + 1);
+    return BangumiItem(
+      id: computedId,
+      type: 2,
+      name: effectiveTitle,
+      nameCn: effectiveTitle,
+      summary: '',
+      airDate: '',
+      airWeekday: 0,
+      rank: 0,
+      images: {
+        "large": image,
+        "common": image,
+        "medium": image,
+        "small": image,
+        "grid": image,
+      },
+      tags: [],
+      alias: [],
+      ratingScore: 0.0,
+      votes: 0,
+      votesCount: [],
+      info: '',
+    );
+  }
+
+  /// 从番剧 info 元数据智能提取总集数/话数 (Animeko MediaSelector 对齐辅助)
+  int? get totalEpisodes {
+    if (info.isEmpty) return null;
+    final match = RegExp(r'(?:话数|集数|总集数|eps)[:：\s]+(\d+)', caseSensitive: false).firstMatch(info);
+    if (match != null && match.group(1) != null) {
+      return int.tryParse(match.group(1)!);
+    }
+    return null;
+  }
+
+  /// 数据源站标识
+  String get source => 'Bangumi';
+
   factory BangumiItem.fromJson(Map<String, dynamic> json) {
     List<String> parseBangumiAliases(Map<String, dynamic> jsonData) {
       if (jsonData.containsKey('infobox') && jsonData['infobox'] is List) {
@@ -81,7 +129,7 @@ class BangumiItem {
     }
 
     List<int> parseBangumiVoteCount(Map<String, dynamic> jsonData) {
-      if (!jsonData.containsKey('rating')) {
+      if (!jsonData.containsKey('rating') || jsonData['rating'] == null) {
         return [];
       }
       final json = jsonData['rating']['count'];
@@ -100,6 +148,9 @@ class BangumiItem {
     List<String> bangumiAlias = parseBangumiAliases(json);
     List<BangumiTag> tagList = list.map((i) => BangumiTag.fromJson(i)).toList();
     List<int> voteList = parseBangumiVoteCount(json);
+    final ratingMap = json['rating'] is Map<String, dynamic>
+        ? json['rating'] as Map<String, dynamic>
+        : null;
     return BangumiItem(
       id: json['id'],
       type: json['type'] ?? 2,
@@ -110,7 +161,7 @@ class BangumiItem {
       summary: json['summary'] ?? '',
       airDate: json['date'] ?? '',
       airWeekday: Utils.dateStringToWeekday(json['date'] ?? '2000-11-11'),
-      rank: json['rating']['rank'] ?? 0,
+      rank: ratingMap?['rank'] ?? 0,
       images: Map<String, String>.from(
         json['images'] ??
             {
@@ -124,8 +175,8 @@ class BangumiItem {
       tags: tagList,
       alias: bangumiAlias,
       ratingScore: double.parse(
-          (json['rating']['score'] ?? 0.0).toDouble().toStringAsFixed(1)),
-      votes: json['rating']['total'] ?? 0,
+          (ratingMap?['score'] ?? 0.0).toDouble().toStringAsFixed(1)),
+      votes: ratingMap?['total'] ?? 0,
       votesCount: voteList,
       info: json['info'] ?? '',
     );

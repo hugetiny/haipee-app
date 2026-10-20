@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/modules/search/plugin_search_module.dart';
@@ -16,6 +17,7 @@ class SourceSearchState {
     required this.statuses,
     required this.results,
     required this.responseTimes,
+    this.errors = const {},
   });
 
   factory SourceSearchState.initial(Iterable<String> pluginNames) {
@@ -32,12 +34,14 @@ class SourceSearchState {
       statuses: statusMap,
       results: resultMap,
       responseTimes: responseTimeMap,
+      errors: const {},
     );
   }
 
   final Map<String, PluginSearchStatus> statuses;
   final Map<String, List<SearchItem>> results;
   final Map<String, int> responseTimes;
+  final Map<String, String> errors;
 
   SourceSearchState setStatus(String pluginName, PluginSearchStatus status) {
     final updatedStatuses = Map<String, PluginSearchStatus>.from(statuses)
@@ -46,6 +50,20 @@ class SourceSearchState {
       statuses: updatedStatuses,
       results: results,
       responseTimes: responseTimes,
+      errors: errors,
+    );
+  }
+
+  SourceSearchState setError(String pluginName, String errorReason) {
+    final updatedStatuses = Map<String, PluginSearchStatus>.from(statuses)
+      ..[pluginName] = PluginSearchStatus.error;
+    final updatedErrors = Map<String, String>.from(errors)
+      ..[pluginName] = errorReason;
+    return SourceSearchState(
+      statuses: updatedStatuses,
+      results: results,
+      responseTimes: responseTimes,
+      errors: updatedErrors,
     );
   }
 
@@ -56,6 +74,7 @@ class SourceSearchState {
       statuses: statuses,
       results: updatedResults,
       responseTimes: responseTimes,
+      errors: errors,
     );
   }
 
@@ -66,6 +85,7 @@ class SourceSearchState {
       statuses: statuses,
       results: results,
       responseTimes: updatedTimes,
+      errors: errors,
     );
   }
 
@@ -77,10 +97,13 @@ class SourceSearchState {
       ..removeWhere((key, _) => names.contains(key));
     final updatedTimes = Map<String, int>.from(responseTimes)
       ..removeWhere((key, _) => names.contains(key));
+    final updatedErrors = Map<String, String>.from(errors)
+      ..removeWhere((key, _) => names.contains(key));
     return SourceSearchState(
       statuses: updatedStatuses,
       results: updatedResults,
       responseTimes: updatedTimes,
+      errors: updatedErrors,
     );
   }
 
@@ -91,15 +114,18 @@ class SourceSearchState {
     final updatedStatuses = Map<String, PluginSearchStatus>.from(statuses);
     final updatedResults = Map<String, List<SearchItem>>.from(results);
     final updatedTimes = Map<String, int>.from(responseTimes);
+    final updatedErrors = Map<String, String>.from(errors);
     for (final name in pluginNames) {
       updatedStatuses[name] = PluginSearchStatus.pending;
       updatedResults[name] = const <SearchItem>[];
       updatedTimes[name] = 0;
+      updatedErrors.remove(name);
     }
     return SourceSearchState(
       statuses: updatedStatuses,
       results: updatedResults,
       responseTimes: updatedTimes,
+      errors: updatedErrors,
     );
   }
 }
@@ -131,12 +157,15 @@ class SourceSearchController
     _pluginsController = ref.read(pluginsProvider.notifier);
 
     final pluginState = ref.read(pluginsProvider);
+    final enabledPlugins = pluginState.pluginList
+        .where((plugin) => _pluginsController.isPluginEnabled(plugin.name))
+        .toList();
     final initialNames =
-        pluginState.pluginList.map((plugin) => plugin.name).toList();
+        enabledPlugins.map((plugin) => plugin.name).toList();
 
-    if (pluginState.pluginList.isNotEmpty) {
+    if (enabledPlugins.isNotEmpty) {
       Future.microtask(
-        () => _queryAll(pluginState.pluginList, _keyword),
+        () => _queryAll(enabledPlugins, _keyword),
       );
     }
 
@@ -147,10 +176,17 @@ class SourceSearchController
           return;
         }
 
-        final prevNames =
-            previous?.pluginList.map((plugin) => plugin.name).toList() ??
-                const [];
-        final nextNames = next.pluginList.map((plugin) => plugin.name).toList();
+        final prevNames = previous?.pluginList
+                .where((plugin) =>
+                    !previous.disabledPluginNames.contains(plugin.name))
+                .map((plugin) => plugin.name)
+                .toList() ??
+            const [];
+        final nextNames = next.pluginList
+            .where((plugin) =>
+                !next.disabledPluginNames.contains(plugin.name))
+            .map((plugin) => plugin.name)
+            .toList();
 
         if (listEquals(prevNames, nextNames)) {
           return;
@@ -211,7 +247,9 @@ class SourceSearchController
   }
 
   Future<void> refresh() async {
-    final pluginList = _pluginsController.pluginList;
+    final pluginList = _pluginsController.pluginList
+        .where((plugin) => _pluginsController.isPluginEnabled(plugin.name))
+        .toList();
     if (pluginList.isEmpty) {
       return;
     }
@@ -219,7 +257,9 @@ class SourceSearchController
   }
 
   Future<void> searchWithKeyword(String keyword) async {
-    final pluginList = _pluginsController.pluginList;
+    final pluginList = _pluginsController.pluginList
+        .where((plugin) => _pluginsController.isPluginEnabled(plugin.name))
+        .toList();
     if (pluginList.isEmpty) {
       return;
     }
@@ -270,7 +310,42 @@ class SourceSearchController
         Level.warning,
         '源 ${plugin.name} 检索失败: $error',
       );
-      _markError(plugin.name);
+      String reason = '检索异常';
+      if (error is DioException) {
+        switch (error.type) {
+          case DioExceptionType.connectionTimeout:
+            reason = '网络连接超时';
+            break;
+          case DioExceptionType.sendTimeout:
+            reason = '请求发送超时';
+            break;
+          case DioExceptionType.receiveTimeout:
+            reason = '响应接收超时';
+            break;
+          case DioExceptionType.badResponse:
+            final code = error.response?.statusCode;
+            reason = code != null ? 'HTTP错误 ($code)' : '服务器响应异常';
+            break;
+          case DioExceptionType.cancel:
+            reason = '请求已取消';
+            break;
+          case DioExceptionType.badCertificate:
+            reason = 'SSL证书校验失败';
+            break;
+          case DioExceptionType.connectionError:
+            reason = '网络连接失败 / 域名无法解析';
+            break;
+          default:
+            reason = '网络请求异常';
+            break;
+        }
+      } else {
+        final errStr = error.toString().split('\n').first.trim();
+        if (errStr.isNotEmpty) {
+          reason = errStr.length > 50 ? '${errStr.substring(0, 50)}...' : errStr;
+        }
+      }
+      _markError(plugin.name, reason);
     }
   }
 
@@ -289,8 +364,8 @@ class SourceSearchController
         .setResponseTime(pluginName, responseTime);
   }
 
-  void _markError(String pluginName) {
-    state = state.setStatus(pluginName, PluginSearchStatus.error);
+  void _markError(String pluginName, [String? errorReason]) {
+    state = state.setError(pluginName, errorReason ?? '检索失败');
   }
 
   Plugin? _findPlugin(String name) {

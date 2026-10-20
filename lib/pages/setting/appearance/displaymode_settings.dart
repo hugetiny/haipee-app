@@ -1,8 +1,9 @@
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/utils/storage.dart';
 
 class DisplaySettingsState {
@@ -63,14 +64,13 @@ class SetDisplayMode extends ConsumerWidget {
     final stateAsync = ref.watch(displaySettingsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('屏幕帧率设置')),
+      appBar: const SysAppBar(title: Text('屏幕帧率设置')),
       body: stateAsync.when(
         data: (state) {
           if (state.modes.isEmpty) {
             return const Center(child: Text('不支持的设备'));
           }
           return SettingsList(
-            maxWidth: 1000,
             sections: [
               SettingsSection(
                 title: const Text('没有生效? 重启应用试试'),

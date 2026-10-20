@@ -1,0 +1,20 @@
+{
+  "api": "1",
+  "type": "maccms",
+  "name": "金鹰影视",
+  "version": "1.0",
+  "muliSources": true,
+  "useWebview": false,
+  "useNativePlayer": true,
+  "usePost": false,
+  "useLegacyParser": false,
+  "userAgent": "Mozilla/5.0 (Kazumi/Player)",
+  "baseURL": "https://jyzyapi.com",
+  "searchURL": "https://jyzyapi.com/provide/vod/?ac=detail&at=json&wd=@keyword",
+  "searchList": "",
+  "searchName": "",
+  "searchResult": "",
+  "chapterRoads": "",
+  "chapterResult": "",
+  "referer": "https://jyzyapi.com/"
+}

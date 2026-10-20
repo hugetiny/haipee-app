@@ -21,6 +21,8 @@ abstract class WebviewItemController<T> {
   int offset = 0;
   bool isIframeLoaded = false;
   bool isVideoSourceLoaded = false;
+  bool isInitialized = false;
+  void markInitialized() => isInitialized = true;
 
   /// Webview initialization method
   Future<void> init();

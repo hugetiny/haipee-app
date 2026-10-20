@@ -14,6 +14,7 @@ import 'package:kazumi/modules/download/download_task.dart';
 import 'package:kazumi/utils/api_credentials.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:logger/logger.dart';
+import 'package:kazumi/services/logging/app_log.dart' show AppLog;
 import 'package:kazumi/services/storage/settings_keys.dart';
 export 'package:kazumi/services/storage/settings_keys.dart';
 
@@ -24,13 +25,15 @@ class GStorage {
   static late Box<History> histories;
   static late Box<CollectedBangumiChange> collectChanges;
   static late Box<String> shieldList;
-  static late final Box<dynamic> setting;
+  static late Box<dynamic> setting;
   static late Box<SearchHistory> searchHistory;
   static late Box<MetadataRecord> metadataCache;
   static late Box<ParseFailureRecord> parseFailures;
   static late Box<dynamic> downloadTasks;
   static late Box<dynamic> torrentEntries;
   static late Box<dynamic> playbackProfiles;
+  static late Box<dynamic> indexerPlugins;
+  static late Box<dynamic> indexerRepos;
 
   static Future init() async {
     Hive.registerAdapter(BangumiItemAdapter());
@@ -49,6 +52,7 @@ class GStorage {
     collectibles = await Hive.openBox('collectibles');
     histories = await Hive.openBox('histories');
     setting = await Hive.openBox('setting');
+    AppLog.loadSavedSettings();
     collectChanges = await Hive.openBox('collectchanges');
     shieldList = await Hive.openBox('shieldList');
     searchHistory = await Hive.openBox('searchHistory');
@@ -57,6 +61,8 @@ class GStorage {
     downloadTasks = await Hive.openBox('downloadTasks');
     torrentEntries = await Hive.openBox('torrentEntries');
     playbackProfiles = await Hive.openBox('playbackProfiles');
+    indexerPlugins = await Hive.openBox('indexerPlugins');
+    indexerRepos = await Hive.openBox('indexerRepos');
 
     await _ensureRetentionDefaults();
   }
@@ -322,21 +328,36 @@ class GStorage {
   }
 
   static String readDanDanAppId() {
-    final String? stored =
-        (setting.get(SettingBoxKey.danDanAppId, defaultValue: '') as String?)
-            ?.trim();
-    return (stored != null && stored.isNotEmpty)
-        ? stored
-        : ApiCredentials.danDanAppId;
+    try {
+      final String? stored =
+          (setting.get(SettingBoxKey.danDanAppId, defaultValue: '') as String?)
+              ?.trim();
+      return (stored != null && stored.isNotEmpty)
+          ? stored
+          : ApiCredentials.danDanAppId;
+    } catch (_) {
+      return ApiCredentials.danDanAppId;
+    }
   }
 
   static String readDanDanApiKey() {
-    final String? stored =
-        (setting.get(SettingBoxKey.danDanApiKey, defaultValue: '') as String?)
-            ?.trim();
-    return (stored != null && stored.isNotEmpty)
-        ? stored
-        : ApiCredentials.danDanApiKey;
+    try {
+      final String? stored =
+          (setting.get(SettingBoxKey.danDanApiKey, defaultValue: '') as String?)
+              ?.trim();
+      return (stored != null && stored.isNotEmpty)
+          ? stored
+          : ApiCredentials.danDanApiKey;
+    } catch (_) {
+      return ApiCredentials.danDanApiKey;
+    }
+  }
+
+  /// Whether valid DanDanPlay credentials are configured.
+  static bool hasValidDanDanCredentials() {
+    final String id = readDanDanAppId();
+    final String key = readDanDanApiKey();
+    return !ApiCredentials.isPlaceholder(id, key);
   }
 
   static T getSetting<T>(
@@ -344,15 +365,19 @@ class GStorage {
     SettingContext context = const SettingContext(),
   }) {
     final defaultValue = key.resolveDefault(context);
-    final storedValue = setting.get(key.name);
-    if (storedValue is T) {
-      return storedValue;
-    }
+    try {
+      final storedValue = setting.get(key.name);
+      if (storedValue is T) {
+        return storedValue;
+      }
+    } catch (_) {}
     return defaultValue;
   }
 
   static Future<void> putSetting<T>(SettingKey<T> key, T value) async {
-    await setting.put(key.name, value);
+    try {
+      await setting.put(key.name, value);
+    } catch (_) {}
   }
 
   static Stream<void> watchSettings(Iterable<SettingKey<Object?>> keys) {
@@ -424,6 +449,7 @@ class SettingBoxKey {
       oledEnhance = 'oledEnhance',
       displayMode = 'displayMode',
       enableGitProxy = 'enableGitProxy',
+      gitProxyUrl = 'gitProxyUrl',
       enableSystemProxy = 'enableSystemProxy',
       isWideScreen = 'isWideScreen',
       webDavEnable = 'webDavEnable',
@@ -438,6 +464,8 @@ class SettingBoxKey {
       exitBehavior = 'exitBehavior',
       playerDebugMode = 'playerDebugMode',
       syncPlayEndPoint = 'syncPlayEndPoint',
+      disabledVideoPlugins = 'disabled_video_plugins',
+      webRuleSubscriptions = 'web_rule_subscriptions',
       androidEnableOpenSLES = 'androidEnableOpenSLES',
       defaultSuperResolutionType = 'defaultSuperResolutionType',
       superResolutionWarn = 'superResolutionWarn',
@@ -460,5 +488,14 @@ class SettingBoxKey {
       subtitleAutoMatchEnabled = 'subtitleAutoMatchEnabled',
       subtitlePreferredLanguages = 'subtitlePreferredLanguages',
       subtitlePreferredFormats = 'subtitlePreferredFormats',
+      downloadDirectory = 'downloadDirectory',
+      prowlarrEndpoint = 'prowlarrEndpoint',
+      prowlarrApiKey = 'prowlarrApiKey',
+      prowlarrEnabled = 'prowlarrEnabled',
+      defaultTorrentStreamEngine = 'defaultTorrentStreamEngine',
+      autoSkipOpEd = 'autoSkipOpEd',
+      debridProvider = 'debridProvider',
+      debridApiKey = 'debridApiKey',
+      diagnosticLogsEnabled = 'diagnosticLogsEnabled',
       appLocale = 'appLocale';
 }

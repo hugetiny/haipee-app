@@ -32,7 +32,9 @@
       "refresh": "刷新",
       "tabs": {
         "downloading": "下载中 ($count)",
+        "paused": "已暂停 ($count)",
         "completed": "已完成 ($count)",
+        "failed": "下载失败 ($count)",
         "all": "全部"
       },
       "actions": {
@@ -65,7 +67,9 @@
       },
       "empty": {
         "downloading": "当前没有下载任务",
+        "paused": "没有已暂停的下载任务",
         "completed": "还没有已完成的下载",
+        "failed": "没有下载失败的任务",
         "all": "下载列表为空",
         "hint": "点击上方的新建按钮添加下载任务"
       },
@@ -636,10 +640,13 @@
   },
   "navigation": {
     "tabs": {
-      "popular": "首页",
+      "popular": "热门",
+      "catalog": "资源分类",
+      "media": "在线视频",
+      "resource": "全网资源",
       "timeline": "时间表",
-      "my": "我的",
-      "download": "下载",
+      "my": "媒体库",
+      "download": "任务与下载",
       "settings": "设置"
     },
     "actions": {

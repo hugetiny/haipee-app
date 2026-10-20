@@ -100,7 +100,11 @@ class BangumiHTTP {
   }
 
   static Future<List<BangumiItem>> getBangumiList(
-      {int rank = 2, String tag = ''}) async {
+      {int rank = 2,
+      String tag = '',
+      int type = 2,
+      int limit = 100,
+      int offset = 0}) async {
     List<BangumiItem> bangumiList = [];
     late Map<String, dynamic> params;
     if (tag == '') {
@@ -108,7 +112,7 @@ class BangumiHTTP {
         'keyword': '',
         'sort': 'rank',
         "filter": {
-          "type": [2],
+          "type": [type],
           "rank": [">$rank", "<=99999"],
           "nsfw": false
         },
@@ -118,7 +122,7 @@ class BangumiHTTP {
         'keyword': '',
         'sort': 'rank',
         "filter": {
-          "type": [2],
+          "type": [type],
           "tag": [tag],
           "rank": [">$rank", "<=99999"],
           "nsfw": false
@@ -127,7 +131,7 @@ class BangumiHTTP {
     }
     try {
       final res = await Request().post(
-        Api.formatUrl(Api.bangumiAPIDomain + Api.bangumiRankSearch, [100, 0]),
+        Api.formatUrl(Api.bangumiAPIDomain + Api.bangumiRankSearch, [limit, offset]),
         data: params,
       );
       final jsonData = res.data;
@@ -166,9 +170,12 @@ class BangumiHTTP {
         final jsonList = jsonData['data'];
         if (jsonList is Iterable) {
           for (dynamic jsonItem in jsonList) {
-            if (jsonItem is Map<String, dynamic> &&
-                jsonItem['subject'] is Map<String, dynamic>) {
-              bangumiList.add(BangumiItem.fromJson(jsonItem['subject']));
+            if (jsonItem is Map<String, dynamic>) {
+              if (jsonItem['subject'] is Map<String, dynamic>) {
+                bangumiList.add(BangumiItem.fromJson(jsonItem['subject']));
+              } else if (jsonItem.containsKey('id')) {
+                bangumiList.add(BangumiItem.fromJson(jsonItem));
+              }
             }
           }
         }

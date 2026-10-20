@@ -19,11 +19,23 @@ class AppDelegate: FlutterAppDelegate {
     var httpReferer: String = ""
     
     override func applicationDidFinishLaunching(_ notification: Notification) {
+        if let iconPath = Bundle.main.path(forResource: "AppIcon", ofType: "icns"),
+           let iconImage = NSImage(contentsOfFile: iconPath) {
+            NSApp.applicationIconImage = iconImage
+        }
+        
         let controller : FlutterViewController = mainFlutterWindow?.contentViewController as! FlutterViewController
         let channel = FlutterMethodChannel.init(name: "com.predidit.kazumi/intent", binaryMessenger: controller.engine.binaryMessenger)
         channel.setMethodCallHandler({
             (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
-            if call.method == "openWithReferer" {
+            if call.method == "updateDockIcon" {
+                if let iconPath = Bundle.main.path(forResource: "AppIcon", ofType: "icns"),
+                   let iconImage = NSImage(contentsOfFile: iconPath) {
+                    NSApp.applicationIconImage = iconImage
+                    NSApp.dockTile.display()
+                }
+                result(true)
+            } else if call.method == "openWithReferer" {
                 guard let args = call.arguments else { return }
                 if let myArgs = args as? [String: Any],
                    let url = myArgs["url"] as? String,

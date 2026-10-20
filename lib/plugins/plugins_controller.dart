@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle, AssetManifest;
 import 'package:path_provider/path_provider.dart';
 import 'package:kazumi/plugins/plugins.dart';
@@ -12,6 +13,9 @@ import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/request/api.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:kazumi/modules/plugin/plugin_subscription.dart';
+import 'package:kazumi/utils/storage.dart';
+
 // 从 1.5.1 版本开始，规则文件储存在单一的 plugins.json 文件中。
 // 之前的版本中，规则以分离文件形式存储，版本更新后将这些分离文件合并为单一的 plugins.json 文件。
 
@@ -19,24 +23,77 @@ class PluginsState {
   const PluginsState({
     this.pluginList = const [],
     this.pluginHTTPList = const [],
+    this.disabledPluginNames = const {},
+    this.subscriptions = const [],
   });
 
   final List<Plugin> pluginList;
   final List<PluginHTTPItem> pluginHTTPList;
+  final Set<String> disabledPluginNames;
+  final List<PluginSubscription> subscriptions;
+
+  bool isPluginEnabled(String name) => !disabledPluginNames.contains(name);
+
+  int get enabledPluginCount =>
+      pluginList.where((p) => !disabledPluginNames.contains(p.name)).length;
+
+  List<Plugin> get enabledPlugins =>
+      pluginList.where((p) => !disabledPluginNames.contains(p.name)).toList();
 
   PluginsState copyWith({
     List<Plugin>? pluginList,
     List<PluginHTTPItem>? pluginHTTPList,
+    Set<String>? disabledPluginNames,
+    List<PluginSubscription>? subscriptions,
   }) {
     return PluginsState(
       pluginList: pluginList ?? this.pluginList,
       pluginHTTPList: pluginHTTPList ?? this.pluginHTTPList,
+      disabledPluginNames: disabledPluginNames ?? this.disabledPluginNames,
+      subscriptions: subscriptions ?? this.subscriptions,
     );
   }
 }
 
 class PluginsController extends Notifier<PluginsState> {
+  static const List<String> bundledPluginAssets = [
+    'assets/plugins/liangzi.json',
+    'assets/plugins/ffzy.json',
+    'assets/plugins/bfzy.json',
+    'assets/plugins/jyzy.json',
+    'assets/plugins/bilibili.json',
+    'assets/plugins/douyin.json',
+    'assets/plugins/mutefun.json',
+    'assets/plugins/dalvdm.json',
+    'assets/plugins/anime7.json',
+    'assets/plugins/DM84.json',
+    'assets/plugins/xfdm.json',
+  ];
+
   bool _isDisposed = false;
+  PluginsState _cachedState = const PluginsState();
+
+  @override
+  set state(PluginsState value) {
+    _cachedState = value;
+    if (!_isDisposed) {
+      super.state = value;
+    }
+  }
+
+  PluginsState get _currentState {
+    try {
+      final s = state;
+      _cachedState = s;
+      return s;
+    } catch (_) {
+      return _cachedState;
+    }
+  }
+
+  void _setState(PluginsState newState) {
+    state = newState;
+  }
 
   @override
   PluginsState build() {
@@ -44,8 +101,9 @@ class PluginsController extends Notifier<PluginsState> {
     ref.onDispose(() {
       _isDisposed = true;
     });
+    _cachedState = const PluginsState();
     Future.microtask(init);
-    return const PluginsState();
+    return _cachedState;
   }
 
   // 规则有效性追踪器
@@ -60,87 +118,222 @@ class PluginsController extends Notifier<PluginsState> {
 
   Directory? newPluginDirectory;
 
-  List<Plugin> get pluginList => state.pluginList;
+  List<Plugin> get pluginList => _currentState.pluginList;
 
-  List<PluginHTTPItem> get pluginHTTPList => state.pluginHTTPList;
+  List<PluginHTTPItem> get pluginHTTPList => _currentState.pluginHTTPList;
+
+  List<PluginSubscription> get subscriptions => _currentState.subscriptions;
 
   // Initializes the plugin directory and loads all plugins
   Future<void> init() async {
-    final directory = await getApplicationSupportDirectory();
-    oldPluginDirectory = Directory('${directory.path}/plugins');
-    if (!await oldPluginDirectory!.exists()) {
-      await oldPluginDirectory!.create(recursive: true);
+    try {
+      _loadDisabledPlugins();
+      _loadSubscriptions();
+      final directory = await getApplicationSupportDirectory();
+      if (_isDisposed) return;
+      oldPluginDirectory = Directory('${directory.path}/plugins');
+      if (!await oldPluginDirectory!.exists()) {
+        try {
+          await oldPluginDirectory!.create(recursive: true);
+        } catch (_) {}
+      }
+      if (_isDisposed) return;
+      newPluginDirectory = Directory('${directory.path}/plugins/v2');
+      if (!await newPluginDirectory!.exists()) {
+        try {
+          await newPluginDirectory!.create(recursive: true);
+        } catch (_) {}
+      }
+      if (_isDisposed) return;
+      await loadAllPlugins();
+      if (_isDisposed) return;
+      await _loadInitialMarketCatalog();
+    } catch (e, stack) {
+      KazumiLogger().log(Level.error, 'PluginsController init 异常: $e\n$stack');
     }
-    newPluginDirectory = Directory('${directory.path}/plugins/v2');
-    if (!await newPluginDirectory!.exists()) {
-      await newPluginDirectory!.create(recursive: true);
+  }
+
+  Future<void> _loadInitialMarketCatalog() async {
+    if (_currentState.pluginHTTPList.isEmpty) {
+      try {
+        final bundled = await PluginHTTP.loadBundledPluginList();
+        if (bundled.isNotEmpty && _currentState.pluginHTTPList.isEmpty) {
+          _setState(_currentState.copyWith(
+            pluginHTTPList: List<PluginHTTPItem>.unmodifiable(bundled),
+          ));
+          KazumiLogger().log(Level.info, '已就绪官方规则市场预置索引: ${bundled.length} 项');
+        }
+      } catch (_) {}
     }
-    await loadAllPlugins();
   }
 
   // Loads all plugins from the directory, populates the plugin list, and saves to plugins.json if needed
   Future<void> loadAllPlugins() async {
-    KazumiLogger()
-        .log(Level.info, 'Plugins Directory: ${newPluginDirectory!.path}');
-    if (await newPluginDirectory!.exists()) {
-      final pluginsFile = File('${newPluginDirectory!.path}/$pluginsFileName');
-      if (await pluginsFile.exists()) {
-        final jsonString = await pluginsFile.readAsString();
-        final plugins = getPluginListFromJson(jsonString);
-        _setPluginList(plugins);
-        KazumiLogger()
-            .log(Level.info, 'Current Plugin number: ${plugins.length}');
-      } else {
-        // No plugins.json
-        var jsonFiles = await getPluginFiles();
-        final List<Plugin> plugins = [];
-        for (var filePath in jsonFiles) {
-          final file = File(filePath);
-          final jsonString = await file.readAsString();
-          final data = jsonDecode(jsonString);
-          final plugin = Plugin.fromJson(data);
-          plugins.add(plugin);
-          await file.delete(recursive: true);
+    try {
+      if (newPluginDirectory == null) return;
+      KazumiLogger()
+          .log(Level.info, 'Plugins Directory: ${newPluginDirectory!.path}');
+      if (await newPluginDirectory!.exists()) {
+        final pluginsFile = File('${newPluginDirectory!.path}/$pluginsFileName');
+        if (await pluginsFile.exists()) {
+          try {
+            final jsonString = await pluginsFile.readAsString();
+            final plugins = getPluginListFromJson(jsonString);
+            if (plugins.isNotEmpty) {
+              await _ensureWorkingPlugins(plugins);
+              _setPluginList(plugins);
+              KazumiLogger()
+                  .log(Level.info, 'Current Plugin number: ${plugins.length}');
+            } else {
+              KazumiLogger().log(Level.warning, 'plugins.json 为空或损坏，正在重置恢复预置规则');
+              await resetAllBundledPlugins();
+            }
+          } catch (e) {
+            KazumiLogger().log(Level.error, '读取 plugins.json 失败, 尝试重置恢复预置规则: $e');
+            await resetAllBundledPlugins();
+          }
+        } else {
+          // No plugins.json
+          var jsonFiles = await getPluginFiles();
+          final List<Plugin> plugins = [];
+          for (var filePath in jsonFiles) {
+            try {
+              final file = File(filePath);
+              final jsonString = await file.readAsString();
+              final data = jsonDecode(jsonString);
+              final plugin = Plugin.fromJson(data);
+              plugins.add(plugin);
+              await file.delete(recursive: true);
+            } catch (_) {}
+          }
+          await _ensureWorkingPlugins(plugins);
+          _setPluginList(plugins);
+          savePlugins();
         }
-        _setPluginList(plugins);
-        savePlugins();
+      } else {
+        KazumiLogger().log(Level.warning, 'Plugin directory does not exist');
       }
-    } else {
-      KazumiLogger().log(Level.warning, 'Plugin directory does not exist');
+    } catch (e) {
+      KazumiLogger().log(Level.error, 'loadAllPlugins 异常: $e');
     }
   }
 
+  /// 确保关键高质量视频源（如 Maccms 影视源、mutefun, dalvdm）在本地规则列表中存在
+  Future<void> _ensureWorkingPlugins(List<Plugin> plugins) async {
+    bool changed = false;
+    final workingAssets = [
+      'assets/plugins/liangzi.json',
+      'assets/plugins/ffzy.json',
+      'assets/plugins/bfzy.json',
+      'assets/plugins/jyzy.json',
+      'assets/plugins/bilibili.json',
+      'assets/plugins/douyin.json',
+      'assets/plugins/mutefun.json',
+      'assets/plugins/dalvdm.json',
+    ];
+
+    for (final assetPath in workingAssets) {
+      final name = assetPath.split('/').last.replaceAll(RegExp(r'\.(json|yaml|yml)$'), '');
+      final existingIndex = plugins.indexWhere((p) => p.name == name);
+      if (existingIndex == -1) {
+        try {
+          String content;
+          try {
+            content = await rootBundle.loadString(assetPath);
+          } catch (_) {
+            content = File(assetPath).readAsStringSync();
+          }
+          final plugin = assetPath.endsWith('.yaml') || assetPath.endsWith('.yml')
+              ? Plugin.fromYaml(content)
+              : Plugin.fromJson(jsonDecode(content));
+          plugins.add(plugin);
+          changed = true;
+          KazumiLogger().log(Level.info, '已自动补充工作视频源: $name');
+        } catch (e) {
+          KazumiLogger().log(Level.warning, '加载预置规则失败 $assetPath: $e');
+        }
+      } else if (name == 'mutefun') {
+        final p = plugins[existingIndex];
+        // 若 mutefun 仍为旧版包含 voddetail 的 baseURL 或缺少 sourceTemplate，自动更新
+        if (p.baseUrl.contains('/voddetail') ||
+            p.searchApiConfig?['sourceTemplate'] == null) {
+          try {
+            String jsonString;
+            try {
+              jsonString = await rootBundle.loadString(assetPath);
+            } catch (_) {
+              jsonString = File(assetPath).readAsStringSync();
+            }
+            final updatedPlugin = Plugin.fromJson(jsonDecode(jsonString));
+            plugins[existingIndex] = updatedPlugin;
+            changed = true;
+            KazumiLogger().log(Level.info,
+                '已自动升级 mutefun 规则为规范根域名与 sourceTemplate: ${updatedPlugin.baseUrl}');
+          } catch (e) {
+            KazumiLogger().log(Level.warning, '升级 mutefun 预置规则失败: $e');
+          }
+        }
+      }
+    }
+
+    if (changed) {
+      await savePlugins();
+    }
+  }
+
+  @visibleForTesting
+  Future<void> ensureWorkingPluginsForTesting(List<Plugin> plugins) =>
+      _ensureWorkingPlugins(plugins);
+
   // Retrieves a list of JSON plugin file paths from the plugin directory
   Future<List<String>> getPluginFiles() async {
-    if (await oldPluginDirectory!.exists()) {
-      final jsonFiles = oldPluginDirectory!
-          .listSync()
-          .where((file) => file.path.endsWith('.json') && file is File)
-          .map((file) => file.path)
-          .toList();
-      return jsonFiles;
-    } else {
-      return [];
-    }
+    try {
+      if (oldPluginDirectory != null && await oldPluginDirectory!.exists()) {
+        final jsonFiles = oldPluginDirectory!
+            .listSync()
+            .where((file) => file.path.endsWith('.json') && file is File)
+            .map((file) => file.path)
+            .toList();
+        return jsonFiles;
+      }
+    } catch (_) {}
+    return [];
   }
 
   // Copies plugin JSON files from the assets to the plugin directory
   Future<void> copyPluginsToExternalDirectory() async {
-    final assetManifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-    final assets = assetManifest.listAssets();
-    final jsonFiles = assets.where((String asset) =>
-        asset.startsWith('assets/plugins/') && asset.endsWith('.json'));
+    List<String> jsonFiles = [];
+    try {
+      final assetManifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final assets = assetManifest.listAssets();
+      jsonFiles = assets
+          .where((String asset) =>
+              asset.startsWith('assets/plugins/') &&
+              (asset.endsWith('.json') ||
+               asset.endsWith('.yaml') ||
+               asset.endsWith('.yml')))
+          .toList();
+    } catch (_) {}
+    if (jsonFiles.isEmpty) {
+      jsonFiles = bundledPluginAssets;
+    }
 
     final List<Plugin> plugins = [...pluginList];
     for (var filePath in jsonFiles) {
-      final jsonString = await rootBundle.loadString(filePath);
-      final plugin = Plugin.fromJson(jsonDecode(jsonString));
-      plugins.add(plugin);
+      try {
+        final content = await rootBundle.loadString(filePath);
+        final plugin = filePath.endsWith('.yaml') || filePath.endsWith('.yml')
+            ? Plugin.fromYaml(content)
+            : Plugin.fromJson(jsonDecode(content));
+        if (!plugins.any((p) => p.name == plugin.name)) {
+          plugins.add(plugin);
+        }
+      } catch (_) {}
     }
     _setPluginList(plugins);
     await savePlugins();
     KazumiLogger().log(Level.info,
-        '${jsonFiles.length} plugin files copied to ${newPluginDirectory!.path}');
+        '${plugins.length} plugin files saved to ${newPluginDirectory!.path}');
   }
 
   List<dynamic> pluginListToJson() {
@@ -151,14 +344,35 @@ class PluginsController extends Notifier<PluginsState> {
     return json;
   }
 
-  // Converts a JSON string into a list of Plugin objects.
+  // Converts a JSON string into a list of Plugin objects safely.
   List<Plugin> getPluginListFromJson(String jsonString) {
-    List<dynamic> json = jsonDecode(jsonString);
-    List<Plugin> plugins = [];
-    for (var j in json) {
-      plugins.add(Plugin.fromJson(j));
+    try {
+      final dynamic decoded = jsonDecode(jsonString);
+      if (decoded is! List) {
+        KazumiLogger().log(Level.warning, 'plugins.json 顶层非 List 结构');
+        return [];
+      }
+      final List<Plugin> plugins = [];
+      for (var j in decoded) {
+        try {
+          Plugin? p;
+          if (j is Map<String, dynamic>) {
+            p = Plugin.fromJson(j);
+          } else if (j is Map) {
+            p = Plugin.fromJson(Map<String, dynamic>.from(j));
+          }
+          if (p != null && p.name.trim().isNotEmpty) {
+            plugins.add(p);
+          }
+        } catch (e) {
+          KazumiLogger().log(Level.warning, '解析单项规则失败: $e');
+        }
+      }
+      return plugins;
+    } catch (e) {
+      KazumiLogger().log(Level.error, '解析 plugins.json 失败: $e');
+      return [];
     }
-    return plugins;
   }
 
   Future<void> removePlugin(Plugin plugin) async {
@@ -192,6 +406,9 @@ class PluginsController extends Notifier<PluginsState> {
   }
 
   Future<void> savePlugins() async {
+    if (newPluginDirectory == null) {
+      return;
+    }
     final jsonData = jsonEncode(pluginListToJson());
     final pluginsFile = File('${newPluginDirectory!.path}/$pluginsFileName');
     await pluginsFile.writeAsString(jsonData);
@@ -203,9 +420,16 @@ class PluginsController extends Notifier<PluginsState> {
     if (_isDisposed) {
       return;
     }
-    state = state.copyWith(
+    _setState(_currentState.copyWith(
       pluginHTTPList: List<PluginHTTPItem>.unmodifiable(pluginHTTPListRes),
-    );
+    ));
+  }
+
+  void setPluginHTTPList(List<PluginHTTPItem> list) {
+    if (_isDisposed) return;
+    _setState(_currentState.copyWith(
+      pluginHTTPList: List<PluginHTTPItem>.unmodifiable(list),
+    ));
   }
 
   Future<Plugin?> queryPluginHTTP(String name) async {
@@ -267,20 +491,370 @@ class PluginsController extends Notifier<PluginsState> {
     return count;
   }
 
-  void removePlugins(Set<String> pluginNames) {
+  void removePlugins(Iterable<String> pluginNames) {
+    final names = pluginNames.toSet();
     final updated = pluginList
-        .where((plugin) => !pluginNames.contains(plugin.name))
+        .where((plugin) => !names.contains(plugin.name))
         .toList();
     _setPluginList(updated);
     savePlugins();
+  }
+
+  static const List<String> bundledPluginNames = [
+    'liangzi',
+    'ffzy',
+    'bfzy',
+    'jyzy',
+    'bilibili',
+    'douyin',
+    'mutefun',
+    'dalvdm',
+    'anime7',
+    'DM84',
+    'xfdm',
+  ];
+
+  bool isBundledPlugin(String name) {
+    return bundledPluginNames.contains(name) ||
+        bundledPluginAssets.any((a) =>
+            a.contains('/$name.json') ||
+            a.contains('/$name.yaml') ||
+            a.contains('/$name.yml'));
+  }
+
+  bool isPluginEnabled(String name) {
+    return _currentState.isPluginEnabled(name);
+  }
+
+  void _loadDisabledPlugins() {
+    try {
+      final list = GStorage.setting.get(SettingBoxKey.disabledVideoPlugins, defaultValue: <dynamic>[]);
+      if (list is List) {
+        final disabled = list.map((e) => e.toString()).toSet();
+        _setState(_currentState.copyWith(disabledPluginNames: disabled));
+      }
+    } catch (_) {}
+  }
+
+  void _saveDisabledPlugins(Set<String> disabled) {
+    try {
+      GStorage.setting.put(SettingBoxKey.disabledVideoPlugins, disabled.toList());
+    } catch (_) {}
+  }
+
+  void togglePluginEnabled(String name, bool enabled) {
+    if (_isDisposed) return;
+    try {
+      final updated = Set<String>.from(_currentState.disabledPluginNames);
+      if (enabled) {
+        updated.remove(name);
+      } else {
+        updated.add(name);
+      }
+      _saveDisabledPlugins(updated);
+      _setState(_currentState.copyWith(disabledPluginNames: updated));
+    } catch (_) {}
+  }
+
+  void batchTogglePlugins(Iterable<String> names, bool enabled) {
+    if (_isDisposed) return;
+    try {
+      final updated = Set<String>.from(_currentState.disabledPluginNames);
+      if (enabled) {
+        updated.removeAll(names);
+      } else {
+        updated.addAll(names);
+      }
+      _saveDisabledPlugins(updated);
+      _setState(_currentState.copyWith(disabledPluginNames: updated));
+    } catch (_) {}
+  }
+
+  // --- 在线规则源订阅 (Online Subscription) ---
+
+  void _loadSubscriptions() {
+    try {
+      final raw = GStorage.setting.get(SettingBoxKey.webRuleSubscriptions);
+      if (raw != null) {
+        final List<dynamic> list = raw is String ? jsonDecode(raw) : (raw as List);
+        final subs = list
+            .map((e) => PluginSubscription.fromJson(
+                Map<String, dynamic>.from(e as Map)))
+            .toList();
+        _setState(_currentState.copyWith(subscriptions: subs));
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '加载规则订阅列表失败: $e');
+    }
+  }
+
+  Future<void> _saveSubscriptions(List<PluginSubscription> subs) async {
+    try {
+      final jsonList = subs.map((s) => s.toJson()).toList();
+      await GStorage.setting.put(SettingBoxKey.webRuleSubscriptions, jsonList);
+      _setState(_currentState.copyWith(subscriptions: subs));
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '保存规则订阅列表失败: $e');
+    }
+  }
+
+  /// 添加新的远程视频规则订阅
+  Future<void> addSubscription(
+    String name,
+    String url, {
+    bool syncImmediately = true,
+  }) async {
+    final cleanUrl = url.trim();
+    final cleanName = name.trim().isNotEmpty ? name.trim() : '在线视频规则订阅';
+    final id = 'sub_${DateTime.now().millisecondsSinceEpoch}';
+
+    final sub = PluginSubscription(
+      id: id,
+      name: cleanName,
+      url: cleanUrl,
+      enabled: true,
+      lastSync: null,
+      pluginCount: 0,
+    );
+
+    final updated = List<PluginSubscription>.from(_currentState.subscriptions)
+      ..add(sub);
+    await _saveSubscriptions(updated);
+
+    if (syncImmediately) {
+      await syncSubscription(id);
+    }
+  }
+
+  /// 移除规则订阅
+  Future<void> removeSubscription(String id) async {
+    final updated =
+        _currentState.subscriptions.where((s) => s.id != id).toList();
+    await _saveSubscriptions(updated);
+  }
+
+  /// 同步单个规则订阅，拉取并批量导入规则
+  Future<int> syncSubscription(String id) async {
+    final index = _currentState.subscriptions.indexWhere((s) => s.id == id);
+    if (index < 0) return 0;
+
+    final sub = _currentState.subscriptions[index];
+    try {
+      final plugins = await PluginSubscription.fetchPluginsFromUrl(sub.url);
+      if (plugins.isNotEmpty) {
+        final importedCount = await addOrUpdatePlugins(plugins, enableAll: true);
+        final updatedSub = sub.copyWith(
+          lastSync: DateTime.now(),
+          pluginCount: plugins.length,
+        );
+        final updatedSubs =
+            List<PluginSubscription>.from(_currentState.subscriptions);
+        updatedSubs[index] = updatedSub;
+        await _saveSubscriptions(updatedSubs);
+        return importedCount;
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.error, '同步订阅失败: ${sub.name} ($id): $e');
+      rethrow;
+    }
+    return 0;
+  }
+
+  /// 一键同步全部已启用的在线规则源订阅
+  Future<int> syncAllSubscriptions() async {
+    int totalImported = 0;
+    for (final sub in _currentState.subscriptions) {
+      if (sub.enabled) {
+        try {
+          final count = await syncSubscription(sub.id);
+          totalImported += count;
+        } catch (_) {}
+      }
+    }
+    return totalImported;
+  }
+
+  /// 批量导入或更新多条 Plugin 规则 (从文件多选、剪贴板数组或订阅源一键载入)
+  Future<int> addOrUpdatePlugins(
+    List<Plugin> plugins, {
+    bool enableAll = true,
+  }) async {
+    if (plugins.isEmpty) return 0;
+
+    final currentList = List<Plugin>.from(_currentState.pluginList);
+    final disabledSet = Set<String>.from(_currentState.disabledPluginNames);
+    int count = 0;
+
+    for (final p in plugins) {
+      if (p.name.trim().isEmpty) continue;
+      final existingIndex = currentList.indexWhere((it) => it.name == p.name);
+      if (existingIndex >= 0) {
+        currentList[existingIndex] = p;
+      } else {
+        currentList.add(p);
+      }
+      if (enableAll) {
+        disabledSet.remove(p.name);
+      }
+      count++;
+    }
+
+    _saveDisabledPlugins(disabledSet);
+    _setPluginList(currentList);
+    await savePlugins();
+    KazumiLogger().log(Level.info, '批量导入成功: $count 条规则，当前规则库总数: ${currentList.length}');
+    return count;
+  }
+
+  /// 批量并发测试指定规则的连通性与可用性
+  /// 测试通过（可用）的规则自动载入并开启，测试失败的置于禁用状态
+  Future<Map<String, bool>> testAndAutoLoadPlugins({
+    List<Plugin>? targets,
+    String keyword = '海贼王',
+    void Function(String name, PluginHealthStatus status)? onProgress,
+  }) async {
+    final list = targets ?? pluginList;
+    if (list.isEmpty) return {};
+
+    final results = <String, bool>{};
+    final passedNames = <String>[];
+    final failedNames = <String>[];
+
+    // 并发分批探测，每批最多 3 个请求，避免并发过高触发风控或阻塞
+    for (int i = 0; i < list.length; i += 3) {
+      if (_isDisposed) break;
+      final chunk =
+          list.sublist(i, (i + 3 > list.length) ? list.length : i + 3);
+
+      await Future.wait(chunk.map((plugin) async {
+        validityTracker.markTesting(plugin.name);
+        onProgress?.call(plugin.name, PluginHealthStatus.testing);
+
+        final stopwatch = Stopwatch()..start();
+        try {
+          var res = await plugin.queryBangumi(
+            keyword,
+            shouldRethrow: true,
+          ).timeout(const Duration(seconds: 8));
+
+          if (res.data.isEmpty) {
+            res = await plugin.queryBangumi(
+              '柯南',
+              shouldRethrow: true,
+            ).timeout(const Duration(seconds: 6));
+          }
+
+          stopwatch.stop();
+
+          if (res.data.isNotEmpty) {
+            validityTracker.markValid(
+              plugin.name,
+              latencyMs: stopwatch.elapsedMilliseconds,
+            );
+            results[plugin.name] = true;
+            passedNames.add(plugin.name);
+            togglePluginEnabled(plugin.name, true);
+            onProgress?.call(plugin.name, PluginHealthStatus.passed);
+          } else {
+            validityTracker.markInvalid(
+              plugin.name,
+              error: '搜索返回 0 项结果',
+              latencyMs: stopwatch.elapsedMilliseconds,
+            );
+            results[plugin.name] = false;
+            failedNames.add(plugin.name);
+            togglePluginEnabled(plugin.name, false);
+            onProgress?.call(plugin.name, PluginHealthStatus.failed);
+          }
+        } catch (e) {
+          stopwatch.stop();
+          validityTracker.markInvalid(
+            plugin.name,
+            error: e.toString(),
+            latencyMs: stopwatch.elapsedMilliseconds,
+          );
+          results[plugin.name] = false;
+          failedNames.add(plugin.name);
+          togglePluginEnabled(plugin.name, false);
+          onProgress?.call(plugin.name, PluginHealthStatus.failed);
+        }
+      }));
+    }
+
+    return results;
+  }
+
+
+  Future<void> resetAllBundledPlugins() async {
+    List<String> jsonFiles = [];
+    try {
+      final assetManifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final assets = assetManifest.listAssets();
+      jsonFiles = assets
+          .where((String asset) =>
+              asset.startsWith('assets/plugins/') &&
+              (asset.endsWith('.json') ||
+               asset.endsWith('.yaml') ||
+               asset.endsWith('.yml')))
+          .toList();
+    } catch (_) {}
+    if (jsonFiles.isEmpty) {
+      jsonFiles = bundledPluginAssets;
+    }
+
+    final List<Plugin> plugins = [...pluginList];
+    for (var filePath in jsonFiles) {
+      try {
+        String content;
+        try {
+          content = await rootBundle.loadString(filePath);
+        } catch (_) {
+          content = File(filePath).readAsStringSync();
+        }
+        final plugin = filePath.endsWith('.yaml') || filePath.endsWith('.yml')
+            ? Plugin.fromYaml(content)
+            : Plugin.fromJson(jsonDecode(content));
+        final idx = plugins.indexWhere((p) => p.name == plugin.name);
+        if (idx >= 0) {
+          plugins[idx] = plugin;
+        } else {
+          plugins.add(plugin);
+        }
+      } catch (_) {}
+    }
+    _setPluginList(plugins);
+    await savePlugins();
+  }
+
+  Future<bool> resetSingleBundledPlugin(String name) async {
+    for (final assetPath in bundledPluginAssets) {
+      final assetName =
+          assetPath.split('/').last.replaceAll(RegExp(r'\.(json|yaml|yml)$'), '');
+      if (assetName == name) {
+        try {
+          String content;
+          try {
+            content = await rootBundle.loadString(assetPath);
+          } catch (_) {
+            content = File(assetPath).readAsStringSync();
+          }
+          final plugin = assetPath.endsWith('.yaml') || assetPath.endsWith('.yml')
+              ? Plugin.fromYaml(content)
+              : Plugin.fromJson(jsonDecode(content));
+          updatePlugin(plugin);
+          return true;
+        } catch (_) {}
+      }
+    }
+    return false;
   }
 
   void _setPluginList(List<Plugin> plugins) {
     if (_isDisposed) {
       return;
     }
-    state = state.copyWith(
+    _setState(_currentState.copyWith(
       pluginList: List<Plugin>.unmodifiable(plugins),
-    );
+    ));
   }
 }

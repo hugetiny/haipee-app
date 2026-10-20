@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,7 +30,15 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
         try {
           final location = GoRouterState.of(context).uri.path;
           ref.read(currentRouteProvider.notifier).updateRoute(location);
-        } catch (_) {}
+        } catch (_) {
+          final childType = widget.child.runtimeType.toString();
+          if (childType == 'OnlineVideoSearchPage') {
+            ref.read(currentRouteProvider.notifier).updateRoute(Routes.onlineVideo);
+          } else if (childType == 'MediaLibraryPage' ||
+              childType == 'MediaPage') {
+            ref.read(currentRouteProvider.notifier).updateRoute(Routes.media);
+          }
+        }
       }
     });
   }
@@ -82,36 +91,31 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
     final appBarConfig = ref.watch(appBarConfigProvider);
 
     return Scaffold(
-      appBar: _buildUnifiedAppBar(appBarConfig),
+      appBar: _buildUnifiedAppBar(appBarConfig, hasLeadingRail: false),
       body: widget.child ?? const SizedBox.shrink(),
       bottomNavigationBar: state.isHidden
           ? const SizedBox(height: 0)
           : NavigationBar(
               destinations: <NavigationDestination>[
                 NavigationDestination(
-                  selectedIcon: const Icon(Icons.home),
-                  icon: const Icon(Icons.home_outlined),
-                  label: t.navigation.tabs.popular,
+                  selectedIcon: const Icon(Icons.language),
+                  icon: const Icon(Icons.language_outlined),
+                  label: t.navigation.tabs.media,
                 ),
                 NavigationDestination(
-                  selectedIcon: const Icon(Icons.timeline),
-                  icon: const Icon(Icons.timeline_outlined),
-                  label: t.navigation.tabs.timeline,
+                  selectedIcon: const Icon(Icons.travel_explore),
+                  icon: const Icon(Icons.travel_explore_outlined),
+                  label: t.navigation.tabs.resource,
                 ),
-                const NavigationDestination(
-                  selectedIcon: Icon(Icons.travel_explore),
-                  icon: Icon(Icons.travel_explore_outlined),
-                  label: '资源搜索',
+                NavigationDestination(
+                  selectedIcon: const Icon(Icons.video_library),
+                  icon: const Icon(Icons.video_library_outlined),
+                  label: t.navigation.tabs.my,
                 ),
                 NavigationDestination(
                   selectedIcon: const Icon(Icons.download),
                   icon: const Icon(Icons.download_outlined),
                   label: t.navigation.tabs.download,
-                ),
-                NavigationDestination(
-                  selectedIcon: const Icon(Icons.person),
-                  icon: const Icon(Icons.person_outline),
-                  label: t.navigation.tabs.my,
                 ),
                 NavigationDestination(
                   selectedIcon: const Icon(Icons.settings),
@@ -128,9 +132,29 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
   }
 
   /// 构建统一的 AppBar
-  PreferredSizeWidget? _buildUnifiedAppBar(AppBarConfig? config) {
+  PreferredSizeWidget? _buildUnifiedAppBar(
+    AppBarConfig? config, {
+    bool hasLeadingRail = false,
+  }) {
     if (config == null || !config.visible) {
       return null;
+    }
+
+    final currentRoute = ref.watch(currentRouteProvider);
+    final isExplicitPopularChild =
+        widget.child.runtimeType.toString() == 'PopularPage';
+    if ((currentRoute == Routes.onlineVideo ||
+            currentRoute == Routes.resource ||
+            currentRoute == Routes.media) &&
+        !isExplicitPopularChild) {
+      return null;
+    }
+
+    PreferredSizeWidget? bottom = config.bottom;
+    if (bottom is TabBar) {
+      if (bottom.controller != null && bottom.controller!.animation == null) {
+        bottom = null;
+      }
     }
 
     Widget? titleWidget;
@@ -140,13 +164,17 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
       titleWidget = config.title;
     }
 
+    // 在桌面端且没有左侧 NavigationRail 时（如隐藏侧边栏或纵向窗口），macOS 顶栏必须避让原生红黄绿按钮
+    final bool effectiveNeedTopOffset =
+        config.needTopOffset || (Platform.isMacOS && !hasLeadingRail);
+
     return SysAppBar(
       title: titleWidget,
       actions: config.actions,
       leading: config.leading,
-      bottom: config.bottom,
+      bottom: bottom,
       toolbarHeight: config.toolbarHeight,
-      needTopOffset: config.needTopOffset,
+      needTopOffset: effectiveNeedTopOffset,
       leadingWidth: config.leadingWidth,
     );
   }
@@ -158,52 +186,38 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
   ) {
     final t = context.t;
     final appBarConfig = ref.watch(appBarConfigProvider);
+    final bool hasLeadingRail = !state.isHidden;
 
     return Scaffold(
-      appBar: _buildUnifiedAppBar(appBarConfig),
       body: Row(
         children: [
-          EmbeddedNativeControlArea(
-            child: Visibility(
-              visible: !state.isHidden,
+          if (hasLeadingRail)
+            EmbeddedNativeControlArea(
+              requireOffset: false,
               child: NavigationRail(
                 backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                 groupAlignment: 1.0,
-                leading: FloatingActionButton(
-                  elevation: 0,
-                  heroTag: null,
-                  onPressed: () {
-                    context.push(Routes.search);
-                  },
-                  tooltip: t.navigation.actions.search,
-                  child: const Icon(Icons.search),
-                ),
                 labelType: NavigationRailLabelType.selected,
                 destinations: <NavigationRailDestination>[
                   NavigationRailDestination(
-                    selectedIcon: const Icon(Icons.home),
-                    icon: const Icon(Icons.home_outlined),
-                    label: Text(t.navigation.tabs.popular),
+                    selectedIcon: const Icon(Icons.language),
+                    icon: const Icon(Icons.language_outlined),
+                    label: Text(t.navigation.tabs.media),
                   ),
                   NavigationRailDestination(
-                    selectedIcon: const Icon(Icons.timeline),
-                    icon: const Icon(Icons.timeline_outlined),
-                    label: Text(t.navigation.tabs.timeline),
+                    selectedIcon: const Icon(Icons.travel_explore),
+                    icon: const Icon(Icons.travel_explore_outlined),
+                    label: Text(t.navigation.tabs.resource),
                   ),
-                  const NavigationRailDestination(
-                    selectedIcon: Icon(Icons.travel_explore),
-                    icon: Icon(Icons.travel_explore_outlined),
-                    label: Text('资源搜索'),
+                  NavigationRailDestination(
+                    selectedIcon: const Icon(Icons.video_library),
+                    icon: const Icon(Icons.video_library_outlined),
+                    label: Text(t.navigation.tabs.my),
                   ),
                   NavigationRailDestination(
                     selectedIcon: const Icon(Icons.download),
                     icon: const Icon(Icons.download_outlined),
                     label: Text(t.navigation.tabs.download),
-                  ),
-                  NavigationRailDestination(
-                    selectedIcon: const Icon(Icons.person),
-                    icon: const Icon(Icons.person_outline),
-                    label: Text(t.navigation.tabs.my),
                   ),
                   NavigationRailDestination(
                     selectedIcon: const Icon(Icons.settings),
@@ -217,9 +231,12 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
                 },
               ),
             ),
-          ),
           Expanded(
-            child: widget.child ?? const SizedBox.shrink(),
+            child: Scaffold(
+              appBar: _buildUnifiedAppBar(appBarConfig,
+                  hasLeadingRail: hasLeadingRail),
+              body: widget.child ?? const SizedBox.shrink(),
+            ),
           ),
         ],
       ),
@@ -251,7 +268,11 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
     // 使用 Riverpod 同步路由状态
     try {
       final location = GoRouterState.of(context).uri.path;
-      ref.read(currentRouteProvider.notifier).updateRoute(location);
+      Future.microtask(() {
+        if (mounted) {
+          ref.read(currentRouteProvider.notifier).updateRoute(location);
+        }
+      });
     } catch (_) {}
   }
 }

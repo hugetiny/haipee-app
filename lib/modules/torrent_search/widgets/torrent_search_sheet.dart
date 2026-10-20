@@ -366,6 +366,12 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                   backgroundColor: colorScheme.secondaryContainer,
                   textColor: colorScheme.onSecondaryContainer,
                 ),
+                const SizedBox(width: 6),
+                Badge(
+                  label: const Text('Torznab / Cardigann P2P 种子索引'),
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  textColor: colorScheme.onSurfaceVariant,
+                ),
                 const Spacer(),
                 if (item.seeders > 0)
                   Row(

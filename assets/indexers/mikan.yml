@@ -1,0 +1,48 @@
+---
+id: mikan
+name: 蜜柑计划
+description: "Mikan Project 是一个面向新番与动画资源的开放式检索索引器。"
+language: zh-CN
+type: public
+encoding: UTF-8
+links:
+  - https://mikanani.me/
+
+caps:
+  categorymappings:
+    - {id: anime, cat: 5070, desc: "新番连载"}
+
+  modes:
+    search: [q]
+
+search:
+  paths:
+    - path: /Home/Search
+  inputs:
+    searchstr: "{{ .Keywords }}"
+
+  rows:
+    selector: table.list-table > tbody > tr
+
+  fields:
+    category:
+      text: 5070
+    title:
+      selector: a.magnet-link-wrap
+    details:
+      selector: a.magnet-link-wrap
+      attribute: href
+    magnet:
+      selector: a.js-magnet
+      attribute: data-clipboard-text
+    download:
+      selector: a[href*="/Home/Episode/"]
+      attribute: href
+    size:
+      selector: td:nth-child(2)
+    date:
+      selector: td:nth-child(3)
+    seeders:
+      text: 10
+    leechers:
+      text: 0

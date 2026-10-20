@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kazumi/bean/appbar/drag_to_move_bar.dart' as dtb;
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
 import 'package:kazumi/bean/widget/collect_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/pages/player/player_controller.dart';
@@ -21,6 +23,7 @@ import 'package:kazumi/utils/aria2_feature_manager.dart';
 import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/utils/remote.dart';
 import 'package:kazumi/utils/utils.dart';
+import 'package:kazumi/pages/player/tracks_settings_sheet.dart';
 import 'package:saver_gallery/saver_gallery.dart';
 
 class PlayerItemPanel extends ConsumerStatefulWidget {
@@ -675,6 +678,30 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                     child: buildBottomControlWidget(playerState, videoState)),
           ),
         ),
+        // AniSkip 智能跳过悬浮胶囊按钮
+        if (playerState.currentAniSkipInterval != null && !playerState.lockPanel)
+          Positioned(
+            right: 24,
+            bottom: 84,
+            child: Material(
+              color: Colors.transparent,
+              child: FilledButton.tonalIcon(
+                onPressed: () => playerController.skipCurrentInterval(),
+                icon: const Icon(Icons.fast_forward_rounded, size: 18),
+                label: Text(
+                  '跳过${playerState.currentAniSkipInterval!.typeLabel}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.black.withAlpha(191),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  elevation: 4,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -738,29 +765,62 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
               ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: ProgressBar(
-                thumbRadius: 8,
-                thumbGlowRadius: 18,
-                timeLabelLocation: Utils.isTablet()
-                    ? TimeLabelLocation.sides
-                    : TimeLabelLocation.none,
-                timeLabelTextStyle: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12.0,
-                  fontFeatures: [
-                    FontFeature.tabularFigures(),
-                  ],
-                ),
-                progress: playerState.currentPosition,
-                buffered: playerState.buffer,
-                total: playerState.duration,
-                onSeek: (duration) {
-                  playerController.seek(duration);
-                },
-                onDragStart: widget.handleProgressBarDragStart,
-                onDragUpdate: (details) =>
-                    playerController.currentPosition = details.timeStamp,
-                onDragEnd: widget.handleProgressBarDragEnd,
+              child: Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  if (playerState.duration.inMilliseconds > 0 &&
+                      playerState.aniSkipIntervals.isNotEmpty)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final totalMs = playerState.duration.inMilliseconds;
+                        return SizedBox(
+                          width: constraints.maxWidth,
+                          height: 6,
+                          child: Stack(
+                            children: [
+                              for (final interval in playerState.aniSkipIntervals)
+                                Positioned(
+                                  left: (interval.startTime * 1000 / totalMs).clamp(0.0, 1.0) * constraints.maxWidth,
+                                  width: (((interval.endTime - interval.startTime) * 1000 / totalMs).clamp(0.0, 1.0) * constraints.maxWidth).clamp(4.0, constraints.maxWidth),
+                                  top: 1,
+                                  bottom: 1,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.amberAccent.withAlpha(165),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ProgressBar(
+                    thumbRadius: 8,
+                    thumbGlowRadius: 18,
+                    timeLabelLocation: Utils.isTablet()
+                        ? TimeLabelLocation.sides
+                        : TimeLabelLocation.none,
+                    timeLabelTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.0,
+                      fontFeatures: [
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
+                    progress: playerState.currentPosition,
+                    buffered: playerState.buffer,
+                    total: playerState.duration,
+                    onSeek: (duration) {
+                      playerController.seek(duration);
+                    },
+                    onDragStart: widget.handleProgressBarDragStart,
+                    onDragUpdate: (details) =>
+                        playerController.currentPosition = details.timeStamp,
+                    onDragEnd: widget.handleProgressBarDragEnd,
+                  ),
+                ],
               ),
             ),
             Padding(
@@ -971,7 +1031,9 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                           }
                         },
                         child: Text(
-                          t.playback.controls.superResolution.label,
+                          playerState.superResolutionType == 1
+                              ? t.playback.controls.superResolution.label
+                              : superResolutionOptions[playerState.superResolutionType - 1],
                           style: const TextStyle(color: Colors.white),
                         ),
                       );
@@ -1102,6 +1164,16 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                         ),
                     ],
                   ),
+                  IconButton(
+                    onPressed: () {
+                      TracksSettingsSheet.show(context);
+                    },
+                    icon: const Icon(
+                      Icons.subtitles_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: '音频与字幕',
+                  ),
                   (!videoState.isFullscreen &&
                           !Utils.isTablet() &&
                           !Utils.isDesktop())
@@ -1144,7 +1216,9 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
   ) {
     return EmbeddedNativeControlArea(
       requireOffset: !videoState.isFullscreen,
-      child: SafeArea(
+      child: DesktopWindowControlsSafeArea(
+        requireOffset: !videoState.isFullscreen,
+        child: SafeArea(
         top: false,
         bottom: false,
         left: videoState.isFullscreen,
@@ -1162,9 +1236,8 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
           },
           child: Row(
             children: [
-              IconButton(
+              AppBackButton(
                 color: Colors.white,
-                icon: const Icon(Icons.arrow_back_rounded),
                 onPressed: () {
                   widget.onBackPressed(context);
                 },
@@ -1249,16 +1322,18 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                   );
                 },
                 menuChildren: [
-                  MenuItemButton(
-                    onPressed: widget.showDanmakuSwitch,
-                    child: SizedBox(
-                      height: 48,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(t.playback.controls.menu.danmakuToggle),
+                  if (playerController.activeBiliCid == null ||
+                      playerController.activeBiliCid! <= 0)
+                    MenuItemButton(
+                      onPressed: widget.showDanmakuSwitch,
+                      child: SizedBox(
+                        height: 48,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(t.playback.controls.menu.danmakuToggle),
+                        ),
                       ),
                     ),
-                  ),
                   // Conditionally show download menu option if aria2 is available
                   if (Aria2FeatureManager().isAvailable)
                     MenuItemButton(
@@ -1398,7 +1473,8 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget buildLeftControlWidget(

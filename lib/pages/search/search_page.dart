@@ -5,8 +5,11 @@ import 'package:kazumi/bean/card/bangumi_card.dart';
 import 'package:kazumi/bean/widget/error_widget.dart';
 import 'package:kazumi/pages/search/providers.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/utils/constants.dart';
+import 'package:kazumi/bean/widget/responsive/responsive.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key, this.inputTag = ''});
@@ -25,22 +28,49 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   void initState() {
     super.initState();
     scrollController.addListener(scrollListener);
-    searchController.addListener(_handleSearchTextChanged);
+    if (widget.inputTag.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !searchController.isOpen) {
+          searchController.openView();
+        }
+      });
+    } else {
+      _applyInputTag(widget.inputTag);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant SearchPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.inputTag != oldWidget.inputTag && widget.inputTag.isNotEmpty) {
+      _applyInputTag(widget.inputTag);
+    }
+  }
+
+  void _applyInputTag(String rawTag) {
+    String decodedTag;
+    try {
+      decodedTag = Uri.decodeComponent(rawTag);
+    } catch (_) {
+      decodedTag = rawTag;
+    }
+    final String tagString = 'tag:$decodedTag';
+    searchController.text = tagString;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref
+            .read(searchProvider.notifier)
+            .searchBangumi(tagString, type: 'init');
+      }
+    });
   }
 
   @override
   void dispose() {
     scrollController.removeListener(scrollListener);
-    searchController.removeListener(_handleSearchTextChanged);
+    searchController.dispose();
+    scrollController.dispose();
     super.dispose();
-  }
-
-  void _handleSearchTextChanged() {
-    if (!mounted) return;
-    if (!FocusScope.of(context).hasPrimaryFocus) return;
-    if (!searchController.isOpen) {
-      searchController.openView();
-    }
   }
 
   void scrollListener() {
@@ -114,19 +144,6 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final t = context.t;
-    // Handle inputTag parameter once on first build
-    if (widget.inputTag.isNotEmpty && searchController.text.isEmpty) {
-      final String tagString = 'tag:${Uri.decodeComponent(widget.inputTag)}';
-      searchController.text = tagString;
-      // Use microtask to trigger search after build
-      Future.microtask(() {
-        if (mounted) {
-          ref
-              .read(searchProvider.notifier)
-              .searchBangumi(tagString, type: 'init');
-        }
-      });
-    }
     return Scaffold(
       appBar: SysAppBar(
         backgroundColor: Colors.transparent,
@@ -154,34 +171,104 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
-            child: FocusScope(
-              descendantsAreFocusable: false,
-              child: SearchAnchor.bar(
-                searchController: searchController,
-                barElevation: WidgetStateProperty<double>.fromMap(
-                  <WidgetStatesConstraint, double>{WidgetState.any: 0},
+            child: SearchAnchor.bar(
+              searchController: searchController,
+              barHintText: t.navigation.actions.search,
+              viewHintText: t.navigation.actions.search,
+              barLeading: const Icon(Icons.search),
+              barElevation: WidgetStateProperty<double>.fromMap(
+                <WidgetStatesConstraint, double>{WidgetState.any: 0},
+              ),
+              viewElevation: 0,
+              barTrailing: [
+                ListenableBuilder(
+                  listenable: searchController,
+                  builder: (context, _) {
+                    if (searchController.text.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return IconButton(
+                      tooltip: MaterialLocalizations.of(context).clearButtonTooltip,
+                      icon: const Icon(Icons.clear, size: 20),
+                      onPressed: () {
+                        searchController.clear();
+                      },
+                    );
+                  },
                 ),
-                viewElevation: 0,
-                viewTrailing: [
-                  IconButton(
-                    tooltip: '全网BT/磁力直搜 (Mikan/Nyaa)',
-                    icon: const Icon(Icons.travel_explore_rounded),
-                    onPressed: () {
-                      final kw = searchController.text.trim();
-                      TorrentSearchSheet.show(
-                        context,
-                        initialKeyword: kw,
-                      );
-                    },
-                  ),
-                ],
-                viewLeading: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back),
+                IconButton(
+                  tooltip: '全网BT/磁力直搜 (Mikan/Nyaa)',
+                  icon: const Icon(Icons.travel_explore_rounded),
+                  onPressed: () {
+                    final kw = searchController.text.trim();
+                    TorrentSearchSheet.show(
+                      context,
+                      initialKeyword: kw,
+                    );
+                  },
                 ),
-                isFullScreen: MediaQuery.sizeOf(context).width <
-                    LayoutBreakpoint.compact['width']!,
-                suggestionsBuilder: (context, controller) {
+              ],
+              viewTrailing: [
+                ListenableBuilder(
+                  listenable: searchController,
+                  builder: (context, _) {
+                    if (searchController.text.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return IconButton(
+                      tooltip: MaterialLocalizations.of(context).clearButtonTooltip,
+                      icon: const Icon(Icons.clear, size: 20),
+                      onPressed: () {
+                        searchController.clear();
+                      },
+                    );
+                  },
+                ),
+                IconButton(
+                  tooltip: '全网BT/磁力直搜 (Mikan/Nyaa)',
+                  icon: const Icon(Icons.travel_explore_rounded),
+                  onPressed: () {
+                    final kw = searchController.text.trim();
+                    TorrentSearchSheet.show(
+                      context,
+                      initialKeyword: kw,
+                    );
+                  },
+                ),
+              ],
+              viewLeading: MediaQuery.sizeOf(context).width <
+                      LayoutBreakpoint.compact['width']!
+                  ? DesktopWindowControlsSafeArea.wrapLeading(
+                      AppBackButton(
+                        onPressed: () {
+                          if (searchController.isOpen) {
+                            searchController.closeView(null);
+                          }
+                          final state = ref.read(searchProvider);
+                          if (state.bangumiList.isEmpty &&
+                              widget.inputTag.isEmpty &&
+                              Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                      ),
+                    )
+                  : AppBackButton(
+                      onPressed: () {
+                        if (searchController.isOpen) {
+                          searchController.closeView(null);
+                        }
+                        final state = ref.read(searchProvider);
+                        if (state.bangumiList.isEmpty &&
+                            widget.inputTag.isEmpty &&
+                            Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                    ),
+              isFullScreen: MediaQuery.sizeOf(context).width <
+                  LayoutBreakpoint.compact['width']!,
+                  suggestionsBuilder: (context, controller) {
                   return [
                     Consumer(builder: (context, ref, _) {
                       final state = ref.watch(searchProvider);
@@ -209,13 +296,15 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                               key: ValueKey(history.key),
                               title: Text(history.keyword),
                               onTap: () {
-                                controller.text = history.keyword;
-                                ref.read(searchProvider.notifier).searchBangumi(
-                                    controller.text.trim(),
-                                    type: 'init');
+                                final kw = history.keyword;
                                 if (searchController.isOpen) {
-                                  searchController.closeView(history.keyword);
+                                  searchController.closeView(kw);
+                                } else {
+                                  searchController.text = kw;
                                 }
+                                ref.read(searchProvider.notifier).searchBangumi(
+                                    kw.trim(),
+                                    type: 'init');
                               },
                               trailing: IconButton(
                                 icon: const Icon(Icons.close),
@@ -232,80 +321,65 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                   ];
                 },
                 onSubmitted: (value) {
-                  ref
-                      .read(searchProvider.notifier)
-                      .searchBangumi(value.trim(), type: 'init');
                   if (searchController.isOpen) {
                     searchController.closeView(value);
                   }
+                  ref
+                      .read(searchProvider.notifier)
+                      .searchBangumi(value.trim(), type: 'init');
                 },
               ),
             ),
-          ),
           Expanded(
             child: Consumer(builder: (context, ref, _) {
               final state = ref.watch(searchProvider);
               if (state.isTimeOut) {
                 return Center(
-                  child: SizedBox(
-                    height: 400,
-                    child: GeneralErrorWidget(
-                      errMsg: t.library.common.emptyState,
-                      actions: [
-                        GeneralErrorButton(
-                          onPressed: () {
-                            ref.read(searchProvider.notifier).searchBangumi(
-                                searchController.text,
-                                type: 'init');
-                          },
-                          text: t.library.common.retry,
-                        ),
-                        GeneralErrorButton(
-                          onPressed: () {
-                            TorrentSearchSheet.show(
-                              context,
-                              initialKeyword: searchController.text.trim(),
-                            );
-                          },
-                          text: '搜全网BT/磁力 (Mikan/Nyaa)',
-                        ),
-                      ],
-                    ),
+                  child: GeneralErrorWidget(
+                    errMsg: t.library.common.emptyState,
+                    actions: [
+                      GeneralErrorButton(
+                        onPressed: () {
+                          ref.read(searchProvider.notifier).searchBangumi(
+                              searchController.text,
+                              type: 'init');
+                        },
+                        text: t.library.common.retry,
+                      ),
+                      GeneralErrorButton(
+                        onPressed: () {
+                          TorrentSearchSheet.show(
+                            context,
+                            initialKeyword: searchController.text.trim(),
+                          );
+                        },
+                        text: '搜全网BT/磁力 (Mikan/Nyaa)',
+                      ),
+                    ],
                   ),
                 );
               }
               if (state.isLoading && state.bangumiList.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
               }
-              int crossCount = 3;
-              if (MediaQuery.sizeOf(context).width >
-                  LayoutBreakpoint.compact['width']!) {
-                crossCount = 5;
-              }
-              if (MediaQuery.sizeOf(context).width >
-                  LayoutBreakpoint.medium['width']!) {
-                crossCount = 6;
-              }
               final bangumiList = state.bangumiList;
-              return GridView.builder(
+              return AdaptiveGrid(
                 controller: scrollController,
                 padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  mainAxisSpacing: StyleString.cardSpace - 2,
-                  crossAxisSpacing: StyleString.cardSpace,
-                  crossAxisCount: crossCount,
-                  mainAxisExtent:
-                      MediaQuery.of(context).size.width / crossCount / 0.65 +
-                          MediaQuery.textScalerOf(context).scale(32.0),
-                ),
-                itemCount: bangumiList.isNotEmpty ? bangumiList.length : 10,
+                smallMobileColumns: 2,
+                mobileColumns: 3,
+                tabletColumns: 5,
+                desktopColumns: 6,
+                mainAxisSpacing: StyleString.cardSpace - 2,
+                crossAxisSpacing: StyleString.cardSpace,
+                extentBuilder: (columnWidth) =>
+                    columnWidth / 0.65 + MediaQuery.textScalerOf(context).scale(32.0),
+                itemCount: bangumiList.length,
                 itemBuilder: (context, index) {
-                  return bangumiList.isNotEmpty
-                      ? BangumiCardV(
-                          enableHero: false,
-                          bangumiItem: bangumiList[index],
-                        )
-                      : const SizedBox.shrink();
+                  return BangumiCardV(
+                    enableHero: false,
+                    bangumiItem: bangumiList[index],
+                  );
                 },
               );
             }),

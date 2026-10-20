@@ -1,0 +1,95 @@
+---
+id: thepiratebay
+name: The Pirate Bay
+description: "The Pirate Bay (TPB) is an online index of digital content of entertainment media and software."
+language: en-US
+type: public
+encoding: UTF-8
+links:
+  - https://thepiratebay.org/
+
+caps:
+  categorymappings:
+    - {id: 100, cat: 1000, desc: "Audio"}
+    - {id: 101, cat: 1000, desc: "Music"}
+    - {id: 102, cat: 1000, desc: "Audio Books"}
+    - {id: 103, cat: 1000, desc: "Sound Clips"}
+    - {id: 104, cat: 1000, desc: "FLAC"}
+    - {id: 199, cat: 1000, desc: "Audio Other"}
+    - {id: 200, cat: 2000, desc: "Video"}
+    - {id: 201, cat: 2000, desc: "Movies"}
+    - {id: 202, cat: 2000, desc: "Movies DVDR"}
+    - {id: 203, cat: 1000, desc: "Music Videos"}
+    - {id: 204, cat: 2000, desc: "Movie Clips"}
+    - {id: 205, cat: 5000, desc: "TV Shows"}
+    - {id: 206, cat: 5000, desc: "Handheld"}
+    - {id: 207, cat: 2000, desc: "HD - Movies"}
+    - {id: 208, cat: 5000, desc: "HD - TV shows"}
+    - {id: 209, cat: 2000, desc: "3D"}
+    - {id: 210, cat: 2000, desc: "CAM/TS"}
+    - {id: 211, cat: 2000, desc: "UHD/4k - Movies"}
+    - {id: 212, cat: 5000, desc: "UHD/4k - TV shows"}
+    - {id: 299, cat: 2000, desc: "Video Other"}
+    - {id: 300, cat: 4000, desc: "Applications"}
+    - {id: 301, cat: 4000, desc: "Windows"}
+    - {id: 302, cat: 4000, desc: "Mac"}
+    - {id: 303, cat: 4000, desc: "UNIX"}
+    - {id: 304, cat: 4000, desc: "Handheld"}
+    - {id: 305, cat: 4000, desc: "IOS"}
+    - {id: 306, cat: 4000, desc: "Android"}
+    - {id: 399, cat: 4000, desc: "Other OS"}
+    - {id: 400, cat: 4050, desc: "Games"}
+    - {id: 401, cat: 4050, desc: "PC Games"}
+    - {id: 402, cat: 4050, desc: "Mac Games"}
+    - {id: 403, cat: 4050, desc: "PSx"}
+    - {id: 404, cat: 4050, desc: "XBOX360"}
+    - {id: 405, cat: 4050, desc: "Wii"}
+    - {id: 406, cat: 4050, desc: "Handheld"}
+    - {id: 407, cat: 4050, desc: "IOS Games"}
+    - {id: 408, cat: 4050, desc: "Android Games"}
+    - {id: 499, cat: 4050, desc: "Games Other"}
+    - {id: 600, cat: 7000, desc: "Other"}
+    - {id: 601, cat: 3000, desc: "E-books"}
+    - {id: 602, cat: 3000, desc: "Comics"}
+    - {id: 603, cat: 3000, desc: "Pictures"}
+    - {id: 604, cat: 3000, desc: "Covers"}
+    - {id: 699, cat: 7000, desc: "Other"}
+
+  modes:
+    search: [q]
+
+search:
+  paths:
+    - path: "{{ if .Keywords }}search/{{ .Keywords }}/1/99/0{{ else }}recent{{ end }}"
+
+  rows:
+    selector: ol#torrents > li.item
+
+  fields:
+    category:
+      selector: span.item-type a
+      attribute: href
+      filters:
+        - name: regexp
+          args: "/(\\d+)$"
+    title:
+      selector: span.item-title a
+    details:
+      selector: span.item-title a
+      attribute: href
+    magnet:
+      selector: a[href^="magnet:"]
+      attribute: href
+    size:
+      selector: span.item-size
+      filters:
+        - name: regexp
+          args: "([\\d\\.]+\\s+[KMGTP]?i?B)"
+    date:
+      selector: span.item-uploaded
+      filters:
+        - name: timeago
+    seeders:
+      selector: span.item-seed
+    leechers:
+      selector: span.item-leech

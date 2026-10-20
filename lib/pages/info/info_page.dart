@@ -1,10 +1,17 @@
 import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kazumi/router_constants.dart';
+import 'package:kazumi/pages/menu/navigation_provider.dart';
+import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
+import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
 import 'dart:io';
 import 'dart:ui';
 import 'package:kazumi/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
 import 'package:kazumi/bean/widget/collect_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/pages/info/info_controller.dart';
@@ -123,12 +130,11 @@ class _InfoPageState extends ConsumerState<InfoPage>
                     ),
                     automaticallyImplyLeading: false,
                     scrolledUnderElevation: 0.0,
-                    leading: EmbeddedNativeControlArea(
-                      child: IconButton(
-                        onPressed: () {
-                          Navigator.maybePop(context);
-                        },
-                        icon: Icon(Icons.arrow_back),
+                    leadingWidth:
+                        DesktopWindowControlsSafeArea.leadingWidth(48.0),
+                    leading: DesktopWindowControlsSafeArea.wrapLeading(
+                      EmbeddedNativeControlArea(
+                        child: const AppBackButton(),
                       ),
                     ),
                     actions: [
@@ -297,21 +303,89 @@ class _InfoPageState extends ConsumerState<InfoPage>
               },
             ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            icon: const Icon(Icons.play_arrow_rounded),
-            label: Text(infoTexts.actions.startWatching),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => SourceSheet(
-                    infoController: infoController,
-                  ),
-                ),
-              );
-            },
-          ),
+          floatingActionButton: _buildBottomActions(context, infoController),
         ),
       ),
+    );
+  }
+
+  void _navigateToUniversalSearch(
+    BuildContext context,
+    InfoController controller,
+  ) {
+    final item = widget.bangumi ?? controller.bangumiItem;
+    final searchKeyword =
+        item.nameCn.isNotEmpty ? item.nameCn : item.name;
+    final TorrentCategory category = switch (item.type) {
+      1 => TorrentCategory.document, // 书籍
+      2 => TorrentCategory.video, // 动画
+      3 => TorrentCategory.audio, // 音乐
+      4 => TorrentCategory.game, // 游戏
+      6 => TorrentCategory.video, // 影视
+      _ => TorrentCategory.all,
+    };
+
+    // 联动设置资源搜索的单选分类和搜索词并触发搜索
+    ref.read(torrentSearchProvider.notifier).setCategoryFilter(category);
+    ref.read(torrentSearchProvider.notifier).search(searchKeyword);
+
+    // 切换主导航至「全网资源」并跳转
+    ref.read(navigationProvider.notifier).updateSelectedIndex(1);
+    context.go(Routes.resource);
+  }
+
+  Widget _buildBottomActions(
+    BuildContext context,
+    InfoController controller,
+  ) {
+    final item = widget.bangumi ?? controller.bangumiItem;
+    final isVideo = item.type == 2 || item.type == 6; // 动画或影视
+    final t = context.t;
+
+    if (!isVideo) {
+      // 非视频类：书籍、音乐、游戏，单按钮全网直搜
+      return FloatingActionButton.extended(
+        key: const Key('info_btn_universal_search'),
+        icon: const Icon(Icons.travel_explore_rounded),
+        label: const Text('全网搜索资源'),
+        onPressed: () => _navigateToUniversalSearch(context, controller),
+      );
+    }
+
+    // 视频类（动画/影视）：左右双按钮分流
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 左按钮：全网BT资源搜索
+        FloatingActionButton.extended(
+          key: const Key('info_btn_search_torrent'),
+          heroTag: 'info_search_torrent_fab',
+          icon: const Icon(Icons.travel_explore_rounded),
+          label: const Text('全网BT搜索'),
+          backgroundColor:
+              Theme.of(context).colorScheme.surfaceContainerHighest,
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          elevation: 2,
+          onPressed: () => _navigateToUniversalSearch(context, controller),
+        ),
+        const SizedBox(width: 12),
+        // 右按钮：在线观看 (网页HTTP插件)
+        FloatingActionButton.extended(
+          key: const Key('info_btn_watch_online'),
+          heroTag: 'info_watch_online_fab',
+          icon: const Icon(Icons.play_arrow_rounded),
+          label: Text(t.library.info.actions.startWatching),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => SourceSheet(
+                  infoController: controller,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

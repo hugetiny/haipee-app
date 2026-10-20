@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,8 +23,20 @@ class ThemeSettingsPage extends ConsumerStatefulWidget {
 
 class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
   final Box setting = GStorage.setting;
-  late dynamic defaultThemeColor;
+  dynamic defaultThemeColor = 'default';
   final MenuController menuController = MenuController();
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      defaultThemeColor =
+          setting.get(SettingBoxKey.themeColor, defaultValue: 'default') ??
+              'default';
+    } catch (_) {
+      defaultThemeColor = 'default';
+    }
+  }
 
   void onBackPressed(BuildContext context) {
     if (KazumiDialog.observer.hasKazumiDialog) {
@@ -108,7 +120,6 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
       child: Scaffold(
         appBar: SysAppBar(title: Text(t.settings.appearancePage.title)),
         body: SettingsList(
-          maxWidth: 1000,
           sections: [
             SettingsSection(
               title: Text(t.settings.general.appearance),
@@ -228,7 +239,6 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                   ),
                 ),
                 SettingsTile.navigation(
-                  enabled: !useDynamicColor,
                   onPressed: (_) async {
                     KazumiDialog.show(builder: (context) {
                       final colorThemes = colorThemeTypes;
@@ -240,9 +250,42 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                           spacing: 8,
                           runSpacing: Utils.isDesktop() ? 8 : 0,
                           children: [
+                            if (!Platform.isIOS)
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  setting.put(
+                                    SettingBoxKey.useDynamicColor,
+                                    true,
+                                  );
+                                  ref
+                                      .read(themeProvider.notifier)
+                                      .setUseDynamicColor(true);
+                                  KazumiDialog.dismiss();
+                                },
+                                child: Column(
+                                  children: [
+                                    PaletteCard(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      selected: useDynamicColor,
+                                    ),
+                                    Text(t.settings.appearancePage.colorScheme
+                                        .dynamicColor),
+                                  ],
+                                ),
+                              ),
                             for (final theme in colorThemes)
                               GestureDetector(
+                                behavior: HitTestBehavior.opaque,
                                 onTap: () {
+                                  setting.put(
+                                    SettingBoxKey.useDynamicColor,
+                                    false,
+                                  );
+                                  ref
+                                      .read(themeProvider.notifier)
+                                      .setUseDynamicColor(false);
                                   final index = colorThemes.indexOf(theme);
                                   if (index == 0) {
                                     resetTheme();
@@ -255,12 +298,14 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                                   children: [
                                     PaletteCard(
                                       color: theme['color'] as Color,
-                                      selected: (theme['color']
-                                                  .value
-                                                  .toRadixString(16) ==
-                                              defaultThemeColor ||
-                                          (defaultThemeColor == 'default' &&
-                                              colorThemes.indexOf(theme) == 0)),
+                                      selected: !useDynamicColor &&
+                                          ((theme['color'] as Color)
+                                                      .toARGB32()
+                                                      .toRadixString(16) ==
+                                                  defaultThemeColor ||
+                                              (defaultThemeColor == 'default' &&
+                                                  colorThemes.indexOf(theme) ==
+                                                      0)),
                                     ),
                                     Text(colorLabel(theme['label'] as String)),
                                   ],
@@ -272,23 +317,6 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                     });
                   },
                   title: Text(t.settings.appearancePage.colorScheme.title),
-                ),
-                SettingsTile.switchTile(
-                  enabled: !Platform.isIOS,
-                  onToggle: (value) async {
-                    final newValue = value ?? !useDynamicColor;
-                    await setting.put(
-                      SettingBoxKey.useDynamicColor,
-                      newValue,
-                    );
-                    ref
-                        .read(themeProvider.notifier)
-                        .setUseDynamicColor(newValue);
-                  },
-                  title: Text(
-                    t.settings.appearancePage.colorScheme.dynamicColor,
-                  ),
-                  initialValue: useDynamicColor,
                 ),
               ],
               bottomInfo:

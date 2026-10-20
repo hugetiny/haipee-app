@@ -1,0 +1,76 @@
+id: dmhy
+name: 动漫花园
+description: "动漫花园 (DMHY) 是一个大型中文动漫资源索引分享站。"
+language: zh-CN
+type: public
+encoding: UTF-8
+links:
+  - https://share.dmhy.org/
+
+caps:
+  categorymappings:
+    - { id: 2, cat: 5070, desc: "动画" }
+    - { id: 31, cat: 5070, desc: "季度全集" }
+    - { id: 3, cat: 3000, desc: "漫画" }
+    - { id: 41, cat: 3000, desc: "港台原版" }
+    - { id: 42, cat: 3000, desc: "日文原版" }
+    - { id: 4, cat: 1000, desc: "音乐" }
+    - { id: 43, cat: 1000, desc: "动漫音乐" }
+    - { id: 44, cat: 1000, desc: "同人音乐" }
+    - { id: 15, cat: 1000, desc: "流行音乐" }
+    - { id: 6, cat: 5000, desc: "日剧" }
+    - { id: 7, cat: 5070, desc: "RAW" }
+    - { id: 9, cat: 4050, desc: "游戏" }
+    - { id: 17, cat: 4050, desc: "电脑游戏" }
+    - { id: 18, cat: 4050, desc: "电视游戏" }
+    - { id: 19, cat: 4050, desc: "掌机游戏" }
+    - { id: 20, cat: 4050, desc: "网络游戏" }
+    - { id: 21, cat: 4050, desc: "游戏周边" }
+    - { id: 12, cat: 5000, desc: "特摄" }
+    - { id: 1, cat: 7000, desc: "其他" }
+
+search:
+  paths:
+    - path: "topics/list?keyword={{ .Keywords }}"
+
+  rows:
+    selector: "table#topic_list tbody tr:has(a[href*=\"/topics/view/\"])"
+
+  fields:
+    title:
+      selector: "td.title > a"
+      filters:
+        - name: trim
+    details:
+      selector: "td.title > a"
+      attribute: href
+    category:
+      selector: "td:nth-child(2) a"
+      attribute: href
+      filters:
+        - name: regexp
+          args: "sort_id/(\\d+)"
+    download:
+      selector: "a.download-arrow[href*=\"download.php\"]"
+      attribute: href
+    magnet:
+      selector: "a[href^=\"magnet:?xt=\"]"
+      attribute: href
+    date:
+      selector: "td:nth-child(1) span"
+      filters:
+        - name: trim
+        - name: dateparse
+          args: "yyyy/MM/dd HH:mm"
+    size:
+      selector: "td:nth-child(5)"
+      filters:
+        - name: trim
+    seeders:
+      selector: "td:nth-child(6) span"
+      filters:
+        - name: trim
+    leechers:
+      selector: "td:nth-child(7) span"
+      filters:
+        - name: trim

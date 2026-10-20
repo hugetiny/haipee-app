@@ -19,6 +19,8 @@ import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/router.dart';
 import 'package:kazumi/pages/setting/providers.dart';
 import 'package:kazumi/utils/tray_localization.dart';
+import 'package:kazumi/services/logging/debug_hud_overlay.dart';
+import 'package:kazumi/shaders/providers.dart';
 
 /// Provider for exit dialog "don't ask again" checkbox state
 final _exitDialogSavePreferenceProvider =
@@ -72,6 +74,12 @@ class _AppWidgetState extends ConsumerState<AppWidget>
     if (Utils.isDesktop()) {
       _handleTray();
     }
+
+    Future.microtask(() async {
+      try {
+        await ref.read(shadersControllerProvider).copyShadersToExternalDirectory();
+      } catch (_) {}
+    });
   }
 
   void setPreventClose() async {
@@ -422,6 +430,8 @@ class _AppWidgetState extends ConsumerState<AppWidget>
             darkTheme: darkTheme,
             themeMode: themeState.themeMode,
             routerConfig: router,
+            builder: (context, child) =>
+                DebugHudOverlay(child: child ?? const SizedBox()),
           );
         },
       ),

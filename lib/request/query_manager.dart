@@ -49,11 +49,13 @@ class QueryManager {
     _controller = StreamController<PluginSearchResponse>();
     _searchResponses.clear();
 
-    for (Plugin plugin in pluginsController.pluginList) {
+    final enabledPlugins = pluginsController.pluginList
+        .where((p) => pluginsController.isPluginEnabled(p.name));
+    for (Plugin plugin in enabledPlugins) {
       _searchStatus[plugin.name] = 'pending';
     }
 
-    for (Plugin plugin in pluginsController.pluginList) {
+    for (Plugin plugin in enabledPlugins) {
       if (_isCancelled) return;
 
       plugin.queryBangumi(keyword, shouldRethrow: true).then((result) {

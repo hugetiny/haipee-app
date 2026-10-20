@@ -500,8 +500,11 @@
   "navigation": {
     "tabs": {
       "popular": "人気",
+      "catalog": "カテゴリ",
+      "media": "オンライン動画",
+      "resource": "リソース",
       "timeline": "タイムライン",
-      "my": "マイ",
+      "my": "メディアライブラリ",
       "download": "ダウンロード",
       "settings": "設定"
     },

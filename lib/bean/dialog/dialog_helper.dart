@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:kazumi/utils/constants.dart';
+import 'package:kazumi/utils/logger.dart';
+import 'package:logger/logger.dart' show Level;
 
 // A simple dialog helper class to show dialogs and toasts based on flutter native implementation (replace flutter_smart_dialog)
 // flutter_smart_dialog use overlays and self-managed route stack to show dialogs.
@@ -47,26 +50,46 @@ class KazumiDialog {
     String? actionLabel,
     Function()? onActionPressed,
     Duration duration = const Duration(seconds: 2),
+    bool isError = false,
+    dynamic error,
   }) {
     final ctx = context ?? observer.scaffoldContext;
     if (ctx != null && ctx.mounted) {
       try {
+        final bool isErr = isError ||
+            error != null ||
+            message.contains('失败') ||
+            message.contains('错误') ||
+            message.contains('异常');
+
+        if (isErr) {
+          KazumiLogger().log(
+            Level.warning,
+            'Toast Message: $message${error != null ? "\n$error" : ""}',
+            error: error,
+          );
+        }
+
+        bool hasAction = showActionButton;
+        String? label = actionLabel;
+        Function()? onAction = onActionPressed;
+
         ScaffoldMessenger.of(ctx)
           ..removeCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text(message),
+              content: SelectionArea(child: Text(message)),
               behavior: SnackBarBehavior.floating,
               width: MediaQuery.sizeOf(ctx).width >
                       LayoutBreakpoint.medium['width']!
                   ? 600
                   : null,
               duration: duration,
-              action: showActionButton
+              action: hasAction
                   ? SnackBarAction(
-                      label: actionLabel ?? 'Dismiss',
+                      label: label ?? 'Dismiss',
                       onPressed: () {
-                        onActionPressed?.call();
+                        onAction?.call();
                         ScaffoldMessenger.of(ctx).hideCurrentSnackBar();
                       },
                     )
@@ -82,14 +105,24 @@ class KazumiDialog {
     }
   }
 
+  static ValueNotifier<String?>? _loadingMessageNotifier;
+
   static Future<void> showLoading({
     BuildContext? context,
     String? msg,
     bool barrierDismissible = false,
     Function()? onDismiss,
+    VoidCallback? onCancel,
   }) async {
+    if (_loadingMessageNotifier != null && observer.hasKazumiDialog) {
+      _loadingMessageNotifier!.value = msg ?? 'Loading...';
+      return;
+    }
+
     final ctx = context ?? observer.currentContext;
     if (ctx != null && ctx.mounted) {
+      final notifier = ValueNotifier<String?>(msg ?? 'Loading...');
+      _loadingMessageNotifier = notifier;
       try {
         await showDialog(
           context: ctx,
@@ -107,10 +140,25 @@ class KazumiDialog {
                     children: [
                       const CircularProgressIndicator(),
                       const SizedBox(height: 16),
-                      Text(
-                        msg ?? 'Loading...',
-                        style: const TextStyle(fontSize: 16),
+                      ValueListenableBuilder<String?>(
+                        valueListenable: notifier,
+                        builder: (context, message, _) {
+                          return Text(
+                            message ?? 'Loading...',
+                            style: const TextStyle(fontSize: 16),
+                          );
+                        },
                       ),
+                      if (onCancel != null) ...[
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context, rootNavigator: true).pop();
+                            onCancel();
+                          },
+                          child: const Text('取消等待'),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -122,10 +170,77 @@ class KazumiDialog {
         onDismiss?.call();
       } catch (e) {
         debugPrint('Kazumi Dialog Error: Failed to show loading dialog: $e');
+      } finally {
+        if (_loadingMessageNotifier == notifier) {
+          _loadingMessageNotifier = null;
+        }
       }
     } else {
       debugPrint(
           'Kazumi Dialog Error: No context available to show the loading dialog');
+    }
+  }
+
+  static Future<void> showErrorDialog({
+    BuildContext? context,
+    String? title,
+    required String message,
+    dynamic error,
+    VoidCallback? onConfirm,
+  }) async {
+    final ctx = context ?? observer.currentContext;
+    if (ctx != null && ctx.mounted) {
+      try {
+        await showDialog(
+          context: ctx,
+          builder: (BuildContext dialogContext) {
+            final dialogTitle = title ?? '错误';
+            final fullCopy =
+                '【$dialogTitle】\n$message${error != null ? "\n$error" : ""}';
+            return AlertDialog(
+              title: SelectableText(dialogTitle),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SelectableText(message),
+                    if (error != null) ...[
+                      const SizedBox(height: 12),
+                      SelectableText(
+                        error.toString(),
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                          color: Theme.of(dialogContext).colorScheme.error,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: fullCopy));
+                  },
+                  child: const Text('复制报错信息'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext, rootNavigator: true).pop();
+                    onConfirm?.call();
+                  },
+                  child: const Text('确定'),
+                ),
+              ],
+            );
+          },
+          routeSettings: const RouteSettings(name: 'KazumiErrorDialog'),
+        );
+      } catch (e) {
+        debugPrint('Kazumi Dialog Error: Failed to show error dialog: $e');
+      }
     }
   }
 
@@ -182,10 +297,18 @@ class KazumiDialog {
     }
   }
 
-  static void dismiss() {
-    if (observer.hasKazumiDialog && observer.kazumiDialogContext != null) {
+  static void dismiss([BuildContext? context]) {
+    if (context != null && context.mounted) {
+      Navigator.maybePop(context);
+      return;
+    }
+    if (observer.hasKazumiDialog && observer._kazumiDialogRoutes.isNotEmpty) {
       try {
-        Navigator.of(observer.kazumiDialogContext!).pop();
+        final route = observer._kazumiDialogRoutes.last;
+        if (route.navigator != null) {
+          route.navigator!.pop();
+          return;
+        }
       } catch (e) {
         debugPrint('Kazumi Dialog Error: Failed to dismiss dialog: $e');
       }
@@ -226,12 +349,6 @@ class KazumiDialogObserver extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
-
-    /// workaround for #533
-    /// we can't remove snackbar when push a new route
-    /// otherwise, framework will throw an exception, and can't be caught
-    /// need other way to remove snackbar here
-    // _removeCurrentSnackBar(previousRoute);
     if (_isKazumiDialogRoute(route)) {
       _kazumiDialogRoutes.add(route);
     }

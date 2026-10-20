@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class GeneralErrorWidget extends StatelessWidget {
   const GeneralErrorWidget({
@@ -12,33 +13,58 @@ class GeneralErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth * 2 / 3,
+    ThemeData? theme;
+    try {
+      theme = Theme.of(context);
+    } catch (_) {
+      theme = null;
+    }
+    final textStyle = theme?.textTheme.titleSmall ??
+        const TextStyle(
+          fontSize: 14,
+          color: Colors.redAccent,
+        );
+
+    return Center(
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: FractionallySizedBox(
+                  widthFactor: 0.85,
+                  child: SelectableText(
+                    errMsg,
+                    textAlign: TextAlign.center,
+                    style: textStyle,
+                  ),
+                ),
               ),
-              child: Text(
-                errMsg,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleSmall,
+              const SizedBox(height: 16),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (actions != null) ...actions!,
+                  GeneralErrorButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: errMsg));
+                    },
+                    text: '复制报错信息',
+                  ),
+                ],
               ),
-            );
-          },
-        ),
-        const SizedBox(height: 20),
-        if (actions != null)
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: actions!,
+            ],
           ),
-      ],
+        ),
+      ),
     );
   }
 }
@@ -55,16 +81,24 @@ class GeneralErrorButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ThemeData? theme;
+    try {
+      theme = Theme.of(context);
+    } catch (_) {
+      theme = null;
+    }
+    final primary = theme?.colorScheme.primary ?? Colors.blue;
+
     return FilledButton.tonal(
       onPressed: onPressed,
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.resolveWith((_) {
-          return Theme.of(context).colorScheme.primary.withAlpha(20);
+          return primary.withAlpha(20);
         }),
       ),
       child: Text(
         text,
-        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        style: TextStyle(color: primary),
       ),
     );
   }

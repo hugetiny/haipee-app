@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/providers/riverpod_compat.dart';
+import 'package:kazumi/request/core/git_proxy_interceptor.dart';
 import 'package:kazumi/services/network/bangumi_acceleration.dart';
+import 'package:kazumi/services/logging/app_log.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 
@@ -129,9 +131,7 @@ class WebDavState {
 class WebDavNotifier extends Notifier<WebDavState> {
   @override
   WebDavState build() {
-    final setting = GStorage.setting;
-    final enableGitProxy =
-        setting.get(SettingBoxKey.enableGitProxy, defaultValue: false);
+    final enableGitProxy = GitProxyInterceptor.isEnabled();
     return WebDavState(
       initialized: true,
       enableGitProxy: enableGitProxy,
@@ -139,13 +139,70 @@ class WebDavNotifier extends Notifier<WebDavState> {
   }
 
   Future<void> toggleGitProxy(bool value) async {
-    await GStorage.setting.put(SettingBoxKey.enableGitProxy, value);
+    await GitProxyInterceptor.setEnabled(value);
     state = state.copyWith(enableGitProxy: value);
   }
 }
 
 final webDavProvider =
     NotifierProvider<WebDavNotifier, WebDavState>(WebDavNotifier.new);
+
+/// 底层 GitHub 代理状态
+class GitProxyState {
+  final bool enabled;
+  final String proxyUrl;
+
+  const GitProxyState({
+    required this.enabled,
+    required this.proxyUrl,
+  });
+
+  GitProxyState copyWith({
+    bool? enabled,
+    String? proxyUrl,
+  }) {
+    return GitProxyState(
+      enabled: enabled ?? this.enabled,
+      proxyUrl: proxyUrl ?? this.proxyUrl,
+    );
+  }
+}
+
+class GitProxyNotifier extends Notifier<GitProxyState> {
+  @override
+  GitProxyState build() {
+    return GitProxyState(
+      enabled: GitProxyInterceptor.isEnabled(),
+      proxyUrl: GitProxyInterceptor.getEffectiveProxyUrl(),
+    );
+  }
+
+  Future<void> updateConfig({bool? enabled, String? proxyUrl}) async {
+    if (enabled != null) {
+      await GitProxyInterceptor.setEnabled(enabled);
+    }
+    if (proxyUrl != null) {
+      await GitProxyInterceptor.setProxyUrl(proxyUrl);
+    }
+    state = GitProxyState(
+      enabled: GitProxyInterceptor.isEnabled(),
+      proxyUrl: GitProxyInterceptor.getEffectiveProxyUrl(),
+    );
+  }
+
+  Future<void> toggleEnabled(bool value) async {
+    await GitProxyInterceptor.setEnabled(value);
+    state = state.copyWith(enabled: value);
+  }
+
+  Future<void> setProxyUrl(String url) async {
+    await GitProxyInterceptor.setProxyUrl(url);
+    state = state.copyWith(proxyUrl: GitProxyInterceptor.getEffectiveProxyUrl());
+  }
+}
+
+final gitProxyProvider =
+    NotifierProvider<GitProxyNotifier, GitProxyState>(GitProxyNotifier.new);
 
 class PlayerSettingsState {
   final double defaultPlaySpeed;
@@ -158,6 +215,7 @@ class PlayerSettingsState {
   final bool privateMode;
   final bool playerDebugMode;
   final bool playerDisableAnimations;
+  final bool autoSkipOpEd;
 
   const PlayerSettingsState({
     this.defaultPlaySpeed = 1.0,
@@ -170,6 +228,7 @@ class PlayerSettingsState {
     this.privateMode = false,
     this.playerDebugMode = false,
     this.playerDisableAnimations = false,
+    this.autoSkipOpEd = false,
   });
 
   PlayerSettingsState copyWith({
@@ -183,6 +242,7 @@ class PlayerSettingsState {
     bool? privateMode,
     bool? playerDebugMode,
     bool? playerDisableAnimations,
+    bool? autoSkipOpEd,
   }) {
     return PlayerSettingsState(
       defaultPlaySpeed: defaultPlaySpeed ?? this.defaultPlaySpeed,
@@ -198,6 +258,7 @@ class PlayerSettingsState {
       playerDebugMode: playerDebugMode ?? this.playerDebugMode,
       playerDisableAnimations:
           playerDisableAnimations ?? this.playerDisableAnimations,
+      autoSkipOpEd: autoSkipOpEd ?? this.autoSkipOpEd,
     );
   }
 }
@@ -229,6 +290,8 @@ class PlayerSettingsNotifier extends Notifier<PlayerSettingsState> {
     final playerDisableAnimations =
         setting.get(SettingBoxKey.playerDisableAnimations, defaultValue: false)
             as bool;
+    final autoSkipOpEd =
+        setting.get(SettingBoxKey.autoSkipOpEd, defaultValue: false) as bool;
 
     return PlayerSettingsState(
       defaultPlaySpeed: defaultPlaySpeed,
@@ -241,7 +304,12 @@ class PlayerSettingsNotifier extends Notifier<PlayerSettingsState> {
       privateMode: privateMode,
       playerDebugMode: playerDebugMode,
       playerDisableAnimations: playerDisableAnimations,
+      autoSkipOpEd: autoSkipOpEd,
     );
+  }
+
+  void setAutoSkipOpEd(bool value) {
+    state = state.copyWith(autoSkipOpEd: value);
   }
 
   void setDefaultPlaySpeed(double speed) {
@@ -473,3 +541,40 @@ final showWindowButtonProvider = StateProvider<bool>((ref) {
   final setting = GStorage.setting;
   return setting.get(SettingBoxKey.showWindowButton, defaultValue: false);
 });
+
+/// Provider for cache size in MB
+final cacheSizeMBProvider = StateProvider<double>((ref) => -1);
+
+/// Provider for auto update setting
+final autoUpdateProvider = StateProvider<bool>((ref) {
+  final setting = GStorage.setting;
+  return setting.get(SettingBoxKey.autoUpdate, defaultValue: true);
+});
+
+/// Notifier and provider for diagnostic logs toggle
+class DebugLogsEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    void listener() {
+      if (state != AppLog.isDebugMode) {
+        state = AppLog.isDebugMode;
+      }
+    }
+
+    AppLog.debugModeNotifier.addListener(listener);
+    ref.onDispose(() {
+      AppLog.debugModeNotifier.removeListener(listener);
+    });
+    return AppLog.isDebugMode;
+  }
+
+  Future<void> setEnabled(bool value) async {
+    AppLog.setDebugMode(value);
+    state = value;
+  }
+}
+
+final debugLogsEnabledProvider =
+    NotifierProvider<DebugLogsEnabledNotifier, bool>(
+  DebugLogsEnabledNotifier.new,
+);

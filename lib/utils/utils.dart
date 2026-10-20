@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:kazumi/request/api.dart';
+import 'package:kazumi/request/core/git_proxy_interceptor.dart';
 import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/storage.dart';
@@ -284,7 +285,9 @@ class Utils {
 
   static Future<String> latest() async {
     try {
-      var resp = await Dio().get<Map<String, dynamic>>(Api.latestApp);
+      final dio = Dio();
+      dio.interceptors.add(GitProxyInterceptor());
+      var resp = await dio.get<Map<String, dynamic>>(Api.latestApp);
       if (resp.data?.containsKey("tag_name") ?? false) {
         return resp.data!["tag_name"];
       } else {

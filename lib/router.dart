@@ -1,17 +1,20 @@
 import 'package:kazumi/pages/player/local_player_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kazumi/bean/appbar/sys_app_bar.dart';
+import 'package:kazumi/pages/online/online_video_search_page.dart';
+import 'package:kazumi/pages/media_library/media_library_page.dart';
 import 'package:kazumi/pages/resource/resource_search_page.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/pages/about/about_page.dart';
+import 'package:kazumi/pages/about/license_page.dart';
 import 'package:kazumi/pages/my/favorites_page.dart';
 import 'package:kazumi/pages/my/my_page.dart';
 import 'package:kazumi/pages/info/info_page.dart';
 import 'package:kazumi/pages/init_page.dart';
 import 'package:kazumi/pages/menu/menu.dart';
 import 'package:kazumi/pages/setting/setting_page.dart';
-import 'package:kazumi/pages/popular/popular_page.dart';
 import 'package:kazumi/pages/search/search_page.dart';
 import 'package:kazumi/pages/settings/decoder_settings.dart';
 import 'package:kazumi/pages/settings/displaymode_settings.dart';
@@ -33,10 +36,14 @@ import 'package:kazumi/pages/webdav_editor/webdav_setting.dart';
 import 'package:kazumi/pages/logs/logs_page.dart';
 import 'package:kazumi/pages/history/history_page.dart';
 import 'package:kazumi/pages/download/download_page.dart';
-import 'package:kazumi/request/api.dart';
+import 'package:kazumi/pages/setting/indexer/indexer_settings_page.dart';
+import 'package:kazumi/pages/setting/media/media_settings_page.dart';
+import 'package:kazumi/pages/setting/metadata/metadata_settings_page.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:kazumi/services/logging/app_log.dart';
+import 'package:kazumi/services/sentry/sentry_service.dart';
 
 /// 全局路由配置
 ///
@@ -44,17 +51,27 @@ import 'package:kazumi/l10n/generated/translations.g.dart';
 /// - 支持深度链接
 /// - 统一错误处理
 /// - 路由重定向
+final GlobalKey<NavigatorState> rootNavigatorKey = () {
+  final key = GlobalKey<NavigatorState>();
+  AppLog.rootNavigatorKey = key;
+  return key;
+}();
+
 final GoRouter router = GoRouter(
-  observers: [KazumiDialog.observer],
+  navigatorKey: rootNavigatorKey,
+  observers: [
+    KazumiDialog.observer,
+    SentryService.navigatorObserver,
+  ],
 
   // 初始路由
-  initialLocation: Routes.popular,
+  initialLocation: Routes.onlineVideo,
 
   // 全局错误处理
   errorBuilder: (context, state) {
     final t = context.t;
     return Scaffold(
-      appBar: AppBar(
+      appBar: SysAppBar(
         title: Text(t.app.title),
       ),
       body: Center(
@@ -75,7 +92,7 @@ final GoRouter router = GoRouter(
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => context.go(Routes.popular),
+              onPressed: () => context.go(Routes.onlineVideo),
               icon: const Icon(Icons.home),
               label: const Text('Back to Home'),
             ),
@@ -94,21 +111,31 @@ final GoRouter router = GoRouter(
       builder: (context, state, child) => ScaffoldMenu(child: child),
       routes: [
         GoRoute(
-          path: Routes.popular,
+          path: Routes.onlineVideo,
           pageBuilder: (context, state) => const NoTransitionPage(
-            child: PopularPage(),
-          ),
-        ),
-        GoRoute(
-          path: Routes.timeline,
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: TimelinePage(),
+            child: OnlineVideoSearchPage(),
           ),
         ),
         GoRoute(
           path: Routes.resource,
           pageBuilder: (context, state) => const NoTransitionPage(
             child: ResourceSearchPage(),
+          ),
+        ),
+        GoRoute(
+          path: Routes.media,
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: MediaLibraryPage(),
+          ),
+        ),
+        GoRoute(
+          path: Routes.popular,
+          redirect: (context, state) => Routes.onlineVideo,
+        ),
+        GoRoute(
+          path: Routes.timeline,
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: TimelinePage(),
           ),
         ),
         GoRoute(
@@ -206,11 +233,7 @@ final GoRouter router = GoRouter(
             ),
             GoRoute(
               path: 'license',
-              builder: (context, state) => LicensePage(
-                applicationName: 'Kazumi',
-                applicationVersion: Api.version,
-                applicationLegalese: context.t.dialogs.about.licenseLegalese,
-              ),
+              builder: (context, state) => const KazumiLicensePage(),
             ),
           ],
         ),
@@ -256,6 +279,22 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: 'download',
           builder: (context, state) => const DownloadSettingsPage(),
+        ),
+        GoRoute(
+          path: 'rules',
+          redirect: (context, state) => Routes.settingsPlugin,
+        ),
+        GoRoute(
+          path: 'indexers',
+          builder: (context, state) => const IndexerSettingsPage(),
+        ),
+        GoRoute(
+          path: 'media',
+          builder: (context, state) => const MediaSettingsPage(),
+        ),
+        GoRoute(
+          path: 'metadata',
+          builder: (context, state) => const MetadataSettingsPage(),
         ),
       ],
     ),

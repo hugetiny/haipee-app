@@ -8,11 +8,14 @@ list(APPEND FLUTTER_PLUGIN_LIST
   dynamic_color
   file_selector_windows
   flutter_volume_controller
+  hotkey_manager_windows
+  irondash_engine_context
   media_kit_libs_windows_video
   media_kit_video
   screen_pixel
   screen_retriever_windows
   share_plus
+  super_native_extensions
   tray_manager
   url_launcher_windows
   webview_windows
@@ -20,7 +23,9 @@ list(APPEND FLUTTER_PLUGIN_LIST
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  flutter_local_notifications_windows
   jni
+  libtorrent_flutter
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

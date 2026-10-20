@@ -6,6 +6,9 @@ class Routes {
   Routes._(); // 私有构造函数，防止实例化
 
   // ==================== Tab 路由 ====================
+  /// 在线视频搜索引擎页（一级主导航 1）
+  static const String onlineVideo = '/tab/online';
+
   /// 热门番剧页
   static const String popular = '/tab/popular';
 
@@ -14,6 +17,9 @@ class Routes {
 
   /// 资源搜索页（一级菜单）
   static const String resource = '/tab/resource';
+
+  /// 媒体分类页
+  static const String media = '/tab/media';
 
   /// 我的收藏页
   static const String my = '/tab/my';
@@ -72,6 +78,9 @@ class Routes {
   /// 弹幕屏蔽设置
   static const String settingsDanmakuShield = '/settings/danmaku/shield';
 
+  /// 统一规则管理中心
+  static const String settingsRuleCenter = '/settings/rules';
+
   /// 插件设置
   static const String settingsPlugin = '/settings/plugin';
 
@@ -80,6 +89,18 @@ class Routes {
 
   /// 插件商店
   static const String settingsPluginShop = '/settings/plugin/shop';
+
+  /// 索引器与在线源设置
+  static const String settingsIndexers = '/settings/indexers';
+
+  /// 视听与媒体设置
+  static const String settingsMedia = '/settings/media';
+
+  /// 媒体元数据与刮削设置
+  static const String settingsMetadata = '/settings/metadata';
+
+  /// 下载引擎设置
+  static const String settingsDownload = '/settings/download';
 
   /// WebDAV 设置
   static const String settingsWebdav = '/settings/webdav';

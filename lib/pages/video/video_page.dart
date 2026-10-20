@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/pages/player/player_controller.dart';
 import 'package:kazumi/pages/player/player_state.dart';
+import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/pages/video/video_controller.dart';
 import 'package:kazumi/pages/webview/webview_item.dart';
 import 'package:kazumi/pages/webview/webview_controller.dart';
@@ -23,6 +24,8 @@ import 'package:screen_brightness_platform_interface/screen_brightness_platform_
 import 'package:scrollview_observer/scrollview_observer.dart';
 import 'package:kazumi/pages/player/episode_comments_sheet.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
 import 'package:kazumi/ui/appbar/kazumi_app_bar_actions.dart';
 import 'package:kazumi/ui/appbar/kazumi_action_item.dart';
@@ -133,11 +136,18 @@ class _VideoPageState extends ConsumerState<VideoPage>
     });
     _videoLoadedSubscription =
         webviewItemController.onVideoLoading.listen((event) {
+      if (playerController.videoUrl.isNotEmpty ||
+          (playerController.mediaPlayer?.state.playing ?? false)) {
+        return;
+      }
       videoPageController.loading = event;
     });
     _videoURLSubscription =
         webviewItemController.onVideoURLParser.listen((event) {
       final (mediaUrl, offset) = event;
+      clearWebviewLog();
+      videoPageController.loading = false;
+      unawaited(webviewItemController.unloadPage());
       playerController.init(mediaUrl, offset: offset);
     });
     _logSubscription = webviewItemController.onLog.listen((event) {
@@ -167,6 +177,12 @@ class _VideoPageState extends ConsumerState<VideoPage>
 
   /// 处理视频解析失败,记录到数据库
   void _handleParseFailure() {
+    // 若视频流已成功定位或播放器已加载媒体，杜绝误报与误记失败
+    if (webviewItemController.isVideoSourceLoaded ||
+        (playerController.videoUrl.isNotEmpty &&
+            !ref.read(playerProvider).loading)) {
+      return;
+    }
     try {
       final bangumiItem = videoPageController.bangumiItem;
       final videoState = ref.read(videoProvider);
@@ -265,21 +281,31 @@ class _VideoPageState extends ConsumerState<VideoPage>
     videoPageController.currentRoad = 0;
     videoPageController.historyOffset = 0;
     videoPageController.showTabBody = true;
+    if (videoPageController.bangumiItemOrNull == null) {
+      videoPageController.bangumiItem = BangumiItem.dummy(
+        title: videoPageController.title.isNotEmpty
+            ? videoPageController.title
+            : '未知视频',
+      );
+    }
 
     // Try to restore playback progress from history
     try {
-      final progress = historyController.lastWatching(
-        videoPageController.bangumiItem,
-        videoPageController.currentPlugin.name,
-      );
-      if (progress != null &&
-          videoPageController.roadList.length > progress.road &&
-          videoPageController.roadList[progress.road].data.length >=
-              progress.episode) {
-        videoPageController.currentEpisode = progress.episode;
-        videoPageController.currentRoad = progress.road;
-        if (playResume) {
-          videoPageController.historyOffset = progress.progress.inSeconds;
+      final pluginName = videoPageController.currentPluginOrNull?.name ?? '';
+      if (pluginName.isNotEmpty) {
+        final progress = historyController.lastWatching(
+          videoPageController.bangumiItem,
+          pluginName,
+        );
+        if (progress != null &&
+            videoPageController.roadList.length > progress.road &&
+            videoPageController.roadList[progress.road].data.length >=
+                progress.episode) {
+          videoPageController.currentEpisode = progress.episode;
+          videoPageController.currentRoad = progress.road;
+          if (playResume) {
+            videoPageController.historyOffset = progress.progress.inSeconds;
+          }
         }
       }
     } catch (_) {
@@ -644,6 +670,17 @@ class _VideoPageState extends ConsumerState<VideoPage>
     final isFullscreen = videoState.isFullscreen;
     final isLoading = videoState.loading;
     final isPlayerLoading = playerState.loading;
+    final isPlayerPlaying = playerState.playing ||
+        (playerController.mediaPlayer?.state.playing ?? false) ||
+        playerState.currentPosition > Duration.zero ||
+        playerState.playerWidth > 0;
+    final isPlayerActive = (useNativePlayer &&
+        playerController.videoUrl.isNotEmpty &&
+        (!isPlayerLoading || isPlayerPlaying));
+    final isParseTimedOut = !isPlayerActive &&
+        !isPlayerPlaying &&
+        playerController.videoUrl.isEmpty &&
+        webviewLogLines.any((log) => log.contains('解析视频资源超时'));
 
     return Stack(
       children: [
@@ -652,7 +689,10 @@ class _VideoPageState extends ConsumerState<VideoPage>
           child: Stack(
             children: [
               Positioned.fill(
-                child: (useNativePlayer && isPlayerLoading && !isLoading)
+                child: (useNativePlayer &&
+                        isPlayerLoading &&
+                        !isLoading &&
+                        !isPlayerPlaying)
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -673,7 +713,9 @@ class _VideoPageState extends ConsumerState<VideoPage>
               ),
               // Show loading or parse failure message
               Visibility(
-                visible: isLoading || webviewLogLines.any((log) => log.contains('解析视频资源超时')),
+                visible: (isLoading || isParseTimedOut) &&
+                    !isPlayerActive &&
+                    !isPlayerPlaying,
                 child: Container(
                   color: Colors.black,
                   child: Align(
@@ -689,7 +731,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
                                       .tertiaryContainer),
                             if (isLoading) const SizedBox(height: 10),
                             Text(
-                                webviewLogLines.any((log) => log.contains('解析视频资源超时'))
+                                isParseTimedOut
                                     ? t.playback.loading.parseFailed
                                     : t.playback.loading.parsing,
                                 style: const TextStyle(
@@ -703,21 +745,23 @@ class _VideoPageState extends ConsumerState<VideoPage>
               ),
               // Top control bar: Always visible during loading, fullscreen, or parse failure
               // This ensures users can always navigate back even when parsing fails
-              if (isLoading ||
+              if ((isLoading && !isPlayerPlaying) ||
                   isFullscreen ||
-                  webviewLogLines.any((log) => log.contains('解析视频资源超时')))
+                  (isParseTimedOut && !isPlayerActive))
                 Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: EmbeddedNativeControlArea(
+                  child: DesktopWindowControlsSafeArea(
                     requireOffset: !isFullscreen,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => onBackPressed(context),
-                        ),
+                    child: EmbeddedNativeControlArea(
+                      requireOffset: !isFullscreen,
+                      child: Row(
+                        children: [
+                          AppBackButton(
+                            color: Colors.white,
+                            onPressed: () => onBackPressed(context),
+                          ),
                         const Expanded(
                           child: dtb.DragToMoveArea(child: SizedBox(height: 40)),
                         ),
@@ -765,11 +809,15 @@ class _VideoPageState extends ConsumerState<VideoPage>
                     ),
                   ),
                 ),
+              ),
             ],
           ),
         ),
         Positioned.fill(
-          child: (!useNativePlayer || isPlayerLoading)
+          child: (!useNativePlayer ||
+                  (isPlayerLoading &&
+                      playerController.videoUrl.isEmpty &&
+                      !isPlayerPlaying))
               ? Container()
               : PlayerItem(
                   openMenu: openTabBodyAnimated,
@@ -1482,17 +1530,23 @@ class _VideoPageState extends ConsumerState<VideoPage>
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.only(right: 8, left: 8),
-        child: GridView.builder(
-          scrollDirection: Axis.vertical,
-          controller: scrollController,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 5,
-            mainAxisExtent: 70,
-          ),
-          itemCount: cardList.length,
-          itemBuilder: (context, index) => cardList[index],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final int crossCount =
+                (constraints.maxWidth / 120.0).floor().clamp(2, 8);
+            return GridView.builder(
+              scrollDirection: Axis.vertical,
+              controller: scrollController,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossCount,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 5,
+                mainAxisExtent: 70,
+              ),
+              itemCount: cardList.length,
+              itemBuilder: (context, index) => cardList[index],
+            );
+          },
         ),
       ),
     );

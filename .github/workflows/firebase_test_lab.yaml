@@ -1,0 +1,142 @@
+name: Firebase Test Lab Automated AI Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_timeout:
+        description: 'Robo test exploration timeout (e.g. 3m, 5m)'
+        required: false
+        default: '3m'
+      device_tier:
+        description: 'Device Tier to test against'
+        required: false
+        type: choice
+        options:
+          - 'Flagship (Pixel 7 / Android 33)'
+          - 'Multi-device Matrix (Pixel 7 Android 33 + Pixel 6 Android 32)'
+        default: 'Flagship (Pixel 7 / Android 33)'
+  push:
+    branches:
+      - main
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/firebase_test_lab.yaml'
+
+jobs:
+  build-and-test:
+    name: Cloud Build & Firebase Test Lab Robo Run
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2.16.0
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Android Release APK with Sentry & TestLab Flags
+        run: |
+          echo "Building universal Release APK with Sentry Telemetry..."
+          flutter build apk --release \
+            --dart-define=SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
+            --dart-define=FIREBASE_TEST_LAB=true
+        shell: bash
+
+      - name: Upload APK Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kazumi-release-testlab-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
+
+      - name: Check Google Cloud Credentials
+        id: check_creds
+        run: |
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "::warning::GCP_SA_KEY secret is not configured. Skipping Firebase Test Lab execution."
+            echo "### ⚠️ Firebase Test Lab Not Executed" >> $GITHUB_STEP_SUMMARY
+            echo "The Android APK was compiled successfully with Sentry telemetry enabled." >> $GITHUB_STEP_SUMMARY
+            echo "To enable automated cloud Robo testing on real devices, add **GCP_SA_KEY** to GitHub Secrets." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Authenticate to Google Cloud
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        if: steps.check_creds.outputs.has_creds == 'true'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run Firebase Test Lab Robo Exploration
+        if: steps.check_creds.outputs.has_creds == 'true'
+        id: run_testlab
+        run: |
+          TIMEOUT="${{ github.event.inputs.test_timeout }}"
+          TIMEOUT="${TIMEOUT:-3m}"
+          DEVICE_TIER="${{ github.event.inputs.device_tier }}"
+          DEVICE_TIER="${DEVICE_TIER:-Flagship (Pixel 7 / Android 33)}"
+          PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}"
+          PROJECT_ID="${PROJECT_ID:-flutter-e3137}"
+          
+          DEVICE_ARGS="--device model=panther,version=33,locale=zh_CN,orientation=portrait"
+          if [[ "$DEVICE_TIER" == *"Multi-device"* ]]; then
+            DEVICE_ARGS="$DEVICE_ARGS --device model=oriole,version=32,locale=zh_CN,orientation=portrait"
+          fi
+
+          echo "Launching Firebase Test Lab Robo crawl on project: $PROJECT_ID..."
+          gcloud firebase test android run \
+            --type robo \
+            --app build/app/outputs/flutter-apk/app-release.apk \
+            --project "$PROJECT_ID" \
+            $DEVICE_ARGS \
+            --timeout "$TIMEOUT" \
+            --client-details matrixLabel="Kazumi GitHub Actions CI" \
+            --no-record-video false 2>&1 | tee test_lab_output.log
+
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
+          echo "Test Lab completed with exit code: $TEST_EXIT_CODE"
+
+          # Extract Firebase Test Lab results URL from logs
+          RESULTS_URL=$(grep -oE 'https://console.firebase.google.com/project/[^ ]*' test_lab_output.log | head -n 1 || true)
+          echo "results_url=$RESULTS_URL" >> $GITHUB_OUTPUT
+          
+          echo "### 🚀 Firebase Test Lab Robo Test Completed" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$RESULTS_URL" ]; then
+            echo "[View Test Lab Cloud Report, Screen Recording & UI Tree]($RESULTS_URL)" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Exploration Duration**: $TIMEOUT" >> $GITHUB_STEP_SUMMARY
+          echo "- **Telemetry**: Sentry Flutter capture active (tagged with \`runner=firebase_test_lab\`)" >> $GITHUB_STEP_SUMMARY
+
+          exit $TEST_EXIT_CODE
+        shell: bash
+
+      - name: Upload Test Lab Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-lab-logs
+          path: test_lab_output.log
+          if-no-files-found: ignore
+

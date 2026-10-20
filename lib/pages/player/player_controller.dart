@@ -24,6 +24,13 @@ import 'package:kazumi/pages/player/player_state.dart';
 import 'package:kazumi/pages/video/providers.dart';
 import 'package:kazumi/shaders/providers.dart';
 import 'package:kazumi/providers/translations_provider.dart';
+import 'package:kazumi/modules/playback/aniskip_model.dart';
+import 'package:kazumi/modules/playback/aniskip_service.dart';
+import 'package:kazumi/modules/playback/media_selector.dart';
+import 'package:kazumi/pages/player/local_video_play_args.dart';
+import 'package:kazumi/services/player/player_error_mapper.dart';
+import 'package:kazumi/modules/source_quality/source_quality_tracker.dart';
+import 'package:kazumi/modules/bilibili/bilibili_service.dart';
 
 class PlayerController extends Notifier<PlayerState> {
   @override
@@ -64,13 +71,13 @@ class PlayerController extends Notifier<PlayerState> {
   int forwardTime = 80;
 
   // 播放器实时状态
-  bool get playerPlaying => mediaPlayer!.state.playing;
-  bool get playerBuffering => mediaPlayer!.state.buffering;
-  bool get playerCompleted => mediaPlayer!.state.completed;
-  double get playerVolume => mediaPlayer!.state.volume;
-  Duration get playerPosition => mediaPlayer!.state.position;
-  Duration get playerBuffer => mediaPlayer!.state.buffer;
-  Duration get playerDuration => mediaPlayer!.state.duration;
+  bool get playerPlaying => mediaPlayer?.state.playing ?? false;
+  bool get playerBuffering => mediaPlayer?.state.buffering ?? false;
+  bool get playerCompleted => mediaPlayer?.state.completed ?? false;
+  double get playerVolume => mediaPlayer?.state.volume ?? 100.0;
+  Duration get playerPosition => mediaPlayer?.state.position ?? Duration.zero;
+  Duration get playerBuffer => mediaPlayer?.state.buffer ?? Duration.zero;
+  Duration get playerDuration => mediaPlayer?.state.duration ?? Duration.zero;
 
   // 播放器调试信息订阅
   StreamSubscription<PlayerLog>? playerLogSubscription;
@@ -80,15 +87,41 @@ class PlayerController extends Notifier<PlayerState> {
   StreamSubscription<AudioParams>? playerAudioParamsSubscription;
   StreamSubscription<Playlist>? playerPlaylistSubscription;
   StreamSubscription<Track>? playerTracksSubscription;
+  StreamSubscription<Tracks>? playerAllTracksSubscription;
   StreamSubscription<double?>? playerAudioBitrateSubscription;
+  StreamSubscription<bool>? playerPlayingSubscription;
+  StreamSubscription<bool>? playerBufferingSubscription;
+  StreamSubscription<Duration>? playerPositionSubscription;
+
+  LocalVideoPlayArgs? activeLocalVideoArgs;
+  String currentTitle = '';
+  bool isAudioMode = false;
+  String? activeAudioUrl;
+  Map<String, String>? activeHttpHeaders;
+  int? activeBiliCid;
+
+  bool get hasActivePlayback =>
+      activeLocalVideoArgs != null ||
+      (mediaPlayer != null &&
+          (mediaPlayer!.state.playing ||
+              (!mediaPlayer!.state.completed && mediaPlayer!.state.duration > Duration.zero)));
 
   void _initializeDependencies() {
     videoPageController = ref.read(videoProvider.notifier);
     shadersController = ref.read(shadersControllerProvider);
   }
 
-  Future<void> init(String url, {int offset = 0}) async {
+  Future<void> init(
+    String url, {
+    int offset = 0,
+    String? audioUrl,
+    Map<String, String>? httpHeaders,
+    int? biliCid,
+  }) async {
     videoUrl = url;
+    activeAudioUrl = audioUrl;
+    activeHttpHeaders = httpHeaders;
+    activeBiliCid = biliCid;
     state = state.copyWith(
       playing: false,
       loading: true,
@@ -97,32 +130,82 @@ class PlayerController extends Notifier<PlayerState> {
       buffer: Duration.zero,
       duration: Duration.zero,
       completed: false,
+      danDanmakus: const {},
     );
     try {
       await disposeResources(disposeSyncPlayController: false);
     } catch (_) {}
-    int episodeFromTitle = 0;
-    try {
-      episodeFromTitle = Utils.extractEpisodeNumber(videoPageController
-          .state
-          .roadList[videoPageController.state.currentRoad]
-          .identifier[videoPageController.state.currentEpisode - 1]);
-    } catch (e) {
-      KazumiLogger().log(Level.error, '从标题解析集数错误 ${e.toString()}');
-    }
-    if (episodeFromTitle == 0) {
-      episodeFromTitle = videoPageController.state.currentEpisode;
-    }
+    final autoSkip = setting.get(SettingBoxKey.autoSkipOpEd, defaultValue: false) as bool;
+    state = state.copyWith(autoSkipOpEd: autoSkip);
 
-    // 🚀 优化：并行加载弹幕和创建播放器，不阻塞播放
-    getDanDanmakuByBgmBangumiID(
-        videoPageController.state.bangumiItem!.id, episodeFromTitle);
+    // 原生官方弹幕优先直载 (B站 视频具有确定的 CID，以官方原生弹幕为准，严禁弹弹play跨站模糊盲搜)
+    if (biliCid != null && biliCid > 0) {
+      await loadBiliDanmaku(biliCid);
+    } else {
+      int episodeFromTitle = 0;
+      final bgmItem = videoPageController.state.bangumiItem;
+      try {
+        final roadList = videoPageController.state.roadList;
+        final curRoad = videoPageController.state.currentRoad;
+        final curEp = videoPageController.state.currentEpisode;
+        if (roadList.isNotEmpty &&
+            curRoad >= 0 &&
+            curRoad < roadList.length &&
+            curEp > 0 &&
+            curEp <= roadList[curRoad].identifier.length) {
+          final currentRoadData = roadList[curRoad];
+          final identifier = currentRoadData.identifier[curEp - 1];
+          final resolution = MediaSelector.resolve(
+            rawIndex: curEp,
+            identifier: identifier,
+            roadName: currentRoadData.name,
+            bangumiTotalEpisodes: bgmItem?.totalEpisodes,
+          );
+          episodeFromTitle = resolution.danmakuEpisode;
+        }
+      } catch (e) {
+        KazumiLogger().log(Level.error, '从标题解析集数错误 ${e.toString()}');
+      }
+      if (episodeFromTitle <= 0) {
+        episodeFromTitle = videoPageController.state.currentEpisode > 0
+            ? videoPageController.state.currentEpisode
+            : 1;
+      }
+
+      if (bgmItem != null && bgmItem.id > 0) {
+        currentTitle = bgmItem.nameCn.isNotEmpty ? bgmItem.nameCn : bgmItem.name;
+        getDanDanmakuByBgmBangumiID(bgmItem.id, episodeFromTitle);
+        unawaited(fetchAniSkipIntervals(bgmItem.id, episodeFromTitle));
+      } else {
+        // 只有非 HTTP 纯直链外链视频（例如本地番剧或种子下载视频）才根据标题尝试匹配弹弹play
+        final isDirectHttp = url.startsWith('http://') || url.startsWith('https://');
+        if (!isDirectHttp) {
+          final resolvedTitle = currentTitle.isNotEmpty
+              ? currentTitle
+              : (activeLocalVideoArgs?.title.isNotEmpty == true
+                  ? activeLocalVideoArgs!.title
+                  : (videoPageController.state.title.isNotEmpty
+                      ? videoPageController.state.title
+                      : videoPageController.bangumiItem.name));
+          currentTitle = resolvedTitle;
+          if (currentTitle.isNotEmpty && currentTitle != '未知视频') {
+            unawaited(getDanDanmakuByTitle(currentTitle, episodeFromTitle));
+          }
+        }
+      }
+    }
     mediaPlayer ??= await createVideoController(offset: offset);
+    final superResolutionType = (setting.get(
+            SettingBoxKey.defaultSuperResolutionType,
+            defaultValue: 1) as num)
+        .toInt();
+    shadersController.superResolutionType = superResolutionType;
     final playerSpeed =
         setting.get(SettingBoxKey.defaultPlaySpeed, defaultValue: 1.0);
     final aspectRatioType =
         setting.get(SettingBoxKey.defaultAspectRatioType, defaultValue: 1);
     state = state.copyWith(
+      superResolutionType: superResolutionType,
       playerSpeed: playerSpeed,
       aspectRatioType: aspectRatioType,
     );
@@ -142,8 +225,9 @@ class PlayerController extends Notifier<PlayerState> {
     KazumiLogger().log(Level.info, 'VideoURL初始化完成');
     state = state.copyWith(loading: false);
     if (syncplayController?.isConnected ?? false) {
+      final bgmId = videoPageController.bangumiItem.id;
       if (syncplayController!.currentFileName !=
-          "${videoPageController.state.bangumiItem!.id}[${videoPageController.state.currentEpisode}]") {
+          "$bgmId[${videoPageController.state.currentEpisode}]") {
         setSyncPlayPlayingBangumi(
             forceSyncPlaying: true, forceSyncPosition: 0.0);
       }
@@ -161,16 +245,36 @@ class PlayerController extends Notifier<PlayerState> {
     });
     await playerWidthSubscription?.cancel();
     playerWidthSubscription = mediaPlayer!.stream.width.listen((event) {
-      state = state.copyWith(playerWidth: event ?? 0);
+      final width = event ?? 0;
+      state = state.copyWith(
+        playerWidth: width,
+        loading: width > 0 ? false : state.loading,
+      );
+      if (width > 0) {
+        videoPageController.loading = false;
+        if (state.superResolutionType != 1) {
+          unawaited(setShader(state.superResolutionType));
+        }
+        unawaited(syncVideoQualityMetrics());
+      }
     });
     await playerHeightSubscription?.cancel();
     playerHeightSubscription = mediaPlayer!.stream.height.listen((event) {
-      state = state.copyWith(playerHeight: event ?? 0);
+      final height = event ?? 0;
+      state = state.copyWith(
+        playerHeight: height,
+        loading: height > 0 ? false : state.loading,
+      );
+      if (height > 0) {
+        videoPageController.loading = false;
+        unawaited(syncVideoQualityMetrics());
+      }
     });
     await playerVideoParamsSubscription?.cancel();
     playerVideoParamsSubscription =
         mediaPlayer!.stream.videoParams.listen((event) {
       state = state.copyWith(playerVideoParams: event.toString());
+      unawaited(syncVideoQualityMetrics());
     });
     await playerAudioParamsSubscription?.cancel();
     playerAudioParamsSubscription =
@@ -181,9 +285,15 @@ class PlayerController extends Notifier<PlayerState> {
     playerPlaylistSubscription = mediaPlayer!.stream.playlist.listen((event) {
       state = state.copyWith(playerPlaylist: event.toString());
     });
+    await playerAllTracksSubscription?.cancel();
+    playerAllTracksSubscription = mediaPlayer!.stream.tracks.listen((tracks) {
+      state = state.copyWith(playerTracks: tracks);
+    });
     await playerTracksSubscription?.cancel();
     playerTracksSubscription = mediaPlayer!.stream.track.listen((event) {
       state = state.copyWith(
+        currentAudioTrack: event.audio,
+        currentSubtitleTrack: event.subtitle,
         playerAudioTracks: event.audio.toString(),
         playerVideoTracks: event.video.toString(),
       );
@@ -192,6 +302,32 @@ class PlayerController extends Notifier<PlayerState> {
     playerAudioBitrateSubscription =
         mediaPlayer!.stream.audioBitrate.listen((event) {
       state = state.copyWith(playerAudioBitrate: event.toString());
+    });
+    await playerPlayingSubscription?.cancel();
+    playerPlayingSubscription = mediaPlayer!.stream.playing.listen((isPlaying) {
+      state = state.copyWith(playing: isPlaying);
+      if (isPlaying) {
+        state = state.copyWith(loading: false);
+        videoPageController.loading = false;
+        unawaited(syncVideoQualityMetrics());
+      }
+    });
+    await playerBufferingSubscription?.cancel();
+    playerBufferingSubscription = mediaPlayer!.stream.buffering.listen((isBuffering) {
+      state = state.copyWith(isBuffering: isBuffering);
+      if (!isBuffering && (mediaPlayer?.state.playing ?? false)) {
+        state = state.copyWith(loading: false);
+        videoPageController.loading = false;
+        unawaited(syncVideoQualityMetrics());
+      }
+    });
+    await playerPositionSubscription?.cancel();
+    playerPositionSubscription = mediaPlayer!.stream.position.listen((pos) {
+      state = state.copyWith(currentPosition: pos);
+      if (pos > Duration.zero && state.loading) {
+        state = state.copyWith(loading: false);
+        videoPageController.loading = false;
+      }
     });
   }
 
@@ -203,7 +339,11 @@ class PlayerController extends Notifier<PlayerState> {
     await playerAudioParamsSubscription?.cancel();
     await playerPlaylistSubscription?.cancel();
     await playerTracksSubscription?.cancel();
+    await playerAllTracksSubscription?.cancel();
     await playerAudioBitrateSubscription?.cancel();
+    await playerPlayingSubscription?.cancel();
+    await playerBufferingSubscription?.cancel();
+    await playerPositionSubscription?.cancel();
   }
 
   Future<Player> createVideoController({int offset = 0}) async {
@@ -223,15 +363,17 @@ class PlayerController extends Notifier<PlayerState> {
       SettingBoxKey.playerDebugMode,
       defaultValue: kDebugMode,
     );
-    if (videoPageController.currentPlugin.userAgent == '') {
+    final plugin = videoPageController.currentPluginOrNull;
+    if (plugin == null || plugin.userAgent.isEmpty) {
       userAgent = Utils.getRandomUA();
     } else {
-      userAgent = videoPageController.currentPlugin.userAgent;
+      userAgent = plugin.userAgent;
     }
-    String referer = videoPageController.currentPlugin.referer;
+    String referer = plugin?.referer ?? '';
     var httpHeaders = {
       'user-agent': userAgent,
       if (referer.isNotEmpty) 'referer': referer,
+      if (activeHttpHeaders != null) ...activeHttpHeaders!,
     };
 
     mediaPlayer = Player(
@@ -247,11 +389,26 @@ class PlayerController extends Notifier<PlayerState> {
     setupPlayerDebugInfoSubscription();
 
     var pp = mediaPlayer!.platform as NativePlayer;
+    if (activeHttpHeaders != null && activeHttpHeaders!.isNotEmpty) {
+      final headerString = activeHttpHeaders!.entries
+          .map((e) => '${e.key}: ${e.value}')
+          .join('\r\n');
+      await pp.setProperty('http-header-fields', headerString);
+      final ref = activeHttpHeaders!['referer'] ?? activeHttpHeaders!['Referer'];
+      if (ref != null) {
+        await pp.setProperty('referrer', ref);
+      }
+      final ua = activeHttpHeaders!['user-agent'] ?? activeHttpHeaders!['User-Agent'];
+      if (ua != null) {
+        await pp.setProperty('user-agent', ua);
+      }
+    }
     // media-kit 默认启用硬盘作为双重缓存，这可以维持大缓存的前提下减轻内存压力
     // media-kit 内部硬盘缓存目录按照 Linux 配置，这导致该功能在其他平台上被损坏
     // 该设置可以在所有平台上正确启用双重缓存
     await pp.setProperty("demuxer-cache-dir", await Utils.getPlayerTempPath());
     await pp.setProperty("af", "scaletempo2=max-speed=8");
+    await pp.setProperty("embeddedfonts", "yes");
     if (Platform.isAndroid) {
       await pp.setProperty("volume-max", "100");
       if (androidEnableOpenSLES) {
@@ -273,24 +430,40 @@ class PlayerController extends Notifier<PlayerState> {
         androidAttachSurfaceAfterVideoParameters: false,
       ),
     );
+    state = state.copyWith(superResolutionType: state.superResolutionType);
     mediaPlayer!.setPlaylistMode(PlaylistMode.none);
 
     // error handle
     bool showPlayerError =
-        setting.get(SettingBoxKey.showPlayerError, defaultValue: true);
+        setting.get(SettingBoxKey.showPlayerError, defaultValue: false);
     mediaPlayer!.stream.error.listen((event) {
-      if (showPlayerError) {
+      KazumiLogger().log(
+          Level.error, 'Player intent error: ${event.toString()} $videoUrl');
+
+      // Ignore transient network read interruptions on segments/advertisements that mpv recovers from
+      if (PlayerErrorMapper.isTransientNetworkError(event)) {
+        return;
+      }
+
+      final actionableMessage = PlayerErrorMapper.toActionableMessage(
+        event,
+        isBuffering: playerBuffering,
+      );
+      if (actionableMessage != null) {
+        KazumiDialog.showToast(
+          message: actionableMessage,
+          showActionButton: true,
+        );
+      } else if (showPlayerError) {
         final t = ref.read(translationsProvider);
         final details = '${event.toString()} $videoUrl';
         KazumiDialog.showToast(
           message:
-              t.playback.toast.internalError.replaceFirst('{details}', details),
+               t.playback.toast.internalError.replaceFirst('{details}', details),
           duration: const Duration(seconds: 5),
           showActionButton: true,
         );
       }
-      KazumiLogger().log(
-          Level.error, 'Player intent error: ${event.toString()} $videoUrl');
     });
 
     if (state.superResolutionType != 1) {
@@ -303,37 +476,73 @@ class PlayerController extends Notifier<PlayerState> {
       play: autoPlay,
     );
 
+    // B站 DASH 音画分离双流挂载：利用 mpv 原生双流能力挂载独立音频流，零损耗加载
+    if (activeAudioUrl != null && activeAudioUrl!.isNotEmpty) {
+      try {
+        await pp.command(['audio-add', activeAudioUrl!, 'select']);
+        KazumiLogger().log(Level.info, '成功通过 mpv audio-add 挂载 DASH 独立音频流');
+      } catch (e) {
+        KazumiLogger().log(Level.warning, '挂载 DASH 独立音频流失败: $e');
+      }
+    }
+
     return mediaPlayer!;
   }
 
+  Future<void> loadBiliDanmaku(int cid) async {
+    try {
+      state = state.copyWith(danDanmakus: {});
+      final danmakus = await BilibiliService.getDanmaku(cid);
+      if (danmakus.isNotEmpty) {
+        addDanmakus(danmakus);
+        KazumiLogger().log(Level.info, '成功加载 B站 原生弹幕 ${danmakus.length} 条 (cid=$cid)');
+      } else {
+        KazumiLogger().log(Level.info, 'B站 该视频无原生弹幕 (cid=$cid)');
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '加载 B站 弹幕失败 cid=$cid: $e');
+    }
+  }
+
   Future<void> setShader(int type, {bool synchronized = true}) async {
-    var pp = mediaPlayer!.platform as NativePlayer;
-    await pp.waitForPlayerInitialization;
-    await pp.waitForVideoControllerInitializationIfAttached;
-    if (type == 2) {
-      await pp.command([
-        'change-list',
-        'glsl-shaders',
-        'set',
-        Utils.buildShadersAbsolutePath(
-            shadersController.shadersDirectory.path, mpvAnime4KShadersLite),
-      ]);
-      state = state.copyWith(superResolutionType: 2);
-      return;
+    try {
+      await shadersController.ensureInitialized();
+      if (mediaPlayer != null && mediaPlayer!.platform is NativePlayer) {
+        var pp = mediaPlayer!.platform as NativePlayer;
+        await pp.waitForPlayerInitialization;
+        await pp.waitForVideoControllerInitializationIfAttached;
+        if (type == 2) {
+          final shaderPath = Utils.buildShadersAbsolutePath(
+              shadersController.shadersDirectory.path, mpvAnime4KShadersLite);
+          await pp.setProperty('glsl-shaders', shaderPath);
+          await pp.command([
+            'change-list',
+            'glsl-shaders',
+            'set',
+            shaderPath,
+          ]);
+        } else if (type == 3) {
+          final shaderPath = Utils.buildShadersAbsolutePath(
+              shadersController.shadersDirectory.path, mpvAnime4KShaders);
+          await pp.setProperty('glsl-shaders', shaderPath);
+          await pp.command([
+            'change-list',
+            'glsl-shaders',
+            'set',
+            shaderPath,
+          ]);
+        } else {
+          await pp.setProperty('glsl-shaders', '');
+          await pp.command(['change-list', 'glsl-shaders', 'clr', '']);
+        }
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.warning, 'Failed to apply shader type $type: $e');
+    } finally {
+      shadersController.superResolutionType = type;
+      await setting.put(SettingBoxKey.defaultSuperResolutionType, type);
+      state = state.copyWith(superResolutionType: type);
     }
-    if (type == 3) {
-      await pp.command([
-        'change-list',
-        'glsl-shaders',
-        'set',
-        Utils.buildShadersAbsolutePath(
-            shadersController.shadersDirectory.path, mpvAnime4KShaders),
-      ]);
-      state = state.copyWith(superResolutionType: 3);
-      return;
-    }
-    await pp.command(['change-list', 'glsl-shaders', 'clr', '']);
-    state = state.copyWith(superResolutionType: 1);
   }
 
   Future<void> setPlaybackSpeed(double playerSpeed) async {
@@ -403,6 +612,7 @@ class PlayerController extends Notifier<PlayerState> {
   }
 
   Future<void> disposeResources({bool disposeSyncPlayController = true}) async {
+    activeBiliCid = null;
     if (disposeSyncPlayController) {
       try {
         state = state.copyWith(syncplayRoom: '', syncplayClientRtt: 0);
@@ -419,10 +629,17 @@ class PlayerController extends Notifier<PlayerState> {
   }
 
   Future<void> stop({bool updateState = true}) async {
+    activeBiliCid = null;
     try {
       await mediaPlayer?.stop();
       if (updateState) {
-        state = state.copyWith(loading: true);
+        state = state.copyWith(
+          loading: true,
+          aniSkipIntervals: const [],
+          currentAniSkipInterval: null,
+          subtitleDelay: 0.0,
+          danDanmakus: const {},
+        );
       }
     } catch (_) {}
   }
@@ -437,26 +654,38 @@ class PlayerController extends Notifier<PlayerState> {
 
   Future<void> getDanDanmakuByBgmBangumiID(
       int bgmBangumiID, int episode) async {
+    final bool enableDanDan =
+        setting.get(SettingBoxKey.danmakuDanDanSource, defaultValue: true) as bool;
+    if (!enableDanDan) {
+      return;
+    }
     KazumiLogger().log(Level.info, '尝试获取弹幕 [BgmBangumiID] $bgmBangumiID');
     try {
       state = state.copyWith(danDanmakus: {});
       bangumiID =
-          await DanmakuRequest.getDanDanBangumiIDByBgmBangumiID(bgmBangumiID);
-      var res = await DanmakuRequest.getDanDanmaku(bangumiID, episode);
-      addDanmakus(res);
+          await DanmakuRequest.getDanDanBangumiIDByBgmBangumiID(bgmBangumiID, silent: true);
+      if (bangumiID > 0) {
+        var res = await DanmakuRequest.getDanDanmaku(bangumiID, episode, silent: true);
+        addDanmakus(res);
+      }
     } catch (e) {
       KazumiLogger().log(Level.warning, '获取弹幕错误 ${e.toString()}');
     }
   }
 
   Future<void> getDanDanmakuByTitle(String title, int episode) async {
+    final bool enableDanDan =
+        setting.get(SettingBoxKey.danmakuDanDanSource, defaultValue: true) as bool;
+    if (!enableDanDan) {
+      return;
+    }
     KazumiLogger().log(Level.info, '尝试根据标题获取弹幕: $title, 集数: $episode');
     try {
       state = state.copyWith(danDanmakus: {});
-      final bId = await DanmakuRequest.getBangumiIDByTitle(title);
+      final bId = await DanmakuRequest.getBangumiIDByTitle(title, silent: true);
       if (bId > 0) {
         bangumiID = bId;
-        final res = await DanmakuRequest.getDanDanmaku(bId, episode);
+        final res = await DanmakuRequest.getDanDanmaku(bId, episode, silent: true);
         addDanmakus(res);
       }
     } catch (e) {
@@ -465,10 +694,11 @@ class PlayerController extends Notifier<PlayerState> {
   }
 
   Future<void> getDanDanmakuByEpisodeID(int episodeID) async {
+    if (episodeID <= 0) return;
     KazumiLogger().log(Level.info, '尝试获取弹幕 $episodeID');
     try {
       state = state.copyWith(danDanmakus: {});
-      var res = await DanmakuRequest.getDanDanmakuByEpisodeID(episodeID);
+      var res = await DanmakuRequest.getDanDanmakuByEpisodeID(episodeID, silent: true);
       addDanmakus(res);
     } catch (e) {
       KazumiLogger().log(Level.warning, '获取弹幕错误 ${e.toString()}');
@@ -876,6 +1106,123 @@ class PlayerController extends Notifier<PlayerState> {
   Duration get currentPosition => state.currentPosition;
   set currentPosition(Duration value) {
     state = state.copyWith(currentPosition: value);
+    _checkAniSkip(value);
+  }
+
+  Future<void> setAudioTrack(dynamic track) async {
+    final AudioTrack? audioTrack = track is Track ? track.audio : (track is AudioTrack ? track : null);
+    if (audioTrack == null) return;
+    state = state.copyWith(currentAudioTrack: audioTrack);
+    try {
+      await mediaPlayer?.setAudioTrack(audioTrack);
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '设置音频轨道失败: $e');
+    }
+  }
+
+  Future<void> setSubtitleTrack(dynamic track) async {
+    final SubtitleTrack? subtitleTrack = track is Track ? track.subtitle : (track is SubtitleTrack ? track : null);
+    if (subtitleTrack == null) return;
+    state = state.copyWith(currentSubtitleTrack: subtitleTrack);
+    try {
+      await mediaPlayer?.setSubtitleTrack(subtitleTrack);
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '设置字幕轨道失败: $e');
+    }
+  }
+
+  Future<void> setSubtitleDelay(double seconds) async {
+    state = state.copyWith(subtitleDelay: seconds);
+    try {
+      final pp = mediaPlayer?.platform as NativePlayer?;
+      if (pp != null) {
+        await pp.setProperty("sub-delay", seconds.toString());
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '设置字幕延迟失败: $e');
+    }
+  }
+
+  Future<void> loadExternalSubtitle(String path) async {
+    try {
+      final track = SubtitleTrack.uri(path, title: path.split(Platform.pathSeparator).last);
+      await setSubtitleTrack(track);
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '加载外部字幕失败: $e');
+    }
+  }
+
+  void _checkAniSkip(Duration position) {
+    if (state.aniSkipIntervals.isEmpty) return;
+    final posSec = position.inMilliseconds / 1000.0;
+    AniSkipInterval? activeInterval;
+    for (final interval in state.aniSkipIntervals) {
+      if (interval.containsSeconds(posSec)) {
+        activeInterval = interval;
+        break;
+      }
+    }
+    if (activeInterval != state.currentAniSkipInterval) {
+      state = state.copyWith(currentAniSkipInterval: activeInterval);
+      if (activeInterval != null && state.autoSkipOpEd) {
+        KazumiLogger().log(
+          Level.info,
+          '[AniSkip] 自动跳过 ${activeInterval.typeLabel} -> ${activeInterval.endTime}s',
+        );
+        unawaited(seek(Duration(milliseconds: (activeInterval.endTime * 1000).toInt())));
+      }
+    }
+  }
+
+  Future<void> skipCurrentInterval() async {
+    final interval = state.currentAniSkipInterval;
+    if (interval != null) {
+      KazumiLogger().log(
+        Level.info,
+        '[AniSkip] 用户点击跳过 ${interval.typeLabel} -> ${interval.endTime}s',
+      );
+      await seek(Duration(milliseconds: (interval.endTime * 1000).toInt()));
+      state = state.copyWith(currentAniSkipInterval: null);
+    }
+  }
+
+  void setAutoSkipOpEd(bool value) {
+    state = state.copyWith(autoSkipOpEd: value);
+    setting.put(SettingBoxKey.autoSkipOpEd, value);
+  }
+
+  Future<void> fetchAniSkipIntervals(int bangumiId, int episode) async {
+    if (bangumiId <= 0 || episode <= 0) {
+      state = state.copyWith(aniSkipIntervals: const [], currentAniSkipInterval: null);
+      return;
+    }
+    try {
+      final intervals = await AniSkipService.instance.getSkipTimes(
+        bangumiId: bangumiId,
+        episode: episode,
+      );
+      state = state.copyWith(
+        aniSkipIntervals: intervals,
+        currentAniSkipInterval: null,
+      );
+      KazumiLogger().log(
+        Level.info,
+        '[AniSkip] 已拉取条目 $bangumiId 第 $episode 集跳过区间: ${intervals.length} 个',
+      );
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '[AniSkip] 获取跳过区间失败: $e');
+    }
+  }
+
+  Future<void> stopAndRelease() async {
+    try {
+      await mediaPlayer?.stop();
+    } catch (_) {}
+    await disposeResources();
+    state = const PlayerState();
+    activeLocalVideoArgs = null;
+    currentTitle = '';
+    isAudioMode = false;
   }
 
   Duration get buffer => state.buffer;
@@ -929,5 +1276,85 @@ class PlayerController extends Notifier<PlayerState> {
       isBuffering: buffering ?? state.isBuffering,
       completed: isCompleted ?? state.completed,
     );
+  }
+
+  /// 周期性或状态变化时同步视频流分辨率、码率、帧率与编码格式至清晰度追踪器
+  Future<void> syncVideoQualityMetrics() async {
+    try {
+      final width = state.playerWidth;
+      final height = state.playerHeight;
+      if (width <= 0 && height <= 0) return;
+
+      double vBitrate = state.playerVideoBitrate;
+      double dBitrate = state.demuxBitrate;
+      String codec = state.videoCodec;
+      double fps = state.videoFps;
+
+      final pp = mediaPlayer?.platform as NativePlayer?;
+      if (pp != null) {
+        if (vBitrate <= 0) {
+          try {
+            final vb = await pp.getProperty('video-bitrate');
+            if (vb.isNotEmpty) {
+              vBitrate = double.tryParse(vb) ?? 0.0;
+            }
+          } catch (_) {}
+        }
+        if (dBitrate <= 0) {
+          try {
+            final db = await pp.getProperty('demux-bitrate');
+            if (db.isNotEmpty) {
+              dBitrate = double.tryParse(db) ?? 0.0;
+            }
+          } catch (_) {}
+        }
+        if (codec.isEmpty) {
+          try {
+            codec = await pp.getProperty('video-format');
+          } catch (_) {}
+        }
+        if (fps <= 0) {
+          try {
+            final fpsVal = await pp.getProperty('estimated-vf-fps');
+            if (fpsVal.isNotEmpty) {
+              fps = double.tryParse(fpsVal) ?? 0.0;
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (vBitrate > 0 || dBitrate > 0 || codec.isNotEmpty || fps > 0) {
+        state = state.copyWith(
+          playerVideoBitrate:
+              vBitrate > 0 ? vBitrate : state.playerVideoBitrate,
+          demuxBitrate: dBitrate > 0 ? dBitrate : state.demuxBitrate,
+          videoCodec: codec.isNotEmpty ? codec : state.videoCodec,
+          videoFps: fps > 0 ? fps : state.videoFps,
+        );
+      }
+
+      final bItem = videoPageController.bangumiItemOrNull;
+      final pName = videoPageController.currentPluginOrNull?.name;
+      final pSrc = videoPageController.src;
+
+      if (bItem != null &&
+          pName != null &&
+          pName.isNotEmpty &&
+          pSrc.isNotEmpty) {
+        await SourceQualityTracker.recordQuality(
+          bangumiId: bItem.id,
+          pluginName: pName,
+          src: pSrc,
+          width: width,
+          height: height,
+          videoBitrate: vBitrate,
+          demuxBitrate: dBitrate,
+          codec: codec,
+          fps: fps,
+        );
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '同步视频清晰度指标出错: $e');
+    }
   }
 }

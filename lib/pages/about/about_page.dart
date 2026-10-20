@@ -1,9 +1,8 @@
 import 'dart:io';
 
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
@@ -14,15 +13,7 @@ import 'package:kazumi/utils/storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
-
-/// ✅ Provider for cache size in MB
-final cacheSizeMBProvider = StateProvider.autoDispose<double>((ref) => -1);
-
-/// ✅ Provider for auto update setting
-final autoUpdateProvider = StateProvider.autoDispose<bool>((ref) {
-  final setting = GStorage.setting;
-  return setting.get(SettingBoxKey.autoUpdate, defaultValue: true);
-});
+import 'package:kazumi/pages/setting/providers.dart';
 
 class AboutPage extends ConsumerStatefulWidget {
   const AboutPage({super.key});
@@ -131,15 +122,12 @@ class _AboutPageState extends ConsumerState<AboutPage> {
 
   @override
   Widget build(BuildContext context) {
-    final String danDanAppId = GStorage.readDanDanAppId();
     final aboutTranslations = context.t.settings.about;
     final sections = aboutTranslations.sections;
     final licenses = sections.licenses;
     final links = sections.links;
     final cache = sections.cache;
     final updates = sections.updates;
-    final formattedDanmakuId = links.danmakuId
-        .replaceFirst('{id}', danDanAppId.isEmpty ? '-' : danDanAppId);
 
     // ✅ Watch providers
     final cacheSizeMB = ref.watch(cacheSizeMBProvider);
@@ -153,7 +141,6 @@ class _AboutPageState extends ConsumerState<AboutPage> {
         appBar: SysAppBar(title: Text(aboutTranslations.title)),
         // backgroundColor: Colors.transparent,
         body: SettingsList(
-          maxWidth: 1000,
           sections: [
             SettingsSection(
               tiles: [
@@ -183,31 +170,6 @@ class _AboutPageState extends ConsumerState<AboutPage> {
                   },
                   title: Text(links.repository),
                   value: const Text('Github'),
-                ),
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    launchUrl(Uri.parse(Api.iconUrl),
-                        mode: LaunchMode.externalApplication);
-                  },
-                  title: Text(links.icon),
-                  value: const Text('Pixiv'),
-                ),
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    launchUrl(Uri.parse(Api.bangumiIndex),
-                        mode: LaunchMode.externalApplication);
-                  },
-                  title: Text(links.index),
-                  value: const Text('Bangumi'),
-                ),
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    launchUrl(Uri.parse(Api.dandanIndex),
-                        mode: LaunchMode.externalApplication);
-                  },
-                  title: Text(links.danmaku),
-                  description: Text(formattedDanmakuId),
-                  value: const Text('DanDanPlay'),
                 ),
               ],
             ),

@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/utils.dart';
@@ -51,14 +53,47 @@ class SysAppBar extends StatelessWidget implements PreferredSizeWidget {
     if (actions != null) {
       acs.addAll(actions!);
     }
-    if (Utils.isDesktop()) {
+    if ((Platform.isWindows || Platform.isLinux) && !showWindowButton()) {
       // acs.add(IconButton(onPressed: () => windowManager.minimize(), icon: const Icon(Icons.minimize)));
-      if (!showWindowButton()) {
-        acs.add(CloseButton(onPressed: () => windowManager.close()));
-      }
+      acs.add(CloseButton(onPressed: () => windowManager.close()));
       acs.add(const SizedBox(width: 8));
     }
-    return GestureDetector(
+    Widget? effectiveLeading;
+    if (leading != null) {
+      effectiveLeading = leading;
+    } else if (Navigator.canPop(context)) {
+      effectiveLeading = const AppBackButton();
+    }
+
+    final bool requireLeadingOffset =
+        needTopOffset || Navigator.canPop(context) || (effectiveLeading is AppBackButton);
+
+    double? effectiveLeadingWidth = leadingWidth;
+    if (effectiveLeading != null) {
+      effectiveLeading = DesktopWindowControlsSafeArea.wrapLeading(
+        effectiveLeading,
+        requireOffset: requireLeadingOffset,
+      );
+      effectiveLeadingWidth = DesktopWindowControlsSafeArea.leadingWidth(
+        leadingWidth,
+        requireOffset: requireLeadingOffset,
+      );
+      effectiveLeading = EmbeddedNativeControlArea(
+        requireOffset: needTopOffset,
+        child: effectiveLeading!,
+      );
+    } else if (DesktopWindowControlsSafeArea.shouldAvoid(requireOffset: needTopOffset)) {
+      // 当没有 leading 按钮（如一级页面且无左侧 NavigationRail 时）在 macOS 顶栏避让原生红黄绿三色视窗按钮
+      effectiveLeading = const SizedBox(
+        width: DesktopWindowControlsSafeArea.kMacOsTrafficLightsWidth,
+      );
+      effectiveLeadingWidth = DesktopWindowControlsSafeArea.leadingWidth(
+        leadingWidth ?? 0.0,
+        requireOffset: needTopOffset,
+      );
+    }
+
+    Widget appBarWidget = GestureDetector(
       onPanStart: (_) =>
           (Utils.isDesktop()) ? windowManager.startDragging() : null,
       child: AppBar(
@@ -77,23 +112,8 @@ class SysAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: e,
           );
         }).toList(),
-        leading: leading != null
-            ? EmbeddedNativeControlArea(
-                requireOffset: needTopOffset,
-                child: leading!,
-              )
-            : Navigator.canPop(context)
-                ? EmbeddedNativeControlArea(
-                    requireOffset: needTopOffset,
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.maybePop(context);
-                      },
-                      icon: Icon(Icons.arrow_back),
-                    ),
-                  )
-                : null,
-        leadingWidth: leadingWidth,
+        leading: effectiveLeading,
+        leadingWidth: effectiveLeadingWidth,
         backgroundColor: backgroundColor,
         elevation: elevation,
         shape: shape,
@@ -110,6 +130,22 @@ class SysAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
     );
+
+    if (Utils.isDesktop() && Navigator.canPop(context)) {
+      appBarWidget = CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            Navigator.maybePop(context);
+          },
+        },
+        child: Focus(
+          autofocus: true,
+          child: appBarWidget,
+        ),
+      );
+    }
+
+    return appBarWidget;
   }
 
   @override

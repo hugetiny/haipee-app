@@ -31,6 +31,7 @@ class DownloadPageUIState {
   final String searchQuery;
   final String sortBy; // created, name, size, speed, progress
   final bool sortAscending;
+  final String filterType; // all, video, audio, archive, installer, document
 
   const DownloadPageUIState({
     this.isSelectionMode = false,
@@ -38,6 +39,7 @@ class DownloadPageUIState {
     this.searchQuery = '',
     this.sortBy = 'created',
     this.sortAscending = false,
+    this.filterType = 'all',
   });
 
   DownloadPageUIState copyWith({
@@ -46,6 +48,7 @@ class DownloadPageUIState {
     String? searchQuery,
     String? sortBy,
     bool? sortAscending,
+    String? filterType,
   }) {
     return DownloadPageUIState(
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
@@ -53,6 +56,7 @@ class DownloadPageUIState {
       searchQuery: searchQuery ?? this.searchQuery,
       sortBy: sortBy ?? this.sortBy,
       sortAscending: sortAscending ?? this.sortAscending,
+      filterType: filterType ?? this.filterType,
     );
   }
 }
@@ -87,6 +91,12 @@ class DownloadPageUINotifier extends Notifier<DownloadPageUIState> {
     );
   }
 
+  void deselectAll() {
+    state = state.copyWith(
+      selectedGids: {},
+    );
+  }
+
   void clearSelection() {
     state = state.copyWith(
       isSelectionMode: false,
@@ -100,6 +110,10 @@ class DownloadPageUINotifier extends Notifier<DownloadPageUIState> {
 
   void clearSearch() {
     state = state.copyWith(searchQuery: '');
+  }
+
+  void updateFilterType(String type) {
+    state = state.copyWith(filterType: type);
   }
 
   void updateSort(String sortBy, {bool? ascending}) {
@@ -144,10 +158,22 @@ final waitingDownloadsCountProvider = Provider<int>((ref) {
   return downloadState.waitingTasks.length;
 });
 
+/// 已暂停下载任务数量 Provider
+final pausedDownloadsCountProvider = Provider<int>((ref) {
+  final downloadState = ref.watch(downloadControllerProvider);
+  return downloadState.pausedTasks.length;
+});
+
 /// 已完成下载任务数量 Provider
 final completedDownloadsCountProvider = Provider<int>((ref) {
   final downloadState = ref.watch(downloadControllerProvider);
   return downloadState.completedTasks.length;
+});
+
+/// 下载失败任务数量 Provider
+final failedDownloadsCountProvider = Provider<int>((ref) {
+  final downloadState = ref.watch(downloadControllerProvider);
+  return downloadState.failedTasks.length;
 });
 
 /// 总下载速度 Provider
@@ -185,7 +211,38 @@ final filteredActiveTasksProvider = Provider<List<DownloadTask>>((ref) {
         .toList();
   }
 
+  // Apply file type filter
+  if (uiState.filterType != 'all') {
+    tasks = _filterByFileType(tasks, uiState.filterType);
+  }
+
   // Apply sort
+  return controller.sortTasks(
+    tasks,
+    uiState.sortBy,
+    ascending: uiState.sortAscending,
+  );
+});
+
+/// 过滤后的已暂停任务 Provider
+final filteredPausedTasksProvider = Provider<List<DownloadTask>>((ref) {
+  final controller = ref.watch(downloadControllerProvider.notifier);
+  final downloadState = ref.watch(downloadControllerProvider);
+  final uiState = ref.watch(downloadPageUIProvider);
+
+  var tasks = List<DownloadTask>.from(downloadState.pausedTasks);
+
+  if (uiState.searchQuery.isNotEmpty) {
+    tasks = controller
+        .searchTasks(uiState.searchQuery)
+        .where((t) => t.isPaused)
+        .toList();
+  }
+
+  if (uiState.filterType != 'all') {
+    tasks = _filterByFileType(tasks, uiState.filterType);
+  }
+
   return controller.sortTasks(
     tasks,
     uiState.sortBy,
@@ -205,11 +262,41 @@ final filteredCompletedTasksProvider = Provider<List<DownloadTask>>((ref) {
   if (uiState.searchQuery.isNotEmpty) {
     tasks = controller
         .searchTasks(uiState.searchQuery)
-        .where((t) => t.isComplete || t.isError)
+        .where((t) => t.isComplete)
         .toList();
   }
 
+  if (uiState.filterType != 'all') {
+    tasks = _filterByFileType(tasks, uiState.filterType);
+  }
+
   // Apply sort
+  return controller.sortTasks(
+    tasks,
+    uiState.sortBy,
+    ascending: uiState.sortAscending,
+  );
+});
+
+/// 过滤后的失败任务 Provider
+final filteredFailedTasksProvider = Provider<List<DownloadTask>>((ref) {
+  final controller = ref.watch(downloadControllerProvider.notifier);
+  final downloadState = ref.watch(downloadControllerProvider);
+  final uiState = ref.watch(downloadPageUIProvider);
+
+  var tasks = List<DownloadTask>.from(downloadState.failedTasks);
+
+  if (uiState.searchQuery.isNotEmpty) {
+    tasks = controller
+        .searchTasks(uiState.searchQuery)
+        .where((t) => t.isError)
+        .toList();
+  }
+
+  if (uiState.filterType != 'all') {
+    tasks = _filterByFileType(tasks, uiState.filterType);
+  }
+
   return controller.sortTasks(
     tasks,
     uiState.sortBy,
@@ -226,12 +313,18 @@ final filteredAllTasksProvider = Provider<List<DownloadTask>>((ref) {
   var tasks = [
     ...downloadState.activeTasks,
     ...downloadState.waitingTasks,
+    ...downloadState.pausedTasks,
     ...downloadState.completedTasks,
+    ...downloadState.failedTasks,
   ];
 
   // Apply search filter
   if (uiState.searchQuery.isNotEmpty) {
     tasks = controller.searchTasks(uiState.searchQuery);
+  }
+
+  if (uiState.filterType != 'all') {
+    tasks = _filterByFileType(tasks, uiState.filterType);
   }
 
   // Apply sort
@@ -242,6 +335,23 @@ final filteredAllTasksProvider = Provider<List<DownloadTask>>((ref) {
   );
 });
 
+List<DownloadTask> _filterByFileType(List<DownloadTask> tasks, String filterType) {
+  switch (filterType) {
+    case 'video':
+      return tasks.where((t) => t.isVideo).toList();
+    case 'audio':
+      return tasks.where((t) => t.isAudio).toList();
+    case 'archive':
+      return tasks.where((t) => t.isArchive).toList();
+    case 'installer':
+      return tasks.where((t) => t.isInstaller).toList();
+    case 'document':
+      return tasks.where((t) => t.isDocument).toList();
+    default:
+      return tasks;
+  }
+}
+
 /// 获取任务详情 Provider (family pattern)
 final downloadTaskProvider =
     Provider.family<DownloadTask?, String>((ref, gid) {
@@ -249,7 +359,9 @@ final downloadTaskProvider =
   final allTasks = [
     ...downloadState.activeTasks,
     ...downloadState.waitingTasks,
+    ...downloadState.pausedTasks,
     ...downloadState.completedTasks,
+    ...downloadState.failedTasks,
   ];
 
   try {
@@ -265,9 +377,12 @@ final downloadStatisticsProvider = Provider<DownloadStatistics>((ref) {
 
   return DownloadStatistics(
     totalDownloading: downloadState.totalDownloading,
+    totalPaused: downloadState.totalPaused,
     totalCompleted: downloadState.totalCompleted,
     totalFailed: downloadState.totalFailed,
+    totalAll: downloadState.totalAll,
     totalSpeed: downloadState.totalDownloadSpeed,
+    totalUploadSpeed: downloadState.totalUploadSpeed,
     totalRemaining: downloadState.totalRemainingBytes,
     eta: downloadState.estimatedRemainingSeconds,
   );
@@ -276,17 +391,23 @@ final downloadStatisticsProvider = Provider<DownloadStatistics>((ref) {
 /// 下载统计数据类
 class DownloadStatistics {
   final int totalDownloading;
+  final int totalPaused;
   final int totalCompleted;
   final int totalFailed;
+  final int totalAll;
   final int totalSpeed;
+  final int totalUploadSpeed;
   final int totalRemaining;
   final int eta;
 
   const DownloadStatistics({
     required this.totalDownloading,
+    required this.totalPaused,
     required this.totalCompleted,
     required this.totalFailed,
+    required this.totalAll,
     required this.totalSpeed,
+    this.totalUploadSpeed = 0,
     required this.totalRemaining,
     required this.eta,
   });

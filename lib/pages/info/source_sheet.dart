@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/providers/riverpod_compat.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kazumi/router_constants.dart';
@@ -17,17 +18,19 @@ import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/plugins/plugins_providers.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/parse_failure_helper.dart';
+import 'package:kazumi/modules/source_quality/source_quality_tracker.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:logger/logger.dart';
 
-  enum SourceSortOption {
+enum SourceSortOption {
   original,
+  highestQuality, // 清晰度/码率优先
+  fastestResponse, // 响应速度最快
   nameAsc,
   nameDesc,
-  failureAsc,  // 失败次数升序 (可靠的在前)
+  failureAsc, // 失败次数升序 (可靠的在前)
   failureDesc, // 失败次数降序 (不可靠的在前)
-  fastestResponse, // 响应速度最快
 }
 
 /// Provider for source sort option
@@ -57,9 +60,10 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     super.initState();
     videoPageController = ref.read(videoProvider.notifier);
     collectController = ref.read(collectionsProvider.notifier);
-    _originalKeyword = widget.infoController.bangumiItem.nameCn.isEmpty
+    final rawName = widget.infoController.bangumiItem.nameCn.isEmpty
         ? widget.infoController.bangumiItem.name
         : widget.infoController.bangumiItem.nameCn;
+    _originalKeyword = Plugin.cleanKeywordForSearch(rawName);
   }
 
   bool get _hasAlias => widget.infoController.bangumiItem.alias.isNotEmpty;
@@ -163,6 +167,8 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     switch (option) {
       case SourceSortOption.original:
         return options.original;
+      case SourceSortOption.highestQuality:
+        return '清晰度/码率最高';
       case SourceSortOption.nameAsc:
         return options.nameAsc;
       case SourceSortOption.nameDesc:
@@ -186,6 +192,38 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     switch (sortOption) {
       case SourceSortOption.original:
         return entries;
+      case SourceSortOption.highestQuality:
+        return [...entries]..sort((a, b) {
+          final recordA = SourceQualityTracker.getQualityRecord(
+                bangumiId: bangumiItem.id,
+                pluginName: a.plugin.name,
+                src: a.item.src,
+              ) ??
+              SourceQualityTracker.getBestQualityForPlugin(
+                bangumiId: bangumiItem.id,
+                pluginName: a.plugin.name,
+              );
+          final recordB = SourceQualityTracker.getQualityRecord(
+                bangumiId: bangumiItem.id,
+                pluginName: b.plugin.name,
+                src: b.item.src,
+              ) ??
+              SourceQualityTracker.getBestQualityForPlugin(
+                bangumiId: bangumiItem.id,
+                pluginName: b.plugin.name,
+              );
+          final scoreA = recordA?.qualityScore ?? -1.0;
+          final scoreB = recordB?.qualityScore ?? -1.0;
+          if (scoreA != scoreB) {
+            return scoreB.compareTo(scoreA); // 降序：高清晰度在前
+          }
+          // 同画质或均无记录时，按响应时间排序
+          final timeA = responseTimes[a.plugin.name] ?? 0;
+          final timeB = responseTimes[b.plugin.name] ?? 0;
+          if (timeA == 0) return 1;
+          if (timeB == 0) return -1;
+          return timeA.compareTo(timeB);
+        });
       case SourceSortOption.nameAsc:
         return [...entries]..sort((a, b) => a.item.name.compareTo(b.item.name));
       case SourceSortOption.nameDesc:
@@ -424,13 +462,22 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     final sheetTexts = context.t.library.info.sourceSheet;
     final theme = Theme.of(context);
 
-    // 获取该源的解析失败次数
+    // 获取该源的解析失败次数与历史清晰度/码率指标
     final bangumiItem = widget.infoController.bangumiItem;
     final failureCount = ParseFailureHelper.getFailureCount(
       bangumiId: bangumiItem.id,
       pluginName: plugin.name,
       src: item.src,
     );
+    final qualityRecord = SourceQualityTracker.getQualityRecord(
+          bangumiId: bangumiItem.id,
+          pluginName: plugin.name,
+          src: item.src,
+        ) ??
+        SourceQualityTracker.getBestQualityForPlugin(
+          bangumiId: bangumiItem.id,
+          pluginName: plugin.name,
+        );
 
     return Card(
       elevation: 0,
@@ -453,6 +500,44 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                       style: theme.textTheme.labelLarge,
                     ),
                   ),
+                  if (qualityRecord != null &&
+                      qualityRecord.badgeLabel.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Tooltip(
+                      message: '历史已播清晰度: ${qualityRecord.detailedLabel}',
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.35),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.high_quality_rounded,
+                              size: 14,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              qualityRecord.badgeLabel,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   if (responseTime > 0) ...[
                     const SizedBox(width: 8),
                     Container(
@@ -540,6 +625,31 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                   color: theme.colorScheme.outline,
                 ),
               ),
+              if (qualityRecord != null &&
+                  qualityRecord.detailedLabel.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.video_camera_back_outlined,
+                      size: 13,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        '已播画质: ${qualityRecord.detailedLabel}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -662,9 +772,8 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
   }
 
   List<Widget> _buildStatusCards({
-    required List<Plugin> pending,
-    required List<Plugin> errors,
-    required List<Plugin> empty,
+    required List<Plugin> plugins,
+    required SourceSearchState searchState,
     required SourceSearchController controller,
   }) {
     final sheetTexts = context.t.library.info.sourceSheet;
@@ -672,70 +781,126 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     final actions = sheetTexts.actions;
     final widgets = <Widget>[];
 
-    for (final plugin in pending) {
-      widgets.add(
-        Card(
-          elevation: 0,
-          child: ListTile(
-            leading: const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 3),
-            ),
-            title: Text(
-              statusTexts.searching.replaceFirst('{plugin}', plugin.name),
-            ),
-            dense: true,
-          ),
-        ),
-      );
-    }
+    // Maintain a stable, fixed order by plugin list to prevent cards from jumping or swapping positions on retry
+    for (final plugin in plugins) {
+      final status =
+          searchState.statuses[plugin.name] ?? PluginSearchStatus.pending;
+      final results = searchState.results[plugin.name] ?? const <SearchItem>[];
 
-    for (final plugin in errors) {
+      // If plugin already succeeded with items, its items are presented in the results grid below
+      if (status == PluginSearchStatus.success && results.isNotEmpty) {
+        continue;
+      }
+
+      Widget leading;
+      Widget? trailing;
+      String titleText;
+      String? errorReason;
+
+      switch (status) {
+        case PluginSearchStatus.pending:
+          leading = const SizedBox(
+            height: 18,
+            width: 18,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          );
+          titleText =
+              statusTexts.searching.replaceFirst('{plugin}', plugin.name);
+          trailing = null;
+          break;
+
+        case PluginSearchStatus.error:
+          leading = Icon(
+            Icons.error_outline_rounded,
+            color: Theme.of(context).colorScheme.error,
+          );
+          titleText =
+              statusTexts.failed.replaceFirst('{plugin}', plugin.name);
+          errorReason = searchState.errors[plugin.name];
+          trailing = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: context.t.app.retry,
+                icon: const Icon(Icons.refresh_rounded, size: 20),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => controller.queryPlugin(plugin.name),
+              ),
+              IconButton(
+                tooltip: actions.removeSource,
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => _confirmRemoveSource(plugin),
+              ),
+            ],
+          );
+          break;
+
+        case PluginSearchStatus.success:
+          leading = Icon(
+            Icons.info_outline_rounded,
+            color: Theme.of(context).colorScheme.outline,
+          );
+          titleText =
+              statusTexts.empty.replaceFirst('{plugin}', plugin.name);
+          trailing = IconButton(
+            tooltip: context.t.app.retry,
+            icon: const Icon(Icons.refresh_rounded, size: 20),
+            visualDensity: VisualDensity.compact,
+            onPressed: () => controller.queryPlugin(plugin.name),
+          );
+          break;
+      }
+
       widgets.add(
         Card(
+          key: ValueKey('plugin_status_card_${plugin.name}'),
           elevation: 0,
-          child: ListTile(
-            leading: Icon(
-              Icons.error_outline_rounded,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            title: Text(
-              statusTexts.failed.replaceFirst('{plugin}', plugin.name),
-            ),
-            dense: true,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                TextButton(
-                  onPressed: () => controller.queryPlugin(plugin.name),
-                  child: Text(context.t.app.retry),
+                leading,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        titleText,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                        softWrap: true,
+                      ),
+                      if (errorReason != null && errorReason.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          errorReason,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: () => _confirmRemoveSource(plugin),
-                  child: Text(actions.removeSource),
-                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing,
+                ],
               ],
             ),
-          ),
-        ),
-      );
-    }
-
-    for (final plugin in empty) {
-      widgets.add(
-        Card(
-          elevation: 0,
-          child: ListTile(
-            leading: Icon(
-              Icons.info_outline_rounded,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            title: Text(
-              statusTexts.empty.replaceFirst('{plugin}', plugin.name),
-            ),
-            dense: true,
           ),
         ),
       );
@@ -805,9 +970,8 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
       searchState.responseTimes,
     );
     final statusCards = _buildStatusCards(
-      pending: aggregation.pending,
-      errors: aggregation.errors,
-      empty: aggregation.empty,
+      plugins: plugins,
+      searchState: searchState,
       controller: searchController,
     );
 
@@ -895,7 +1059,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
           ),
         ),
       );
-    } else if (aggregation.pending.isNotEmpty) {
+    } else if (statusCards.isEmpty && aggregation.pending.isNotEmpty) {
       slivers.add(
         SliverFillRemaining(
           hasScrollBody: false,
@@ -913,7 +1077,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
           ),
         ),
       );
-    } else {
+    } else if (statusCards.isEmpty) {
       slivers.add(
         SliverFillRemaining(
           hasScrollBody: false,
@@ -926,10 +1090,27 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
           ),
         ),
       );
+    } else if (aggregation.pending.isEmpty) {
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                sheetTexts.empty.noResults,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: SysAppBar(
         title: Text(
           sheetTexts.title.replaceFirst('{name}', bangumiName),
         ),

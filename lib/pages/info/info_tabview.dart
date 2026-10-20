@@ -40,7 +40,7 @@ class InfoTabView extends ConsumerStatefulWidget {
 
 class _InfoTabViewState extends ConsumerState<InfoTabView>
     with SingleTickerProviderStateMixin {
-  final maxWidth = 950.0;
+  double get maxWidth => double.infinity;
   // ✅ fullIntro, fullTag, showAllEpisodes moved to Riverpod StateProvider
 
   Widget get infoBody {

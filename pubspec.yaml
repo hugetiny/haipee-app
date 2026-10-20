@@ -9,19 +9,50 @@ environment:
   flutter: 3.47.6
 
 dependencies:
+  # ==========================================
+  # 🧠 状态管理与核心底座 (State Management & Core Infrastructure)
+  # ==========================================
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
   slang_flutter: ^3.31.0
-
-  cupertino_icons: ^1.0.6
   flutter_riverpod: ^3.4.3
-  go_router: ^14.8.1
   riverpod: ^3.4.3
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
+  cupertino_icons: ^1.0.6
+  go_router: ^14.8.1
 
+  # ==========================================
+  # 🎨 现代化交互、动效与自适应弹窗 (Modern UI, Motion & Responsive Dialogs)
+  # ==========================================
+  # gskinner 声明式流体动效库 (流畅入场、淡入、微动效)
+  flutter_animate: ^4.5.2
+  # Wolt / DoorDash 商业级自适应多步弹窗与吸顶底部抽屉 (自适应移动端与桌面端)
+  wolt_modal_sheet: ^0.11.0
+  # 系统原生上下文右键菜单 (macOS 原生 NSMenu / Win32 原生右键菜单 / 移动端长按)
+  super_context_menu: ^0.9.1
+  # 骨架屏加载动效 (现代化加载占位)
+  skeletonizer: ^2.1.2
+  # 高性能商业级数据图表组件
+  fl_chart: ^1.1.1
+  # 评分与星级展示条
+  flutter_rating_bar: ^4.0.1
+  # 列表滚动视口可见性与精准索引监听
+  scrollview_observer: ^1.22.0
+  # 多手势图片双指缩放与平移查看器
+  photo_view: ^0.15.0
+  # Material 3 现代化动态几何多边形与圆角曲率
+  material_new_shapes: ^1.0.0
+  # Material You 动态颜色提取算法与调色板生成
+  material_color_utilities: any
+  # 原生系统取色与 Monet 动态主题引擎
+  dynamic_color: ^1.9.0
+
+  # ==========================================
+  # 🌐 网络、下载与流媒体 (Network, Torrent, Streaming & Storage)
+  # ==========================================
   dio: ^5.11.0
   cookie_jar: ^4.0.9
   dio_cookie_manager: ^3.1.1
@@ -29,18 +60,19 @@ dependencies:
   web_socket_channel: ^3.0.1
   ech_http: ^0.2.1
   http: ^1.6.0
-  image: ^4.8.0
-
+  libtorrent_flutter: ^2.0.0
+  dlna_dart: ^0.0.8
+  webdav_client: ^1.2.2
   path_provider: ^2.1.5
   hive_ce: ^2.16.0
   hive_ce_flutter: ^2.3.3
   cached_network_image: ^3.4.1
   flutter_cache_manager: ^3.4.1
   card_settings_ui: ^2.0.1
-
-  flutter_volume_controller: ^2.0.1
   audio_video_progress_bar: ^2.0.2
   audio_service: ^0.18.15
+  audio_session: ^0.2.2
+  flutter_volume_controller: ^2.0.1
   audio_service_mpris:
     git:
       url: https://github.com/Predidit/audio-service-mpris.git
@@ -49,56 +81,6 @@ dependencies:
     git:
       url: https://github.com/Predidit/audio_service_win.git
       ref: 8ad650c6eb487208b9861d44755c8e58db061c88
-  audio_session: ^0.2.2
-  dynamic_color: ^1.9.0
-  flutter_displaymode: ^0.6.0
-
-  url_launcher: ^6.3.0
-  device_info_plus: ^11.3.0
-  window_manager: ^0.5.1
-  xpath_selector: ^3.0.2
-  xpath_selector_html_parser: ^3.0.1
-  json_path: ^0.9.0
-  webview_flutter: ^4.13.0
-  canvas_danmaku: ^0.3.3
-  webdav_client: ^1.2.2
-  tray_manager: ^0.5.0
-  dlna_dart: ^0.0.8
-  screen_pixel: ^0.0.3
-  logger: ^2.6.2
-  flutter_rating_bar: ^4.0.1
-  scrollview_observer: ^1.22.0
-  saver_gallery: ^4.1.0
-  html: any
-  xml: ^6.5.0
-  material_color_utilities: any
-  material_new_shapes: ^1.0.0
-  path: any
-  photo_view: ^0.15.0
-  win32: ^5.15.0
-  ffi: ^2.1.0
-  image_picker: ^1.2.1
-  screen_brightness_android: ^2.1.3
-  screen_brightness_ios: ^2.1.2
-  screen_brightness_ohos: ^2.1.2
-  screen_brightness_platform_interface: ^2.1.0
-  synchronized: any
-  crypto: ^3.0.6
-  flutter_svg: ^2.2.3
-  antlr4: ^4.13.2
-  fl_chart: ^1.1.1
-  flutter_foreground_task: ^9.0.0
-  skeletonizer: ^2.1.2
-  macos_secure_bookmarks: ^0.2.1
-
-  webview_windows:
-    git:
-      url: https://github.com/Predidit/flutter-webview-windows.git
-      ref: 2b3306d2bfb9f22cbb328743b60e547cf50f0c3c
-  desktop_webview_window:
-    git:
-      url: https://github.com/Predidit/linux_webview_window.git
-      ref: b429f8ba6b8a99cd0f7eb5fe8d1621f325635c3d
   media_kit:
     git:
       url: https://github.com/Predidit/media-kit.git
@@ -114,16 +96,77 @@ dependencies:
       url: https://github.com/Predidit/media-kit.git
       ref: 13a209a0af921d117be7f1aac6f9066949e39db9
       path: ./libs/universal/media_kit_libs_video
+
+  # ==========================================
+  # 🖥️ 桌面平台专属生态 (Desktop Only - macOS / Windows / Linux)
+  # ==========================================
+  # 系统级全局快捷键捕获 (老板键显隐控制 / 全局播放暂停)
+  hotkey_manager: ^0.2.3
+  # 窗口管理控制器 (自定义标题栏、尺寸控制、最小化/最大化/关闭及隐藏)
+  window_manager: ^0.5.1
+  # 系统托盘与状态栏管理 (macOS 顶部状态栏 / Windows 任务栏通知区图标与菜单)
+  tray_manager: ^0.5.0
+  # Windows 原生 Win32 API 底层互操作
+  win32: ^5.15.0
+  # macOS App Sandbox 安全作用域书签管理 (持久化跨会话访问用户授权目录)
+  macos_secure_bookmarks: ^0.2.1
+  # Windows 专属内嵌 WebView (基于 Edge WebView2 运行时)
+  webview_windows:
+    git:
+      url: https://github.com/Predidit/flutter-webview-windows.git
+      ref: 2b3306d2bfb9f22cbb328743b60e547cf50f0c3c
+  # Linux 专属独立 WebView 窗口
+  desktop_webview_window:
+    git:
+      url: https://github.com/Predidit/linux_webview_window.git
+      ref: b429f8ba6b8a99cd0f7eb5fe8d1621f325635c3d
+
+  # ==========================================
+  # 📱 移动端与平台基础 (Mobile, Webview & Platform Utilities)
+  # ==========================================
+  url_launcher: ^6.3.0
+  device_info_plus: ^11.3.0
+  screen_pixel: ^0.0.3
+  saver_gallery: ^4.1.0
+  image_picker: ^1.2.1
+  file_picker: ^10.3.7
+  open_filex: ^4.7.0
+  screen_brightness_android: ^2.1.3
+  screen_brightness_ios: ^2.1.2
+  screen_brightness_ohos: ^2.1.2
+  screen_brightness_platform_interface: ^2.1.0
+  flutter_foreground_task: ^9.0.0
+  flutter_displaymode: ^0.6.0
+  flutter_local_notifications: ^22.3.1
+  webview_flutter: ^4.13.0
   flutter_inappwebview_platform_interface: ^1.3.0+1
   flutter_inappwebview_ios: ^1.1.2
   flutter_inappwebview_macos: ^1.1.2
   flutter_inappwebview_android: ^1.1.3
-  upgrader: ^12.3.0
-  open_filex: ^4.7.0
-  archive: ^4.0.0
-  file_picker: ^10.3.7
+
+  # ==========================================
+  # 🛠️ 解析、诊断与通用工具 (Parsers, Diagnostics & Utilities)
+  # ==========================================
+  logger: ^2.6.2
   talker_flutter: ^5.1.16
   talker_dio_logger: ^5.1.20
+  sentry_flutter: ^8.12.0
+  xpath_selector: ^3.0.2
+  xpath_selector_html_parser: ^3.0.1
+  json_path: ^0.9.0
+  canvas_danmaku: ^0.3.3
+  html: any
+  xml: ^6.5.0
+  path: any
+  ffi: ^2.1.0
+  synchronized: any
+  crypto: ^3.0.6
+  flutter_svg: ^2.2.3
+  antlr4: ^4.13.2
+  archive: ^4.0.0
+  yaml: ^3.1.4
+  image: ^4.8.0
+  upgrader: ^12.3.0
 
 dependency_overrides:
   media_kit_libs_linux:
@@ -153,6 +196,8 @@ dependency_overrides:
       path: ./libs/macos/media_kit_libs_macos_video
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   path_provider_platform_interface: ^2.1.2
   plugin_platform_interface: ^2.1.8
   flutter_test:
@@ -166,6 +211,7 @@ dev_dependencies:
   flutter_native_splash: ^2.4.3
   msix: ^3.16.12
   slang: ^3.31.0
+  vm_service: ^15.3.0
 
 flutter_launcher_icons:
   android: true
@@ -208,6 +254,7 @@ flutter:
   assets:
     - assets/images/
     - assets/plugins/
+    - assets/indexers/
     - assets/shaders/
     - assets/images/logo/
     - assets/statements/

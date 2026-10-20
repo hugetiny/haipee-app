@@ -14,14 +14,20 @@ class BangumiCardV extends StatelessWidget {
     required this.bangumiItem,
     this.canTap = true,
     this.enableHero = true,
+    this.source,
   });
 
   final BangumiItem bangumiItem;
   final bool canTap;
   final bool enableHero;
+  final String? source;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveSource = (source != null && source!.isNotEmpty)
+        ? source!
+        : (bangumiItem.source.isNotEmpty ? bangumiItem.source : 'Bangumi');
+
     return Card(
       elevation: 0,
       clipBehavior: Clip.antiAlias,
@@ -45,27 +51,149 @@ class BangumiCardV extends StatelessWidget {
                 child: LayoutBuilder(builder: (context, boxConstraints) {
                   final double maxWidth = boxConstraints.maxWidth;
                   final double maxHeight = boxConstraints.maxHeight;
-                  return enableHero
-                      ? Hero(
-                          transitionOnUserGestures: true,
-                          tag: bangumiItem.id,
-                          child: NetworkImgLayer(
-                            src: bangumiItem.images['large'] ?? '',
-                            width: maxWidth,
-                            height: maxHeight,
-                          ),
-                        )
-                      : NetworkImgLayer(
-                          src: bangumiItem.images['large'] ?? '',
-                          width: maxWidth,
-                          height: maxHeight,
-                        );
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      enableHero
+                          ? Hero(
+                              transitionOnUserGestures: true,
+                              tag: bangumiItem.id,
+                              child: NetworkImgLayer(
+                                src: bangumiItem.images['large'] ?? '',
+                                width: maxWidth,
+                                height: maxHeight,
+                              ),
+                            )
+                          : NetworkImgLayer(
+                              src: bangumiItem.images['large'] ?? '',
+                              width: maxWidth,
+                              height: maxHeight,
+                            ),
+                      // 源站徽章 (Top-Left)
+                      Positioned(
+                        top: 6,
+                        left: 6,
+                        child: _SourceBadge(source: effectiveSource),
+                      ),
+                      // 评分徽章 (Bottom-Right)
+                      if (bangumiItem.ratingScore > 0)
+                        Positioned(
+                          bottom: 6,
+                          right: 6,
+                          child: _RatingBadge(score: bangumiItem.ratingScore),
+                        ),
+                    ],
+                  );
                 }),
               ),
               BangumiContent(bangumiItem: bangumiItem)
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SourceBadge extends StatelessWidget {
+  final String source;
+
+  const _SourceBadge({required this.source});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isBangumi = source.toLowerCase().contains('bangumi');
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black45,
+            blurRadius: 3,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(
+              color: isBangumi
+                  ? const Color(0xFFF09199)
+                  : theme.colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 3.5),
+          Flexible(
+            child: Text(
+              source,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+                height: 1.1,
+              ),
+              textScaler:
+                  MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingBadge extends StatelessWidget {
+  final double score;
+
+  const _RatingBadge({required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.70),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.star_rounded,
+            size: 11,
+            color: Color(0xFFFFB300),
+          ),
+          const SizedBox(width: 2),
+          Text(
+            score.toStringAsFixed(1),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 9.5,
+              fontWeight: FontWeight.bold,
+              height: 1.1,
+            ),
+            textScaler:
+                MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.2),
+          ),
+        ],
       ),
     );
   }
@@ -79,6 +207,8 @@ class BangumiContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ts = MediaQuery.textScalerOf(context);
+    final title =
+        bangumiItem.nameCn.isNotEmpty ? bangumiItem.nameCn : bangumiItem.name;
 
     return Expanded(
       child: Padding(
@@ -87,7 +217,7 @@ class BangumiContent extends StatelessWidget {
         // 单列
         // padding: const EdgeInsets.fromLTRB(14, 10, 4, 8),
         child: Text(
-          bangumiItem.nameCn,
+          title,
           textAlign: TextAlign.start,
           style: const TextStyle(
             fontWeight: FontWeight.w500,

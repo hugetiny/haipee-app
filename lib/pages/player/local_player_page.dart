@@ -1,26 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:canvas_danmaku/models/danmaku_content_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:kazumi/modules/playback/subtitle_matcher.dart';
 import 'package:kazumi/pages/player/player_controller.dart';
 import 'package:kazumi/pages/player/player_item.dart';
 import 'package:kazumi/pages/player/player_providers.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:logger/logger.dart';
+import 'package:path/path.dart' as p;
 
-class LocalVideoPlayArgs {
-  final String filePath;
-  final String title;
-  final String? bangumiId;
-  final int? episode;
-
-  const LocalVideoPlayArgs({
-    required this.filePath,
-    required this.title,
-    this.bangumiId,
-    this.episode,
-  });
-}
+import 'package:kazumi/pages/player/local_video_play_args.dart';
+export 'package:kazumi/pages/player/local_video_play_args.dart';
 
 class LocalPlayerPage extends ConsumerStatefulWidget {
   final LocalVideoPlayArgs args;
@@ -42,31 +36,103 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
 
     // 启动本地视频播放
     Future.microtask(() async {
-      final file = File(widget.args.filePath);
-      if (!file.existsSync()) {
-        KazumiLogger().log(
-          Level.warning,
-          '[LocalPlayerPage] 本地视频文件不存在: ${widget.args.filePath}',
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('文件不存在: ${widget.args.filePath}')),
+      final isHttp = widget.args.filePath.startsWith('http://') ||
+          widget.args.filePath.startsWith('https://');
+      if (!isHttp) {
+        final file = File(widget.args.filePath);
+        if (!file.existsSync()) {
+          KazumiLogger().log(
+            Level.warning,
+            '[LocalPlayerPage] 本地视频文件不存在: ${widget.args.filePath}',
           );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('文件不存在: ${widget.args.filePath}')),
+            );
+          }
+          return;
         }
-        return;
       }
 
-      await _playerController.init(widget.args.filePath);
+      _playerController.activeLocalVideoArgs = widget.args;
+      _playerController.currentTitle = widget.args.title;
+      _playerController.isAudioMode = widget.args.effectiveIsAudio;
 
-      // 自动加载弹幕
-      final ep = widget.args.episode ?? 1;
-      final bgmId = int.tryParse(widget.args.bangumiId ?? '');
-      if (bgmId != null && bgmId > 0) {
-        await _playerController.getDanDanmakuByBgmBangumiID(bgmId, ep);
-      } else if (widget.args.title.isNotEmpty) {
-        await _playerController.getDanDanmakuByTitle(widget.args.title, ep);
+      await _playerController.init(
+        widget.args.filePath,
+        audioUrl: widget.args.audioUrl,
+        httpHeaders: widget.args.httpHeaders,
+        biliCid: widget.args.biliCid,
+      );
+
+      if (widget.args.danmakus != null && widget.args.danmakus!.isNotEmpty) {
+        _playerController.addDanmakus(widget.args.danmakus!);
+      }
+
+      // 智能同名伴飞字幕自动探测与匹配 (SubtitleMatcher)
+      if (!isHttp) {
+        unawaited(_autoMatchCompanionSubtitle(widget.args.filePath));
+      }
+
+      // 自动加载弹幕与 AniSkip 片头片尾 (原生 B站 弹幕由 biliCid 精确直载，严禁跨站模糊猜测)
+      if (widget.args.biliCid == null || widget.args.biliCid! <= 0) {
+        final ep = widget.args.episode ?? 1;
+        final bgmId = int.tryParse(widget.args.bangumiId ?? '');
+        if (bgmId != null && bgmId > 0) {
+          await _playerController.getDanDanmakuByBgmBangumiID(bgmId, ep);
+          unawaited(_playerController.fetchAniSkipIntervals(bgmId, ep));
+        } else if (widget.args.title.isNotEmpty && !isHttp) {
+          await _playerController.getDanDanmakuByTitle(widget.args.title, ep);
+        }
       }
     });
+  }
+
+  Future<void> _autoMatchCompanionSubtitle(String videoPath) async {
+    try {
+      final videoFile = File(videoPath);
+      final parentDir = videoFile.parent;
+      if (!parentDir.existsSync()) return;
+
+      final videoBaseName = p.basenameWithoutExtension(videoPath).toLowerCase();
+      final candidates = <SubtitleMatch>[];
+
+      for (final entity in parentDir.listSync()) {
+        if (entity is File) {
+          final fmt = SubtitleMatcher.extractFormat(entity.path);
+          if (fmt != null && const ['ass', 'srt', 'ssa', 'vtt', 'sub'].contains(fmt)) {
+            final subBase = p.basenameWithoutExtension(entity.path).toLowerCase();
+            double confidence = 0.5;
+            if (subBase == videoBaseName) {
+              confidence = 1.0;
+            } else if (subBase.contains(videoBaseName) || videoBaseName.contains(subBase)) {
+              confidence = 0.85;
+            }
+            String lang = 'zh-CN';
+            if (subBase.contains('en') || subBase.contains('eng')) lang = 'en-US';
+            if (subBase.contains('ja') || subBase.contains('jpn')) lang = 'ja-JP';
+            if (subBase.contains('tc') || subBase.contains('cht')) lang = 'zh-TW';
+            candidates.add(SubtitleMatch(
+              url: entity.path,
+              language: lang,
+              confidence: confidence,
+              format: fmt,
+            ));
+          }
+        }
+      }
+
+      final bestMatch = SubtitleMatcher().selectBestMatch(candidates);
+      if (bestMatch != null && await SubtitleMatcher.validateSubtitleFile(bestMatch.url)) {
+        await _playerController.loadExternalSubtitle(bestMatch.url);
+        KazumiLogger().log(
+          Level.info,
+          '[LocalPlayerPage] SubtitleMatcher matched companion subtitle: ${bestMatch.url}',
+        );
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.debug, '[LocalPlayerPage] Auto match subtitle error: $e');
+    }
   }
 
   @override
@@ -106,16 +172,17 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
 
             // 顶部返回按钮与标题
             Positioned(
-              top: MediaQuery.paddingOf(context).top + 8,
-              left: 16,
+              top: MediaQuery.paddingOf(context).top + (Platform.isMacOS ? 4 : 8),
+              left: 0,
               right: 16,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                  const SizedBox(width: 8),
+              child: DesktopWindowControlsSafeArea(
+                child: Row(
+                  children: [
+                    AppBackButton(
+                      color: Colors.white,
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                    const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       widget.args.title,
@@ -137,6 +204,7 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
                 ],
               ),
             ),
+          ),
           ],
         ),
       ),

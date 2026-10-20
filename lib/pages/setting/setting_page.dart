@@ -1,4 +1,5 @@
-import 'package:card_settings_ui/card_settings_ui.dart';
+import 'dart:io';
+import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,12 +9,14 @@ import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/pages/menu/navigation_provider.dart';
 import 'package:kazumi/pages/layout/app_bar_config.dart';
 import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/pages/webdav_editor/providers.dart';
-import 'package:kazumi/services/network/bangumi_acceleration.dart';
+import 'package:kazumi/pages/setting/setting_controller.dart';
+import 'package:kazumi/pages/setting/widgets/git_proxy_dialog.dart';
+import 'package:kazumi/request/api.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/utils/aria2_feature_manager.dart';
+import 'package:path_provider/path_provider.dart';
 
 class SettingPage extends ConsumerStatefulWidget {
   const SettingPage({super.key});
@@ -25,6 +28,7 @@ class SettingPage extends ConsumerStatefulWidget {
 class _SettingPageState extends ConsumerState<SettingPage> {
   late final Box setting;
   late int exitBehavior;
+  late final MyController myController;
 
   @override
   void initState() {
@@ -32,6 +36,95 @@ class _SettingPageState extends ConsumerState<SettingPage> {
     setting = GStorage.setting;
     exitBehavior =
         setting.get(SettingBoxKey.exitBehavior, defaultValue: 2) as int;
+    myController = ref.read(myControllerProvider.notifier);
+    _getCacheSize();
+  }
+
+  Future<Directory> _getCacheDir() async {
+    Directory tempDir = await getTemporaryDirectory();
+    return Directory('${tempDir.path}/libCachedImageData');
+  }
+
+  Future<void> _getCacheSize() async {
+    try {
+      Directory cacheDir = await _getCacheDir();
+
+      if (await cacheDir.exists()) {
+        int totalSizeBytes = await _getTotalSizeOfFilesInDir(cacheDir);
+        double totalSizeMB = (totalSizeBytes / (1024 * 1024));
+
+        if (mounted) {
+          ref.read(cacheSizeMBProvider.notifier).state = totalSizeMB;
+        }
+      } else {
+        if (mounted) {
+          ref.read(cacheSizeMBProvider.notifier).state = 0.0;
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ref.read(cacheSizeMBProvider.notifier).state = 0.0;
+      }
+    }
+  }
+
+  Future<int> _getTotalSizeOfFilesInDir(final Directory directory) async {
+    final List<FileSystemEntity> children = directory.listSync();
+    int total = 0;
+
+    try {
+      for (final FileSystemEntity child in children) {
+        if (child is File) {
+          final int length = await child.length();
+          total += length;
+        } else if (child is Directory) {
+          total += await _getTotalSizeOfFilesInDir(child);
+        }
+      }
+    } catch (_) {}
+    return total;
+  }
+
+  Future<void> _clearCache() async {
+    try {
+      final Directory libCacheDir = await _getCacheDir();
+      if (await libCacheDir.exists()) {
+        await libCacheDir.delete(recursive: true);
+      }
+    } catch (_) {}
+    _getCacheSize();
+  }
+
+  void _showCacheDialog() {
+    KazumiDialog.show(
+      builder: (context) {
+        final cacheDialog = context.t.dialogs.cache;
+        return AlertDialog(
+          title: Text(cacheDialog.title),
+          content: Text(cacheDialog.message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                KazumiDialog.dismiss();
+              },
+              child: Text(
+                context.t.app.cancel,
+                style: TextStyle(color: Theme.of(context).colorScheme.outline),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  await _clearCache();
+                } catch (_) {}
+                KazumiDialog.dismiss();
+              },
+              child: Text(context.t.app.confirm),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void onBackPressed(BuildContext context) {
@@ -40,7 +133,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
       return;
     }
     ref.read(navigationProvider.notifier).updateSelectedIndex(0);
-    context.go(Routes.popular);
+    context.go(Routes.media);
   }
 
   void _updateAppBarConfig() {
@@ -56,10 +149,8 @@ class _SettingPageState extends ConsumerState<SettingPage> {
   @override
   Widget build(BuildContext context) {
     final t = context.t; // Get translations
-    final webDavState = ref.watch(webDavSettingsProvider);
-    final webDavController = ref.read(webDavSettingsProvider.notifier);
+    final gitProxyState = ref.watch(gitProxyProvider);
     final metadataState = ref.watch(metadataSettingsProvider);
-    final metadataController = ref.read(metadataSettingsProvider.notifier);
     final localeState = ref.watch(localeSettingsProvider);
 
     // 初始化时设置 AppBar
@@ -115,6 +206,10 @@ class _SettingPageState extends ConsumerState<SettingPage> {
           .label;
     }
 
+    final cacheSizeMB = ref.watch(cacheSizeMBProvider);
+    final autoUpdate = ref.watch(autoUpdateProvider);
+    final debugLogsEnabled = ref.watch(debugLogsEnabledProvider);
+
     final isDesktop = Utils.isDesktop();
     return PopScope(
       canPop: false,
@@ -123,190 +218,181 @@ class _SettingPageState extends ConsumerState<SettingPage> {
         onBackPressed(context);
       },
       child: SettingsList(
-          maxWidth: 1000,
-          sections: [
-            SettingsSection(
-              title: Text(t.settings.general.title),
-              tiles: [
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsTheme);
-                  },
-                  title: Text(t.settings.general.appearance),
-                  description: Text(t.settings.general.appearanceDesc),
-                ),
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsLanguage);
-                  },
-                  title: Text(t.settings.general.language),
-                  description: Text(t.settings.general.languageDesc),
-                  value: Text(appLocaleLabel),
-                ),
-                if (isDesktop)
-                  SettingsTile.navigation(
-                    onPressed: (_) {
-                      context.push(Routes.settingsExitBehavior);
-                    },
-                    title: Text(t.settings.general.exitBehavior),
-                    value: Text(exitBehaviorTitles[exitBehavior]),
-                  ),
-              ],
-            ),
-            SettingsSection(
-              title: Text(t.settings.source.title),
-              tiles: [
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsPlugin);
-                  },
-                  title: Text(t.settings.source.ruleManagement),
-                  description: Text(t.settings.source.ruleManagementDesc),
-                ),
-                SettingsTile.switchTile(
-                  enabled: webDavState.initialized,
-                  onToggle: (value) async {
-                    if (!webDavState.initialized) {
-                      return;
-                    }
-                    await webDavController.toggleGitProxy(
-                      value ?? !webDavState.enableGitProxy,
-                    );
-                  },
-                  title: Text(t.settings.source.githubProxy),
-                  description: Text(t.settings.source.githubProxyDesc),
-                  initialValue: webDavState.enableGitProxy,
-                ),
-              ],
-            ),
-            SettingsSection(
-              title: Text(t.settings.metadata.title),
-              tiles: [
-                SettingsTile.switchTile(
-                  onToggle: (value) async {
-                    await metadataController.setBangumiEnabled(
-                      value ?? !metadataState.bangumiEnabled,
-                    );
-                  },
-                  title: Text(t.settings.metadata.enableBangumi),
-                  description: Text(t.settings.metadata.enableBangumiDesc),
-                  initialValue: metadataState.bangumiEnabled,
-                ),
-                if (metadataState.bangumiEnabled)
-                  SettingsTile.navigation(
-                    title: const Text('Bangumi 网络加速'),
-                    description: const Text('选择连接 Bangumi 服务的加速方式 (直连 / ECH / 镜像)'),
-                    value: Text(metadataState.bangumiAcceleration.label),
-                    onPressed: (context) {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (bottomSheetContext) {
-                          return SafeArea(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                for (final mode in BangumiAcceleration.values)
-                                  ListTile(
-                                    title: Text(mode.label),
-                                    subtitle: Text(switch (mode) {
-                                      BangumiAcceleration.direct => '直接连接官方服务器',
-                                      BangumiAcceleration.ech => 'ECH (Encrypted Client Hello) 域名防嗅探加速',
-                                      BangumiAcceleration.mirror => '通过反向代理镜像站连接',
-                                    }),
-                                    trailing: metadataState.bangumiAcceleration == mode
-                                        ? const Icon(Icons.check)
-                                        : null,
-                                    onTap: () {
-                                      metadataController.setBangumiAcceleration(mode);
-                                      Navigator.pop(bottomSheetContext);
-                                    },
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                SettingsTile.switchTile(
-                  onToggle: (value) async {
-                    await metadataController.setTmdbEnabled(
-                      value ?? !metadataState.tmdbEnabled,
-                    );
-                  },
-                  title: Text(t.settings.metadata.enableTmdb),
-                  description: Text(t.settings.metadata.enableTmdbDesc),
-                  initialValue: metadataState.tmdbEnabled,
-                ),
-              ],
-            ),
-            SettingsSection(
-              title: Text(t.settings.player.title),
-              tiles: [
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsPlayer);
-                  },
-                  title: Text(t.settings.player.playerSettings),
-                  description: Text(t.settings.player.playerSettingsDesc),
-                ),
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsDanmaku);
-                  },
-                  title: Text(t.settings.player.danmakuSettings),
-                  description: Text(t.settings.player.danmakuSettingsDesc),
-                ),
-              ],
-            ),
-            SettingsSection(
-              title: Text(t.settings.webdav.title),
-              tiles: [
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsWebdav);
-                  },
-                  title: Text(t.settings.webdav.title),
-                  description: Text(t.settings.webdav.desc),
-                ),
-              ],
-            ),
-            SettingsSection(
-              title: Text(t.settings.other.title),
-              tiles: [
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsWebdav);
-                  },
-                  leading: const Icon(Icons.cloud),
-                  title: const Text('WebDAV'),
-                  description: const Text('设置同步参数'),
-                ),
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsAbout);
-                  },
-                  title: Text(t.settings.other.about),
-                ),
-              ],
-            ),
-            // Conditionally show download section if aria2 is available
-            if (Aria2FeatureManager().isAvailable)
-              SettingsSection(
-                title: const Text('下载'),
-                tiles: [
-                  SettingsTile.navigation(
-                    onPressed: (_) {
-                      context.push('/settings/download');
-                    },
-                    leading: const Icon(Icons.download),
-                    title: const Text('下载设置'),
-                    description: const Text('配置 aria2 下载参数'),
-                  ),
-                ],
+        sections: [
+          SettingsSection(
+            title: Text(t.settings.general.title),
+            tiles: [
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsTheme);
+                },
+                title: Text(t.settings.general.appearance),
+                description: Text(t.settings.general.appearanceDesc),
               ),
-          ],
-        ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsLanguage);
+                },
+                title: Text(t.settings.general.language),
+                description: Text(t.settings.general.languageDesc),
+                value: Text(appLocaleLabel),
+              ),
+              if (isDesktop)
+                SettingsTile.navigation(
+                  onPressed: (_) {
+                    context.push(Routes.settingsExitBehavior);
+                  },
+                  title: Text(t.settings.general.exitBehavior),
+                  value: Text(exitBehaviorTitles[exitBehavior]),
+                ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  _showCacheDialog();
+                },
+                title: Text(t.settings.about.sections.cache.clearAction),
+                value: cacheSizeMB == -1
+                    ? Text(t.settings.about.sections.cache.sizePending)
+                    : Text(
+                        t.settings.about.sections.cache.sizeLabel.replaceFirst(
+                          '{size}',
+                          cacheSizeMB.toStringAsFixed(2),
+                        ),
+                      ),
+              ),
+              SettingsTile.switchTile(
+                onToggle: (value) async {
+                  final newValue = value ?? !autoUpdate;
+                  await setting.put(SettingBoxKey.autoUpdate, newValue);
+                  ref.read(autoUpdateProvider.notifier).state = newValue;
+                },
+                title: Text(t.settings.about.sections.updates.autoUpdate),
+                initialValue: autoUpdate,
+              ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  myController.checkUpdate();
+                },
+                title: Text(t.settings.about.sections.updates.check),
+                value: Text(
+                  t.settings.about.sections.updates.currentVersion
+                      .replaceFirst('{version}', Api.version),
+                ),
+              ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsAboutLicense);
+                },
+                title: Text(t.settings.about.sections.licenses.title),
+                description: Text(t.settings.about.sections.licenses.description),
+              ),
+              SettingsTile.switchTile(
+                onToggle: (value) async {
+                  final newValue = value ?? !debugLogsEnabled;
+                  ref.read(debugLogsEnabledProvider.notifier).setEnabled(newValue);
+                },
+                title: const Text('运行日志与诊断'),
+                initialValue: debugLogsEnabled,
+              ),
+              if (debugLogsEnabled)
+                SettingsTile.navigation(
+                  onPressed: (_) {
+                    context.push(Routes.settingsAboutLogs);
+                  },
+                  title: const Text('查看运行日志与诊断面板'),
+                ),
+            ],
+          ),
+          SettingsSection(
+            title: const Text('视听与媒体'),
+            tiles: [
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsPlayer);
+                },
+                title: Text(t.settings.player.playerSettings),
+                description: Text(t.settings.player.playerSettingsDesc),
+              ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsDanmaku);
+                },
+                title: Text(t.settings.player.danmakuSettings),
+                description: Text(t.settings.player.danmakuSettingsDesc),
+              ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsMetadata);
+                },
+                title: const Text('媒体元数据与刮削'),
+                description: Text(
+                  'Bangumi (${metadataState.bangumiEnabled ? "已启用 · ${metadataState.bangumiAcceleration.label}" : "已禁用"}) · TMDB (${metadataState.tmdbEnabled ? "已启用" : "已禁用"})',
+                ),
+              ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsPlugin);
+                },
+                title: const Text('Kazumi 视频规则'),
+                description: Text(t.settings.source.ruleManagementDesc),
+              ),
+            ],
+          ),
+          SettingsSection(
+            title: const Text('资源检索与下载'),
+            tiles: [
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsIndexers);
+                },
+                title: const Text('Cardigann 规则'),
+                description: const Text('Cardigann 规则中心与索引源管理'),
+              ),
+              if (Aria2FeatureManager().isAvailable)
+                SettingsTile.navigation(
+                  onPressed: (_) {
+                    context.push(Routes.settingsDownload);
+                  },
+                  leading: const Icon(Icons.download),
+                  title: const Text('下载设置'),
+                  description: const Text('配置 aria2 下载参数'),
+                ),
+            ],
+          ),
+          SettingsSection(
+            title: const Text('数据与云同步'),
+            tiles: [
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  GitProxyDialog.show(context);
+                },
+                leading: const Icon(Icons.alt_route_rounded),
+                title: Text(t.settings.source.githubProxy),
+                description: const Text('底层加速 Kazumi 视频规则、Cardigann 规则与更新'),
+                value: Text(
+                  gitProxyState.enabled
+                      ? '已启用 · ${gitProxyState.proxyUrl.replaceAll("https://", "").replaceAll("/", "")}'
+                      : '未启用',
+                  style: TextStyle(
+                    color: gitProxyState.enabled
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.outline,
+                    fontWeight:
+                        gitProxyState.enabled ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsWebdav);
+                },
+                leading: const Icon(Icons.cloud_sync_rounded),
+                title: Text(t.settings.webdav.title),
+                description: Text(t.settings.webdav.desc),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

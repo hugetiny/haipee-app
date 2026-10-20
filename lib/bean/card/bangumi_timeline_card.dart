@@ -75,6 +75,60 @@ class BangumiTimelineCard extends StatelessWidget {
       width: width,
       height: height,
     );
+    img = Stack(
+      children: [
+        Positioned.fill(child: img),
+        Positioned(
+          top: 4,
+          left: 4,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 0.5,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black45,
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 4.5,
+                  height: 4.5,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF09199),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  'Bangumi',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.2,
+                    height: 1.1,
+                  ),
+                  textScaler: MediaQuery.textScalerOf(context)
+                      .clamp(maxScaleFactor: 1.1),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
     if (enableHero) {
       img = Hero(
         tag: bangumiItem.id,
@@ -90,7 +144,11 @@ class BangumiTimelineCard extends StatelessWidget {
         child: img,
       );
     }
-    return img;
+    return SizedBox(
+      width: width,
+      height: height,
+      child: img,
+    );
   }
 
   Widget buildInfo(BuildContext context, TextScaler textScaler, bool isDesktop,
@@ -119,36 +177,40 @@ class BangumiTimelineCard extends StatelessWidget {
         SizedBox(height: spacing),
         // 简介
         if (bangumiItem.summary.isNotEmpty || bangumiItem.info.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer
-                    .withAlpha((255 * 0.10).round()),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Text(
-                  bangumiItem.info.isNotEmpty
-                      ? bangumiItem.info
-                      : bangumiItem.summary,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w500,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer
+                      .withAlpha((255 * 0.10).round()),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    bangumiItem.info.isNotEmpty
+                        ? bangumiItem.info
+                        : bangumiItem.summary,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textScaler: textScaler.clamp(maxScaleFactor: 1.0),
                   ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  textScaler: textScaler.clamp(maxScaleFactor: 1.0),
                 ),
               ),
             ),
-          ),
-        const Spacer(),
+          )
+        else
+        const SizedBox(height: 4),
         Row(
           children: [
             if (bangumiItem.ratingScore > 0)
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.star_rounded,
                       size: 15, color: colorScheme.primary),
@@ -159,8 +221,9 @@ class BangumiTimelineCard extends StatelessWidget {
               ),
             if (bangumiItem.rank > 0)
               Padding(
-                padding: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.only(left: 6),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.leaderboard,
                         size: 15, color: colorScheme.tertiary),
@@ -171,7 +234,14 @@ class BangumiTimelineCard extends StatelessWidget {
               ),
             const Spacer(),
             if (bangumiItem.votes > 0)
-              Text('评分人数: ${bangumiItem.votes}', style: subStyle),
+              Flexible(
+                child: Text(
+                  '${bangumiItem.votes}人',
+                  style: subStyle,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
           ],
         ),
       ],
