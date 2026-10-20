@@ -303,7 +303,7 @@ class TorrServerStreamEngine {
       isStreamable: TorrentStreamService.isPlayableFile(chosenFile.name),
     );
 
-    final allFileInfos = files.map((f) => FileInfo(
+    final allFileInfos = files.map<FileInfo>((f) => FileInfo(
       index: f.id,
       name: f.name,
       path: f.path,

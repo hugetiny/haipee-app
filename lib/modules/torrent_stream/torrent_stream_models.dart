@@ -10,20 +10,26 @@ enum StreamState {
 
 /// Information describing a single file entry within a torrent payload.
 class FileInfo {
-  final int id;
+  final int index;
   final String name;
   final int size;
   final String path;
+  final bool isStreamable;
+
+  int get id => index;
 
   const FileInfo({
-    required this.id,
+    int? index,
+    int? id,
     required this.name,
     required this.size,
     required this.path,
-  });
+    this.isStreamable = true,
+  }) : index = index ?? id ?? 0;
 
   @override
-  String toString() => 'FileInfo(id: $id, name: $name, size: $size, path: $path)';
+  String toString() =>
+      'FileInfo(index: $index, name: $name, size: $size, path: $path, isStreamable: $isStreamable)';
 }
 
 /// Metadata and real-time network discovery state for an active torrent.
