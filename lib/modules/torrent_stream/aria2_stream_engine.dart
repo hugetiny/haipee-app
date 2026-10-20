@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'package:libtorrent_flutter/libtorrent_flutter.dart' show FileInfo;
+import 'package:kazumi/modules/torrent_stream/torrent_stream_models.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
 import 'package:kazumi/modules/torrent_stream/aria2_stream_server.dart';

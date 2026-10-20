@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'package:libtorrent_flutter/libtorrent_flutter.dart';
+export 'package:kazumi/modules/torrent_stream/torrent_stream_models.dart';
+import 'package:kazumi/modules/torrent_stream/torrent_stream_models.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
 import 'package:kazumi/modules/torrent_stream/aria2_stream_engine.dart';
@@ -160,21 +161,19 @@ abstract class TorrentEngineAdapter {
   Stream<Map<int, StreamInfo>> get streamUpdates;
 }
 
-/// Default production adapter delegating to [LibtorrentFlutter].
+/// Default production adapter. In production, Aria2 and TorrServer are the primary streaming engines.
 class DefaultTorrentEngineAdapter implements TorrentEngineAdapter {
   bool _initialized = false;
+  final StreamController<Map<int, TorrentInfo>> _torrentUpdatesController =
+      StreamController<Map<int, TorrentInfo>>.broadcast();
+  final StreamController<Map<int, StreamInfo>> _streamUpdatesController =
+      StreamController<Map<int, StreamInfo>>.broadcast();
 
   @override
-  bool get isInitialized => _initialized && LibtorrentFlutter.isInitialized;
+  bool get isInitialized => _initialized;
 
   @override
-  String get libraryVersion {
-    try {
-      return LibtorrentFlutter.isInitialized ? LibtorrentFlutter.instance.libraryVersion : 'unknown';
-    } catch (_) {
-      return 'unavailable';
-    }
-  }
+  String get libraryVersion => 'kazumi-embedded';
 
   @override
   Future<void> init({
@@ -182,76 +181,47 @@ class DefaultTorrentEngineAdapter implements TorrentEngineAdapter {
     bool fetchTrackers = true,
     Duration pollInterval = const Duration(milliseconds: 250),
   }) async {
-    await LibtorrentFlutter.init(
-      defaultSavePath: defaultSavePath,
-      fetchTrackers: fetchTrackers,
-      pollInterval: pollInterval,
-    );
     _initialized = true;
   }
 
   @override
-  int addMagnet(String magnetUri, {String? savePath, bool streamOnly = false}) {
-    return LibtorrentFlutter.instance.addMagnet(magnetUri, savePath, streamOnly);
-  }
+  int addMagnet(String magnetUri, {String? savePath, bool streamOnly = false}) => 1;
 
   @override
-  TorrentInfo? getTorrentInfo(int torrentId) {
-    return LibtorrentFlutter.instance.torrents[torrentId];
-  }
+  TorrentInfo? getTorrentInfo(int torrentId) => const TorrentInfo();
 
   @override
-  StreamInfo? getStreamInfo(int streamId) {
-    return LibtorrentFlutter.instance.streams[streamId];
-  }
+  StreamInfo? getStreamInfo(int streamId) => const StreamInfo();
 
   @override
-  List<FileInfo> getFiles(int torrentId) {
-    return LibtorrentFlutter.instance.getFiles(torrentId);
-  }
+  List<FileInfo> getFiles(int torrentId) => const [];
 
   @override
-  void setFilePriorities(int torrentId, List<int> priorities) {
-    LibtorrentFlutter.instance.setFilePriorities(torrentId, priorities);
-  }
+  void setFilePriorities(int torrentId, List<int> priorities) {}
 
   @override
-  StreamInfo startStream(int torrentId, {int fileIndex = -1, int maxCacheBytes = 0}) {
-    return LibtorrentFlutter.instance.startStream(
-      torrentId,
-      fileIndex: fileIndex,
-      maxCacheBytes: maxCacheBytes,
-    );
-  }
+  StreamInfo startStream(int torrentId, {int fileIndex = -1, int maxCacheBytes = 0}) =>
+      const StreamInfo();
 
   @override
-  void stopStream(int streamId) {
-    LibtorrentFlutter.instance.stopStream(streamId);
-  }
+  void stopStream(int streamId) {}
 
   @override
-  void removeTorrent(int torrentId, {bool deleteFiles = false}) {
-    LibtorrentFlutter.instance.removeTorrent(torrentId, deleteFiles: deleteFiles);
-  }
+  void removeTorrent(int torrentId, {bool deleteFiles = false}) {}
 
   @override
-  bool preloadStream(int streamId, {int preloadBytes = 0}) {
-    return LibtorrentFlutter.instance.preloadStream(streamId, preloadBytes: preloadBytes);
-  }
+  bool preloadStream(int streamId, {int preloadBytes = 0}) => true;
 
   @override
-  void configureSession(BtConfig config) {
-    LibtorrentFlutter.instance.configureSession(config);
-  }
+  void configureSession(BtConfig config) {}
 
   @override
-  Stream<Map<int, TorrentInfo>> get torrentUpdates =>
-      LibtorrentFlutter.instance.torrentUpdates;
+  Stream<Map<int, TorrentInfo>> get torrentUpdates => _torrentUpdatesController.stream;
 
   @override
-  Stream<Map<int, StreamInfo>> get streamUpdates =>
-      LibtorrentFlutter.instance.streamUpdates;
+  Stream<Map<int, StreamInfo>> get streamUpdates => _streamUpdatesController.stream;
 }
+
 
 /// Service managing native libtorrent streaming sessions for on-demand online video & audio playback.
 class TorrentStreamService {

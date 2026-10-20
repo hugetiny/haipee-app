@@ -60,7 +60,6 @@ dependencies:
   web_socket_channel: ^3.0.1
   ech_http: ^0.2.1
   http: ^1.6.0
-  libtorrent_flutter: ^2.0.0
   dlna_dart: ^0.0.8
   webdav_client: ^1.2.2
   path_provider: ^2.1.5

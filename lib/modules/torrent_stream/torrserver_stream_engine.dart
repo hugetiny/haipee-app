@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:libtorrent_flutter/libtorrent_flutter.dart';
+import 'package:kazumi/modules/torrent_stream/torrent_stream_models.dart';
 import 'package:kazumi/modules/torrent_stream/torrserver_client.dart';
 import 'package:kazumi/modules/torrent_stream/torrserver_process_manager.dart';
 import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
