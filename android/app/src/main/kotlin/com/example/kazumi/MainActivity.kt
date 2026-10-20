@@ -7,15 +7,16 @@ import android.os.Bundle
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import io.flutter.embedding.android.FlutterActivity
+import com.ryanheise.audioservice.AudioServiceActivity
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileNotFoundException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainActivity: FlutterActivity() {
+class MainActivity: AudioServiceActivity() {
     private val CHANNEL = "com.predidit.kazumi/intent"
     private val ARIA2_CHANNEL = "com.predidit.kazumi/aria2"
     private var aria2Process: Process? = null
@@ -150,12 +151,17 @@ class MainActivity: FlutterActivity() {
             
             // Only extract if not already present or if asset is newer
             if (!outputFile.exists()) {
-                assets.open(binaryName).use { input ->
-                    FileOutputStream(outputFile).use { output ->
-                        input.copyTo(output)
+                try {
+                    assets.open(binaryName).use { input ->
+                        FileOutputStream(outputFile).use { output ->
+                            input.copyTo(output)
+                        }
                     }
+                    outputFile.setExecutable(true, false)
+                } catch (fnf: FileNotFoundException) {
+                    android.util.Log.i("Aria2", "aria2c asset is not bundled in APK assets; skipped local extraction.")
+                    return null
                 }
-                outputFile.setExecutable(true, false)
             }
             
             return outputFile
