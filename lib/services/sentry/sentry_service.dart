@@ -112,7 +112,7 @@ class SentryService {
   /// Attach Talker observer to mirror application logs and exceptions into Sentry
   static void _attachTalkerBridge() {
     try {
-      AppLog.talker.addObserver(SentryTalkerObserver());
+      AppLog.addObserver(SentryTalkerObserver());
     } catch (e) {
       debugPrint('[SentryService] Failed to attach Talker bridge: $e');
     }

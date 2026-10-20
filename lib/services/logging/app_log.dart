@@ -141,6 +141,43 @@ class AppLogObserver extends TalkerObserver {
   }
 }
 
+/// Composite observer allowing multiple [TalkerObserver] instances (e.g. file sink + Sentry).
+class CompositeTalkerObserver extends TalkerObserver {
+  CompositeTalkerObserver(this.primary);
+  final TalkerObserver primary;
+  final List<TalkerObserver> _additionalObservers = [];
+
+  void addObserver(TalkerObserver observer) {
+    if (!_additionalObservers.contains(observer)) {
+      _additionalObservers.add(observer);
+    }
+  }
+
+  @override
+  void onError(TalkerError err) {
+    primary.onError(err);
+    for (final obs in _additionalObservers) {
+      obs.onError(err);
+    }
+  }
+
+  @override
+  void onException(TalkerException err) {
+    primary.onException(err);
+    for (final obs in _additionalObservers) {
+      obs.onException(err);
+    }
+  }
+
+  @override
+  void onLog(TalkerData log) {
+    primary.onLog(log);
+    for (final obs in _additionalObservers) {
+      obs.onLog(log);
+    }
+  }
+}
+
 /// Centralized, high-ergonomics application logging facade for Kazumi.
 class AppLog {
   AppLog._();
@@ -196,13 +233,20 @@ class AppLog {
     maxBackups: 2, // kazumi.1.log, kazumi.2.log
   );
 
+  static final CompositeTalkerObserver compositeObserver =
+      CompositeTalkerObserver(AppLogObserver(fileSink));
+
   static final Talker talker = TalkerFlutter.init(
-    observer: AppLogObserver(fileSink),
+    observer: compositeObserver,
     settings: TalkerSettings(
       maxHistoryItems: 1000,
       useConsoleLogs: !kReleaseMode,
     ),
   );
+
+  static void addObserver(TalkerObserver observer) {
+    compositeObserver.addObserver(observer);
+  }
 
   static final ValueNotifier<bool> logScreenOpenNotifier =
       ValueNotifier<bool>(false);

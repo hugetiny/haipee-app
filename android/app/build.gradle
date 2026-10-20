@@ -27,15 +27,15 @@ android {
     compileSdk flutter.compileSdkVersion
     // Pin ndk version to 21.3.6528147 to fix android build warning
     // The build warning throws by gradle plugin, when the ndk is older than gradle plugin required version
-    ndkVersion "27.2.12479018"
+    ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     sourceSets {
