@@ -9,6 +9,8 @@ import 'package:kazumi/modules/plugin/plugin_http_module.dart';
 import 'package:kazumi/plugins/plugins_providers.dart';
 import 'package:kazumi/plugins/plugins_controller.dart';
 import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
+import 'package:flutter/services.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -177,7 +179,7 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
             .split('.')[0]
         : '-';
 
-    return Card(
+    final cardWidget = Card(
       elevation: 0,
       color: colorScheme.surfaceContainer,
       margin: EdgeInsets.zero,
@@ -281,6 +283,49 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
           ],
         ),
       ),
+    );
+
+    return AppContextMenu(
+      itemsBuilder: (context) => [
+        AppMenuAction(
+          title: isInstalled ? '已安装此规则' : (isInstall ? '安装此规则' : '更新此规则'),
+          icon: isInstalled ? Icons.check_circle_outline : Icons.download_rounded,
+          disabled: isInstalled || isProcessing,
+          onSelected: () => _installMarketItem(item),
+        ),
+        if (item.effectiveBaseUrl.isNotEmpty) ...[
+          const AppMenuSeparator(),
+          AppMenuAction(
+            title: '在浏览器中打开源站官网',
+            icon: Icons.open_in_browser_rounded,
+            onSelected: () => _openBrowserUrl(item.effectiveBaseUrl),
+          ),
+          AppMenuAction(
+            title: '复制源站官网地址',
+            icon: Icons.link_rounded,
+            onSelected: () async {
+              await Clipboard.setData(ClipboardData(text: item.effectiveBaseUrl));
+              KazumiDialog.showToast(message: '已复制源站官网地址');
+            },
+          ),
+        ],
+        AppMenuAction(
+          title: '复制规则名称 (${item.name})',
+          icon: Icons.copy_rounded,
+          onSelected: () async {
+            await Clipboard.setData(ClipboardData(text: item.name));
+            KazumiDialog.showToast(message: '已复制规则名称');
+          },
+        ),
+        AppMenuAction(
+          title: '在浏览器中打开 GitHub 规则源码',
+          icon: Icons.code_rounded,
+          onSelected: () => _openBrowserUrl(
+            'https://github.com/Predidit/KazumiRules/blob/main/${item.name}.json',
+          ),
+        ),
+      ],
+      child: cardWidget,
     );
   }
 

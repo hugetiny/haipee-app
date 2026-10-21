@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
+import 'package:kazumi/bean/widget/bangumi_context_menu.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/bean/card/network_img_layer.dart';
 
 /// 时间线番剧卡片
-class BangumiTimelineCard extends StatelessWidget {
+class BangumiTimelineCard extends ConsumerWidget {
   const BangumiTimelineCard({
     super.key,
     required this.bangumiItem,
@@ -23,7 +26,7 @@ class BangumiTimelineCard extends StatelessWidget {
   final double? cardWidth;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = Utils.isDesktop();
     final isTablet = Utils.isTablet();
     final theme = Theme.of(context);
@@ -31,7 +34,7 @@ class BangumiTimelineCard extends StatelessWidget {
     final double imageWidth = cardHeight * 0.7;
     final double borderRadius = 18;
 
-    return Card(
+    final cardWidget = Card(
       elevation: 1,
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
       shape: RoundedRectangleBorder(
@@ -64,6 +67,15 @@ class BangumiTimelineCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    return AppContextMenu(
+      itemsBuilder: (context) => BangumiContextMenuHelper.buildMenuItems(
+        context: context,
+        ref: ref,
+        bangumiItem: bangumiItem,
+      ),
+      child: cardWidget,
     );
   }
 

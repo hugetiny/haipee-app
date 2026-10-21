@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/bean/card/network_img_layer.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
+import 'package:kazumi/bean/widget/bangumi_context_menu.dart';
 import 'package:kazumi/bean/widget/collect_button.dart';
 import 'package:kazumi/modules/history/history_module.dart';
 import 'package:kazumi/pages/history/history_controller.dart';
@@ -93,7 +95,7 @@ class _BangumiHistoryCardVState extends ConsumerState<BangumiHistoryCardV> {
     final double borderRadius = 18;
     final double imageWidth = widget.cardHeight * 0.7;
 
-    return Card(
+    final cardWidget = Card(
       elevation: 1,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       shape: RoundedRectangleBorder(
@@ -244,6 +246,20 @@ class _BangumiHistoryCardVState extends ConsumerState<BangumiHistoryCardV> {
           ],
         ),
       ),
+    );
+
+    return AppContextMenu(
+      itemsBuilder: (context) => BangumiContextMenuHelper.buildMenuItems(
+        context: context,
+        ref: ref,
+        bangumiItem: widget.historyItem.bangumiItem,
+        explicitHistoryItem: widget.historyItem,
+        onDeleteHistory: () {
+          historyController.deleteHistory(widget.historyItem);
+          KazumiDialog.showToast(message: '已移出观看历史', context: context);
+        },
+      ),
+      child: cardWidget,
     );
   }
 }

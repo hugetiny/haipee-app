@@ -21,9 +21,21 @@ import 'package:path_provider/path_provider.dart';
 import 'package:screen_pixel/screen_pixel.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_inappwebview_platform_interface/flutter_inappwebview_platform_interface.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class Utils {
   static final Random random = Random();
+
+  /// 在系统默认外部浏览器中打开链接
+  static Future<bool> openUrl(String url) async {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return false;
+    try {
+      return await launchUrlString(trimmed, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      return false;
+    }
+  }
 
   static bool? _isDocumentStartScriptSupported;
 

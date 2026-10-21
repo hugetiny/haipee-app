@@ -1,11 +1,15 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
 import 'package:kazumi/bean/widget/error_widget.dart';
 import 'package:kazumi/bean/card/comments_card.dart';
 import 'package:kazumi/bean/card/character_card.dart';
 import 'package:kazumi/bean/card/staff_card.dart';
+import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
@@ -341,7 +345,11 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
         '${_formatEpisodeDate(episode.airDate)} · ${_formatEpisodeRuntime(episode.runtimeMinutes)}';
     final String synopsis = (episode.synopsis ?? '').trim();
 
-    return ListTile(
+    final String animeTitle = widget.bangumiItem.nameCn.isNotEmpty
+        ? widget.bangumiItem.nameCn
+        : widget.bangumiItem.name;
+
+    final tile = ListTile(
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         radius: 18,
@@ -363,6 +371,45 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
             ),
         ],
       ),
+    );
+
+    return AppContextMenu(
+      itemsBuilder: (context) => [
+        AppMenuAction(
+          title: '检索本集磁力/离线下载...',
+          icon: Icons.download_rounded,
+          onSelected: () {
+            TorrentSearchSheet.show(
+              context,
+              initialKeyword: '$animeTitle ${episode.number}',
+              bangumiId: widget.bangumiItem.id.toString(),
+            );
+          },
+        ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          title: '复制剧集标题',
+          icon: Icons.copy_rounded,
+          onSelected: () async {
+            await Clipboard.setData(ClipboardData(text: title));
+            if (context.mounted) {
+              KazumiDialog.showToast(message: '已复制剧集标题', context: context);
+            }
+          },
+        ),
+        if (synopsis.isNotEmpty)
+          AppMenuAction(
+            title: '复制本集简介',
+            icon: Icons.description_outlined,
+            onSelected: () async {
+              await Clipboard.setData(ClipboardData(text: synopsis));
+              if (context.mounted) {
+                KazumiDialog.showToast(message: '已复制本集简介', context: context);
+              }
+            },
+          ),
+      ],
+      child: tile,
     );
   }
 

@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
 import 'package:kazumi/request/core/git_proxy_interceptor.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
@@ -723,6 +724,83 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
             onPressed: () => _confirmDeleteCustom(plugin),
           ),
       ],
+      contextMenuBuilder: (context) => [
+        AppMenuAction(
+          title: plugin.isEnabled ? '禁用索引器' : '启用索引器',
+          icon: plugin.isEnabled ? Icons.toggle_on : Icons.toggle_off,
+          onSelected: () {
+            ref
+                .read(indexerPluginsProvider.notifier)
+                .togglePlugin(plugin.id, !plugin.isEnabled);
+          },
+        ),
+        AppMenuAction(
+          title: '查看/编辑 YAML 源码',
+          icon: Icons.code,
+          onSelected: () => IndexerEditorDialog.show(context, plugin),
+        ),
+        AppMenuAction(
+          title: '测试抓取 (Dry-Run)',
+          icon: Icons.play_arrow_outlined,
+          onSelected: () => _runDryRunTest(plugin),
+        ),
+        if (plugin.definition.settings.isNotEmpty || plugin.definition.isPrivate)
+          AppMenuAction(
+            title: '配置凭据/参数',
+            icon: Icons.vpn_key_outlined,
+            onSelected: () => IndexerSettingsDialog.show(context, plugin),
+          ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          title: '复制 YAML 规则源码',
+          icon: Icons.copy_rounded,
+          onSelected: () async {
+            await Clipboard.setData(ClipboardData(text: plugin.rawYaml));
+            KazumiDialog.showToast(message: '已复制 YAML 规则源码');
+          },
+        ),
+        if (plugin.definition.defaultLink.isNotEmpty) ...[
+          AppMenuAction(
+            title: '复制站点主页链接',
+            icon: Icons.link_rounded,
+            onSelected: () async {
+              await Clipboard.setData(
+                  ClipboardData(text: plugin.definition.defaultLink));
+              KazumiDialog.showToast(message: '已复制站点链接');
+            },
+          ),
+          AppMenuAction(
+            title: '在浏览器中打开站点官网',
+            icon: Icons.open_in_browser_rounded,
+            onSelected: () =>
+                _openBrowserUrl(plugin.definition.defaultLink),
+          ),
+        ],
+        AppMenuAction(
+          title: '查看 GitHub 规则定义',
+          icon: Icons.public,
+          onSelected: () => _openBrowserUrl(
+            'https://github.com/Prowlarr/Indexers/blob/master/definitions/v11/${plugin.id}.yml',
+          ),
+        ),
+        if (isOverridden) ...[
+          const AppMenuSeparator(),
+          AppMenuAction(
+            title: '恢复官方预置 YAML',
+            icon: Icons.restore_outlined,
+            onSelected: () => _confirmResetSingle(plugin),
+          ),
+        ],
+        if (plugin.isCustom) ...[
+          const AppMenuSeparator(),
+          AppMenuAction(
+            title: '删除自定义规则',
+            icon: Icons.delete_outline_rounded,
+            destructive: true,
+            onSelected: () => _confirmDeleteCustom(plugin),
+          ),
+        ],
+      ],
     );
   }
 
@@ -963,6 +1041,45 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
           icon: const Icon(Icons.public, size: 16),
           label: const Text('YAML 来源'),
           style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+        ),
+      ],
+      contextMenuBuilder: (context) => [
+        AppMenuAction(
+          title: isInstalled ? '已安装此索引器' : '安装/启用此规则',
+          icon: isInstalled ? Icons.check_circle_outline : Icons.download_rounded,
+          disabled: isInstalled || isInstalling,
+          onSelected: () => _installMarketEntry(entry),
+        ),
+        AppMenuAction(
+          title: '查看 GitHub 规则定义',
+          icon: Icons.public,
+          onSelected: () => _openBrowserUrl(
+            'https://github.com/Prowlarr/Indexers/blob/master/definitions/v11/${entry.id}.yml',
+          ),
+        ),
+        if (entry.links.isNotEmpty) ...[
+          const AppMenuSeparator(),
+          AppMenuAction(
+            title: '在浏览器中打开站点官网',
+            icon: Icons.open_in_browser_rounded,
+            onSelected: () => _openBrowserUrl(entry.links.first),
+          ),
+          AppMenuAction(
+            title: '复制站点主页链接',
+            icon: Icons.link_rounded,
+            onSelected: () async {
+              await Clipboard.setData(ClipboardData(text: entry.links.first));
+              KazumiDialog.showToast(message: '已复制站点链接');
+            },
+          ),
+        ],
+        AppMenuAction(
+          title: '复制索引器 ID (${entry.id})',
+          icon: Icons.copy_rounded,
+          onSelected: () async {
+            await Clipboard.setData(ClipboardData(text: entry.id));
+            KazumiDialog.showToast(message: '已复制索引器 ID');
+          },
         ),
       ],
     );

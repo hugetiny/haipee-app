@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/bean/card/network_img_layer.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
+import 'package:kazumi/bean/widget/bangumi_context_menu.dart';
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 
 // 视频卡片 - 垂直布局
-class BangumiCardV extends StatelessWidget {
+class BangumiCardV extends ConsumerWidget {
   const BangumiCardV({
     super.key,
     required this.bangumiItem,
@@ -23,12 +26,12 @@ class BangumiCardV extends StatelessWidget {
   final String? source;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final effectiveSource = (source != null && source!.isNotEmpty)
         ? source!
         : (bangumiItem.source.isNotEmpty ? bangumiItem.source : 'Bangumi');
 
-    return Card(
+    final cardWidget = Card(
       elevation: 0,
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
@@ -91,6 +94,15 @@ class BangumiCardV extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    return AppContextMenu(
+      itemsBuilder: (context) => BangumiContextMenuHelper.buildMenuItems(
+        context: context,
+        ref: ref,
+        bangumiItem: bangumiItem,
+      ),
+      child: cardWidget,
     );
   }
 }

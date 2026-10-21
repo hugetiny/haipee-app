@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_context_menu/super_context_menu.dart';
 
+import 'package:kazumi/utils/utils.dart';
+
 /// 统一的上下文菜单条目抽象
 sealed class AppMenuItem {
   const AppMenuItem();
@@ -15,6 +17,7 @@ class AppMenuAction extends AppMenuItem {
   final IconData? icon;
   final bool destructive;
   final bool disabled;
+  final String? shortcutHint;
 
   const AppMenuAction({
     required this.title,
@@ -22,6 +25,7 @@ class AppMenuAction extends AppMenuItem {
     this.icon,
     this.destructive = false,
     this.disabled = false,
+    this.shortcutHint,
   });
 }
 
@@ -52,13 +56,15 @@ class AppContextMenu extends StatelessWidget {
   final List<AppMenuItem> Function(BuildContext context) itemsBuilder;
   final bool enabled;
   final HitTestBehavior hitTestBehavior;
+  final bool enableLongPress;
 
   const AppContextMenu({
     super.key,
     required this.child,
     required this.itemsBuilder,
     this.enabled = true,
-    this.hitTestBehavior = HitTestBehavior.deferToChild,
+    this.hitTestBehavior = HitTestBehavior.opaque,
+    this.enableLongPress = true,
   });
 
   /// 单元测试或特殊无原生 Runner 环境下切换为自适应纯 Flutter 菜单，避免 MissingPluginException
@@ -85,15 +91,23 @@ class AppContextMenu extends StatelessWidget {
         onSecondaryTapUp: (details) {
           show(context, details.globalPosition, itemsBuilder(context));
         },
-        onLongPressStart: (details) {
-          show(context, details.globalPosition, itemsBuilder(context));
-        },
+        onLongPressStart: enableLongPress
+            ? (details) {
+                show(context, details.globalPosition, itemsBuilder(context));
+              }
+            : null,
         child: child,
       );
     }
 
     return ContextMenuWidget(
       hitTestBehavior: hitTestBehavior,
+      contextMenuIsAllowed: (location) {
+        if (!enableLongPress && !Utils.isDesktop()) {
+          return false;
+        }
+        return true;
+      },
       menuProvider: (MenuRequest request) {
         final items = itemsBuilder(context);
         if (items.isEmpty) return null;
@@ -150,10 +164,8 @@ class AppContextMenu extends StatelessWidget {
             enabled: !item.disabled,
             value: item.onSelected,
             child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 8,
               children: [
-                if (item.icon != null)
+                if (item.icon != null) ...[
                   Icon(
                     item.icon,
                     size: 18,
@@ -161,12 +173,28 @@ class AppContextMenu extends StatelessWidget {
                         ? Theme.of(context).colorScheme.error
                         : null,
                   ),
-                Text(
-                  item.title,
-                  style: item.destructive
-                      ? TextStyle(color: Theme.of(context).colorScheme.error)
-                      : null,
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    item.title,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: item.destructive
+                        ? TextStyle(color: Theme.of(context).colorScheme.error)
+                        : null,
+                  ),
                 ),
+                if (item.shortcutHint != null) ...[
+                  const SizedBox(width: 12),
+                  Text(
+                    item.shortcutHint!,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -177,16 +205,24 @@ class AppContextMenu extends StatelessWidget {
         popupItems.add(
           PopupMenuItem<VoidCallback>(
             value: () {
-              show(context, position, item.children);
+              if (context.mounted) {
+                show(context, position, item.children);
+              }
             },
             child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 8,
               children: [
-                if (item.icon != null)
+                if (item.icon != null) ...[
                   Icon(item.icon, size: 18),
-                Text(item.title),
-                const Spacer(),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    item.title,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 const Icon(Icons.arrow_right, size: 18),
               ],
             ),
@@ -211,3 +247,10 @@ class AppContextMenu extends StatelessWidget {
     selected?.call();
   }
 }
+
+/// 桌面级原生上下文菜单别名，满足不同模块语义化调用
+typedef DesktopContextMenu = AppContextMenu;
+
+/// 自适应跨平台上下文菜单别名
+typedef AdaptiveContextMenu = AppContextMenu;
+

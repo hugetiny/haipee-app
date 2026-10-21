@@ -8,6 +8,8 @@ import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/bean/card/network_img_layer.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
+import 'package:kazumi/bean/widget/bangumi_context_menu.dart';
 
 /// Provider for chart touched index
 final chartTouchedIndexProvider = StateProvider.autoDispose<int>((ref) => -1);
@@ -150,7 +152,7 @@ class _BangumiInfoCardVState extends ConsumerState<BangumiInfoCardV> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final cardWidget = SizedBox(
       height: 300,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,6 +346,15 @@ class _BangumiInfoCardVState extends ConsumerState<BangumiInfoCardV> {
           ),
         ],
       ),
+    );
+
+    return AppContextMenu(
+      itemsBuilder: (context) => BangumiContextMenuHelper.buildMenuItems(
+        context: context,
+        ref: ref,
+        bangumiItem: widget.bangumiItem,
+      ),
+      child: cardWidget,
     );
   }
 }

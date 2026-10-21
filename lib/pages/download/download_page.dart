@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
+import 'package:kazumi/bean/widget/download_context_menu.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/pages/player/local_player_page.dart';
 import 'package:flutter/material.dart';
@@ -1456,7 +1458,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     final typeColor = _getFileTypeColor(task);
     final typeTag = _getFileTypeTag(task);
 
-    return Card(
+    final cardWidget = Card(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       elevation: isSelected ? 3 : 0.8,
       shape: RoundedRectangleBorder(
@@ -1975,6 +1977,38 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
           ),
         ),
       ),
+    );
+
+    return AppContextMenu(
+      enableLongPress: false,
+      itemsBuilder: (context) => _buildTaskContextMenuItems(
+        context,
+        task,
+        controller,
+        isActive: isActive,
+      ),
+      child: cardWidget,
+    );
+  }
+
+  /// 桌面端与移动端统一右键/长按菜单构建器
+  List<AppMenuItem> _buildTaskContextMenuItems(
+    BuildContext context,
+    DownloadTask task,
+    DownloadController controller, {
+    required bool isActive,
+  }) {
+    return DownloadContextMenuHelper.buildMenuItems(
+      context: context,
+      ref: ref,
+      task: task,
+      controller: controller,
+      isActive: isActive,
+      onPlay: () => _playTask(context, task),
+      onStreamPlay: () => _streamPlayTask(context, task),
+      onToggleSelectionMode: _toggleSelectionMode,
+      onToggleSelection: _toggleSelection,
+      showDeleteConfirmDialog: _showDeleteConfirmDialog,
     );
   }
 

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:kazumi/bean/appbar/sys_app_bar.dart';
 import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/bean/widget/responsive/constrained_content.dart';
 import 'package:kazumi/bean/widget/rule/unified_rule_card.dart';
@@ -1422,6 +1423,86 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
               .toggleSelection(plugin.name);
         }
       },
+      contextMenuBuilder: (context) => [
+        AppMenuAction(
+          title: isEnabled ? '禁用规则' : '启用规则',
+          icon: isEnabled ? Icons.toggle_on : Icons.toggle_off,
+          onSelected: () {
+            pluginsController.togglePluginEnabled(plugin.name, !isEnabled);
+          },
+        ),
+        AppMenuAction(
+          title: '查看/编辑规则',
+          icon: Icons.edit_outlined,
+          onSelected: () => _openEditor(plugin),
+        ),
+        AppMenuAction(
+          title: '测试抓取 (Dry-Run)',
+          icon: Icons.play_arrow_outlined,
+          onSelected: () => _runDryRun(plugin),
+        ),
+        AppMenuAction(
+          title: '测速检测',
+          icon: Icons.speed_rounded,
+          onSelected: () => _retestSinglePlugin(plugin),
+        ),
+        AppMenuAction(
+          title: '在线更新',
+          icon: Icons.update_rounded,
+          onSelected: () => _handleUpdateSingle(plugin),
+        ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          title: '导出/复制 JSON 规则',
+          icon: Icons.data_object_rounded,
+          onSelected: () async {
+            await Clipboard.setData(ClipboardData(
+                text: const JsonEncoder.withIndent('  ')
+                    .convert(plugin.toJson())));
+            KazumiDialog.showToast(message: '已复制 JSON 规则定义到剪贴板');
+          },
+        ),
+        AppMenuAction(
+          title: '导出/复制 YAML 规则',
+          icon: Icons.code_rounded,
+          onSelected: () async {
+            await Clipboard.setData(ClipboardData(text: plugin.toYamlString()));
+            KazumiDialog.showToast(message: '已复制 YAML 规则到剪贴板');
+          },
+        ),
+        AppMenuAction(
+          title: '复制分享口令 (Base64)',
+          icon: Icons.share_outlined,
+          onSelected: () async {
+            final base64Str =
+                Utils.jsonToKazumiBase64(json.encode(plugin.toJson()));
+            await Clipboard.setData(ClipboardData(text: base64Str));
+            KazumiDialog.showToast(message: '已复制 Kazumi 规则口令到剪贴板');
+          },
+        ),
+        if (plugin.baseUrl.isNotEmpty) ...[
+          AppMenuAction(
+            title: '复制站点主页地址',
+            icon: Icons.link_rounded,
+            onSelected: () async {
+              await Clipboard.setData(ClipboardData(text: plugin.baseUrl));
+              KazumiDialog.showToast(message: '已复制站点主页地址');
+            },
+          ),
+          AppMenuAction(
+            title: '在浏览器中打开主页',
+            icon: Icons.open_in_browser_rounded,
+            onSelected: () => _openBrowserUrl(plugin.baseUrl),
+          ),
+        ],
+        const AppMenuSeparator(),
+        AppMenuAction(
+          title: '删除规则',
+          icon: Icons.delete_outline_rounded,
+          destructive: true,
+          onSelected: () => _confirmDelete(plugin),
+        ),
+      ],
     );
   }
 
@@ -1696,6 +1777,45 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           icon: const Icon(Icons.code_rounded, size: 16),
           label: const Text('规则源码'),
           style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+        ),
+      ],
+      contextMenuBuilder: (context) => [
+        AppMenuAction(
+          title: isInstalled ? '重新安装/更新' : '安装此规则',
+          icon: isInstalled ? Icons.update_rounded : Icons.download_rounded,
+          disabled: isProcessing,
+          onSelected: () => _installMarketItem(item),
+        ),
+        if (effectiveUrl.isNotEmpty) ...[
+          const AppMenuSeparator(),
+          AppMenuAction(
+            title: '在浏览器中打开源站官网',
+            icon: Icons.open_in_browser_rounded,
+            onSelected: () => _openBrowserUrl(effectiveUrl),
+          ),
+          AppMenuAction(
+            title: '复制源站官网地址',
+            icon: Icons.link_rounded,
+            onSelected: () async {
+              await Clipboard.setData(ClipboardData(text: effectiveUrl));
+              KazumiDialog.showToast(message: '已复制源站官网地址');
+            },
+          ),
+        ],
+        AppMenuAction(
+          title: '复制规则名称 (${item.name})',
+          icon: Icons.copy_rounded,
+          onSelected: () async {
+            await Clipboard.setData(ClipboardData(text: item.name));
+            KazumiDialog.showToast(message: '已复制规则名称');
+          },
+        ),
+        AppMenuAction(
+          title: '在浏览器中打开 GitHub 规则源码',
+          icon: Icons.code_rounded,
+          onSelected: () => _openBrowserUrl(
+            'https://github.com/Predidit/KazumiRules/blob/main/${item.name}.json',
+          ),
         ),
       ],
     );

@@ -14,6 +14,9 @@ import 'package:kazumi/modules/search/search_history_provider.dart';
 import 'package:kazumi/pages/player/local_video_play_args.dart';
 import 'package:kazumi/pages/video/providers.dart';
 import 'package:kazumi/plugins/plugins_providers.dart';
+import 'package:flutter/services.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
+import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/utils.dart';
@@ -876,7 +879,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    return Card(
+    final cardWidget = Card(
       clipBehavior: Clip.antiAlias,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -1090,6 +1093,73 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
           ],
         ),
       ),
+    );
+
+    final pageUrl = item.bvid.startsWith('douyin_')
+        ? 'https://www.douyin.com/video/${item.bvid.replaceFirst('douyin_', '')}'
+        : (item.bvid.startsWith('web_')
+            ? item.description
+            : 'https://www.bilibili.com/video/${item.bvid}');
+
+    return AppContextMenu(
+      itemsBuilder: (context) => [
+        AppMenuAction(
+          title: '播放视频',
+          icon: Icons.play_arrow_rounded,
+          onSelected: () => _handleVideoTap(item),
+        ),
+        AppMenuAction(
+          title: '检索相关资源/下载...',
+          icon: Icons.download_rounded,
+          onSelected: () {
+            TorrentSearchSheet.show(
+              context,
+              initialKeyword: item.title,
+            );
+          },
+        ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          title: '复制视频标题',
+          icon: Icons.copy_rounded,
+          onSelected: () async {
+            await Clipboard.setData(ClipboardData(text: item.title));
+            if (context.mounted) {
+              KazumiDialog.showToast(message: '已复制视频标题', context: context);
+            }
+          },
+        ),
+        if (item.author.isNotEmpty)
+          AppMenuAction(
+            title: '复制来源/作者 (${item.author})',
+            icon: Icons.person_outline_rounded,
+            onSelected: () async {
+              await Clipboard.setData(ClipboardData(text: item.author));
+              if (context.mounted) {
+                KazumiDialog.showToast(message: '已复制作者信息', context: context);
+              }
+            },
+          ),
+        if (pageUrl.isNotEmpty) ...[
+          AppMenuAction(
+            title: '复制视频链接',
+            icon: Icons.link_rounded,
+            onSelected: () async {
+              await Clipboard.setData(ClipboardData(text: pageUrl));
+              if (context.mounted) {
+                KazumiDialog.showToast(message: '已复制视频链接', context: context);
+              }
+            },
+          ),
+          if (pageUrl.startsWith('http'))
+            AppMenuAction(
+              title: '在浏览器中打开原网页',
+              icon: Icons.open_in_browser_rounded,
+              onSelected: () => Utils.openUrl(pageUrl),
+            ),
+        ],
+      ],
+      child: cardWidget,
     );
   }
 

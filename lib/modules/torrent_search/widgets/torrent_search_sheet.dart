@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
+import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
 import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
+import 'package:kazumi/modules/torrent_search/widgets/selective_download_dialog.dart';
+import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
 import 'package:kazumi/pages/download/providers.dart';
 import 'package:kazumi/router_constants.dart';
+import 'package:kazumi/utils/utils.dart';
 
 class TorrentSearchSheet extends ConsumerStatefulWidget {
   final String initialKeyword;
@@ -149,6 +155,111 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
         );
       }
     }
+  }
+
+  Future<void> _handleSelectiveDownload(TorrentItem item) async {
+    final magnet = item.magnetUrl;
+    if (magnet.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('未找到有效的下载链接')),
+        );
+      }
+      return;
+    }
+
+    final cancelToken = TorrentStreamCancelToken();
+    bool isCompleted = false;
+
+    KazumiDialog.showLoading(
+      msg: '正在通过 DHT 与 Tracker 解析磁力元数据...',
+      onCancel: () {
+        cancelToken.cancel();
+      },
+      onDismiss: () {
+        if (!isCompleted) {
+          cancelToken.cancel();
+        }
+      },
+    );
+
+    List<TorrentFileEntry> entries;
+    try {
+      entries = await TorrentStreamService.instance.resolveMagnetFiles(
+        magnet,
+        cancelToken: cancelToken,
+        onProgress: (status) {
+          KazumiDialog.showLoading(msg: status);
+        },
+      );
+    } on TorrentStreamCancelledException {
+      KazumiDialog.dismiss();
+      return;
+    } catch (e) {
+      KazumiDialog.dismiss();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('解析磁力元数据失败: $e')),
+        );
+      }
+      return;
+    }
+
+    isCompleted = true;
+    KazumiDialog.dismiss();
+    if (!mounted) return;
+
+    if (entries.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('未能获取到该资源的文件列表')),
+      );
+      return;
+    }
+
+    final downloadTitle = item.displayTitle == item.title
+        ? item.title
+        : '${widget.initialKeyword} - ${item.displayTitle}';
+
+    await SelectiveDownloadDialog.show(
+      context,
+      title: downloadTitle,
+      files: entries,
+      onConfirm: (indices, savePath) async {
+        final options = <String, dynamic>{};
+        if (savePath.isNotEmpty) {
+          options['dir'] = savePath;
+        }
+        if (indices.isNotEmpty) {
+          options['select-file'] = indices.join(',');
+        }
+
+        final downloadCtrl = ref.read(downloadControllerProvider.notifier);
+        await downloadCtrl.addUris(
+          [magnet],
+          title: downloadTitle,
+          bangumiId: widget.bangumiId,
+          episodeNumber: int.tryParse(item.episode ?? ''),
+          options: options,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '已添加选择性下载任务 (已勾选 ${indices.length} 个文件): $downloadTitle',
+              ),
+              action: SnackBarAction(
+                label: '查看下载',
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.push(Routes.download);
+                },
+              ),
+            ),
+          );
+        }
+      },
+    );
   }
 
   @override
@@ -345,7 +456,7 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
             ? 'Nyaa'
             : 'Torznab';
 
-    return Card.outlined(
+    final cardWidget = Card.outlined(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -457,6 +568,76 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
           ],
         ),
       ),
+    );
+
+    return AppContextMenu(
+      itemsBuilder: (context) => [
+        AppMenuAction(
+          title: '极速下载',
+          icon: Icons.download_rounded,
+          onSelected: () => _handleDownload(item),
+        ),
+        AppMenuAction(
+          title: '选择性下载 (迅雷树)...',
+          icon: Icons.checklist_rtl_rounded,
+          onSelected: () => _handleSelectiveDownload(item),
+        ),
+        AppMenuAction(
+          title: '边下边播 (首尾关键帧优先)',
+          icon: Icons.play_circle_outline_rounded,
+          onSelected: () => _handleStreamPlay(item),
+        ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          title: '复制磁力链接',
+          icon: Icons.copy_rounded,
+          onSelected: () {
+            Clipboard.setData(ClipboardData(text: item.magnetUrl));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('磁力链接已复制到剪贴板'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          },
+        ),
+        AppMenuAction(
+          title: '复制资源全称',
+          icon: Icons.title_rounded,
+          onSelected: () {
+            Clipboard.setData(ClipboardData(text: item.title));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('已复制资源全称'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          },
+        ),
+        if (item.displayTitle != item.title)
+          AppMenuAction(
+            title: '复制短标题 (${item.displayTitle})',
+            icon: Icons.subtitles_outlined,
+            onSelected: () {
+              Clipboard.setData(ClipboardData(text: item.displayTitle));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('已复制短标题'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+        if (item.pageUrl != null && item.pageUrl!.isNotEmpty) ...[
+          const AppMenuSeparator(),
+          AppMenuAction(
+            title: '在浏览器中打开原始发布页',
+            icon: Icons.open_in_browser_rounded,
+            onSelected: () => Utils.openUrl(item.pageUrl!),
+          ),
+        ],
+      ],
+      child: cardWidget,
     );
   }
 }

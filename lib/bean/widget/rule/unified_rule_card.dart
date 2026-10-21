@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kazumi/bean/widget/app_context_menu.dart';
 export 'package:kazumi/bean/widget/settings/card_settings_ui.dart' show SettingsBadge;
 
 /// 统一规则卡片组件 (Unified Rule Grid Card Component)
@@ -63,6 +64,9 @@ class UnifiedRuleCard extends StatelessWidget {
   /// 卡片内边距
   final EdgeInsetsGeometry padding;
 
+  /// 桌面端与移动端上下文右键/长按菜单构建器
+  final List<AppMenuItem> Function(BuildContext context)? contextMenuBuilder;
+
   const UnifiedRuleCard({
     super.key,
     required this.title,
@@ -83,6 +87,7 @@ class UnifiedRuleCard extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.padding = const EdgeInsets.all(16),
+    this.contextMenuBuilder,
   });
 
   @override
@@ -98,7 +103,7 @@ class UnifiedRuleCard extends StatelessWidget {
         ? BorderSide(color: colorScheme.primary, width: 1.5)
         : BorderSide(color: colorScheme.outlineVariant.withAlpha(55), width: 0.8);
 
-    return Card(
+    final cardWidget = Card(
       elevation: 0,
       color: effectiveCardColor,
       margin: EdgeInsets.zero,
@@ -265,6 +270,15 @@ class UnifiedRuleCard extends StatelessWidget {
         ),
       ),
     );
+
+    if (contextMenuBuilder != null) {
+      return AppContextMenu(
+        itemsBuilder: contextMenuBuilder!,
+        child: cardWidget,
+      );
+    }
+
+    return cardWidget;
   }
 }
 
