@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audio_service_win
   connectivity_plus
   dynamic_color
-  file_selector_windows
   flutter_volume_controller
   hotkey_manager_windows
   irondash_engine_context
