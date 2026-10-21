@@ -1,50 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:libtorrent_flutter/libtorrent_flutter.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_stream/aria2_stream_engine.dart';
 import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
 import 'package:kazumi/modules/torrent_stream/widgets/torrent_stream_dialog.dart';
-import 'package:kazumi/utils/aria2_client.dart';
-
-class _FakeWidgetAria2Client extends Aria2Client {
-  _FakeWidgetAria2Client()
-      : super(endpoint: Uri.parse('http://127.0.0.1:6800/jsonrpc'));
-
-  @override
-  Future<String?> addUri(List<String> uris, {Map<String, dynamic>? options, int? position}) async {
-    return 'gid-widget-test-1';
-  }
-
-  @override
-  Future<Map<String, dynamic>?> tellStatus(String gid, {List<String>? keys}) async {
-    return {
-      'gid': gid,
-      'status': 'active',
-      'totalLength': '104857600',
-      'completedLength': '2097152',
-      'downloadSpeed': '1048576',
-      'numSeeders': '10',
-      'connections': '15',
-      'files': [
-        {
-          'index': '1',
-          'path': '/tmp/sample_video.mp4',
-          'length': '104857600',
-          'completedLength': '2097152',
-          'selected': 'true',
-        }
-      ],
-    };
-  }
-
-  @override
-  Future<bool> changeOption(String gid, Map<String, dynamic> options) async => true;
-
-  @override
-  Future<bool> remove(String gid, {bool force = false}) async => true;
-}
 
 class _FakeDialogEngineAdapter implements TorrentEngineAdapter {
   bool initialized = false;
@@ -152,12 +111,10 @@ void main() {
   setUp(() {
     fakeAdapter = _FakeDialogEngineAdapter();
     TorrentStreamService.instance.setAdapterForTesting(fakeAdapter);
-    Aria2StreamEngine.instance.setClientForTesting(_FakeWidgetAria2Client());
   });
 
   tearDown(() async {
     await TorrentStreamService.instance.stopAll();
-    Aria2StreamEngine.instance.setClientForTesting(null);
     TorrentStreamService.instance.resetAdapter();
   });
 
@@ -201,7 +158,6 @@ void main() {
     expect(find.textContaining('Sample Animation'), findsWidgets);
     expect(find.text('取消'), findsOneWidget);
     expect(find.text('后台下载'), findsOneWidget);
-    expect(find.text('换用 Aria2 极速流式'), findsOneWidget);
 
     // Let microtasks and postFrameCallback run
     await tester.pump(const Duration(milliseconds: 350));
@@ -252,32 +208,5 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TorrentStreamDialog), findsNothing);
-  });
-
-  testWidgets('TorrentStreamDialog switching engine updates UI badge without closing dialog', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(
-            body: TorrentStreamDialog(
-              item: testItem,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pump();
-    expect(find.text('原生 Libtorrent'), findsOneWidget);
-    expect(find.text('换用 Aria2 极速流式'), findsOneWidget);
-
-    // Tap switch engine
-    await tester.tap(find.text('换用 Aria2 极速流式'));
-    await tester.pump();
-
-    // Verify engine badge switched to Aria2 without dialog closing
-    expect(find.byType(TorrentStreamDialog), findsOneWidget);
-    expect(find.text('Aria2 极速流式'), findsOneWidget);
-    expect(find.text('换用原生引擎'), findsOneWidget);
   });
 }

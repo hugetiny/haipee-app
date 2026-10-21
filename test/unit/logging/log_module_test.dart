@@ -22,6 +22,7 @@ void main() {
       expect(LogModule.detect('[PlayerController] start play'), equals(LogModule.player));
       expect(LogModule.detect('[Danmaku] loaded'), equals(LogModule.player));
       expect(LogModule.detect('[DownloadTask] queued'), equals(LogModule.download));
+      expect(LogModule.detect('[GopeedService] task added'), equals(LogModule.download));
       expect(LogModule.detect('[SyncPlay] connected'), equals(LogModule.syncplay));
       expect(LogModule.detect('[HiveStorage] box opened'), equals(LogModule.storage));
       expect(LogModule.detect('[WebDAV] synced'), equals(LogModule.storage));

@@ -15,7 +15,6 @@ import 'package:kazumi/request/api.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/aria2_feature_manager.dart';
 import 'package:path_provider/path_provider.dart';
 
 class SettingPage extends ConsumerStatefulWidget {
@@ -347,15 +346,14 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                 title: const Text('Cardigann 规则'),
                 description: const Text('Cardigann 规则中心与索引源管理'),
               ),
-              if (Aria2FeatureManager().isAvailable)
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsDownload);
-                  },
-                  leading: const Icon(Icons.download),
-                  title: const Text('下载设置'),
-                  description: const Text('配置 aria2 下载参数'),
-                ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsDownload);
+                },
+                leading: const Icon(Icons.download),
+                title: const Text('下载设置'),
+                description: const Text('配置下载目录与并发参数'),
+              ),
             ],
           ),
           SettingsSection(

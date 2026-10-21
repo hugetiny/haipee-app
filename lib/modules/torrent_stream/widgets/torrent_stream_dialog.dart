@@ -7,13 +7,13 @@ import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
 import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
 import 'package:kazumi/pages/download/providers.dart';
 
-/// 专为 BT/磁力链在线边下边播设计的实时交互 HUD 对话框（支持原生与 Aria2 双引擎极速互保）。
+/// 专为 BT/磁力链在线边下边播设计的实时交互 HUD 对话框（支持原生与 TorrServer 极速互保）。
 ///
 /// 核心特性：
 /// 1. 结构化展示做种节点发现、元数据拉取、首尾关键帧索引预缓冲状态；
 /// 2. 实时展示活跃 Peer 节点、即时下载速度、已缓冲秒数/分片数及当前驱动引擎；
-/// 3. 支持随时一键在「原生 Libtorrent」与「Aria2 极速流式」之间无缝切换；
-/// 4. 支持随时一键取消或无缝切换至 Aria2 离线下载队列（双引擎互保，绝不无限转圈卡死）；
+/// 3. 支持随时一键在「原生 Libtorrent」与「TorrServer 极速流式」之间无缝切换；
+/// 4. 支持随时一键取消或无缝切换至离线下载队列（多引擎互保，绝不无限转圈卡死）；
 /// 5. 关键分片缓冲就绪后安全退出并返回 [TorrentStreamSession]，保障播放器即时首帧渲染。
 class TorrentStreamDialog extends ConsumerStatefulWidget {
   final TorrentItem item;
@@ -124,9 +124,7 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
       _errorMessage = null;
       _progress = TorrentStreamProgress(
         stage: TorrentStreamStage.connectingPeers,
-        message: _currentEngine == TorrentStreamEngine.aria2
-            ? '正在通过 Aria2 极速网络建立连接并拉取种子元数据...'
-            : '正在通过分布式 DHT 与公共 Tracker 查找活跃做种节点...',
+        message: '正在通过分布式 DHT 与公共 Tracker 查找活跃做种节点...',
         engine: _currentEngine,
       );
     });
@@ -179,30 +177,20 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
     } on TorrentMetadataTimeoutException catch (e) {
       if (mounted && _cancelToken == token) {
         setState(() {
-          _errorMessage = '获取种子元数据超时（当前发现节点数: ${e.peerCount}）。\n当前网络环境下做种节点较少，建议一键改用 Aria2 极速流式或转入后台离线下载。';
+          _errorMessage = '获取种子元数据超时（当前发现节点数: ${e.peerCount}）。\n当前网络环境下做种节点较少，建议转入后台离线下载。';
         });
       }
     } catch (e) {
       if (mounted && _cancelToken == token) {
         setState(() {
-          _errorMessage = '流式准备失败: $e\n建议切换流式引擎重试，或转入后台离线下载。';
+          _errorMessage = '流式准备失败: $e\n建议转入后台离线下载。';
         });
       }
     }
   }
 
-  /// 切换流式引擎
-  void _switchEngine(TorrentStreamEngine targetEngine) {
-    if (_isFinished) return;
-    _cancelToken.cancel();
-    setState(() {
-      _currentEngine = targetEngine;
-    });
-    _startStreamPreparation();
-  }
-
-  /// 一键转入后台 Aria2 离线下载队列
-  Future<void> _switchToAria2Download() async {
+  /// 一键转入后台离线下载队列
+  Future<void> _switchToBackgroundDownload() async {
     if (_isSwitchingToDownload) return;
     _isSwitchingToDownload = true;
     _cancelToken.cancel();
@@ -279,8 +267,6 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
 
   Widget _buildHeader(ThemeData theme, ColorScheme colorScheme) {
     final isAudio = widget.isAudio || widget.item.isAudio;
-    final isAria2 = _progress.engine == TorrentStreamEngine.aria2;
-
     return Row(
       children: [
         Container(
@@ -306,7 +292,7 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
                   Text(
                     isAudio ? '音频边下边听' : '在线边下边播',
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -315,9 +301,7 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
                     decoration: BoxDecoration(
                       color: _progress.engine == TorrentStreamEngine.torrserver
                           ? colorScheme.primaryContainer
-                          : (isAria2
-                              ? colorScheme.secondaryContainer
-                              : colorScheme.tertiaryContainer),
+                          : colorScheme.tertiaryContainer,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
@@ -326,27 +310,23 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
                         Icon(
                           _progress.engine == TorrentStreamEngine.torrserver
                               ? Icons.rocket_launch_rounded
-                              : (isAria2 ? Icons.bolt_rounded : Icons.memory_rounded),
+                              : Icons.memory_rounded,
                           size: 11,
                           color: _progress.engine == TorrentStreamEngine.torrserver
                               ? colorScheme.onPrimaryContainer
-                              : (isAria2
-                                  ? colorScheme.onSecondaryContainer
-                                  : colorScheme.onTertiaryContainer),
+                              : colorScheme.onTertiaryContainer,
                         ),
                         const SizedBox(width: 3),
                         Text(
                           _progress.engine == TorrentStreamEngine.torrserver
                               ? 'TorrServer 内存流式'
-                              : (isAria2 ? 'Aria2 极速流式' : '原生 Libtorrent'),
+                              : '原生 Libtorrent',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: _progress.engine == TorrentStreamEngine.torrserver
                                 ? colorScheme.onPrimaryContainer
-                                : (isAria2
-                                    ? colorScheme.onSecondaryContainer
-                                    : colorScheme.onTertiaryContainer),
+                                : colorScheme.onTertiaryContainer,
                           ),
                         ),
                       ],
@@ -558,96 +538,51 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
   }
 
   Widget _buildActionButtons(ThemeData theme, ColorScheme colorScheme) {
-    final isAria2 = _progress.engine == TorrentStreamEngine.aria2;
-
     if (_errorMessage != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (!isAria2) ...[
-            FilledButton.icon(
-              onPressed: () => _switchEngine(TorrentStreamEngine.aria2),
-              icon: const Icon(Icons.bolt_rounded, size: 18),
-              label: const Text('改用 Aria2 极速流式引擎起播'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 11),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: _handleCancel,
-                child: const Text('取消'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: _startStreamPreparation,
-                child: const Text('重试'),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.tonalIcon(
-                onPressed: _switchToAria2Download,
-                icon: const Icon(Icons.download_rounded, size: 16),
-                label: const Text('转入离线下载'),
-              ),
-            ],
+          TextButton(
+            onPressed: _handleCancel,
+            child: const Text('取消'),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            onPressed: _startStreamPreparation,
+            child: const Text('重试'),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonalIcon(
+            onPressed: _switchToBackgroundDownload,
+            icon: const Icon(Icons.download_rounded, size: 16),
+            label: const Text('转入离线下载'),
           ),
         ],
       );
     }
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        // 在非 TorrServer 引擎模式下提供热切换按钮
-        if (_progress.engine != TorrentStreamEngine.torrserver)
-          TextButton.icon(
-            onPressed: () => _switchEngine(
-              isAria2 ? TorrentStreamEngine.native : TorrentStreamEngine.aria2,
-            ),
-            icon: Icon(
-              isAria2 ? Icons.tune_rounded : Icons.bolt_rounded,
-              size: 15,
-            ),
-            label: Text(
-              isAria2 ? '换用原生引擎' : '换用 Aria2 极速流式',
-              style: const TextStyle(fontSize: 12),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: colorScheme.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            ),
-          )
-        else
-          const SizedBox.shrink(),
-
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextButton.icon(
-              onPressed: _isSwitchingToDownload ? null : _switchToAria2Download,
-              icon: const Icon(Icons.download_rounded, size: 15),
-              label: Text(
-                _isSwitchingToDownload ? '正在转入...' : '后台下载',
-                style: const TextStyle(fontSize: 12),
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: colorScheme.secondary,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              ),
-            ),
-            const SizedBox(width: 4),
-            TextButton(
-              onPressed: _handleCancel,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              ),
-              child: const Text('取消', style: TextStyle(fontSize: 12)),
-            ),
-          ],
+        TextButton.icon(
+          onPressed: _isSwitchingToDownload ? null : _switchToBackgroundDownload,
+          icon: const Icon(Icons.download_rounded, size: 15),
+          label: Text(
+            _isSwitchingToDownload ? '正在转入...' : '后台下载',
+            style: const TextStyle(fontSize: 12),
+          ),
+          style: TextButton.styleFrom(
+            foregroundColor: colorScheme.secondary,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          ),
+        ),
+        const SizedBox(width: 4),
+        TextButton(
+          onPressed: _handleCancel,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          ),
+          child: const Text('取消', style: TextStyle(fontSize: 12)),
         ),
       ],
     );

@@ -5,8 +5,8 @@ export 'package:kazumi/modules/torrent_stream/torrent_stream_models.dart';
 import 'package:kazumi/modules/torrent_stream/torrent_stream_models.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
-import 'package:kazumi/modules/torrent_stream/aria2_stream_engine.dart';
 import 'package:kazumi/modules/torrent_stream/torrserver_stream_engine.dart';
+import 'package:kazumi/modules/torrent_stream/torrserver_client.dart';
 import 'package:kazumi/modules/torrent_stream/torrent_tracker_service.dart';
 import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/storage.dart';
@@ -56,7 +56,8 @@ enum TorrentStreamEngine {
   auto,        // 智能双引擎互保
   debrid,      // Debrid 云端高速离线 Hub (Real-Debrid / TorBox / PikPak)
   torrserver,  // TorrServer 专精视频流式引擎 (纯内存环形缓冲，少节点网络穿透，MP4/MKV首尾索引预读)
-  aria2,       // Aria2 极速顺序流式引擎 (基于 HTTP 206 本地代理，免动态库，强网络穿透)
+  @Deprecated('Aria2 engine retired; defaults to torrserver')
+  aria2,       // 兼容保留枚举，已弃用
   native,      // 原生 Libtorrent C++ 引擎 (内存滑窗分片调度)
 }
 
@@ -161,7 +162,7 @@ abstract class TorrentEngineAdapter {
   Stream<Map<int, StreamInfo>> get streamUpdates;
 }
 
-/// Default production adapter. In production, Aria2 and TorrServer are the primary streaming engines.
+/// Default production adapter. In production, TorrServer is the primary streaming engine.
 class DefaultTorrentEngineAdapter implements TorrentEngineAdapter {
   bool _initialized = false;
   final StreamController<Map<int, TorrentInfo>> _torrentUpdatesController =
@@ -387,7 +388,7 @@ class TorrentStreamService {
       _nativeEngineAvailable = false;
       AppLog.w(
         LogModule.stream,
-        '[TorrentStreamService] Native libtorrent init failed: $e (Aria2 engine will be used)',
+        '[TorrentStreamService] Native libtorrent init failed: $e (TorrServer engine will be used)',
       );
       return;
     }
@@ -515,18 +516,20 @@ class TorrentStreamService {
         try {
           final savedSetting = GStorage.setting.get(
             SettingBoxKey.defaultTorrentStreamEngine,
-            defaultValue: 'aria2',
+            defaultValue: 'torrserver',
           ) as String;
-          if (savedSetting == 'aria2') {
-            effectiveEngine = TorrentStreamEngine.aria2;
-          } else if (savedSetting == 'native') {
+          if (savedSetting == 'native') {
             effectiveEngine = TorrentStreamEngine.native;
+          } else {
+            effectiveEngine = TorrentStreamEngine.torrserver;
           }
         } catch (_) {}
       }
     }
 
-    if (effectiveEngine == TorrentStreamEngine.torrserver) {
+    if (effectiveEngine == TorrentStreamEngine.torrserver ||
+        effectiveEngine == TorrentStreamEngine.aria2 ||
+        !_nativeEngineAvailable) {
       KazumiLogger().log(
         Level.info,
         '[TorrentStreamService] Launching dedicated TorrServer stream: $title',
@@ -548,41 +551,6 @@ class TorrentStreamService {
       return session;
     }
 
-    // 若指定或回退到 Aria2 流式引擎，直接调度 Aria2 极速流式服务器 (主要服务于音频流或旧模式)
-    if (effectiveEngine == TorrentStreamEngine.aria2 || !_nativeEngineAvailable) {
-      KazumiLogger().log(
-        Level.info,
-        '[TorrentStreamService] Launching stream with Aria2StreamEngine: $title',
-      );
-      final session = await Aria2StreamEngine.instance.startStream(
-        magnetUri: effectiveMagnet,
-        title: title,
-        isAudio: isAudio,
-        fileIndex: fileIndex,
-        onProgress: onProgress,
-        onProgressUpdate: (p) {
-          onProgressUpdate?.call(TorrentStreamProgress(
-            stage: p.stage,
-            message: p.message,
-            peerCount: p.peerCount,
-            downloadRate: p.downloadRate,
-            bufferSeconds: p.bufferSeconds,
-            bufferPieces: p.bufferPieces,
-            bufferPercent: p.bufferPercent,
-            selectedFileName: p.selectedFileName,
-            selectedFileSize: p.selectedFileSize,
-            engine: TorrentStreamEngine.aria2,
-          ));
-        },
-        metadataTimeout: metadataTimeout,
-        bufferTimeout: bufferTimeout,
-        waitForBuffer: waitForBuffer,
-        cancelToken: cancelToken,
-      );
-      _activeSessions[session.streamId] = session;
-      return session;
-    }
-
     // 尝试原生 libtorrent 引擎
     try {
       await ensureInitialized();
@@ -590,7 +558,7 @@ class TorrentStreamService {
         throw const TorrentStreamException('原生 libtorrent 引擎在当前环境不可用');
       }
 
-      // 在 auto 模式下，设置灵敏的元数据拉取上限（至多 15s），若无节点或被防火墙屏蔽，自动转入 Aria2 互保
+      // 在 auto 模式下，设置灵敏的元数据拉取上限（至多 15s），若无节点或被防火墙屏蔽，自动转入 TorrServer 互保
       final metaTimeoutToUse = effectiveEngine == TorrentStreamEngine.auto
           ? (metadataTimeout < const Duration(seconds: 15)
               ? metadataTimeout
@@ -613,43 +581,30 @@ class TorrentStreamService {
       if (cancelToken?.isCancelled == true) rethrow;
       if (e is NoStreamableFileException) rethrow;
 
-      // 在 auto 智能双引擎模式下，当原生引擎遇到任何异常或超时，且 Aria2 可用时，自动无缝切换到 Aria2
-      if (engine == TorrentStreamEngine.auto &&
-          (_adapter is DefaultTorrentEngineAdapter || Aria2StreamEngine.instance.hasTestClient)) {
-        final aria2Ready = await Aria2StreamEngine.instance.isAvailable();
-        if (aria2Ready) {
+      // 在 auto 智能双引擎模式下，当原生引擎遇到任何异常或超时，自动无缝切换到 TorrServer
+      if (effectiveEngine == TorrentStreamEngine.auto && _adapter is DefaultTorrentEngineAdapter) {
+        final torrServerReady = await TorrServerStreamEngine.instance.isAvailable();
+        if (torrServerReady) {
           KazumiLogger().log(
             Level.info,
-            '[TorrentStreamService] Native stream unviable ($e). Seamlessly falling back to Aria2StreamEngine...',
+            '[TorrentStreamService] Native stream unviable ($e). Seamlessly falling back to TorrServerStreamEngine...',
           );
-          const fallbackMsg = '原生引擎连接超时或无做种者，已自动无缝切换至 Aria2 极速流式引擎...';
+          const fallbackMsg = '原生引擎连接超时或无做种者，已自动无缝切换至 TorrServer 流式引擎...';
           onProgress?.call(fallbackMsg);
           onProgressUpdate?.call(const TorrentStreamProgress(
             stage: TorrentStreamStage.connectingPeers,
             message: fallbackMsg,
-            engine: TorrentStreamEngine.aria2,
+            engine: TorrentStreamEngine.torrserver,
           ));
 
-          final session = await Aria2StreamEngine.instance.startStream(
+          final session = await TorrServerStreamEngine.instance.startStream(
             magnetUri: magnetUri,
+            torrentUrl: torrentUrl,
             title: title,
             isAudio: isAudio,
             fileIndex: fileIndex,
             onProgress: onProgress,
-            onProgressUpdate: (p) {
-              onProgressUpdate?.call(TorrentStreamProgress(
-                stage: p.stage,
-                message: p.message,
-                peerCount: p.peerCount,
-                downloadRate: p.downloadRate,
-                bufferSeconds: p.bufferSeconds,
-                bufferPieces: p.bufferPieces,
-                bufferPercent: p.bufferPercent,
-                selectedFileName: p.selectedFileName,
-                selectedFileSize: p.selectedFileSize,
-                engine: TorrentStreamEngine.aria2,
-              ));
-            },
+            onProgressUpdate: onProgressUpdate,
             metadataTimeout: metadataTimeout,
             bufferTimeout: bufferTimeout,
             waitForBuffer: waitForBuffer,
@@ -937,7 +892,7 @@ class TorrentStreamService {
         if (finalPeers == 0 && finalRate == 0) {
           await stopStream(streamInfo.id, torrentId: torrentId);
           throw const TorrentStreamException(
-            '媒体流预缓冲超时（网络中暂无可用数据传输），建议转入 Aria2 离线下载队列。',
+            '媒体流预缓冲超时（网络中暂无可用数据传输），建议转入离线下载队列。',
           );
         }
       }
@@ -959,15 +914,6 @@ class TorrentStreamService {
     TorrentStreamCancelToken? cancelToken,
     TorrentStreamEngine engine = TorrentStreamEngine.auto,
   }) async {
-    if (engine == TorrentStreamEngine.aria2 || !_nativeEngineAvailable) {
-      return await Aria2StreamEngine.instance.resolveMagnetFiles(
-        magnetUri,
-        timeout: metadataTimeout,
-        cancelToken: cancelToken,
-        onProgress: onProgress,
-      );
-    }
-
     try {
       await ensureInitialized();
       if (!_nativeEngineAvailable) {
@@ -989,22 +935,25 @@ class TorrentStreamService {
     } catch (e) {
       if (cancelToken?.isCancelled == true) rethrow;
 
-      if (engine == TorrentStreamEngine.auto &&
-          (_adapter is DefaultTorrentEngineAdapter || Aria2StreamEngine.instance.hasTestClient)) {
-        final aria2Ready = await Aria2StreamEngine.instance.isAvailable();
-        if (aria2Ready) {
-          KazumiLogger().log(
-            Level.info,
-            '[TorrentStreamService] Native resolve failed ($e). Falling back to Aria2...',
-          );
-          onProgress?.call('原生引擎连接受阻，已切换至 Aria2 极速解析种子文件列表...');
-          return await Aria2StreamEngine.instance.resolveMagnetFiles(
-            magnetUri,
-            timeout: metadataTimeout,
-            cancelToken: cancelToken,
-            onProgress: onProgress,
-          );
-        }
+      // Fallback via TorrServer if available
+      if (_adapter is DefaultTorrentEngineAdapter) {
+        try {
+          final torrServerReady = await TorrServerStreamEngine.instance.isAvailable();
+          if (torrServerReady) {
+            onProgress?.call('正在通过 TorrServer 核心解析种子文件列表...');
+            final client = TorrServerClient();
+            final torrent = await client.addTorrent(link: magnetUri, title: 'resolve_files');
+            if (torrent.files.isNotEmpty) {
+              return torrent.files.map((f) => TorrentFileEntry(
+                index: f.id,
+                name: f.name,
+                path: f.path,
+                sizeBytes: f.length,
+                pathSegments: f.path.split('/'),
+              )).toList();
+            }
+          }
+        } catch (_) {}
       }
       rethrow;
     }
@@ -1116,12 +1065,6 @@ class TorrentStreamService {
       if (session != null) return;
     }
 
-    // 检查是否为 Aria2 流式引擎生成的会话（streamId >= 80000）
-    if (streamId >= 80000 || session?.engine == TorrentStreamEngine.aria2) {
-      await Aria2StreamEngine.instance.stopStream(streamId, deleteFiles: deleteFiles);
-      return;
-    }
-
     try {
       _adapter.stopStream(streamId);
     } catch (e) {
@@ -1141,12 +1084,11 @@ class TorrentStreamService {
   /// Stops all active streams and removes temporary torrents.
   Future<void> stopAll({bool deleteFiles = true}) async {
     await TorrServerStreamEngine.instance.stopCurrentSession();
-    await Aria2StreamEngine.instance.stopAll(deleteFiles: deleteFiles);
 
     final sessionList = _activeSessions.values.toList();
     _activeSessions.clear();
     for (final session in sessionList) {
-      if (session.engine == TorrentStreamEngine.torrserver || session.streamId >= 80000) continue;
+      if (session.engine == TorrentStreamEngine.torrserver) continue;
       try {
         _adapter.stopStream(session.streamId);
       } catch (_) {}

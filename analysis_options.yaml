@@ -16,6 +16,7 @@ analyzer:
     - lib/l10n/generated/**
     - test/integration/**.mocks.dart
     - packages/**
+    - third_party/**
     - build/**
     - android/**
     - ios/**

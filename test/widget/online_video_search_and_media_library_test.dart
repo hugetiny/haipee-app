@@ -160,8 +160,9 @@ void main() {
       expect(find.text('抖音短视频'), findsNothing); // 已从主过滤器移除脆弱的抖音专有标签
       expect(find.text('底层技术: 多协议并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
 
-      // 3. 验证快捷操作入口 (规则管理中心快捷图标)
-      expect(find.byIcon(Icons.rule_folder_outlined), findsOneWidget);
+      // 3. 验证快捷操作入口 (视频规则管理与下载管理快捷图标)
+      expect(find.byIcon(Icons.video_library_outlined), findsWidgets);
+      expect(find.byIcon(Icons.download_outlined), findsOneWidget);
 
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();

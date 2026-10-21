@@ -135,8 +135,7 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 600,
-        constraints: const BoxConstraints(maxHeight: 700),
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -208,11 +207,13 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '支持 HTTP/HTTPS/FTP/磁力链接',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+              Expanded(
+                child: Text(
+                  '支持 HTTP/HTTPS/FTP/磁力链接',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
               ),
               TextButton.icon(
                 onPressed: _pasteFromClipboard,
@@ -646,7 +647,7 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
       return;
     }
 
-    // 构建 aria2 选项
+    // 构建下载选项
     final options = <String, dynamic>{};
     if (_savePathController.text.isNotEmpty) {
       options['dir'] = _savePathController.text;
@@ -685,7 +686,7 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
     options['max-connection-per-server'] = _connectionsNotifier.value;
     options['split'] = _splitNotifier.value;
 
-    // 添加到 aria2
+    // 添加到下载服务
     final controller = ref.read(downloadControllerProvider.notifier);
     await controller.addUris(urls, options: options);
 
@@ -706,7 +707,7 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
       return;
     }
 
-    // 构建 aria2 选项
+    // 构建下载选项
     final options = <String, dynamic>{};
     if (_savePathController.text.isNotEmpty) {
       options['dir'] = _savePathController.text;
@@ -714,7 +715,7 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
     options['max-connection-per-server'] = _connections;
     options['split'] = _split;
 
-    // 添加到 aria2
+    // 添加到下载服务
     final controller = ref.read(downloadControllerProvider.notifier);
     await controller.addTorrent(_torrentFileNotifier.value!, options: options);
 

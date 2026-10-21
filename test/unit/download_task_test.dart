@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kazumi/modules/download/download_task.dart';
+import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
 
 void main() {
   group('DownloadTask', () {
@@ -66,29 +67,36 @@ void main() {
       expect(task.isActive, false);
     });
 
-    test('should create task from aria2 status', () {
-      final aria2Status = {
-        'gid': 'abc123',
-        'status': 'active',
-        'totalLength': '10485760',
-        'completedLength': '5242880',
-        'downloadSpeed': '1048576',
-        'files': [
-          {
-            'path': '/downloads/video.mp4',
-            'uris': [
-              {'uri': 'http://example.com/video.mp4'}
-            ]
-          }
-        ]
-      };
+    test('should create task from gopeed task with smart video selection', () {
+      final gopeedTask = GopeedTask(
+        id: 'gopeed-123',
+        name: 'My Video',
+        status: 'running',
+        totalLength: 10485760,
+        completedLength: 5242880,
+        downloadSpeed: 1048576,
+        url: 'http://example.com/video.mp4',
+        files: [
+          GopeedFile(
+            name: 'cover.jpg',
+            path: '/downloads/cover.jpg',
+            size: 150000,
+          ),
+          GopeedFile(
+            name: 'video.mp4',
+            path: '/downloads/video.mp4',
+            size: 10335760,
+            completed: 5242880,
+          ),
+        ],
+      );
 
-      final task = DownloadTask.fromAria2Status(
-        aria2Status,
+      final task = DownloadTask.fromGopeedTask(
+        gopeedTask,
         title: 'My Video',
       );
 
-      expect(task.gid, 'abc123');
+      expect(task.gid, 'gopeed-123');
       expect(task.status, 'active');
       expect(task.totalLength, 10485760);
       expect(task.completedLength, 5242880);
@@ -96,6 +104,8 @@ void main() {
       expect(task.title, 'My Video');
       expect(task.url, 'http://example.com/video.mp4');
       expect(task.fileName, '/downloads/video.mp4');
+      expect(task.filePath, '/downloads/video.mp4');
+      expect(task.isVideo, isTrue);
     });
 
     test('copyWith should update only specified fields', () {

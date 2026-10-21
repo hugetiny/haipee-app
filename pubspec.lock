@@ -1143,14 +1143,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.2"
-  libtorrent_flutter:
-    dependency: "direct main"
-    description:
-      name: libtorrent_flutter
-      sha256: fd954704312c6990294e7bcb40ed5bcf6c9edf8976a547649de32100e0523199
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "2.0.0"
   lints:
     dependency: transitive
     description:
@@ -1695,6 +1687,22 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.27.3"
+  sentry:
+    dependency: transitive
+    description:
+      name: sentry
+      sha256: "599701ca0693a74da361bc780b0752e1abc98226cf5095f6b069648116c896bb"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "8.14.2"
+  sentry_flutter:
+    dependency: "direct main"
+    description:
+      name: sentry_flutter
+      sha256: "5ba2cf40646a77d113b37a07bd69f61bb3ec8a73cbabe5537b05a7c89d2656f8"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "8.14.2"
   share_plus:
     dependency: transitive
     description:

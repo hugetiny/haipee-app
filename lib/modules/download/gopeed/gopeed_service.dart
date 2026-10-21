@@ -25,7 +25,7 @@ class GopeedService {
     String targetDir = storageDir ?? '';
     if (targetDir.isEmpty) {
       try {
-        final appDir = await getApplicationSupportDirectory();
+        final appDir = await getApplicationSupportDirectory().timeout(const Duration(seconds: 2));
         targetDir = '${appDir.path}/gopeed';
       } catch (_) {
         targetDir = '${Directory.current.path}/.gopeed';
@@ -47,8 +47,8 @@ class GopeedService {
     };
 
     await _worker.start(jsonEncode(config));
-    // Subscribe to all task events (mask = 0xFFFF)
-    await _worker.subscribeTaskEvents(0xFFFF);
+    // Subscribe to task done and error events (mask = 0x03: done=1, error=2)
+    await _worker.subscribeTaskEvents(0x03);
     _worker.taskEvents.listen((data) {
       _eventController.add(GopeedTaskEvent.fromJson(data));
     });
@@ -100,6 +100,15 @@ class GopeedService {
           .toList();
     }
     return [];
+  }
+
+  /// Fetch a single task by ID
+  Future<GopeedTask?> getTask(String id) async {
+    final res = await _worker.invoke('GET', '/api/v1/tasks/$id', '', '');
+    if (res is Map && res['code'] == 0 && res['data'] is Map) {
+      return GopeedTask.fromJson((res['data'] as Map).cast<String, dynamic>());
+    }
+    return null;
   }
 
   /// Pause a task

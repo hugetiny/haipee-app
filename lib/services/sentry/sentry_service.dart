@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -74,6 +75,7 @@ class SentryService {
 
           // Rich diagnostic attachments for UI bug discovery
           options.attachScreenshot = true;
+          // ignore: experimental_member_use
           options.attachViewHierarchy = true;
           options.autoAppStart = true;
           options.enableAutoSessionTracking = true;
@@ -179,10 +181,10 @@ class SentryTalkerObserver extends TalkerObserver {
   }
 
   @override
-  void onException(TalkerException exc) {
+  void onException(TalkerException err) {
     if (!SentryService.isInitialized) return;
     try {
-      final msg = exc.message ?? exc.exception.toString();
+      final msg = err.message ?? err.exception.toString();
       final moduleStr = LogModule.detect(msg).tag;
 
       Sentry.addBreadcrumb(
@@ -190,13 +192,13 @@ class SentryTalkerObserver extends TalkerObserver {
           message: '[$moduleStr] $msg',
           category: 'talker.exception',
           level: SentryLevel.error,
-          timestamp: exc.time,
+          timestamp: err.time,
         ),
       );
 
       Sentry.captureException(
-        exc.exception,
-        stackTrace: exc.stackTrace,
+        err.exception,
+        stackTrace: err.stackTrace,
         withScope: (scope) {
           scope.setTag('module', moduleStr);
           scope.setExtra('talker_message', msg);
@@ -244,7 +246,6 @@ class SentryTalkerObserver extends TalkerObserver {
       case LogLevel.verbose:
         return SentryLevel.debug;
       case LogLevel.info:
-      default:
         return SentryLevel.info;
     }
   }

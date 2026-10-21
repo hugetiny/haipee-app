@@ -12,8 +12,8 @@ import 'package:kazumi/modules/download/download_task.dart';
 import 'package:kazumi/modules/search/search_history_module.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
+import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
 import 'package:kazumi/request/request.dart';
-import 'package:kazumi/utils/aria2_process_manager.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'robots/log_watcher_robot.dart';
 import 'robots/navigation_robot.dart';
@@ -78,7 +78,7 @@ void main() {
 
   tearDownAll(() async {
     try {
-      await Aria2ProcessManager().stop();
+      await GopeedService().stop();
     } catch (_) {}
     try {
       Request.dio.close(force: true);

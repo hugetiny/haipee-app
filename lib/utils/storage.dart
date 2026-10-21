@@ -266,18 +266,9 @@ class GStorage {
     if (!setting.containsKey(SettingBoxKey.danDanApiKey)) {
       await setting.put(SettingBoxKey.danDanApiKey, '');
     }
-    if (!setting.containsKey(SettingBoxKey.aria2Endpoint)) {
-      await setting.put(
-          SettingBoxKey.aria2Endpoint, 'http://127.0.0.1:6800/jsonrpc');
-    }
-    if (!setting.containsKey(SettingBoxKey.aria2Secret)) {
-      await setting.put(SettingBoxKey.aria2Secret, '');
-    }
-    if (!setting.containsKey(SettingBoxKey.aria2TimeoutSeconds)) {
-      await setting.put(SettingBoxKey.aria2TimeoutSeconds, 15);
-    }
-    if (!setting.containsKey(SettingBoxKey.aria2MaxConcurrentDownloads)) {
-      await setting.put(SettingBoxKey.aria2MaxConcurrentDownloads, 2);
+    if (!setting.containsKey(SettingBoxKey.maxConcurrentDownloads)) {
+      final legacy = setting.get(SettingBoxKey.aria2MaxConcurrentDownloads);
+      await setting.put(SettingBoxKey.maxConcurrentDownloads, legacy ?? 3);
     }
     if (!setting.containsKey(SettingBoxKey.torrentConsentAccepted)) {
       await setting.put(SettingBoxKey.torrentConsentAccepted, false);
@@ -479,9 +470,7 @@ class SettingBoxKey {
       tmdbApiKey = 'tmdbApiKey',
       danDanAppId = 'danDanAppId',
       danDanApiKey = 'danDanApiKey',
-      aria2Endpoint = 'aria2Endpoint',
-      aria2Secret = 'aria2Secret',
-      aria2TimeoutSeconds = 'aria2TimeoutSeconds',
+      maxConcurrentDownloads = 'maxConcurrentDownloads',
       aria2MaxConcurrentDownloads = 'aria2MaxConcurrentDownloads',
       torrentConsentAccepted = 'torrentConsentAccepted',
       torrentConsentTimestamp = 'torrentConsentTimestamp',

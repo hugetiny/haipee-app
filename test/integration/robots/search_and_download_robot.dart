@@ -11,7 +11,6 @@ import 'package:kazumi/pages/resource/resource_search_content.dart';
 import 'package:kazumi/pages/resource/resource_search_page.dart';
 import 'package:kazumi/router.dart';
 import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/aria2_process_manager.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'log_watcher_robot.dart';
 
@@ -152,12 +151,6 @@ class SearchAndDownloadRobot {
     final storedTask = GStorage.downloadTasks.get(mockGid) as DownloadTask?;
     expect(storedTask, isNotNull, reason: 'DownloadTask must be persisted in GStorage.downloadTasks');
     expect(storedTask?.title, equals(item.title));
-
-    // Verify Aria2ProcessManager configuration and security properties
-    final secret = Aria2ProcessManager.generateSecureSecret();
-    expect(secret.length, equals(32), reason: 'Aria2ProcessManager high-entropy secret must be 32 chars');
-    final port = Aria2ProcessManager.activePort ?? 6800;
-    expect(port, greaterThan(0), reason: 'Aria2 port must be positive');
   }
 
   /// Tests the full SelectiveDownloadDialog flow (three-state tree parsing, file selection, confirm).

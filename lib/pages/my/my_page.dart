@@ -7,7 +7,6 @@ import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/pages/menu/navigation_provider.dart';
 import 'package:kazumi/pages/layout/app_bar_config.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/aria2_feature_manager.dart';
 
 class MyPage extends ConsumerStatefulWidget {
   const MyPage({super.key});
@@ -72,14 +71,12 @@ class _MyPageState extends ConsumerState<MyPage> {
                 title: Text(t.library.my.history.title),
                 description: Text(t.library.my.history.description),
               ),
-              // Conditionally show download management if aria2 is available
-              if (Aria2FeatureManager().isAvailable)
-                SettingsTile.navigation(
-                  onPressed: (_) => context.push('/my/download'),
-                  leading: const Icon(Icons.download_rounded),
-                  title: const Text('下载管理'),
-                  description: const Text('管理下载任务'),
-                ),
+              SettingsTile.navigation(
+                onPressed: (_) => context.push('/my/download'),
+                leading: const Icon(Icons.download_rounded),
+                title: const Text('下载管理'),
+                description: const Text('管理下载任务'),
+              ),
             ],
           ),
         ],

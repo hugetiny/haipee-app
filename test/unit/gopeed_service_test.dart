@@ -27,7 +27,8 @@ void main() {
 
       expect(task.gid, equals('task-12345'));
       expect(task.title, equals('test_video.mp4'));
-      expect(task.fileName, equals('test_video.mp4'));
+      expect(task.fileName, equals('/Users/test/Downloads/test_video.mp4'));
+      expect(task.filePath, equals('/Users/test/Downloads/test_video.mp4'));
       expect(task.status, equals('active'));
       expect(task.isActive, isTrue);
       expect(task.totalLength, equals(104857600));

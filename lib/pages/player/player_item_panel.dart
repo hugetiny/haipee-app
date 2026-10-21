@@ -19,7 +19,6 @@ import 'package:kazumi/pages/video/providers.dart';
 import 'package:kazumi/pages/video/video_controller.dart';
 import 'package:kazumi/pages/video/video_state.dart';
 import 'package:kazumi/pages/download/providers.dart';
-import 'package:kazumi/utils/aria2_feature_manager.dart';
 import 'package:kazumi/utils/constants.dart';
 import 'package:kazumi/utils/remote.dart';
 import 'package:kazumi/utils/utils.dart';
@@ -1284,16 +1283,14 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                     playerController.canHidePlayerPanel = true;
                   },
                 ),
-              // Conditionally show download button if aria2 is available
-              if (Aria2FeatureManager().isAvailable)
-                IconButton(
-                  color: Colors.white,
-                  icon: const Icon(Icons.download_rounded),
-                  tooltip: '下载',
-                  onPressed: () async {
-                    await _handleDownload(videoState);
-                  },
-                ),
+              IconButton(
+                color: Colors.white,
+                icon: const Icon(Icons.download_rounded),
+                tooltip: '下载',
+                onPressed: () async {
+                  await _handleDownload(videoState);
+                },
+              ),
               MenuAnchor(
                 consumeOutsideTap: true,
                 onOpen: () {
@@ -1334,20 +1331,18 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                         ),
                       ),
                     ),
-                  // Conditionally show download menu option if aria2 is available
-                  if (Aria2FeatureManager().isAvailable)
-                    MenuItemButton(
-                      onPressed: () async {
-                        await _handleDownload(videoState);
-                      },
-                      child: const SizedBox(
-                        height: 48,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text('下载视频'),
-                        ),
+                  MenuItemButton(
+                    onPressed: () async {
+                      await _handleDownload(videoState);
+                    },
+                    child: const SizedBox(
+                      height: 48,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('下载视频'),
                       ),
                     ),
+                  ),
                   MenuItemButton(
                     onPressed: widget.showVideoInfo,
                     child: SizedBox(

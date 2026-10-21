@@ -10,8 +10,8 @@ import 'package:kazumi/modules/history/history_module.dart';
 import 'package:kazumi/modules/parse_failure/parse_failure_module.dart';
 import 'package:kazumi/modules/download/download_task.dart';
 import 'package:kazumi/modules/search/search_history_module.dart';
+import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
 import 'package:kazumi/request/request.dart';
-import 'package:kazumi/utils/aria2_process_manager.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'robots/download_lifecycle_robot.dart';
 import 'robots/fuzz_and_invariant_hunter_robot.dart';
@@ -71,13 +71,17 @@ void main() {
     GStorage.histories = await Hive.openBox('histories');
     GStorage.favorites = await Hive.openBox('favorites');
     GStorage.shieldList = await Hive.openBox('shieldList');
-
     LocaleSettings.setLocale(AppLocale.zhCn);
+
+    final dylibFile = File('${Directory.current.path}/macos/Frameworks/libgopeed.dylib');
+    if (dylibFile.existsSync()) {
+      await GopeedService().initialize(storageDir: '${tempDir.path}/gopeed');
+    }
   });
 
   tearDownAll(() async {
     try {
-      await Aria2ProcessManager().stop();
+      await GopeedService().stop();
     } catch (_) {}
     try {
       Request.dio.close(force: true);

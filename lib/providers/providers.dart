@@ -23,7 +23,7 @@ export 'package:kazumi/pages/search/providers.dart'; // searchProvider
 export 'package:kazumi/pages/info/providers.dart'; // bangumiInfoProvider, bangumiCommentsProvider, bangumiCharactersProvider, bangumiStaffsProvider
 
 // ==================== 下载管理 Providers ====================
-export 'package:kazumi/pages/download/providers.dart'; // downloadControllerProvider, downloadPageUIProvider, aria2ConnectionStateProvider, filteredActiveTasksProvider, etc.
+export 'package:kazumi/pages/download/providers.dart'; // downloadControllerProvider, downloadPageUIProvider, gopeedStatusProvider, filteredActiveTasksProvider, etc.
 
 // ==================== 设置 Providers ====================
 export 'package:kazumi/pages/setting/providers.dart'; // themeProvider, playerSettingsProvider, metadataSettingsProvider, localeSettingsProvider, showWindowButtonProvider
@@ -57,7 +57,7 @@ export 'package:kazumi/providers/translations_provider.dart'; // translationsPro
 ///
 /// 4. StreamProvider - 实时数据流
 ///    - WebSocket、Server-Sent Events
-///    - 示例：aria2EventStreamProvider、aria2ConnectionStreamProvider
+///    - 示例：downloadEventStreamProvider、downloadStatusStreamProvider
 ///
 /// 5. Provider - 计算派生状态
 ///    - 从其他 Provider 派生的只读数据
@@ -103,16 +103,16 @@ export 'package:kazumi/providers/translations_provider.dart'; // translationsPro
 /// - Timer、StreamSubscription、StreamController 必须在 dispose 中取消/关闭
 /// - 避免内存泄漏
 ///
-/// 【实时通信模式（WebSocket/Stream）】
+/// 【实时通信模式（Stream）】
 /// 1. 创建 StreamProvider 暴露事件流
 ///    ```dart
-///    final aria2EventStreamProvider = StreamProvider<Aria2EventData>((ref) {
+///    final downloadEventStreamProvider = StreamProvider<dynamic>((ref) {
 ///      final controller = ref.watch(downloadControllerProvider.notifier);
 ///      return controller.eventStream;
 ///    });
 ///    ```
 ///
-/// 2. Controller 内部管理 WebSocket 连接
+/// 2. Controller 内部管理事件连接
 ///    ```dart
 ///    final StreamController<EventData> _eventStreamController =
 ///        StreamController<EventData>.broadcast();
@@ -121,7 +121,7 @@ export 'package:kazumi/providers/translations_provider.dart'; // translationsPro
 ///
 /// 3. 在 widget 中监听事件
 ///    ```dart
-///    ref.listen(aria2EventStreamProvider, (previous, next) {
+///    ref.listen(downloadEventStreamProvider, (previous, next) {
 ///      next.whenData((event) {
 ///        // 处理事件
 ///      });

@@ -4,7 +4,6 @@ import 'package:kazumi/modules/metadata_sync/metadata_cache_repository.dart';
 import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
 import 'package:kazumi/modules/metadata_sync/metadata_sync_controller.dart';
 import 'package:kazumi/request/metadata_client.dart';
-import 'package:kazumi/utils/aria2_client.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/platform_guard.dart';
 
@@ -27,10 +26,6 @@ final downloadQueueBoxProvider = Provider<Box<dynamic>>((ref) {
 
 final playbackProfileBoxProvider = Provider<Box<dynamic>>((ref) {
   return GStorage.playbackProfiles;
-});
-
-final aria2ClientProvider = Provider<Aria2Client>((ref) {
-  return Aria2Client.fromSettings();
 });
 
 final platformGuardProvider = Provider<PlatformGuard>((ref) {

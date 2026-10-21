@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:libtorrent_flutter/libtorrent_flutter.dart';
 import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
 
 /// Fake test adapter that simulates libtorrent engine without native C++ dylibs.

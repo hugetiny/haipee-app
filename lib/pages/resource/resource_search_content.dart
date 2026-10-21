@@ -244,7 +244,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         ? int.tryParse(item.episode?.replaceAll('E', '') ?? '')
         : null;
 
-    // 默认优先种子：如果具备种子文件，尝试在 3 秒内极速下载并直接推送给 Aria2
+    // 默认优先种子：如果具备种子文件，尝试在 3 秒内极速下载并直接推送到下载服务
     if (hasTorrent) {
       try {
         final torrentBytes = await TorrentDownloadHelper.fetchTorrentBytes(
@@ -508,7 +508,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('无法在线播放'),
-          content: Text('该资源为 $format 压缩包格式（${item.title}），不支持直接在线边下边播。\n\n建议使用 Aria2 离线下载到本地解压后播放。'),
+          content: Text('该资源为 $format 压缩包格式（${item.title}），不支持直接在线边下边播。\n\n建议离线下载到本地解压后播放。'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),

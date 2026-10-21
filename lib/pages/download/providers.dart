@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kazumi/pages/download/download_controller.dart';
 import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/utils/aria2_websocket.dart';
 
 /// 下载控制器 Provider
 final downloadControllerProvider =
@@ -9,20 +8,26 @@ final downloadControllerProvider =
   DownloadController.new,
 );
 
-/// Aria2 WebSocket 事件流 Provider
+/// 下载事件流 Provider
 /// 用于实时监听下载事件
-final aria2EventStreamProvider = StreamProvider<Aria2EventData>((ref) {
+final downloadEventStreamProvider = StreamProvider<DownloadEventData>((ref) {
   final controller = ref.watch(downloadControllerProvider.notifier);
   return controller.eventStream;
 });
 
-/// Aria2 连接状态流 Provider
-/// 实时监听 WebSocket 连接状态变化
-final aria2ConnectionStreamProvider =
-    StreamProvider<Aria2ConnectionState>((ref) {
+@Deprecated('Use downloadEventStreamProvider instead')
+final aria2EventStreamProvider = downloadEventStreamProvider;
+
+/// 下载连接状态流 Provider
+/// 实时监听下载引擎连接状态变化
+final downloadConnectionStreamProvider =
+    StreamProvider<DownloadConnectionState>((ref) {
   final controller = ref.watch(downloadControllerProvider.notifier);
   return controller.connectionStateStream;
 });
+
+@Deprecated('Use downloadConnectionStreamProvider instead')
+final aria2ConnectionStreamProvider = downloadConnectionStreamProvider;
 
 /// 下载页面 UI 状态
 class DownloadPageUIState {
@@ -134,17 +139,24 @@ final downloadPageUIProvider =
   DownloadPageUINotifier.new,
 );
 
-/// WebSocket 连接状态 Provider
-final aria2ConnectionStateProvider = Provider<Aria2ConnectionState>((ref) {
+/// 下载引擎连接状态 Provider
+final downloadConnectionStateProvider =
+    Provider<DownloadConnectionState>((ref) {
   final downloadState = ref.watch(downloadControllerProvider);
   return downloadState.wsConnectionState;
 });
 
+@Deprecated('Use downloadConnectionStateProvider instead')
+final aria2ConnectionStateProvider = downloadConnectionStateProvider;
+
 /// 是否已连接 Provider
-final isAria2ConnectedProvider = Provider<bool>((ref) {
-  final connectionState = ref.watch(aria2ConnectionStateProvider);
-  return connectionState == Aria2ConnectionState.connected;
+final isDownloadConnectedProvider = Provider<bool>((ref) {
+  final connectionState = ref.watch(downloadConnectionStateProvider);
+  return connectionState == DownloadConnectionState.connected;
 });
+
+@Deprecated('Use isDownloadConnectedProvider instead')
+final isAria2ConnectedProvider = isDownloadConnectedProvider;
 
 /// 活动下载任务数量 Provider
 final activeDownloadsCountProvider = Provider<int>((ref) {
@@ -189,11 +201,14 @@ final hasActiveDownloadsProvider = Provider<bool>((ref) {
       downloadState.waitingTasks.isNotEmpty;
 });
 
-/// WebSocket 统计信息 Provider
-final aria2StatsProvider = Provider<Map<String, dynamic>?>((ref) {
+/// 引擎统计信息 Provider
+final downloadStatsProvider = Provider<Map<String, dynamic>?>((ref) {
   final controller = ref.read(downloadControllerProvider.notifier);
   return controller.getWebSocketStats();
 });
+
+@Deprecated('Use downloadStatsProvider instead')
+final aria2StatsProvider = downloadStatsProvider;
 
 /// 过滤后的活动任务 Provider
 final filteredActiveTasksProvider = Provider<List<DownloadTask>>((ref) {

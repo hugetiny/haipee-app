@@ -41,7 +41,9 @@ enum LogModule {
             rawTag.contains('media_kit')) {
           return LogModule.player;
         }
-        if (rawTag.contains('download')) return LogModule.download;
+        if (rawTag.contains('download') || rawTag.contains('gopeed')) {
+          return LogModule.download;
+        }
         if (rawTag.contains('syncplay')) return LogModule.syncplay;
         if (rawTag.contains('storage') ||
             rawTag.contains('hive') ||

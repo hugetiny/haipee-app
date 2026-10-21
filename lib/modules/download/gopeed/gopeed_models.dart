@@ -101,11 +101,13 @@ class GopeedFile {
   final String name;
   final String path;
   final int size;
+  final int completed;
 
   GopeedFile({
     required this.name,
     required this.path,
     required this.size,
+    this.completed = 0,
   });
 
   factory GopeedFile.fromJson(Map<String, dynamic> json) {
@@ -113,17 +115,24 @@ class GopeedFile {
       name: json['name']?.toString() ?? '',
       path: json['path']?.toString() ?? '',
       size: (json['size'] as num?)?.toInt() ?? 0,
+      completed: (json['completed'] as num?)?.toInt() ?? 0,
     );
   }
 }
 
 class GopeedTaskEvent {
   final String eventType;
+  final String taskId;
+  final String name;
+  final String? error;
   final GopeedTask? task;
   final Map<String, dynamic> raw;
 
   GopeedTaskEvent({
     required this.eventType,
+    this.taskId = '',
+    this.name = '',
+    this.error,
     this.task,
     required this.raw,
   });
@@ -131,8 +140,16 @@ class GopeedTaskEvent {
   factory GopeedTaskEvent.fromJson(Map<String, dynamic> json) {
     final type = json['type']?.toString() ?? '';
     final taskData = json['task'] as Map<String, dynamic>?;
+    final taskId = json['taskId']?.toString() ??
+        (taskData != null ? taskData['id']?.toString() ?? '' : '');
+    final name = json['name']?.toString() ??
+        (taskData != null ? taskData['name']?.toString() ?? '' : '');
+    final error = json['error']?.toString();
     return GopeedTaskEvent(
       eventType: type,
+      taskId: taskId,
+      name: name,
+      error: error,
       task: taskData != null ? GopeedTask.fromJson(taskData) : null,
       raw: json,
     );

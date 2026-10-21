@@ -4,8 +4,8 @@ import 'package:hive_ce/hive.dart';
 import 'package:kazumi/modules/download/download_task.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
 import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/utils/aria2_client.dart';
-import 'package:kazumi/utils/aria2_process_manager.dart';
+import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
+import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
 import 'package:kazumi/utils/storage.dart';
 
 void main() {
@@ -54,15 +54,10 @@ void main() {
       await probeFile.delete();
     });
 
-    test('2. Aria2ProcessManager 自动继承并使用配置的下载目录', () async {
+    test('2. GopeedService 自动继承并使用配置的下载目录', () async {
       await GStorage.setting.put(SettingBoxKey.downloadDirectory, targetDownloadDir);
-      final manager = Aria2ProcessManager();
-      // 验证安全密钥与可用端口生成
-      final secret = Aria2ProcessManager.generateSecureSecret();
-      expect(secret.length, equals(32));
-      final port = await Aria2ProcessManager.findAvailablePort();
-      expect(port, greaterThan(0));
-      expect(manager, isNotNull);
+      final service = GopeedService();
+      expect(service, isNotNull);
     });
 
     test('3. 自动化检索 nds 资源并选定第 1 个结果', () async {
@@ -116,56 +111,32 @@ void main() {
       expect(effectiveOptions['dir'], equals(targetDownloadDir));
     });
 
-    test('5. 端到端 Aria2 任务派发与状态监控闭环', () async {
-      // 检查当前是否有活跃 aria2 RPC
-      final client = Aria2Client(endpoint: Uri.parse('http://127.0.0.1:6800/jsonrpc'));
-      bool rpcActive = false;
-      try {
-        final socket = await Socket.connect('127.0.0.1', 6800,
-            timeout: const Duration(milliseconds: 200));
-        await socket.close();
-        final version = await client.getVersion();
-        rpcActive = version.containsKey('version');
-      } catch (_) {}
+    test('5. 端到端 Gopeed 任务状态转换与模型解析闭环', () async {
+      final sampleTask = GopeedTask(
+        id: 'test_nds_gid_123',
+        name: 'Nintendo DS Roms 0001 - 4851',
+        status: 'running',
+        totalLength: 10485760,
+        completedLength: 5242880,
+        downloadSpeed: 1048576,
+        uploadSpeed: 0,
+        savePath: targetDownloadDir,
+        url: 'magnet:?xt=urn:btih:3772F6578DACB15C02DC090168DF9CFA2610094A&dn=Nintendo+DS+Roms',
+        files: [
+          GopeedFile(
+            name: 'nds_game.nds',
+            path: '$targetDownloadDir/nds_game.nds',
+            size: 10485760,
+            completed: 5242880,
+          ),
+        ],
+      );
 
-      if (rpcActive) {
-        // 如果本地有活跃 aria2，执行真实 RPC 任务派发测试
-        const magnet = 'magnet:?xt=urn:btih:3772F6578DACB15C02DC090168DF9CFA2610094A&dn=Nintendo+DS+Roms';
-        final gid = await client.addUri(
-          [magnet],
-          options: {'dir': targetDownloadDir},
-        );
-        expect(gid, isNotNull);
-
-        final status = await client.tellStatus(gid!);
-        expect(status, isNotNull);
-        expect(status!['gid'], equals(gid));
-        expect(['active', 'waiting'].contains(status['status']), isTrue);
-
-        // 清理测试任务以避免持续占用带宽
-        await client.remove(gid, force: true);
-      } else {
-        // 验证 RPC 请求 payload 格式与解析正确性
-        final sampleStatus = {
-          'gid': 'test_nds_gid_123',
-          'status': 'active',
-          'totalLength': '10485760',
-          'completedLength': '5242880',
-          'downloadSpeed': '1048576',
-          'dir': targetDownloadDir,
-          'files': [
-            {
-              'path': '$targetDownloadDir/nds_game.nds',
-              'uris': [{'uri': 'magnet:?xt=urn:btih:mock'}]
-            }
-          ]
-        };
-
-        final task = DownloadTask.fromAria2Status(sampleStatus, title: 'Nintendo DS Roms');
-        expect(task.gid, equals('test_nds_gid_123'));
-        expect(task.progress, equals(0.5));
-        expect(task.fileName, contains('/Volumes/HD/downloads'));
-      }
+      final task = DownloadTask.fromGopeedTask(sampleTask, title: 'Nintendo DS Roms');
+      expect(task.gid, equals('test_nds_gid_123'));
+      expect(task.progress, equals(0.5));
+      expect(task.fileName, equals('$targetDownloadDir/nds_game.nds'));
+      expect(task.filePath, equals('$targetDownloadDir/nds_game.nds'));
     });
 
     test('6. 验证全流程业务贯通: 搜索结果 -> 提取首位 -> 自动注入 /Volumes/HD/downloads 并完成入队',

@@ -1,3 +1,0 @@
-# Ignore the aria2 binary (it's large, ~8MB)
-# Developers should download it separately following docs/aria2_android_setup.md
-aria2c

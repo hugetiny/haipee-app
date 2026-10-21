@@ -1,4 +1,5 @@
 import 'package:hive_ce/hive.dart';
+import 'package:path/path.dart' as p;
 import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
 
 part 'download_task.g.dart';
@@ -226,79 +227,69 @@ class DownloadTask extends HiveObject {
   // filePath getter - returns fileName if available
   String? get filePath => fileName;
 
-  factory DownloadTask.fromAria2Status(
-    Map<String, dynamic> aria2Status, {
+  factory DownloadTask.fromGopeedTask(
+    GopeedTask gopeedTask, {
     String? title,
     String? bangumiId,
     int? episodeNumber,
     bool preferAudio = false,
     String? url,
   }) {
-    final String gid = aria2Status['gid'] as String? ?? '';
-    final String status = aria2Status['status'] as String? ?? 'unknown';
-    final int totalLength =
-        int.tryParse(aria2Status['totalLength']?.toString() ?? '0') ?? 0;
-    final int completedLength =
-        int.tryParse(aria2Status['completedLength']?.toString() ?? '0') ?? 0;
-    final int downloadSpeed =
-        int.tryParse(aria2Status['downloadSpeed']?.toString() ?? '0') ?? 0;
-    final int uploadSpeed =
-        int.tryParse(aria2Status['uploadSpeed']?.toString() ?? '0') ?? 0;
-    final String? errorMessage = aria2Status['errorMessage'] as String?;
-    final int? errorCode = aria2Status['errorCode'] != null
-        ? int.tryParse(aria2Status['errorCode'].toString())
-        : null;
+    String mappedStatus;
+    switch (gopeedTask.status) {
+      case 'running':
+        mappedStatus = 'active';
+        break;
+      case 'pause':
+        mappedStatus = 'paused';
+        break;
+      case 'wait':
+      case 'ready':
+        mappedStatus = 'waiting';
+        break;
+      case 'done':
+        mappedStatus = 'complete';
+        break;
+      case 'error':
+        mappedStatus = 'error';
+        break;
+      default:
+        mappedStatus = gopeedTask.status;
+    }
 
-    final String? btInfoName = (aria2Status['bittorrent'] is Map)
-        ? (aria2Status['bittorrent']['info'] is Map
-            ? aria2Status['bittorrent']['info']['name']?.toString()
-            : null)
-        : null;
     String effectiveTitle = title ?? '';
-    if (btInfoName != null && btInfoName.isNotEmpty) {
-      if (effectiveTitle.isEmpty || effectiveTitle.startsWith('magnet:')) {
-        effectiveTitle = btInfoName;
+    if (effectiveTitle.isEmpty || effectiveTitle.startsWith('magnet:')) {
+      if (gopeedTask.name.isNotEmpty) {
+        effectiveTitle = gopeedTask.name;
       }
     }
 
     String resolvedUrl = url ?? '';
+    if (resolvedUrl.isEmpty) {
+      resolvedUrl = gopeedTask.url;
+    }
+
     String? bestVideoPath;
     int maxVideoLength = -1;
     final List<Map<String, dynamic>> audioFiles = [];
     String? fallbackPath;
 
-    if (aria2Status['files'] != null && aria2Status['files'] is List) {
-      final List<dynamic> files = aria2Status['files'] as List<dynamic>;
-      for (final f in files) {
-        if (f is Map) {
-          final String path = f['path']?.toString() ?? '';
-          final int length =
-              int.tryParse(f['length']?.toString() ?? '0') ?? 0;
-          if (path.isNotEmpty) {
-            fallbackPath ??= path;
-            final lower = path.toLowerCase();
-            final isVideo = lower.endsWith('.mp4') ||
-                lower.endsWith('.mkv') ||
-                lower.endsWith('.avi') ||
-                lower.endsWith('.flv') ||
-                lower.endsWith('.ts') ||
-                lower.endsWith('.mov') ||
-                lower.endsWith('.webm');
-            if (isVideo && length > maxVideoLength) {
-              maxVideoLength = length;
-              bestVideoPath = path;
-            }
-            final isAudioFile = _audioExtensions.any((ext) => lower.endsWith(ext));
-            if (isAudioFile) {
-              audioFiles.add({'path': path, 'length': length});
-            }
-          }
-          if (resolvedUrl.isEmpty && f['uris'] != null && f['uris'] is List) {
-            final uris = f['uris'] as List<dynamic>;
-            if (uris.isNotEmpty && uris[0] is Map) {
-              resolvedUrl = (uris[0] as Map<String, dynamic>)['uri']?.toString() ?? '';
-            }
-          }
+    for (final f in gopeedTask.files) {
+      String resolvedPath = f.path.isNotEmpty ? f.path : f.name;
+      if (resolvedPath.isNotEmpty) {
+        if (gopeedTask.savePath.isNotEmpty && !p.isAbsolute(resolvedPath)) {
+          resolvedPath = p.join(gopeedTask.savePath, resolvedPath);
+        }
+        fallbackPath ??= resolvedPath;
+        final lower = resolvedPath.toLowerCase();
+        final isVideo = _videoExtensions.any((ext) => lower.endsWith(ext));
+        if (isVideo && f.size > maxVideoLength) {
+          maxVideoLength = f.size;
+          bestVideoPath = resolvedPath;
+        }
+        final isAudioFile = _audioExtensions.any((ext) => lower.endsWith(ext));
+        if (isAudioFile) {
+          audioFiles.add({'path': resolvedPath, 'length': f.size});
         }
       }
     }
@@ -325,70 +316,17 @@ class DownloadTask extends HiveObject {
       fileName = bestVideoPath ?? bestAudioPath ?? fallbackPath;
     }
 
-    return DownloadTask(
-      gid: gid,
-      url: resolvedUrl,
-      title: effectiveTitle.isNotEmpty ? effectiveTitle : (fileName ?? resolvedUrl),
-      fileName: fileName,
-      totalLength: totalLength,
-      completedLength: completedLength,
-      downloadSpeed: downloadSpeed,
-      uploadSpeed: uploadSpeed,
-      status: status,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      errorMessage: errorMessage,
-      errorCode: errorCode,
-      bangumiId: bangumiId,
-      episodeNumber: episodeNumber,
-    );
-  }
-
-  factory DownloadTask.fromGopeedTask(
-    GopeedTask gopeedTask, {
-    String? title,
-    String? bangumiId,
-    int? episodeNumber,
-  }) {
-    String mappedStatus;
-    switch (gopeedTask.status) {
-      case 'running':
-        mappedStatus = 'active';
-        break;
-      case 'pause':
-        mappedStatus = 'paused';
-        break;
-      case 'wait':
-      case 'ready':
-        mappedStatus = 'waiting';
-        break;
-      case 'done':
-        mappedStatus = 'complete';
-        break;
-      case 'error':
-        mappedStatus = 'error';
-        break;
-      default:
-        mappedStatus = gopeedTask.status;
-    }
-
-    String effectiveTitle = title ?? '';
-    if (effectiveTitle.isEmpty) {
-      effectiveTitle = gopeedTask.name;
-    }
-
-    String? singleFileName;
-    if (gopeedTask.files.isNotEmpty) {
-      singleFileName = gopeedTask.files.first.name;
-    } else if (gopeedTask.name.isNotEmpty) {
-      singleFileName = gopeedTask.name;
+    if (fileName == null && gopeedTask.name.isNotEmpty) {
+      fileName = gopeedTask.savePath.isNotEmpty && !p.isAbsolute(gopeedTask.name)
+          ? p.join(gopeedTask.savePath, gopeedTask.name)
+          : gopeedTask.name;
     }
 
     return DownloadTask(
       gid: gopeedTask.id,
-      url: gopeedTask.url,
-      title: effectiveTitle,
-      fileName: singleFileName,
+      url: resolvedUrl,
+      title: effectiveTitle.isNotEmpty ? effectiveTitle : (fileName ?? resolvedUrl),
+      fileName: fileName,
       totalLength: gopeedTask.totalLength,
       completedLength: gopeedTask.completedLength,
       downloadSpeed: gopeedTask.downloadSpeed,

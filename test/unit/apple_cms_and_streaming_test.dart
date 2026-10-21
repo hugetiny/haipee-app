@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kazumi/modules/download/download_task.dart';
+import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
 import 'package:kazumi/pages/player/local_player_page.dart';
 import 'package:kazumi/pages/player/player_item_surface.dart';
 import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/utils/aria2_client.dart';
 
 void main() {
   group('AppleCMS / MacCMS Plugin Tests', () {
@@ -79,35 +79,34 @@ void main() {
 
   group('DownloadTask Smart Video Path Selection', () {
     test('should pick the primary video file instead of non-video files', () {
-      final aria2Status = {
-        'gid': 'gid-12345',
-        'status': 'active',
-        'totalLength': '1050000000',
-        'completedLength': '25000000',
-        'downloadSpeed': '5242880',
-        'files': [
-          {
-            'path': '/downloads/Anime_Ep01/cover.jpg',
-            'length': '150000',
-            'completedLength': '150000',
-          },
-          {
-            'path': '/downloads/Anime_Ep01/release_info.nfo',
-            'length': '2048',
-            'completedLength': '2048',
-          },
-          {
-            'path': '/downloads/Anime_Ep01/[SubGroup] Anime - 01 [1080p].mp4',
-            'length': '1049000000',
-            'completedLength': '24847952',
-            'uris': [
-              {'uri': 'magnet:?xt=urn:btih:0123456789abcdef'}
-            ],
-          },
+      final gopeedTask = GopeedTask(
+        id: 'gid-12345',
+        name: 'Anime Ep 01',
+        status: 'running',
+        totalLength: 1050000000,
+        completedLength: 25000000,
+        downloadSpeed: 5242880,
+        url: 'magnet:?xt=urn:btih:0123456789abcdef',
+        files: [
+          GopeedFile(
+            name: 'cover.jpg',
+            path: '/downloads/Anime_Ep01/cover.jpg',
+            size: 150000,
+          ),
+          GopeedFile(
+            name: 'release_info.nfo',
+            path: '/downloads/Anime_Ep01/release_info.nfo',
+            size: 2048,
+          ),
+          GopeedFile(
+            name: '[SubGroup] Anime - 01 [1080p].mp4',
+            path: '/downloads/Anime_Ep01/[SubGroup] Anime - 01 [1080p].mp4',
+            size: 1049000000,
+          ),
         ],
-      };
+      );
 
-      final task = DownloadTask.fromAria2Status(aria2Status, title: 'Anime Ep 01');
+      final task = DownloadTask.fromGopeedTask(gopeedTask, title: 'Anime Ep 01');
 
       expect(task.fileName, '/downloads/Anime_Ep01/[SubGroup] Anime - 01 [1080p].mp4');
       expect(task.filePath, '/downloads/Anime_Ep01/[SubGroup] Anime - 01 [1080p].mp4');
@@ -116,51 +115,54 @@ void main() {
     });
 
     test('should fallback to first file if no video extension matches', () {
-      final aria2Status = {
-        'gid': 'gid-67890',
-        'status': 'complete',
-        'totalLength': '500',
-        'completedLength': '500',
-        'files': [
-          {
-            'path': '/downloads/archive.tar.gz',
-            'length': '500',
-            'completedLength': '500',
-          }
+      final gopeedTask = GopeedTask(
+        id: 'gid-67890',
+        name: 'archive',
+        status: 'done',
+        totalLength: 500,
+        completedLength: 500,
+        files: [
+          GopeedFile(
+            name: 'archive.tar.gz',
+            path: '/downloads/archive.tar.gz',
+            size: 500,
+          ),
         ],
-      };
+      );
 
-      final task = DownloadTask.fromAria2Status(aria2Status);
+      final task = DownloadTask.fromGopeedTask(gopeedTask);
       expect(task.filePath, '/downloads/archive.tar.gz');
       expect(task.isComplete, isTrue);
     });
 
     test('should pick the primary audio file and set isAudio for audio torrents', () {
-      final aria2Status = {
-        'gid': 'gid-audio-1',
-        'status': 'active',
-        'totalLength': '60000000',
-        'completedLength': '10000000',
-        'files': [
-          {
-            'path': '/music/Album/cover.jpg',
-            'length': '350000',
-          },
-          {
-            'path': '/music/Album/disc.cue',
-            'length': '2048',
-          },
-          {
-            'path': '/music/Album/01 - Hi-Res Track.flac',
-            'length': '59000000',
-            'uris': [
-              {'uri': 'magnet:?xt=urn:btih:audioalbum123'}
-            ],
-          },
+      final gopeedTask = GopeedTask(
+        id: 'gid-audio-1',
+        name: 'Hi-Res Album',
+        status: 'running',
+        totalLength: 60000000,
+        completedLength: 10000000,
+        url: 'magnet:?xt=urn:btih:audioalbum123',
+        files: [
+          GopeedFile(
+            name: 'cover.jpg',
+            path: '/music/Album/cover.jpg',
+            size: 350000,
+          ),
+          GopeedFile(
+            name: 'disc.cue',
+            path: '/music/Album/disc.cue',
+            size: 2048,
+          ),
+          GopeedFile(
+            name: '01 - Hi-Res Track.flac',
+            path: '/music/Album/01 - Hi-Res Track.flac',
+            size: 59000000,
+          ),
         ],
-      };
+      );
 
-      final task = DownloadTask.fromAria2Status(aria2Status, title: 'Hi-Res Album');
+      final task = DownloadTask.fromGopeedTask(gopeedTask, title: 'Hi-Res Album');
       expect(task.fileName, '/music/Album/01 - Hi-Res Track.flac');
       expect(task.isAudio, isTrue);
       expect(task.isVideo, isFalse);
@@ -168,24 +170,27 @@ void main() {
     });
 
     test('should prioritize video file over audio file if release contains both', () {
-      final aria2Status = {
-        'gid': 'gid-hybrid',
-        'status': 'active',
-        'totalLength': '700000000',
-        'completedLength': '20000000',
-        'files': [
-          {
-            'path': '/release/soundtrack.mp3',
-            'length': '15000000',
-          },
-          {
-            'path': '/release/movie.mkv',
-            'length': '680000000',
-          },
+      final gopeedTask = GopeedTask(
+        id: 'gid-hybrid',
+        name: 'Movie + OST',
+        status: 'running',
+        totalLength: 700000000,
+        completedLength: 20000000,
+        files: [
+          GopeedFile(
+            name: 'soundtrack.mp3',
+            path: '/release/soundtrack.mp3',
+            size: 15000000,
+          ),
+          GopeedFile(
+            name: 'movie.mkv',
+            path: '/release/movie.mkv',
+            size: 680000000,
+          ),
         ],
-      };
+      );
 
-      final task = DownloadTask.fromAria2Status(aria2Status, title: 'Movie + OST');
+      final task = DownloadTask.fromGopeedTask(gopeedTask, title: 'Movie + OST');
       expect(task.fileName, '/release/movie.mkv');
       expect(task.isVideo, isTrue);
       expect(task.isAudio, isFalse);
@@ -256,8 +261,8 @@ void main() {
     });
   });
 
-  group('Aria2 Magnet Task Following and Metadata Inheritance', () {
-    test('child task inherits metadata via following GID lookup', () {
+  group('Gopeed Task Metadata Inheritance and Smart Selection', () {
+    test('task inherits metadata from existing stored task', () {
       final metadataTask = DownloadTask(
         gid: 'gid-meta-1',
         url: 'magnet:?xt=urn:btih:hash1',
@@ -269,34 +274,27 @@ void main() {
         updatedAt: DateTime.now(),
       );
 
-      final taskStore = <String, DownloadTask>{
-        metadataTask.gid: metadataTask,
-      };
+      final gopeedTask = GopeedTask(
+        id: 'gid-meta-1',
+        name: 'Fate_Zero_01',
+        status: 'running',
+        totalLength: 2000000000,
+        completedLength: 1000000,
+        url: 'magnet:?xt=urn:btih:hash1',
+        files: [
+          GopeedFile(
+            name: 'Fate_Zero_01.mkv',
+            path: '/downloads/Fate_Zero_01.mkv',
+            size: 2000000000,
+          ),
+        ],
+      );
 
-      // Simulated Aria2 status for the spawned download task
-      final activeAria2Status = {
-        'gid': 'gid-data-1',
-        'status': 'active',
-        'following': 'gid-meta-1',
-        'totalLength': '2000000000',
-        'completedLength': '1000000',
-        'files': [
-          {'path': '/downloads/Fate_Zero_01.mkv', 'length': '2000000000'}
-        ]
-      };
-
-      final gid = activeAria2Status['gid'] as String;
-      final following = activeAria2Status['following'] as String;
-      DownloadTask? existingTask = taskStore[gid];
-      if (existingTask == null && following.isNotEmpty) {
-        existingTask = taskStore[following];
-      }
-
-      final downloadedTask = DownloadTask.fromAria2Status(
-        activeAria2Status,
-        title: existingTask?.title,
-        bangumiId: existingTask?.bangumiId,
-        episodeNumber: existingTask?.episodeNumber,
+      final downloadedTask = DownloadTask.fromGopeedTask(
+        gopeedTask,
+        title: metadataTask.title,
+        bangumiId: metadataTask.bangumiId,
+        episodeNumber: metadataTask.episodeNumber,
       );
 
       expect(downloadedTask.title, 'Fate/Zero S01 [BDRip FLAC]');
@@ -305,58 +303,20 @@ void main() {
       expect(downloadedTask.fileName, '/downloads/Fate_Zero_01.mkv');
     });
 
-    test('metadata task with followedBy is filtered out from stopped results', () {
-      final stoppedResults = [
-        {
-          'gid': 'gid-meta-1',
-          'status': 'complete',
-          'followedBy': ['gid-data-1'],
-        },
-        {
-          'gid': 'gid-normal-complete',
-          'status': 'complete',
-          'files': [
-            {'path': '/downloads/finished.mp4', 'length': '5000000'}
-          ]
-        }
-      ];
-
-      final filtered = <Map<String, dynamic>>[];
-      for (final result in stoppedResults) {
-        final followedBy = result['followedBy'] as List<dynamic>?;
-        if (followedBy != null && followedBy.isNotEmpty) {
-          continue;
-        }
-        filtered.add(result);
-      }
-
-      expect(filtered.length, 1);
-      expect(filtered.first['gid'], 'gid-normal-complete');
-    });
-
-    test('Aria2Client.defaultStatusKeys must request following, followedBy, and dir', () {
-      final keys = Aria2Client.defaultStatusKeys;
-      expect(keys.contains('following'), isTrue,
-          reason: 'Aria2 RPC will not return following without this key');
-      expect(keys.contains('followedBy'), isTrue,
-          reason: 'Aria2 RPC will not return followedBy without this key');
-      expect(keys.contains('dir'), isTrue,
-          reason: 'Aria2 RPC will not return download directory without this key');
-    });
-
-    test('child data task inherits url from parent metadata task', () {
-      final dataStatus = {
-        'gid': 'gid-data-child',
-        'status': 'active',
-        'following': 'gid-meta-parent',
-        'files': [
-          {'path': '/downloads/movie.mkv', 'length': '1000000', 'uris': []}
+    test('task preserves original URL when passed', () {
+      final gopeedTask = GopeedTask(
+        id: 'gid-data-child',
+        name: 'movie',
+        status: 'running',
+        totalLength: 1000000,
+        files: [
+          GopeedFile(name: 'movie.mkv', path: '/downloads/movie.mkv', size: 1000000),
         ],
-      };
+      );
 
       const originalMagnet = 'magnet:?xt=urn:btih:abcdef123456';
-      final task = DownloadTask.fromAria2Status(
-        dataStatus,
+      final task = DownloadTask.fromGopeedTask(
+        gopeedTask,
         url: originalMagnet,
         title: 'Movie Title',
       );
@@ -366,65 +326,65 @@ void main() {
       expect(task.fileName, '/downloads/movie.mkv');
     });
 
-    test('extracts bittorrent info name when title is missing or a raw magnet link', () {
-      final btStatus = {
-        'gid': 'gid-bt',
-        'status': 'active',
-        'bittorrent': {
-          'info': {'name': 'Steins;Gate Complete OST [FLAC]'}
-        },
-        'files': [
-          {'path': '/downloads/01.flac', 'length': '30000000'}
-        ]
-      };
+    test('extracts name when title is missing or a raw magnet link', () {
+      final gopeedTask = GopeedTask(
+        id: 'gid-bt',
+        name: 'Steins;Gate Complete OST [FLAC]',
+        status: 'running',
+        files: [
+          GopeedFile(name: '01.flac', path: '/downloads/01.flac', size: 30000000),
+        ],
+      );
 
-      final taskFromMagnet = DownloadTask.fromAria2Status(
-        btStatus,
+      final taskFromMagnet = DownloadTask.fromGopeedTask(
+        gopeedTask,
         title: 'magnet:?xt=urn:btih:12345',
       );
       expect(taskFromMagnet.title, 'Steins;Gate Complete OST [FLAC]');
 
-      final taskNullTitle = DownloadTask.fromAria2Status(
-        btStatus,
+      final taskNullTitle = DownloadTask.fromGopeedTask(
+        gopeedTask,
       );
       expect(taskNullTitle.title, 'Steins;Gate Complete OST [FLAC]');
     });
 
     test('multi-track audio album prioritizes Track 1 instead of the longest track', () {
-      final albumStatus = {
-        'gid': 'gid-album',
-        'status': 'active',
-        'files': [
-          {'path': '/music/Album/03 - Track 3.flac', 'length': '50000000'},
-          {'path': '/music/Album/01 - Track 1.flac', 'length': '30000000'},
-          {'path': '/music/Album/02 - Track 2.flac', 'length': '40000000'},
-        ]
-      };
+      final gopeedTask = GopeedTask(
+        id: 'gid-album',
+        name: 'Album',
+        status: 'running',
+        files: [
+          GopeedFile(name: '03 - Track 3.flac', path: '/music/Album/03 - Track 3.flac', size: 50000000),
+          GopeedFile(name: '01 - Track 1.flac', path: '/music/Album/01 - Track 1.flac', size: 30000000),
+          GopeedFile(name: '02 - Track 2.flac', path: '/music/Album/02 - Track 2.flac', size: 40000000),
+        ],
+      );
 
-      final task = DownloadTask.fromAria2Status(albumStatus);
+      final task = DownloadTask.fromGopeedTask(gopeedTask);
       expect(task.fileName, '/music/Album/01 - Track 1.flac');
       expect(task.isAudio, isTrue);
     });
 
     test('preferAudio prioritizes lossless music album over small promo video', () {
-      final hybridStatus = {
-        'gid': 'gid-hybrid-music',
-        'status': 'active',
-        'files': [
-          {'path': '/music/promo_preview.mp4', 'length': '8000000'},
-          {'path': '/music/01.flac', 'length': '60000000'},
-        ]
-      };
+      final gopeedTask = GopeedTask(
+        id: 'gid-hybrid-music',
+        name: 'Hybrid',
+        status: 'running',
+        files: [
+          GopeedFile(name: 'promo_preview.mp4', path: '/music/promo_preview.mp4', size: 8000000),
+          GopeedFile(name: '01.flac', path: '/music/01.flac', size: 60000000),
+        ],
+      );
 
-      final taskExplicit = DownloadTask.fromAria2Status(
-        hybridStatus,
+      final taskExplicit = DownloadTask.fromGopeedTask(
+        gopeedTask,
         preferAudio: true,
       );
       expect(taskExplicit.fileName, '/music/01.flac');
       expect(taskExplicit.isAudio, isTrue);
 
-      final taskAutoRatio = DownloadTask.fromAria2Status(
-        hybridStatus,
+      final taskAutoRatio = DownloadTask.fromGopeedTask(
+        gopeedTask,
       );
       expect(taskAutoRatio.fileName, '/music/01.flac');
       expect(taskAutoRatio.isAudio, isTrue);

@@ -49,7 +49,7 @@ void main() {
       expect(
         () => observer.onError(
           TalkerError(
-            Exception('Sample database error'),
+            ArgumentError('Sample database error'),
             message: 'Database query failed',
           ),
         ),
