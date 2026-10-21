@@ -1480,7 +1480,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                   context: context,
                   builder: (context) => DownloadTaskDetailDialog(
                     task: task,
-                    onRetry: task.isError
+                    onRetry: (task.isError || task.isRemoved)
                         ? () async {
                             await controller.retryDownload(task);
                             if (context.mounted) {
@@ -1489,7 +1489,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                             }
                           }
                         : null,
-                    onOpenFile: task.isComplete && task.isPlayable
+                    onOpenFile: (task.isComplete || task.isRemoved) && task.isPlayable
                         ? () => _playTask(context, task)
                         : null,
                   ),
@@ -1924,12 +1924,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                       ),
                       const SizedBox(width: 8),
                     ]
-                    // 下载失败状态下的按钮
-                    else if (task.isError) ...[
+                    // 下载失败或已取消状态下的按钮
+                    else if (task.isError || task.isRemoved) ...[
                       FilledButton.icon(
                         onPressed: () => controller.retryDownload(task),
                         icon: const Icon(Icons.refresh_rounded, size: 16),
-                        label: const Text('重试'),
+                        label: Text(task.isRemoved ? '重新下载' : '重试'),
                         style: FilledButton.styleFrom(
                           backgroundColor: xunleiBlue,
                           foregroundColor: Colors.white,
@@ -2005,6 +2005,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       backgroundColor = Theme.of(context).colorScheme.errorContainer;
       foregroundColor = Theme.of(context).colorScheme.onErrorContainer;
       label = task.isRedirectOrAuthError ? '鉴权失效' : '失败';
+    } else if (task.isRemoved) {
+      backgroundColor = Colors.blueGrey.withValues(alpha: 0.15);
+      foregroundColor = Colors.blueGrey.shade700;
+      label = '已取消';
     } else {
       backgroundColor =
           Theme.of(context).colorScheme.surfaceContainerHighest;

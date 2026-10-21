@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/modules/download/download_task.dart';
+import 'package:kazumi/utils/storage.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class DownloadValidationResult {
   final bool isValid;
@@ -16,7 +19,219 @@ class DownloadValidationResult {
       : isValid = false;
 }
 
+class DownloadDiskInfo {
+  final String fullPath;
+  final String directory;
+  final String fileName;
+  final bool exists;
+  final bool isDirectory;
+  final int diskSize;
+
+  const DownloadDiskInfo({
+    required this.fullPath,
+    required this.directory,
+    required this.fileName,
+    required this.exists,
+    required this.isDirectory,
+    required this.diskSize,
+  });
+}
+
 class DownloadFileUtils {
+  /// Resolves the default download directory synchronously (custom setting or system Downloads)
+  static String getDefaultDownloadDirectorySync() {
+    try {
+      final customPath = (GStorage.setting.get(
+        SettingBoxKey.downloadDirectory,
+        defaultValue: '',
+      ) as String).trim();
+      if (customPath.isNotEmpty) {
+        return customPath;
+      }
+    } catch (_) {}
+
+    try {
+      final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+      if (home != null && home.isNotEmpty) {
+        final dl = p.join(home, 'Downloads');
+        if (Directory(dl).existsSync()) {
+          return dl;
+        }
+      }
+    } catch (_) {}
+
+    return Directory.current.path;
+  }
+
+  /// Resolves the default download directory (custom setting or system Downloads)
+  static Future<String> getDefaultDownloadDirectory() async {
+    try {
+      final customPath = (GStorage.setting.get(
+        SettingBoxKey.downloadDirectory,
+        defaultValue: '',
+      ) as String).trim();
+      if (customPath.isNotEmpty) {
+        return customPath;
+      }
+    } catch (_) {}
+
+    try {
+      final downloadDir = await getDownloadsDirectory()
+          .timeout(const Duration(milliseconds: 150));
+      if (downloadDir != null) {
+        return downloadDir.path;
+      }
+      final appDocDir = await getApplicationDocumentsDirectory()
+          .timeout(const Duration(milliseconds: 150));
+      return appDocDir.path;
+    } catch (_) {}
+
+    return getDefaultDownloadDirectorySync();
+  }
+
+  /// Resolves the canonical full path, containing directory, and disk existence for a task synchronously.
+  static DownloadDiskInfo resolveDiskInfo(DownloadTask task) {
+    String? rawPath = task.filePath;
+    if (rawPath == null || rawPath.trim().isEmpty) {
+      rawPath = task.fileName;
+    }
+
+    String defaultDir = getDefaultDownloadDirectorySync();
+
+    String fullPath = '';
+    String directory = '';
+    String fileName = '';
+
+    if (rawPath != null && rawPath.trim().isNotEmpty) {
+      final trimmed = rawPath.trim();
+      if (p.isAbsolute(trimmed)) {
+        fullPath = p.normalize(trimmed);
+        fileName = p.basename(fullPath);
+        directory = p.dirname(fullPath);
+      } else {
+        fileName = p.basename(trimmed);
+        fullPath = p.normalize(p.join(defaultDir, trimmed));
+        directory = p.dirname(fullPath);
+      }
+    } else {
+      final safeName = task.displayTitle.isNotEmpty
+          ? task.displayTitle
+          : (task.title.isNotEmpty ? task.title : 'download_task');
+      fileName = p.basename(safeName);
+      fullPath = p.normalize(p.join(defaultDir, fileName));
+      directory = defaultDir;
+    }
+
+    bool exists = false;
+    bool isDir = false;
+    int diskSize = 0;
+
+    try {
+      final file = File(fullPath);
+      if (file.existsSync()) {
+        exists = true;
+        isDir = false;
+        diskSize = file.lengthSync();
+      } else {
+        final dir = Directory(fullPath);
+        if (dir.existsSync()) {
+          exists = true;
+          isDir = true;
+          for (final entity in dir.listSync(recursive: true, followLinks: false)) {
+            if (entity is File) {
+              try {
+                diskSize += entity.lengthSync();
+              } catch (_) {}
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    return DownloadDiskInfo(
+      fullPath: fullPath,
+      directory: directory,
+      fileName: fileName,
+      exists: exists,
+      isDirectory: isDir,
+      diskSize: diskSize,
+    );
+  }
+
+  /// Async version of resolveDiskInfo with platform directory fallback.
+  static Future<DownloadDiskInfo> resolveDiskInfoAsync(DownloadTask task) async {
+    String? rawPath = task.filePath;
+    if (rawPath == null || rawPath.trim().isEmpty) {
+      rawPath = task.fileName;
+    }
+
+    String defaultDir = '';
+    try {
+      defaultDir = await getDefaultDownloadDirectory();
+    } catch (_) {
+      defaultDir = getDefaultDownloadDirectorySync();
+    }
+
+    String fullPath = '';
+    String directory = '';
+    String fileName = '';
+
+    if (rawPath != null && rawPath.trim().isNotEmpty) {
+      final trimmed = rawPath.trim();
+      if (p.isAbsolute(trimmed)) {
+        fullPath = p.normalize(trimmed);
+        fileName = p.basename(fullPath);
+        directory = p.dirname(fullPath);
+      } else {
+        fileName = p.basename(trimmed);
+        fullPath = p.normalize(p.join(defaultDir, trimmed));
+        directory = p.dirname(fullPath);
+      }
+    } else {
+      final safeName = task.displayTitle.isNotEmpty
+          ? task.displayTitle
+          : (task.title.isNotEmpty ? task.title : 'download_task');
+      fileName = p.basename(safeName);
+      fullPath = p.normalize(p.join(defaultDir, fileName));
+      directory = defaultDir;
+    }
+
+    bool exists = false;
+    bool isDir = false;
+    int diskSize = 0;
+
+    try {
+      final file = File(fullPath);
+      if (await file.exists()) {
+        exists = true;
+        isDir = false;
+        diskSize = await file.length();
+      } else {
+        final dir = Directory(fullPath);
+        if (await dir.exists()) {
+          exists = true;
+          isDir = true;
+          await for (final entity in dir.list(recursive: true, followLinks: false)) {
+            if (entity is File) {
+              try {
+                diskSize += await entity.length();
+              } catch (_) {}
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    return DownloadDiskInfo(
+      fullPath: fullPath,
+      directory: directory,
+      fileName: fileName,
+      exists: exists,
+      isDirectory: isDir,
+      diskSize: diskSize,
+    );
+  }
+
   /// Opens a file using the system default application.
   static Future<bool> openFile(String? filePath) async {
     if (filePath == null || filePath.isEmpty) {
@@ -58,6 +273,12 @@ class DownloadFileUtils {
       final dir = exists
           ? file.parent
           : (Directory(filePath).existsSync() ? Directory(filePath) : file.parent);
+
+      if (!dir.existsSync()) {
+        try {
+          dir.createSync(recursive: true);
+        } catch (_) {}
+      }
 
       if (Platform.isMacOS) {
         if (exists) {

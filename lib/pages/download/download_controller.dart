@@ -467,6 +467,8 @@ class DownloadController extends Notifier<DownloadState> {
           pausedTasks.add(task);
         } else if (task.isActive) {
           activeTasks.add(task);
+        } else if (task.isRemoved) {
+          failedTasks.add(task);
         } else {
           waitingTasks.add(task);
         }
@@ -491,6 +493,8 @@ class DownloadController extends Notifier<DownloadState> {
               pausedTasks.add(localTask);
             } else if (localTask.isActive) {
               activeTasks.add(localTask);
+            } else if (localTask.isRemoved) {
+              failedTasks.add(localTask);
             } else {
               waitingTasks.add(localTask);
             }
