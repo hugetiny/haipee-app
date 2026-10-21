@@ -13,6 +13,7 @@ import 'package:kazumi/modules/search/search_history_module.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
 import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
 import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
+import 'package:kazumi/modules/torrent_stream/torrent_tracker_service.dart';
 import 'package:kazumi/request/request.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'robots/log_watcher_robot.dart';
@@ -73,10 +74,20 @@ void main() {
     GStorage.favorites = await Hive.openBox('favorites');
     GStorage.shieldList = await Hive.openBox('shieldList');
 
+    TorrentTrackerService.instance.setTrackersForTesting([]);
+    await GStorage.setting.put(
+      SettingBoxKey.downloadDirectory,
+      '${tempDir.path}/downloads',
+    );
+    try {
+      await GopeedService().initialize(storageDir: '${tempDir.path}/gopeed');
+    } catch (_) {}
+
     LocaleSettings.setLocale(AppLocale.zhCn);
   });
 
   tearDownAll(() async {
+    TorrentTrackerService.instance.resetTrackersForTesting();
     try {
       await GopeedService().stop();
     } catch (_) {}

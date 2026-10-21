@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/services.dart';
 import 'libgopeed_bind.dart';
 
 typedef _InvokeResultNative = Void Function(Uint64 requestID, Int32 success, Pointer<Char> payload);
@@ -14,53 +15,140 @@ class LibgopeedWorker {
   factory LibgopeedWorker() => _instance;
 
   LibgopeedWorker._() {
-    _receivePort.listen(_handleWorkerMessage);
-    _errorPort.listen(_handleWorkerError);
-    _isolateReady = Isolate.spawn(_workerMain, _receivePort.sendPort, onError: _errorPort.sendPort);
+    if (_isMobile) {
+      _initMobile();
+    } else {
+      _receivePort.listen(_handleWorkerMessage);
+      _errorPort.listen(_handleWorkerError);
+      _isolateReady = Isolate.spawn(_workerMain, _receivePort.sendPort, onError: _errorPort.sendPort);
+    }
   }
 
   static final LibgopeedWorker _instance = LibgopeedWorker._();
+  static const MethodChannel _channel = MethodChannel('gopeed.com/libgopeed');
+  bool get _isMobile => Platform.isAndroid || Platform.isIOS;
 
   final ReceivePort _receivePort = ReceivePort();
   final ReceivePort _errorPort = ReceivePort();
   final Map<int, Completer<Object?>> _pending = {};
-  final StreamController<Map<String, dynamic>> _taskEvents = StreamController<Map<String, dynamic>>.broadcast();
+  StreamController<Map<String, dynamic>> _taskEvents = StreamController<Map<String, dynamic>>.broadcast();
   late final Future<Isolate> _isolateReady;
   final Completer<SendPort> _sendPort = Completer<SendPort>();
   Future<void>? _stopFuture;
   int _requestID = 0;
   bool _stopping = false;
   bool _stopped = false;
+  bool _started = false;
+  Future<int>? _startFuture;
 
-  Stream<Map<String, dynamic>> get taskEvents => _taskEvents.stream;
+  Stream<Map<String, dynamic>> get taskEvents {
+    if (_taskEvents.isClosed) {
+      _taskEvents = StreamController<Map<String, dynamic>>.broadcast();
+    }
+    return _taskEvents.stream;
+  }
+  bool get isStarted => _started;
 
-  Future<int> start(String config) => _request<int>('start', [config]);
+  void _initMobile() {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'taskEvent') {
+        try {
+          final payload = call.arguments is String
+              ? jsonDecode(call.arguments as String) as Map<String, dynamic>
+              : (call.arguments as Map).cast<String, dynamic>();
+          if (!_taskEvents.isClosed) {
+            _taskEvents.add(payload);
+          }
+        } catch (_) {}
+      }
+    });
+  }
+
+  Future<int> start(String config) {
+    if (_started) return Future.value(0);
+    return _startFuture ??= (_isMobile ? _startMobile(config) : _request<int>('start', [config])).then((res) {
+      _started = true;
+      return res;
+    }).catchError((e) {
+      _startFuture = null;
+      throw e;
+    });
+  }
+
+  Future<int> _startMobile(String config) async {
+    final port = await _channel.invokeMethod<int>('start', {'cfg': config});
+    return port ?? 0;
+  }
 
   Future<void> stop() => _stopFuture ??= _stop();
 
   Future<void> _stop() async {
     _stopping = true;
     try {
-      await _request<Object?>('stop', const [], allowWhileStopping: true);
+      if (_isMobile) {
+        await _channel.invokeMethod<void>('stop');
+      } else {
+        await _request<Object?>('stop', const [], allowWhileStopping: true);
+      }
     } catch (_) {}
     _stopped = true;
+    _started = false;
+    _startFuture = null;
     final stoppingError = StateError('libgopeed worker stopped before the request completed');
     for (final completer in _pending.values) {
       completer.completeError(stoppingError);
     }
     _pending.clear();
     await _taskEvents.close();
-    _receivePort.close();
-    _errorPort.close();
+    if (!_isMobile) {
+      _receivePort.close();
+      _errorPort.close();
+    }
   }
 
   Future<Object?> invoke(String method, String path, String query, String body) {
+    if (_isMobile) {
+      return _invokeMobile(method, path, query, body);
+    }
     return _request<Object?>('invoke', [method, path, query, body]);
   }
 
-  Future<String> apiServer(String operation) => _request<String>('apiServer', [operation]);
+  Future<Object?> _invokeMobile(String method, String path, String query, String body) async {
+    final requestID = _requestID++;
+    final res = await _channel.invokeMethod<String>('invoke', {
+      'method': method,
+      'path': path,
+      'query': query,
+      'body': body,
+      'requestID': requestID,
+    });
+    if (res != null && res.isNotEmpty) {
+      try {
+        return jsonDecode(res);
+      } catch (_) {
+        return res;
+      }
+    }
+    return null;
+  }
+
+  Future<String> apiServer(String operation) {
+    if (_isMobile) {
+      return _apiServerMobile(operation);
+    }
+    return _request<String>('apiServer', [operation]);
+  }
+
+  Future<String> _apiServerMobile(String operation) async {
+    final res = await _channel.invokeMethod<String>(operation);
+    return res ?? '';
+  }
 
   Future<void> subscribeTaskEvents(int mask) async {
+    if (_isMobile) {
+      await _channel.invokeMethod<void>('subscribeTaskEvents', {'mask': mask});
+      return;
+    }
     await _request<Object?>('subscribeTaskEvents', [mask]);
   }
 

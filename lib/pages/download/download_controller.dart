@@ -627,6 +627,10 @@ class DownloadController extends Notifier<DownloadState> {
             customName = title;
           }
 
+          if (!GopeedService().isInitialized) {
+            await GopeedService().initialize();
+          }
+
           final gid = await GopeedService().createTask(
             url: targetUrl,
             name: customName,
@@ -699,6 +703,10 @@ class DownloadController extends Notifier<DownloadState> {
 
       final fileName = torrentFile.path.split(Platform.pathSeparator).last;
       final fileUri = 'file://${torrentFile.absolute.path}';
+
+      if (!GopeedService().isInitialized) {
+        await GopeedService().initialize();
+      }
 
       final gid = await GopeedService().createTask(
         url: fileUri,

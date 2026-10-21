@@ -172,19 +172,6 @@ class SearchAndDownloadRobot {
       onConfirm: (indices, path) async {
         confirmedIndices = indices;
         confirmedSavePath = path;
-
-        // Simulate creating task with selective indices
-        final task = DownloadTask(
-          gid: 'selective_gid_${DateTime.now().millisecondsSinceEpoch}',
-          title: title,
-          url: 'magnet:?xt=urn:btih:selective_mock',
-          status: 'waiting',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        await tester.runAsync(() async {
-          await GStorage.downloadTasks.put(task.gid, task);
-        });
       },
     );
 
@@ -227,6 +214,20 @@ class SearchAndDownloadRobot {
 
     await tester.tap(confirmButton, warnIfMissed: false);
     await settleView();
+
+    // Persist selective task in storage outside of widget event callback
+    final selectiveGid = 'selective_gid_${DateTime.now().millisecondsSinceEpoch}';
+    final selectiveTask = DownloadTask(
+      gid: selectiveGid,
+      title: title,
+      url: 'magnet:?xt=urn:btih:selective_mock',
+      status: 'waiting',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    await tester.runAsync(() async {
+      await GStorage.downloadTasks.put(selectiveTask.gid, selectiveTask);
+    });
 
     logWatcher.checkTesterException(
       tester,

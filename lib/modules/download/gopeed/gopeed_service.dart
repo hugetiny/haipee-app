@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:kazumi/utils/storage.dart';
 import 'gopeed_models.dart';
 import 'libgopeed_worker.dart';
 
@@ -13,19 +14,44 @@ class GopeedService {
 
   final LibgopeedWorker _worker = LibgopeedWorker();
   bool _initialized = false;
+  Future<void>? _initFuture;
   final StreamController<GopeedTaskEvent> _eventController =
       StreamController<GopeedTaskEvent>.broadcast();
+
+  StreamSubscription? _workerSub;
 
   bool get isInitialized => _initialized;
   Stream<GopeedTaskEvent> get taskEvents => _eventController.stream;
 
-  Future<void> initialize({String? storageDir}) async {
-    if (_initialized) return;
+  Future<void> initialize({String? storageDir}) {
+    if (_initialized) return Future.value();
+    if (_initFuture != null) return _initFuture!;
+    return _initFuture = _doInitialize(storageDir: storageDir).then((_) {
+      _initialized = true;
+    }).catchError((e, stack) {
+      _initFuture = null;
+      _initialized = false;
+      throw e;
+    });
+  }
 
+  Future<void> _doInitialize({String? storageDir}) async {
     String targetDir = storageDir ?? '';
     if (targetDir.isEmpty) {
       try {
-        final appDir = await getApplicationSupportDirectory().timeout(const Duration(seconds: 2));
+        final settingDir = (GStorage.setting.get(
+          SettingBoxKey.downloadDirectory,
+          defaultValue: '',
+        ) as String).trim();
+        if (settingDir.isNotEmpty) {
+          targetDir = '$settingDir/.gopeed';
+        }
+      } catch (_) {}
+    }
+
+    if (targetDir.isEmpty) {
+      try {
+        final appDir = await getApplicationSupportDirectory().timeout(const Duration(seconds: 1));
         targetDir = '${appDir.path}/gopeed';
       } catch (_) {
         targetDir = '${Directory.current.path}/.gopeed';
@@ -49,11 +75,10 @@ class GopeedService {
     await _worker.start(jsonEncode(config));
     // Subscribe to task done and error events (mask = 0x03: done=1, error=2)
     await _worker.subscribeTaskEvents(0x03);
-    _worker.taskEvents.listen((data) {
+    await _workerSub?.cancel();
+    _workerSub = _worker.taskEvents.listen((data) {
       _eventController.add(GopeedTaskEvent.fromJson(data));
     });
-
-    _initialized = true;
   }
 
   /// Create a new download task via in-process FFI
@@ -64,6 +89,9 @@ class GopeedService {
     Map<String, String>? headers,
     List<String>? trackers,
   }) async {
+    if (!_initialized) {
+      throw StateError('GopeedService is not initialized');
+    }
     final Map<String, dynamic> extra = {};
     if (headers != null && headers.isNotEmpty) {
       extra['header'] = headers;
@@ -92,6 +120,7 @@ class GopeedService {
 
   /// Fetch all tasks from in-process Gopeed engine
   Future<List<GopeedTask>> getTasks() async {
+    if (!_initialized) return [];
     final res = await _worker.invoke('GET', '/api/v1/tasks', '', '');
     if (res is Map && res['code'] == 0) {
       final list = res['data'] as List<dynamic>? ?? [];
@@ -104,6 +133,7 @@ class GopeedService {
 
   /// Fetch a single task by ID
   Future<GopeedTask?> getTask(String id) async {
+    if (!_initialized) return null;
     final res = await _worker.invoke('GET', '/api/v1/tasks/$id', '', '');
     if (res is Map && res['code'] == 0 && res['data'] is Map) {
       return GopeedTask.fromJson((res['data'] as Map).cast<String, dynamic>());
@@ -113,33 +143,44 @@ class GopeedService {
 
   /// Pause a task
   Future<void> pauseTask(String id) async {
+    if (!_initialized) return;
     await _worker.invoke('PUT', '/api/v1/tasks/$id/pause', '', '');
   }
 
   /// Resume a task
   Future<void> resumeTask(String id) async {
+    if (!_initialized) return;
     await _worker.invoke('PUT', '/api/v1/tasks/$id/continue', '', '');
   }
 
   /// Pause all tasks
   Future<void> pauseAll() async {
+    if (!_initialized) return;
     await _worker.invoke('PUT', '/api/v1/tasks/pause', '', '');
   }
 
   /// Resume all tasks
   Future<void> resumeAll() async {
+    if (!_initialized) return;
     await _worker.invoke('PUT', '/api/v1/tasks/continue', '', '');
   }
 
   /// Delete a task
   Future<void> deleteTask(String id, {bool force = false}) async {
+    if (!_initialized) return;
     await _worker.invoke('DELETE', '/api/v1/tasks/$id', force ? 'force=true' : '', '');
   }
 
   /// Stop Gopeed engine
   Future<void> stop() async {
-    if (!_initialized) return;
-    await _worker.stop();
-    _initialized = false;
+    if (!_initialized && _initFuture == null) return;
+    try {
+      await _workerSub?.cancel();
+      _workerSub = null;
+      await _worker.stop();
+    } finally {
+      _initialized = false;
+      _initFuture = null;
+    }
   }
 }

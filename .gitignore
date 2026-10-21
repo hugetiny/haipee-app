@@ -15,6 +15,7 @@
 .swiftpm/
 migrate_working_dir/
 prowlarr_indexers/
+*.bolt.db
 
 # Archives & credentials
 *.apk
@@ -149,5 +150,6 @@ pubspec.lock
 
 # Native desktop binaries & external libraries
 macos/Frameworks/
+android/app/libs/
 third_party/
 assets/bin/macos/torrserver
