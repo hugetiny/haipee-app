@@ -15,6 +15,11 @@ on:
           - 'Flagship (Pixel 7 / Android 33)'
           - 'Multi-device Matrix (Pixel 7 Android 33 + Pixel 6 Android 32)'
         default: 'Flagship (Pixel 7 / Android 33)'
+      run_ios:
+        description: 'Attempt iOS build & validation (requires macOS runner)'
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -47,7 +52,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -158,4 +163,46 @@ jobs:
           name: test-lab-logs
           path: test_lab_output.log
           if-no-files-found: ignore
+
+  ios-build-and-test:
+    name: Cloud Build & iOS Test Lab Validation
+    runs-on: macos-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_ios == true
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2.16.0
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build iOS App Bundle (Unsigned Release)
+        run: |
+          echo "Building iOS Release..."
+          flutter build ios --release --no-codesign
+          mkdir Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/Runner.app
+          zip -q -r kazumi-release-unsigned.ipa Payload
+
+      - name: Upload iOS IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kazumi-release-unsigned-ipa
+          path: kazumi-release-unsigned.ipa
+
+      - name: Check Apple Code Signing & Test Lab Readiness
+        run: |
+          echo "### 📱 iOS Firebase Test Lab Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: kazumi-release-unsigned.ipa compiled successfully." >> $GITHUB_STEP_SUMMARY
+          echo "- **Physical Device Requirement**: Firebase Test Lab tests iOS apps on real physical devices (e.g. iPhone 14 Pro, iOS 16.6). Apple's kernel enforces signature verification; unsigned IPAs are rejected during matrix creation." >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Note**: To run cloud Robo crawls on real iPhones, provide an Apple Developer Team profile / enterprise provisioning certificate in GitHub Secrets." >> $GITHUB_STEP_SUMMARY
+
 
