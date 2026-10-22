@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -115,16 +116,25 @@ void main() async {
           await windowManager.show();
           await windowManager.focus();
         });
+        // Fallback for hot restart or if waitUntilReadyToShow has already fired
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          try {
+            if (!(await windowManager.isVisible())) {
+              await windowManager.show();
+              await windowManager.focus();
+            }
+          } catch (_) {}
+        });
       }
       Request();
       await Request.setCookie();
 
-      // Initialize Gopeed download engine
-      try {
-        await GopeedService().initialize();
-      } catch (e) {
-        KazumiLogger().log(Level.warning, '[Main] Failed to initialize Gopeed: $e');
-      }
+      // Initialize Gopeed download engine in background without blocking UI startup
+      unawaited(
+        GopeedService().initialize().catchError((e) {
+          KazumiLogger().log(Level.warning, '[Main] Failed to initialize Gopeed: $e');
+        }),
+      );
 
       runApp(
         const ProviderScope(

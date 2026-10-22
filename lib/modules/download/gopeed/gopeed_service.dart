@@ -26,7 +26,12 @@ class GopeedService {
   Future<void> initialize({String? storageDir}) {
     if (_initialized) return Future.value();
     if (_initFuture != null) return _initFuture!;
-    return _initFuture = _doInitialize(storageDir: storageDir).then((_) {
+    return _initFuture = _doInitialize(storageDir: storageDir).timeout(
+      const Duration(seconds: 4),
+      onTimeout: () {
+        throw TimeoutException('GopeedService initialization timed out after 4 seconds');
+      },
+    ).then((_) {
       _initialized = true;
     }).catchError((e, stack) {
       _initFuture = null;
@@ -72,9 +77,9 @@ class GopeedService {
       'refreshInterval': 1000,
     };
 
-    await _worker.start(jsonEncode(config));
+    await _worker.start(jsonEncode(config)).timeout(const Duration(seconds: 3));
     // Subscribe to task done and error events (mask = 0x03: done=1, error=2)
-    await _worker.subscribeTaskEvents(0x03);
+    await _worker.subscribeTaskEvents(0x03).timeout(const Duration(seconds: 2));
     await _workerSub?.cancel();
     _workerSub = _worker.taskEvents.listen((data) {
       _eventController.add(GopeedTaskEvent.fromJson(data));
