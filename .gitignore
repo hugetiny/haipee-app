@@ -153,3 +153,9 @@ macos/Frameworks/
 android/app/libs/
 third_party/
 assets/bin/macos/torrserver
+
+# Temporary diagnostic captures (Strict Zero-Screenshot Policy)
+/flutter_*.png
+/screen_*.png
+/temp_screen*.png
+/tmp_*.png

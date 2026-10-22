@@ -210,6 +210,10 @@ _Avoid_: Reckless unofficial forks of complex C++ plugins, ignoring upstream SPM
 The zero-boilerplate static facade unifying application logging across 11 strongly-typed subsystems (`LogModule.stream`, `LogModule.aria2`, `LogModule.indexer`, `LogModule.player`, `LogModule.network`, `LogModule.ui`, `LogModule.download`, `LogModule.syncplay`, `LogModule.storage`, `LogModule.system`, `LogModule.plugin`) backed by `TalkerFlutter`. Provides backward-compatible shims for legacy `KazumiLogger`.
 _Avoid_: Scattershot `print` / `debugPrint`, unstructured string logs, unmanaged log levels
 
+**Telemetry Coexistence Topology (`AppLog` & `SentryFlutter` Coexistence)**:
+The decoupled two-tier observability topology where `AppLog` acts as the authoritative local Single Source of Truth (SSOT) and `SentryService` acts as the optional cloud APM consumer via `SentryTalkerObserver`. Local developers and offline builds run with zero remote overhead; when a valid Sentry DSN is configured, `AppLog` errors and warnings automatically flow into Sentry Breadcrumbs and Issue events without littering business code with direct Sentry calls.
+_Avoid_: Direct duplicate reporting from UI/business layers, conflicting logging abstractions, hardcoded remote telemetry dependencies
+
 **Rolling File Sink**:
 The non-blocking, queued file persistence sink maintaining at most 3 fixed-size log files (`kazumi.log`, `kazumi.1.log`, `kazumi.2.log`, 5MB each) in the application support directory, persisting INFO, WARNING, ERROR, and CRITICAL logs (plus DEBUG when developer mode is active).
 _Avoid_: Direct synchronous file writes in UI thread, unbounded single log files, loss of operational INFO context
@@ -222,12 +226,15 @@ _Avoid_: Hidden unreachable logs, unthrottled error toast spam, needing device U
 The unified I/O stream piping directing stdout/stderr and event callbacks from internal and background engines (such as Gopeed FFI event pipes and external daemons) into `AppLog` with standard module tagging (`[Gopeed]`, `[Download]`, `[Stream]`).
 _Avoid_: Swallowing daemon stdout/stderr, unparsed raw character codes, silent child process crashes
 
-
 ### Zero-Screenshot Development Architecture & Introspection
 
 **Zero-Screenshot Development Architecture**:
 The 4-layer headless testing and introspection toolchain strictly banning OS-level screenshotting (`screencapture`) and coordinate-based clicking (`CGEvent` / AppleScript). Replaces visual guesswork with deterministic in-memory `WidgetTester` assertions, `ext.flutter.inspector` VM Service JSON-RPC queries, strong semantic `Key` identifiers, and domain-level Robot automation.
 _Avoid_: OS screenshot captures, pixel coordinate mouse clicking, visual regression guessing, slow non-deterministic manual verification
+
+**Programmatic Verification Protocol (程序化确定性校验规范)**:
+The mandatory development invariant requiring all functional, visual, and liveness verifications to be performed programmatically through unit/widget tests (`flutter test`), VM Service RPC inspections (`tool/inspect_app.dart`), and structured `AppLog` state machine streams. Pixel eyeballing and screenshot rendering are permanently prohibited across all engineering and subagent tasks.
+_Avoid_: Taking screenshots to confirm layout, eyeballing image files, manual clicking without Finder assertions
 
 **VM Service Introspection CLI (`tool/inspect_app.dart`)**:
 The dedicated developer and AI automation CLI connecting directly to the running Dart VM Service WebSocket (`ws://127.0.0.1:<port>/<token>/ws`). Provides instantaneous runtime overflow scanning (`--check-overflow`), live widget finding by type/key/description (`--find`), compact widget hierarchy tree dumping (`--tree`), and RPC-driven hot reload (`--reload`).
