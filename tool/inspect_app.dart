@@ -328,16 +328,18 @@ Future<String?> _autoDiscoverVmServiceUri() async {
   final regExp = RegExp(r'ws://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/ws');
   final httpRegExp = RegExp(r'http://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/');
 
-  final tasksDir = Directory('/Users/a12/.gemini/antigravity-cli/brain/f8aa996f-3e7a-43fd-a39e-24ad2cba58f0/.system_generated/tasks');
-  if (await tasksDir.exists()) {
-    final files = tasksDir
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.log'))
-        .toList()
-      ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+  final brainDir = Directory('/Users/a12/.gemini/antigravity-cli/brain');
+  if (await brainDir.exists()) {
+    final taskFiles = <File>[];
+    for (final conv in brainDir.listSync().whereType<Directory>()) {
+      final tasksDir = Directory('${conv.path}/.system_generated/tasks');
+      if (tasksDir.existsSync()) {
+        taskFiles.addAll(tasksDir.listSync().whereType<File>().where((f) => f.path.endsWith('.log')));
+      }
+    }
+    taskFiles.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
 
-    for (final file in files) {
+    for (final file in taskFiles) {
       try {
         final lines = await file.readAsLines();
         for (final line in lines.reversed) {
