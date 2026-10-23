@@ -25,13 +25,12 @@ import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/utils/parse_failure_helper.dart';
 import 'package:kazumi/utils/utils.dart';
 
-/// Kazumi 规则管理一级分类组 (严格四大分类：在线视频、电视直播、网盘资源【下载类】、BT磁力【下载类】及规则商店)
+/// Kazumi 规则管理一级分类组 (三大核心分类：视频、直播、网盘资源【网盘与BT】及规则商店)
 enum PluginCategoryGroup {
   all(id: 'all', label: '全部', icon: Icons.all_inclusive),
-  video(id: 'video', label: '在线视频', icon: Icons.video_library_outlined),
-  live(id: 'live', label: '电视直播', icon: Icons.live_tv_outlined),
-  drive(id: 'drive', label: '网盘资源 (下载类)', icon: Icons.cloud_download_outlined),
-  bt(id: 'bt', label: 'BT磁力 (下载类)', icon: Icons.download_for_offline_outlined),
+  video(id: 'video', label: '视频', icon: Icons.video_library_outlined),
+  live(id: 'live', label: '直播', icon: Icons.live_tv_outlined),
+  resource(id: 'resource', label: '网盘资源', icon: Icons.cloud_download_outlined),
   catalog(id: 'catalog', label: '规则商店', icon: Icons.storefront_outlined);
 
   final String id;
@@ -891,10 +890,8 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.video).toList();
           } else if (group == PluginCategoryGroup.live) {
             categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.live).toList();
-          } else if (group == PluginCategoryGroup.drive) {
-            categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.drive).toList();
-          } else if (group == PluginCategoryGroup.bt) {
-            categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.bt).toList();
+          } else if (group == PluginCategoryGroup.resource) {
+            categoryList = allPlugins.where((p) => p.resolvedCategory.isResource).toList();
           }
 
           final count = group == PluginCategoryGroup.catalog
@@ -962,10 +959,8 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
       categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.video).toList();
     } else if (_selectedGroup == PluginCategoryGroup.live) {
       categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.live).toList();
-    } else if (_selectedGroup == PluginCategoryGroup.drive) {
-      categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.drive).toList();
-    } else if (_selectedGroup == PluginCategoryGroup.bt) {
-      categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.bt).toList();
+    } else if (_selectedGroup == PluginCategoryGroup.resource) {
+      categoryPlugins = allPlugins.where((p) => p.resolvedCategory.isResource).toList();
     }
 
     // 结合 L2 属性筛选与关键字过滤

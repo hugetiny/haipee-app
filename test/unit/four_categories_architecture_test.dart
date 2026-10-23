@@ -240,24 +240,20 @@ void main() {
     // 4. UI 枚举一致性 (PluginCategoryGroup & OnlineSourceFilter)
     // -------------------------------------------------------------
     group('4. UI 分类结构一致性校验', () {
-      test('PluginCategoryGroup 包含四大分类与规则商店', () {
+      test('PluginCategoryGroup 包含三大分类与规则商店', () {
         final groups = PluginCategoryGroup.values.map((g) => g.id).toList();
         expect(groups, contains('all'));
         expect(groups, contains('video'));
         expect(groups, contains('live'));
-        expect(groups, contains('drive'));
-        expect(groups, contains('bt'));
+        expect(groups, contains('resource'));
         expect(groups, contains('catalog'));
 
-        // 标签明确标注下载类
-        final driveGroup = PluginCategoryGroup.values.firstWhere((g) => g.id == 'drive');
-        expect(driveGroup.label, contains('下载类'));
-
-        final btGroup = PluginCategoryGroup.values.firstWhere((g) => g.id == 'bt');
-        expect(btGroup.label, contains('下载类'));
+        // 标签明确标注网盘资源
+        final resGroup = PluginCategoryGroup.values.firstWhere((g) => g.id == 'resource');
+        expect(resGroup.label, equals('网盘资源'));
       });
 
-      test('OnlineSourceFilter 包含在线视频、电视直播与资源下载类', () {
+      test('OnlineSourceFilter 包含视频、直播与网盘资源', () {
         final filters = OnlineSourceFilter.values.map((f) => f.id).toList();
         expect(filters, contains('all'));
         expect(filters, contains('video'));
@@ -265,8 +261,7 @@ void main() {
         expect(filters, contains('resource'));
 
         final resFilter = OnlineSourceFilter.values.firstWhere((f) => f.id == 'resource');
-        expect(resFilter.label, contains('资源下载'));
-        expect(resFilter.label, contains('网盘/BT'));
+        expect(resFilter.label, equals('网盘资源'));
       });
     });
 

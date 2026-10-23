@@ -153,11 +153,11 @@ void main() {
         findsOneWidget,
       );
 
-      // 2. 验证四大分类规则源切换 Chips 及底层技术说明
-      expect(find.text('全部源'), findsOneWidget);
-      expect(find.text('在线视频 (1)'), findsOneWidget);
-      expect(find.text('电视直播 (0)'), findsOneWidget);
-      expect(find.text('资源下载 (0)'), findsOneWidget);
+      // 2. 验证三大分类规则源切换 Chips 及底层技术说明
+      expect(find.text('全部'), findsOneWidget);
+      expect(find.text('视频 (1)'), findsOneWidget);
+      expect(find.text('直播 (0)'), findsOneWidget);
+      expect(find.text('网盘资源 (0)'), findsOneWidget);
       expect(find.text('底层技术: 多协议全网并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
 
       // 3. 验证快捷操作入口 (视频规则管理与下载管理快捷图标)
@@ -277,7 +277,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify initial rendering
-      expect(find.text('在线视频 (1)'), findsOneWidget);
+      expect(find.text('视频 (1)'), findsOneWidget);
 
       // Mutate pluginsProvider state as if catalog/disabled state loaded asynchronously
       final controller = container.read(pluginsProvider.notifier);
@@ -287,7 +287,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify reactive update succeeded without ProviderException
-      expect(find.text('在线视频 (0)'), findsOneWidget);
+      expect(find.text('视频 (0)'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       tester.view.resetPhysicalSize();
@@ -387,8 +387,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // 切换至在线视频分类
-      await tester.tap(find.text('在线视频 (0)'));
+      // 切换至视频分类
+      await tester.tap(find.text('视频 (0)'));
       await tester.pumpAndSettle();
 
       // 输入普通搜索关键词（当前无插件匹配）
@@ -482,22 +482,29 @@ void main() {
       );
       expect(find.text('底层技术: 多协议全网并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
 
-      // 2. 切换至在线视频
-      await tester.tap(find.text('在线视频 (0)'));
+      // 2. 切换至视频
+      await tester.tap(find.text('视频 (0)'));
       await tester.pumpAndSettle();
 
       expect(find.text('搜索在线视频、动漫番剧或粘贴 B站 BV 号'), findsOneWidget);
       expect(find.text('底层技术: B站官方 4K DASH · 影视CMS采集 · 动漫点播'), findsOneWidget);
 
-      // 3. 切换至电视直播
-      await tester.tap(find.text('电视直播 (0)'));
+      // 3. 切换至直播
+      await tester.tap(find.text('直播 (0)'));
       await tester.pumpAndSettle();
 
       expect(find.text('搜索电视直播频道、央视、卫视或轮播台'), findsOneWidget);
       expect(find.text('底层技术: IPTV M3U8 · 央视卫视 · 二次元轮播'), findsOneWidget);
 
-      // 4. 切回全部源
-      await tester.tap(find.text('全部源'));
+      // 4. 切换至网盘资源
+      await tester.tap(find.text('网盘资源 (0)'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('搜索网盘影视文件 (AList/WebDAV) 或 BT 资源'), findsOneWidget);
+      expect(find.text('底层技术: 网盘与BT下载资源聚合 · AList直链 · 磁力种子转存下载'), findsOneWidget);
+
+      // 5. 切回全部
+      await tester.tap(find.text('全部'));
       await tester.pumpAndSettle();
 
       expect(

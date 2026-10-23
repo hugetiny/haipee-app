@@ -255,7 +255,58 @@ class BiliAuthService {
     }
   }
 
-  /// 5. 退出登录
+  /// 5. 通过原始 Cookie 字符串或 SESSDATA 手动登录
+  Future<(bool, String)> loginWithCookieString(String input) async {
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) {
+      return (false, 'Cookie 不能为空');
+    }
+
+    String? sessData;
+    String? biliJct;
+    String? dedeUserId;
+
+    if (trimmed.contains('=')) {
+      final parts = trimmed.split(';');
+      for (final part in parts) {
+        final pair = part.trim().split('=');
+        if (pair.length >= 2) {
+          final key = pair[0].trim();
+          final val = pair.sublist(1).join('=').trim();
+          if (key == 'SESSDATA') sessData = val;
+          if (key == 'bili_jct') biliJct = val;
+          if (key == 'DedeUserID') dedeUserId = val;
+        }
+      }
+    } else {
+      // 纯 SESSDATA 串
+      sessData = trimmed;
+    }
+
+    if (sessData == null || sessData.isEmpty) {
+      return (false, '未能从输入中提取到有效的 SESSDATA');
+    }
+
+    await saveSession(
+      sessData: sessData,
+      biliJct: biliJct,
+      dedeUserId: dedeUserId,
+    );
+
+    try {
+      final profile = await fetchUserProfile();
+      if (profile != null && profile.isLogin) {
+        return (true, '登录成功！欢迎，${profile.uname}');
+      } else {
+        await logout();
+        return (false, 'Cookie 验证未通过，账号未处于登录状态或凭据已失效');
+      }
+    } catch (e) {
+      return (false, '请求验证失败: $e');
+    }
+  }
+
+  /// 6. 退出登录
   Future<void> logout() async {
     await GStorage.setting.delete('bilibiliSessData');
     await GStorage.setting.delete('bilibiliBiliJct');

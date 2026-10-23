@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:integration_test/integration_test.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
@@ -21,7 +20,7 @@ import '../test/integration/robots/navigation_robot.dart';
 import '../test/integration/robots/search_and_download_robot.dart';
 
 void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
   late LogWatcherRobot logWatcher;

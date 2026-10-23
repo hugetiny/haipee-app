@@ -158,6 +158,43 @@ void main() {
       expect(authService.getSessData(), isNull);
       expect(authService.userNotifier.value, isNull);
     });
+
+    test('5. loginWithCookieString handles empty, raw string, and full cookie header', () async {
+      // 1. Empty string validation
+      final (emptySuccess, emptyMsg) = await authService.loginWithCookieString('  ');
+      expect(emptySuccess, isFalse);
+      expect(emptyMsg, contains('不能为空'));
+
+      // 2. Mock Dio for user profile validation
+      final mockDio = Dio();
+      mockDio.httpClientAdapter = _MockHttpClientAdapter((options) {
+        if (options.uri.path.contains('/x/web-interface/nav')) {
+          return ResponseBody.fromString(
+            '{"code":0,"data":{"isLogin":true,"mid":88888,"uname":"移动端测试用户","face":"https://test.bili/avatar.jpg","vipType":2,"vip_label":{"text":"年度大会员"}}}',
+            200,
+            headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+          );
+        }
+        return ResponseBody.fromString('{}', 404);
+      });
+      authService.setCustomDio(mockDio);
+
+      // 3. Full Cookie header input
+      final (cookieSuccess, cookieMsg) = await authService.loginWithCookieString(
+        'buvid3=test; SESSDATA=my_valid_sessdata_abc; bili_jct=my_valid_jct_123; DedeUserID=88888;',
+      );
+      expect(cookieSuccess, isTrue);
+      expect(cookieMsg, contains('欢迎，移动端测试用户'));
+      expect(authService.isLoggedIn, isTrue);
+      expect(authService.getSessData(), equals('my_valid_sessdata_abc'));
+      expect(authService.userNotifier.value?.uname, equals('移动端测试用户'));
+      expect(authService.userNotifier.value?.isVip, isTrue);
+
+      // 4. Plain token input
+      final (plainSuccess, _) = await authService.loginWithCookieString('my_plain_token_xyz');
+      expect(plainSuccess, isTrue);
+      expect(authService.getSessData(), equals('my_plain_token_xyz'));
+    });
   });
 }
 

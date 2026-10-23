@@ -29,26 +29,26 @@ import 'package:logger/logger.dart';
 enum OnlineSourceFilter {
   all(
     id: 'all',
-    label: '全部源',
+    label: '全部',
     techStack: '多协议全网并发聚合调度 · 毫秒级原生直出',
     icon: Icons.all_inclusive,
   ),
   video(
     id: 'video',
-    label: '在线视频',
+    label: '视频',
     techStack: 'B站官方 4K DASH · 影视CMS采集 · 动漫点播',
     icon: Icons.video_library_outlined,
   ),
   live(
     id: 'live',
-    label: '电视直播',
+    label: '直播',
     techStack: 'IPTV M3U8 · 央视卫视 · 二次元轮播',
     icon: Icons.live_tv_outlined,
   ),
   resource(
     id: 'resource',
-    label: '资源下载 (网盘/BT)',
-    techStack: 'AList 网盘原画直链 · BT磁力种子检索与转存下载',
+    label: '网盘资源',
+    techStack: '网盘与BT下载资源聚合 · AList直链 · 磁力种子转存下载',
     icon: Icons.cloud_download_outlined,
   );
 
@@ -831,17 +831,17 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                 final videoCount = pluginsState.enabledPlugins
                     .where((p) => p.resolvedCategory == PluginCategory.video)
                     .length;
-                labelText = '在线视频 ($videoCount)';
+                labelText = '${filter.label} ($videoCount)';
               } else if (filter == OnlineSourceFilter.live) {
                 final liveCount = pluginsState.enabledPlugins
                     .where((p) => p.resolvedCategory == PluginCategory.live)
                     .length;
-                labelText = '电视直播 ($liveCount)';
+                labelText = '${filter.label} ($liveCount)';
               } else if (filter == OnlineSourceFilter.resource) {
                 final resCount = pluginsState.enabledPlugins
                     .where((p) => p.isResource)
                     .length;
-                labelText = '资源下载 ($resCount)';
+                labelText = '${filter.label} ($resCount)';
               }
               return ChoiceChip(
                 avatar: Icon(filter.icon, size: 16),

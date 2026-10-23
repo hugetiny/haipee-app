@@ -185,8 +185,6 @@ dependency_overrides:
       path: ./libs/macos/media_kit_libs_macos_video
 
 dev_dependencies:
-  integration_test:
-    sdk: flutter
   path_provider_platform_interface: ^2.1.2
   plugin_platform_interface: ^2.1.8
   flutter_test:

@@ -135,7 +135,9 @@ void main() {
     await tester.ensureVisible(find.text('保存并应用'));
     await tester.tap(find.text('保存并应用'));
     await tester.pump();
-    await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
+    await tester.runAsync(() async {
+      await Future.delayed(const Duration(milliseconds: 300));
+    });
     await tester.pumpAndSettle();
 
     // 验证底层存储与配置已更新

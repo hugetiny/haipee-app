@@ -109,6 +109,56 @@ void main() {
       await tester.tap(find.text('暂不登录 (保持360P)'));
       await tester.pumpAndSettle();
     });
+
+    testWidgets('3. BiliLoginDialog supports switching between WebView, QR Code, and Cookie tabs', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () => BiliLoginDialog.show(context),
+                child: const Text('Open Dialog'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Dialog'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 1. Verify 3 tab options exist in SegmentedButton
+      expect(find.text('网页/短信'), findsOneWidget);
+      expect(find.text('扫码登录'), findsOneWidget);
+      expect(find.text('Cookie'), findsOneWidget);
+
+      // On macOS desktop test runner, initial tab is QR Code (desktop recommended)
+      expect(find.text('桌面端推荐'), findsOneWidget);
+
+      // 2. Switch to Cookie tab
+      await tester.tap(find.text('Cookie'));
+      await tester.pump();
+
+      expect(find.text('手动粘贴 B站登录凭据 (SESSDATA)'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text('验证并登录'), findsOneWidget);
+
+      // 3. Switch to Webview tab
+      await tester.tap(find.text('网页/短信'));
+      await tester.pump();
+
+      expect(find.text('桌面端推荐使用手机 App 扫码登录'), findsOneWidget);
+      expect(find.text('在默认浏览器中打开登录页'), findsOneWidget);
+
+      // Dismiss dialog
+      await tester.tap(find.text('暂不登录 (保持360P)'));
+      await tester.pumpAndSettle();
+    });
   });
 }
 
