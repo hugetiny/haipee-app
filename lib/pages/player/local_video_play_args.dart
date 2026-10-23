@@ -11,6 +11,7 @@ class LocalVideoPlayArgs {
   final String? audioUrl;
   final Map<String, String>? httpHeaders;
   final int? biliCid;
+  final String? biliBvid;
   final List<DanmakuEntry>? danmakus;
 
   const LocalVideoPlayArgs({
@@ -24,6 +25,7 @@ class LocalVideoPlayArgs {
     this.audioUrl,
     this.httpHeaders,
     this.biliCid,
+    this.biliBvid,
     this.danmakus,
   });
 

@@ -99,6 +99,19 @@ class PlayerController extends Notifier<PlayerState> {
   String? activeAudioUrl;
   Map<String, String>? activeHttpHeaders;
   int? activeBiliCid;
+  String? activeBiliBvid;
+
+  /// 检测当前播放流是否为 B站 视频
+  bool get isBiliPlayback {
+    if (activeBiliCid != null && activeBiliCid! > 0) return true;
+    if (activeBiliBvid != null && activeBiliBvid!.isNotEmpty) return true;
+    if (activeLocalVideoArgs?.biliCid != null && activeLocalVideoArgs!.biliCid! > 0) return true;
+    if (activeLocalVideoArgs?.biliBvid != null && activeLocalVideoArgs!.biliBvid!.isNotEmpty) return true;
+    final currentUrl = videoUrl.toLowerCase();
+    if (currentUrl.contains('bilivideo.com') || currentUrl.contains('bilibili.com')) return true;
+    if (videoPageController.currentPlugin.isBilibili) return true;
+    return false;
+  }
 
   bool get hasActivePlayback =>
       activeLocalVideoArgs != null ||
@@ -117,11 +130,13 @@ class PlayerController extends Notifier<PlayerState> {
     String? audioUrl,
     Map<String, String>? httpHeaders,
     int? biliCid,
+    String? biliBvid,
   }) async {
     videoUrl = url;
     activeAudioUrl = audioUrl;
     activeHttpHeaders = httpHeaders;
     activeBiliCid = biliCid;
+    activeBiliBvid = biliBvid ?? activeLocalVideoArgs?.biliBvid;
     state = state.copyWith(
       playing: false,
       loading: true,

@@ -61,6 +61,7 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
         audioUrl: widget.args.audioUrl,
         httpHeaders: widget.args.httpHeaders,
         biliCid: widget.args.biliCid,
+        biliBvid: widget.args.biliBvid,
       );
 
       if (widget.args.danmakus != null && widget.args.danmakus!.isNotEmpty) {

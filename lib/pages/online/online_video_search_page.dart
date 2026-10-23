@@ -8,8 +8,6 @@ import 'package:kazumi/bean/dialog/dialog_helper.dart';
 import 'package:kazumi/modules/bangumi/bangumi_item.dart';
 import 'package:kazumi/modules/bilibili/bilibili_models.dart';
 import 'package:kazumi/modules/bilibili/bilibili_service.dart';
-import 'package:kazumi/modules/bilibili/bilibili_auth_service.dart';
-import 'package:kazumi/modules/bilibili/widgets/bili_login_dialog.dart';
 import 'package:kazumi/modules/douyin/douyin_service.dart';
 import 'package:kazumi/modules/search/search_history_dropdown.dart';
 import 'package:kazumi/modules/search/search_history_provider.dart';
@@ -490,6 +488,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
         audioUrl: playUrl.audioUrl,
         httpHeaders: playUrl.headers,
         biliCid: part.cid,
+        biliBvid: detail.bvid,
       ),
     );
   }
@@ -838,69 +837,6 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
             }).toList(),
           ),
           const SizedBox(height: 8),
-
-          // 哔哩哔哩专属：扫码登录与 1080P/4K 解锁指示条
-          if (_selectedFilter == OnlineSourceFilter.video || _selectedFilter == OnlineSourceFilter.all)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: ValueListenableBuilder<BiliUserProfile?>(
-                valueListenable: BiliAuthService().userNotifier,
-                builder: (context, user, _) {
-                  final isLogin = BiliAuthService().isLoggedIn && user != null;
-                  return InkWell(
-                    key: const Key('bili_auth_banner'),
-                    onTap: () => BiliLoginDialog.show(context),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isLogin
-                            ? Colors.pink.withValues(alpha: 0.1)
-                            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isLogin
-                              ? Colors.pink.withValues(alpha: 0.3)
-                              : colorScheme.outlineVariant.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isLogin && user.face.isNotEmpty)
-                            CircleAvatar(
-                              radius: 8,
-                              backgroundImage: CachedNetworkImageProvider(user.face),
-                            )
-                          else
-                            Icon(
-                              isLogin ? Icons.verified : Icons.lock_open_rounded,
-                              size: 14,
-                              color: isLogin ? Colors.pink : colorScheme.primary,
-                            ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              isLogin
-                                  ? '${user.uname} · 已解锁 ${user.isVip ? "4K / 1080P60" : "1080P 高清"}'
-                                  : 'B站未登录 (360P) · 点击扫码解锁 1080P/4K',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isLogin ? Colors.pink : colorScheme.primary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          const SizedBox(height: 6),
 
           // 推荐热搜标签 (保持干净简洁，仅在初始空闲状态时呈现)
           if (_activeKeyword.isEmpty)
