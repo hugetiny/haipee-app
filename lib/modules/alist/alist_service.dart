@@ -93,12 +93,17 @@ class AlistService {
               src: fullPath,
               pic: picUrl,
               remarks: isDir ? '影视合集' : '单视频',
+              category: 'drive', // 网盘资源 (属于资源类/下载类)
             ));
           }
         }
       }
 
-      return PluginSearchResponse(pluginName: pluginName, data: items);
+      return PluginSearchResponse(
+        pluginName: pluginName,
+        data: items,
+        category: 'drive',
+      );
     } catch (e) {
       KazumiLogger().log(Level.warning, 'AList 搜索异常: $e');
       return PluginSearchResponse(pluginName: pluginName, data: const []);

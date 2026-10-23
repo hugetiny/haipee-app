@@ -25,10 +25,14 @@ import 'package:kazumi/router_constants.dart';
 import 'package:kazumi/utils/parse_failure_helper.dart';
 import 'package:kazumi/utils/utils.dart';
 
-/// Kazumi 视频规则一级分类组 (严格仅保留「全部」与「Kazumi 规则源」两个核心 Tab)
+/// Kazumi 规则管理一级分类组 (严格四大分类：在线视频、电视直播、网盘资源【下载类】、BT磁力【下载类】及规则商店)
 enum PluginCategoryGroup {
   all(id: 'all', label: '全部', icon: Icons.all_inclusive),
-  catalog(id: 'catalog', label: 'Kazumi 规则源', icon: Icons.storefront_outlined);
+  video(id: 'video', label: '在线视频', icon: Icons.video_library_outlined),
+  live(id: 'live', label: '电视直播', icon: Icons.live_tv_outlined),
+  drive(id: 'drive', label: '网盘资源 (下载类)', icon: Icons.cloud_download_outlined),
+  bt(id: 'bt', label: 'BT磁力 (下载类)', icon: Icons.download_for_offline_outlined),
+  catalog(id: 'catalog', label: '规则商店', icon: Icons.storefront_outlined);
 
   final String id;
   final String label;
@@ -882,13 +886,24 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
         tabs: PluginCategoryGroup.values.map((group) {
           final isSelected = _selectedGroup == group;
 
+          List<Plugin> categoryList = allPlugins;
+          if (group == PluginCategoryGroup.video) {
+            categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.video).toList();
+          } else if (group == PluginCategoryGroup.live) {
+            categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.live).toList();
+          } else if (group == PluginCategoryGroup.drive) {
+            categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.drive).toList();
+          } else if (group == PluginCategoryGroup.bt) {
+            categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.bt).toList();
+          }
+
           final count = group == PluginCategoryGroup.catalog
               ? marketList.length
-              : allPlugins.length;
+              : categoryList.length;
 
           final activeCount = group == PluginCategoryGroup.catalog
               ? 0
-              : allPlugins
+              : categoryList
                   .where((p) => pluginsController.isPluginEnabled(p.name))
                   .length;
 
@@ -942,12 +957,36 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
       );
     }
 
-    final categoryPlugins = allPlugins;
+    List<Plugin> categoryPlugins = allPlugins;
+    if (_selectedGroup == PluginCategoryGroup.video) {
+      categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.video).toList();
+    } else if (_selectedGroup == PluginCategoryGroup.live) {
+      categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.live).toList();
+    } else if (_selectedGroup == PluginCategoryGroup.drive) {
+      categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.drive).toList();
+    } else if (_selectedGroup == PluginCategoryGroup.bt) {
+      categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.bt).toList();
+    }
 
     // 结合 L2 属性筛选与关键字过滤
     final query = _searchController.text.trim().toLowerCase();
     final filtered = categoryPlugins.where((p) {
-      // 类型过滤
+      // 业务大类与类型过滤
+      if (_typeFilter == 'video' && p.resolvedCategory != PluginCategory.video) {
+        return false;
+      }
+      if (_typeFilter == 'live' && p.resolvedCategory != PluginCategory.live) {
+        return false;
+      }
+      if (_typeFilter == 'drive' && p.resolvedCategory != PluginCategory.drive) {
+        return false;
+      }
+      if (_typeFilter == 'bt' && p.resolvedCategory != PluginCategory.bt) {
+        return false;
+      }
+      if (_typeFilter == 'resource' && !p.isResource) {
+        return false;
+      }
       if (_typeFilter == 'xpath' && p.type.toLowerCase() != 'xpath') {
         return false;
       }
@@ -1158,7 +1197,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             child: Row(
               children: [
                 Text(
-                  '解析类型: ',
+                  '四类划分: ',
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurfaceVariant,
@@ -1166,13 +1205,15 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                 ),
                 _buildFilterChip('全部', 'all', _typeFilter,
                     (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('主流平台', 'media', _typeFilter,
+                _buildFilterChip('在线视频', 'video', _typeFilter,
                     (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('网页 XPath', 'xpath', _typeFilter,
+                _buildFilterChip('电视直播', 'live', _typeFilter,
                     (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('影视 CMS', 'maccms', _typeFilter,
+                _buildFilterChip('网盘资源 (下载类)', 'drive', _typeFilter,
                     (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('动漫专线', 'anime', _typeFilter,
+                _buildFilterChip('BT磁力 (下载类)', 'bt', _typeFilter,
+                    (val) => setState(() => _typeFilter = val)),
+                _buildFilterChip('仅资源类', 'resource', _typeFilter,
                     (val) => setState(() => _typeFilter = val)),
                 const SizedBox(width: 16),
                 Text(
@@ -1289,6 +1330,25 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           ? () => _openBrowserUrl(plugin.baseUrl)
           : null,
       badges: [
+        SettingsBadge(
+          label: plugin.resolvedCategory.isResource
+              ? '${plugin.resolvedCategory.label} · 资源下载类'
+              : plugin.resolvedCategory.label,
+          color: plugin.resolvedCategory == PluginCategory.live
+              ? Colors.orange.withValues(alpha: 0.15)
+              : (plugin.resolvedCategory == PluginCategory.drive
+                  ? Colors.blue.withValues(alpha: 0.15)
+                  : (plugin.resolvedCategory == PluginCategory.bt
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : Colors.purple.withValues(alpha: 0.15))),
+          textColor: plugin.resolvedCategory == PluginCategory.live
+              ? Colors.orange.shade800
+              : (plugin.resolvedCategory == PluginCategory.drive
+                  ? Colors.blue.shade800
+                  : (plugin.resolvedCategory == PluginCategory.bt
+                      ? Colors.green.shade800
+                      : Colors.purple.shade800)),
+        ),
         SettingsBadge(
           label: isBundled ? '预置精选' : '自定义规则',
           color: isBundled

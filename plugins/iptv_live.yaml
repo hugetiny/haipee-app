@@ -1,6 +1,7 @@
 api: "1"
 name: "IPTV 电视直播"
 version: "1.0"
+category: "live"
 type: "iptv"
 baseURL: "https://live.fanmingming.com/tv/m3u/ipv6.m3u"
 searchURL: "https://live.fanmingming.com/tv/m3u/ipv6.m3u"

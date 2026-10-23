@@ -1,0 +1,20 @@
+api: "1"
+name: "Nyaa 动漫BT"
+version: "1.0"
+category: "bt"
+type: "cardigann"
+baseURL: "https://nyaa.si/"
+searchURL: "https://nyaa.si/?f=0&c=0_0&q=@keyword"
+muliSources: true
+useWebview: false
+useNativePlayer: true
+usePost: false
+useLegacyParser: false
+userAgent: "Mozilla/5.0 (Kazumi/Torrent)"
+referer: "https://nyaa.si/"
+searchList: ""
+searchName: ""
+searchResult: ""
+chapterRoads: ""
+chapterResult: ""
+searchPic: ""

@@ -15,6 +15,7 @@ import 'package:kazumi/modules/search/search_history_dropdown.dart';
 import 'package:kazumi/modules/search/search_history_provider.dart';
 import 'package:kazumi/pages/player/local_video_play_args.dart';
 import 'package:kazumi/pages/video/providers.dart';
+import 'package:kazumi/plugins/plugins.dart';
 import 'package:kazumi/plugins/plugins_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:kazumi/bean/widget/app_context_menu.dart';
@@ -24,25 +25,31 @@ import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:logger/logger.dart';
 
-/// 在线视频搜索源枚举 (明确标注每种源背后的底层机制)
+/// 在线视频搜索源枚举 (明确对应四大分类体系)
 enum OnlineSourceFilter {
   all(
     id: 'all',
     label: '全部源',
-    techStack: '多协议并发聚合调度 · 毫秒级原生直出',
+    techStack: '多协议全网并发聚合调度 · 毫秒级原生直出',
     icon: Icons.all_inclusive,
   ),
-  bilibili(
-    id: 'bilibili',
-    label: '哔哩哔哩',
-    techStack: '官方 WBI 签名 · DASH 音画分离',
-    icon: Icons.tv,
+  video(
+    id: 'video',
+    label: '在线视频',
+    techStack: 'B站官方 4K DASH · 影视CMS采集 · 动漫点播',
+    icon: Icons.video_library_outlined,
   ),
-  web(
-    id: 'web',
-    label: 'Web 规则源',
-    techStack: '苹果CMS V10 JSON · 声明式规则体系',
-    icon: Icons.public,
+  live(
+    id: 'live',
+    label: '电视直播',
+    techStack: 'IPTV M3U8 · 央视卫视 · 二次元轮播',
+    icon: Icons.live_tv_outlined,
+  ),
+  resource(
+    id: 'resource',
+    label: '资源下载 (网盘/BT)',
+    techStack: 'AList 网盘原画直链 · BT磁力种子检索与转存下载',
+    icon: Icons.cloud_download_outlined,
   );
 
   final String id;
@@ -159,19 +166,19 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
       // 2. 检查是否直接粘贴了 Bilibili BV 号或视频链接
       BiliVideoDetail? directBiliDetail;
       final bvMatch = RegExp(r'BV[a-zA-Z0-9]{10}').firstMatch(clean);
-      if (bvMatch != null && _selectedFilter != OnlineSourceFilter.web) {
+      if (bvMatch != null && (_selectedFilter == OnlineSourceFilter.all || _selectedFilter == OnlineSourceFilter.video)) {
         directBiliDetail = await BilibiliService.getVideoDetails(bvMatch.group(0)!);
       }
 
-      // 3. 多源并行聚合检索 (Bilibili + 苹果CMS / Web 规则源)
+      // 3. 多源并行聚合检索 (四大分类调度：在线视频、电视直播、网盘资源【下载类】、BT磁力【下载类】)
       final List<BiliVideoItem> searchResults = [];
       final List<Future<void>> futures = [];
       final pluginsState = ref.read(pluginsProvider);
 
-      // 3.1 哔哩哔哩源检索 (在 all 且规则启用时执行，或在 bilibili 分类时执行)
+      // 3.1 哔哩哔哩源检索 (在 all 且规则启用时执行，或在 video 在线视频分类时执行)
       final isBiliRuleEnabled = pluginsState.isPluginEnabled('bilibili');
       if ((_selectedFilter == OnlineSourceFilter.all && isBiliRuleEnabled) ||
-          _selectedFilter == OnlineSourceFilter.bilibili) {
+          _selectedFilter == OnlineSourceFilter.video) {
         futures.add(() async {
           try {
             final biliList = await BilibiliService.searchVideos(clean);
@@ -182,41 +189,61 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
         }());
       }
 
-      // 3.2 苹果CMS 与第三方 Web 规则源检索 (在 all 或 web 时并发执行)
-      if (_selectedFilter == OnlineSourceFilter.all ||
-          _selectedFilter == OnlineSourceFilter.web) {
-        futures.add(() async {
-          try {
-            final enabledPlugins = pluginsState.enabledPlugins
-                .where((p) => !p.isBilibili && !p.isDouyin)
-                .toList();
+      // 3.2 苹果CMS、IPTV直播、AList网盘与第三方规则源检索
+      futures.add(() async {
+        try {
+          final enabledPlugins = pluginsState.enabledPlugins.where((plugin) {
+            if (plugin.isBilibili || plugin.isDouyin) return false;
+            if (_selectedFilter == OnlineSourceFilter.all) return true;
+            if (_selectedFilter == OnlineSourceFilter.video) {
+              return plugin.resolvedCategory == PluginCategory.video;
+            }
+            if (_selectedFilter == OnlineSourceFilter.live) {
+              return plugin.resolvedCategory == PluginCategory.live;
+            }
+            if (_selectedFilter == OnlineSourceFilter.resource) {
+              return plugin.isResource; // 网盘和 BT 属于资源类 (也就是下载类)
+            }
+            return true;
+          }).toList();
 
-            final webTasks = enabledPlugins.map((plugin) async {
-              try {
-                final resp = await plugin.queryBangumi(clean).timeout(const Duration(seconds: 8));
-                for (final item in resp.data) {
-                  searchResults.add(
-                    BiliVideoItem(
-                      bvid: 'web_${plugin.name}_${item.src}',
-                      title: item.name,
-                      author: plugin.name,
-                      pic: item.pic,
-                      duration: item.remarks.isNotEmpty
-                          ? item.remarks
-                          : (plugin.isMacCms ? '苹果CMS' : 'Web规则'),
-                      description: item.src,
-                      tag: plugin.isMacCms ? '苹果CMS' : 'Web源',
-                    ),
-                  );
-                }
-              } catch (_) {}
-            });
-            await Future.wait(webTasks);
-          } catch (e) {
-            KazumiLogger().log(Level.warning, 'Web规则搜索异常: $e');
-          }
-        }());
-      }
+          final webTasks = enabledPlugins.map((plugin) async {
+            try {
+              final resp = await plugin.queryBangumi(clean).timeout(const Duration(seconds: 8));
+              final cat = plugin.resolvedCategory;
+              String tagLabel;
+              if (cat == PluginCategory.live) {
+                tagLabel = '电视直播';
+              } else if (cat == PluginCategory.drive) {
+                tagLabel = '网盘 · 资源下载';
+              } else if (cat == PluginCategory.bt) {
+                tagLabel = 'BT · 资源下载';
+              } else {
+                tagLabel = plugin.isMacCms ? '苹果CMS' : '在线视频';
+              }
+
+              for (final item in resp.data) {
+                searchResults.add(
+                  BiliVideoItem(
+                    bvid: 'web_${plugin.name}_${item.src}',
+                    title: item.name,
+                    author: plugin.name,
+                    pic: item.pic,
+                    duration: item.remarks.isNotEmpty
+                        ? item.remarks
+                        : (cat.isResource ? '资源下载类' : (cat == PluginCategory.live ? '实时直播' : '点播正片')),
+                    description: item.src,
+                    tag: tagLabel,
+                  ),
+                );
+              }
+            } catch (_) {}
+          });
+          await Future.wait(webTasks);
+        } catch (e) {
+          KazumiLogger().log(Level.warning, '多源并发检索异常: $e');
+        }
+      }());
 
       await Future.wait(futures);
 
@@ -747,11 +774,13 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                   _performSearch(val);
                 },
                 decoration: InputDecoration(
-                  hintText: _selectedFilter == OnlineSourceFilter.bilibili
-                      ? '搜索 Bilibili 视频关键词或粘贴 BV 号'
-                      : (_selectedFilter == OnlineSourceFilter.web
-                          ? '搜索苹果CMS及Web规则源，或输入番剧片名'
-                          : '输入作品、关键词或粘贴链接 (B站 / 苹果CMS / Web规则源)'),
+                  hintText: _selectedFilter == OnlineSourceFilter.video
+                      ? '搜索在线视频、动漫番剧或粘贴 B站 BV 号'
+                      : (_selectedFilter == OnlineSourceFilter.live
+                          ? '搜索电视直播频道、央视、卫视或轮播台'
+                          : (_selectedFilter == OnlineSourceFilter.resource
+                              ? '搜索网盘影视文件 (AList/WebDAV) 或 BT 资源'
+                              : '输入作品、频道、网盘文件或粘贴链接 (聚合直搜)')),
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -789,16 +818,30 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
           ),
           const SizedBox(height: 12),
 
-          // 规则源切换 Chips
+          // 规则源切换 Chips (四大分类明确切换)
           Wrap(
             spacing: 8,
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: OnlineSourceFilter.values.map((filter) {
               final isSelected = _selectedFilter == filter;
+              final pluginsState = ref.watch(pluginsProvider);
               String labelText = filter.label;
-              if (filter == OnlineSourceFilter.web) {
-                labelText = 'Web 规则源 ($enabledPluginCount 个)';
+              if (filter == OnlineSourceFilter.video) {
+                final videoCount = pluginsState.enabledPlugins
+                    .where((p) => p.resolvedCategory == PluginCategory.video)
+                    .length;
+                labelText = '在线视频 ($videoCount)';
+              } else if (filter == OnlineSourceFilter.live) {
+                final liveCount = pluginsState.enabledPlugins
+                    .where((p) => p.resolvedCategory == PluginCategory.live)
+                    .length;
+                labelText = '电视直播 ($liveCount)';
+              } else if (filter == OnlineSourceFilter.resource) {
+                final resCount = pluginsState.enabledPlugins
+                    .where((p) => p.isResource)
+                    .length;
+                labelText = '资源下载 ($resCount)';
               }
               return ChoiceChip(
                 avatar: Icon(filter.icon, size: 16),
@@ -851,7 +894,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
           const SizedBox(height: 6),
 
           // 哔哩哔哩专属：扫码登录与 1080P/4K 解锁指示条
-          if (_selectedFilter == OnlineSourceFilter.bilibili || _selectedFilter == OnlineSourceFilter.all)
+          if (_selectedFilter == OnlineSourceFilter.video || _selectedFilter == OnlineSourceFilter.all)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: ValueListenableBuilder<BiliUserProfile?>(
@@ -1025,9 +1068,13 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                         color: item.bvid.startsWith('douyin_')
                             ? Colors.black87
                             : (item.bvid.startsWith('web_')
-                                ? (item.tag == '苹果CMS'
-                                    ? Colors.indigo.shade700
-                                    : Colors.teal.shade700)
+                                ? (item.tag.contains('直播')
+                                    ? Colors.orange.shade800
+                                    : (item.tag.contains('资源') || item.tag.contains('网盘') || item.tag.contains('BT')
+                                        ? Colors.blue.shade800
+                                        : (item.tag == '苹果CMS'
+                                            ? Colors.indigo.shade700
+                                            : Colors.teal.shade700)))
                                 : Colors.pinkAccent.withValues(alpha: 0.9)),
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -1035,9 +1082,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                         item.bvid.startsWith('douyin_')
                             ? '抖音'
                             : (item.bvid.startsWith('web_')
-                                ? (item.tag == '苹果CMS'
-                                    ? '苹果CMS · ${item.author}'
-                                    : 'Web · ${item.author}')
+                                ? '${item.tag} · ${item.author}'
                                 : 'BiliBili'),
                         style: const TextStyle(
                           color: Colors.white,
@@ -1179,6 +1224,18 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
             );
           },
         ),
+        if (item.tag.contains('资源') || item.tag.contains('网盘') || item.tag.contains('BT')) ...[
+          AppMenuAction(
+            title: '复制资源下载直链 (支持下载器/网盘转存)',
+            icon: Icons.link_rounded,
+            onSelected: () async {
+              await Clipboard.setData(ClipboardData(text: item.description));
+              if (context.mounted) {
+                KazumiDialog.showToast(message: '已复制资源下载直链', context: context);
+              }
+            },
+          ),
+        ],
         const AppMenuSeparator(),
         AppMenuAction(
           title: '复制视频标题',

@@ -302,7 +302,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
             ],
           ),
           SettingsSection(
-            title: const Text('视听与媒体'),
+            title: const Text('视听与在线媒体 (点播与直播)'),
             tiles: [
               SettingsTile.navigation(
                 onPressed: (_) {
@@ -331,28 +331,35 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                 onPressed: (_) {
                   context.push(Routes.settingsPlugin);
                 },
-                title: const Text('Kazumi 视频规则'),
-                description: Text(t.settings.source.ruleManagementDesc),
+                title: const Text('在线视频与电视直播规则'),
+                description: const Text('管理影视采集(MacCMS/TVBox)、B站、YouTube与电视直播(IPTV)规则'),
               ),
             ],
           ),
           SettingsSection(
-            title: const Text('资源检索与下载'),
+            title: const Text('资源检索与下载 (网盘与BT)'),
             tiles: [
               SettingsTile.navigation(
                 onPressed: (_) {
                   context.push(Routes.settingsIndexers);
                 },
-                title: const Text('Cardigann 规则'),
-                description: const Text('Cardigann 规则中心与索引源管理'),
+                title: const Text('BT / 磁力下载规则'),
+                description: const Text('Cardigann 规则中心、种子索引与 Tracker 管理 (P2P/边下边播)'),
+              ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push(Routes.settingsPlugin);
+                },
+                title: const Text('网盘资源规则 (AList / WebDAV)'),
+                description: const Text('网盘资源挂载、原画直链提取与高速转存下载'),
               ),
               SettingsTile.navigation(
                 onPressed: (_) {
                   context.push(Routes.settingsDownload);
                 },
                 leading: const Icon(Icons.download),
-                title: const Text('下载设置'),
-                description: const Text('配置下载目录与并发参数'),
+                title: const Text('下载设置与任务中心'),
+                description: const Text('配置本地存储目录、并发任务数与已下载文件管理'),
               ),
             ],
           ),

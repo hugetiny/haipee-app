@@ -17,11 +17,66 @@ import 'package:kazumi/modules/iptv/iptv_service.dart';
 import 'package:kazumi/modules/alist/alist_service.dart';
 import 'package:kazumi/modules/piped/piped_service.dart';
 
+/// 规则与媒体源一级分类枚举 (四大分类架构，网盘与BT明确归属为资源类/下载类)
+enum PluginCategory {
+  video(
+    id: 'video',
+    label: '在线视频',
+    groupLabel: '视听在线',
+    isResource: false,
+    isDownloadable: false,
+  ),
+  live(
+    id: 'live',
+    label: '电视直播',
+    groupLabel: '视听在线',
+    isResource: false,
+    isDownloadable: false,
+  ),
+  drive(
+    id: 'drive',
+    label: '网盘资源',
+    groupLabel: '资源下载',
+    isResource: true, // 特殊归属：属于资源类，也就是下载类
+    isDownloadable: true,
+  ),
+  bt(
+    id: 'bt',
+    label: 'BT磁力',
+    groupLabel: '资源下载',
+    isResource: true, // 特殊归属：属于资源类，也就是下载类
+    isDownloadable: true,
+  );
+
+  final String id;
+  final String label;
+  final String groupLabel;
+  final bool isResource;
+  final bool isDownloadable;
+
+  const PluginCategory({
+    required this.id,
+    required this.label,
+    required this.groupLabel,
+    required this.isResource,
+    required this.isDownloadable,
+  });
+
+  static PluginCategory fromString(String? val) {
+    final clean = (val ?? '').trim().toLowerCase();
+    if (clean == 'live' || clean == 'iptv' || clean == 'm3u') return PluginCategory.live;
+    if (clean == 'drive' || clean == 'alist' || clean == 'pan' || clean == 'webdav') return PluginCategory.drive;
+    if (clean == 'bt' || clean == 'torrent' || clean == 'magnet' || clean == 'cardigann') return PluginCategory.bt;
+    return PluginCategory.video;
+  }
+}
+
 class Plugin {
   String api;
   String type;
   String name;
   String version;
+  String category;
   bool muliSources;
   bool useWebview;
   bool useNativePlayer;
@@ -63,6 +118,7 @@ class Plugin {
     required this.chapterRoads,
     required this.chapterResult,
     required this.referer,
+    this.category = '',
     this.searchPic = '',
     this.searchMode = '',
     this.searchApiConfig,
@@ -71,6 +127,26 @@ class Plugin {
     this.adBlocker = false,
     this.authConfig,
   });
+
+  PluginCategory get resolvedCategory {
+    if (category.isNotEmpty) {
+      return PluginCategory.fromString(category);
+    }
+    if (isIptv) return PluginCategory.live;
+    if (isAlist) return PluginCategory.drive;
+    if (type.toLowerCase() == 'torrent' || type.toLowerCase() == 'cardigann') {
+      return PluginCategory.bt;
+    }
+    return PluginCategory.video;
+  }
+
+  /// 网盘和 BT 属于资源类（也就是下载类）
+  bool get isResource => resolvedCategory.isResource;
+  bool get isDownloadable => resolvedCategory.isDownloadable;
+  bool get isLive => resolvedCategory == PluginCategory.live;
+  bool get isDrive => resolvedCategory == PluginCategory.drive;
+  bool get isBt => resolvedCategory == PluginCategory.bt;
+  bool get isVideo => resolvedCategory == PluginCategory.video;
 
   bool get supportsAuth => authConfig != null || isBilibili;
 
@@ -286,6 +362,7 @@ class Plugin {
         referer: (json['referer'] != null && json['referer'].toString().trim().isNotEmpty)
             ? json['referer'].toString().trim()
             : (json['baseURL']?.toString() ?? ''),
+        category: json['category']?.toString() ?? '',
         searchPic: json['searchPic']?.toString() ?? '',
         searchMode: json['searchMode']?.toString() ?? '',
         searchApiConfig: json['searchApiConfig'] is Map ? Map<String, dynamic>.from(json['searchApiConfig']) : null,
@@ -301,6 +378,7 @@ class Plugin {
         type: 'anime',
         name: '',
         version: '',
+        category: 'video',
         muliSources: true,
         useWebview: true,
         useNativePlayer: true,
@@ -324,6 +402,7 @@ class Plugin {
     data['type'] = type;
     data['name'] = name;
     data['version'] = version;
+    if (category.isNotEmpty) data['category'] = category;
     data['muliSources'] = muliSources;
     data['useWebview'] = useWebview;
     data['useNativePlayer'] = useNativePlayer;
@@ -540,14 +619,15 @@ class Plugin {
           name: element.queryXPath(searchName).node!.text?.trim() ?? '',
           src: srcUrl,
           pic: picUrl,
+          category: resolvedCategory.id,
         );
         searchItems.add(searchItem);
         KazumiLogger().log(Level.info,
             '$name ${element.queryXPath(searchName).node!.text ?? ''} $fullUrl');
       } catch (_) {}
     });
-    PluginSearchResponse pluginSearchResponse =
-        PluginSearchResponse(pluginName: name, data: searchItems);
+    PluginSearchResponse pluginSearchResponse = PluginSearchResponse(
+        pluginName: name, data: searchItems, category: resolvedCategory.id);
     return pluginSearchResponse;
   }
 
@@ -675,13 +755,22 @@ class Plugin {
               itemPic = baseUrl.endsWith('/') ? '$baseUrl$cleanPath' : '$baseUrl/$cleanPath';
             }
           }
-          searchItems.add(SearchItem(name: itemName, src: itemSrc, pic: itemPic));
+          searchItems.add(SearchItem(
+            name: itemName,
+            src: itemSrc,
+            pic: itemPic,
+            category: resolvedCategory.id,
+          ));
           KazumiLogger().log(Level.info, '$name [API] $itemName -> $itemSrc');
         }
       }
     }
 
-    return PluginSearchResponse(pluginName: name, data: searchItems);
+    return PluginSearchResponse(
+      pluginName: name,
+      data: searchItems,
+      category: resolvedCategory.id,
+    );
   }
 
   /// 苹果 CMS V10 标准 JSON 采集接口搜索 (支持 ac=detail 快速获取高清海报、更新状态与播放线路)
@@ -748,6 +837,7 @@ class Plugin {
               src: detailSrc,
               pic: vodPic,
               remarks: vodRemarks,
+              category: resolvedCategory.id,
             ));
             KazumiLogger().log(Level.info, '$name [MacCMS] $vodName $detailSrc');
           }
@@ -755,7 +845,11 @@ class Plugin {
       }
     }
 
-    return PluginSearchResponse(pluginName: name, data: searchItems);
+    return PluginSearchResponse(
+      pluginName: name,
+      data: searchItems,
+      category: resolvedCategory.id,
+    );
   }
 
   Future<List<Road>> querychapterRoads(String url,

@@ -1,6 +1,7 @@
 api: "1"
 name: "光速资源"
 version: "1.0"
+category: "video"
 type: "2"
 baseURL: "https://api.guangsuapi.com/"
 searchURL: "https://api.guangsuapi.com/api.php/provide/vod/?ac=detail&at=json&wd=@keyword"

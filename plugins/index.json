@@ -2,6 +2,7 @@
   {
     "name": "哔哩哔哩",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "hugetiny/Kazumi",
@@ -11,6 +12,7 @@
   {
     "name": "抖音",
     "version": "1.1",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "hugetiny/Kazumi",
@@ -20,6 +22,7 @@
   {
     "name": "IPTV 电视直播",
     "version": "1.0",
+    "category": "live",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "IPTV M3U 官方直播源",
@@ -29,15 +32,27 @@
   {
     "name": "AList 网盘聚合",
     "version": "1.0",
+    "category": "drive",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
-    "author": "AList V3 网盘规范",
+    "author": "AList V3 网盘规范 (资源下载类)",
     "baseURL": "https://al.chirmyram.com",
+    "lastUpdate": 1792400000000
+  },
+  {
+    "name": "Nyaa 动漫BT",
+    "version": "1.0",
+    "category": "bt",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Cardigann 种子规范 (资源下载类)",
+    "baseURL": "https://nyaa.si/",
     "lastUpdate": 1792400000000
   },
   {
     "name": "YouTube (Piped)",
     "version": "1.0",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Piped 开放流媒体规范",
@@ -47,6 +62,7 @@
   {
     "name": "光速资源",
     "version": "1.0",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Maccms JSON 官方源",
@@ -56,6 +72,7 @@
   {
     "name": "卧龙资源",
     "version": "1.0",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Maccms JSON 官方源",
@@ -65,6 +82,7 @@
   {
     "name": "TVBox 聚合适配器",
     "version": "1.0",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "TVBox 盒装生态规范",
@@ -74,6 +92,7 @@
   {
     "name": "量子影视",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Maccms JSON 官方源",
@@ -83,6 +102,7 @@
   {
     "name": "非凡影视",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Maccms JSON 官方源",
@@ -92,6 +112,7 @@
   {
     "name": "暴风影视",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Maccms JSON 官方源",
@@ -101,6 +122,7 @@
   {
     "name": "金鹰影视",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Maccms JSON 官方源",
@@ -110,6 +132,7 @@
   {
     "name": "快车影视",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Maccms JSON 官方源",
@@ -119,6 +142,7 @@
   {
     "name": "索尼影视",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "Maccms JSON 官方源",
@@ -128,6 +152,7 @@
   {
     "name": "dalvdm",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": true,
     "author": "hugetiny/Kazumi",
@@ -137,6 +162,7 @@
   {
     "name": "mutefun",
     "version": "1.5",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "hugetiny/Kazumi",
@@ -146,6 +172,7 @@
   {
     "name": "anime7",
     "version": "1.2",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "hugetiny/Kazumi",
@@ -155,6 +182,7 @@
   {
     "name": "xfdm",
     "version": "1.8",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "hugetiny/Kazumi",
@@ -164,6 +192,7 @@
   {
     "name": "DM84",
     "version": "1.3",
+    "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
     "author": "hugetiny/Kazumi",

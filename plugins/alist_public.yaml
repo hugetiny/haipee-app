@@ -1,6 +1,7 @@
 api: "1"
 name: "AList 网盘聚合"
 version: "1.0"
+category: "drive"
 type: "alist"
 baseURL: "https://al.chirmyram.com"
 searchURL: "https://al.chirmyram.com"

@@ -159,10 +159,15 @@ class IptvService {
         src: c.url,
         pic: c.logo,
         remarks: c.group,
+        category: 'live',
       );
     }).toList();
 
-    return PluginSearchResponse(pluginName: pluginName, data: items);
+    return PluginSearchResponse(
+      pluginName: pluginName,
+      data: items,
+      category: 'live',
+    );
   }
 
   /// 根据选中的频道生成播放线路

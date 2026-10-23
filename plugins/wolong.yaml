@@ -1,6 +1,7 @@
 api: "1"
 name: "卧龙资源"
 version: "1.0"
+category: "video"
 type: "2"
 baseURL: "https://collect.wolongzyw.com/"
 searchURL: "https://collect.wolongzyw.com/api.php/provide/vod/?ac=detail&at=json&wd=@keyword"
