@@ -1772,7 +1772,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           ),
         TextButton.icon(
           onPressed: () => _openBrowserUrl(
-            'https://github.com/Predidit/KazumiRules/blob/main/${item.name}.json',
+            'https://github.com/hugetiny/Kazumi/blob/main/plugins/${item.name}.yaml',
           ),
           icon: const Icon(Icons.code_rounded, size: 16),
           label: const Text('规则源码'),
@@ -1814,7 +1814,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           title: '在浏览器中打开 GitHub 规则源码',
           icon: Icons.code_rounded,
           onSelected: () => _openBrowserUrl(
-            'https://github.com/Predidit/KazumiRules/blob/main/${item.name}.json',
+            'https://github.com/hugetiny/Kazumi/blob/main/plugins/${item.name}.yaml',
           ),
         ),
       ],

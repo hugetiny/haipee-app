@@ -26,6 +26,7 @@
     "listPath": "$.list[*]",
     "namePath": "$.name",
     "sourcePath": "$.id",
+    "picPath": "$.pic",
     "sourceTemplate": "https://www.sbdl.cc/index.php/vod/detail/id/@source.html"
   },
   "searchList": "",

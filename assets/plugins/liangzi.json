@@ -13,6 +13,7 @@
   "searchURL": "https://cj.lziapi.com/api.php/provide/vod/?ac=detail&at=json&wd=@keyword",
   "searchList": "",
   "searchName": "",
+  "searchPic": "$.vod_pic",
   "searchResult": "",
   "chapterRoads": "",
   "chapterResult": "",

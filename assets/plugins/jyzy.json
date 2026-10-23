@@ -13,6 +13,7 @@
   "searchURL": "https://jyzyapi.com/provide/vod/?ac=detail&at=json&wd=@keyword",
   "searchList": "",
   "searchName": "",
+  "searchPic": "$.vod_pic",
   "searchResult": "",
   "chapterRoads": "",
   "chapterResult": "",

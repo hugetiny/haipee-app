@@ -321,7 +321,7 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
           title: '在浏览器中打开 GitHub 规则源码',
           icon: Icons.code_rounded,
           onSelected: () => _openBrowserUrl(
-            'https://github.com/Predidit/KazumiRules/blob/main/${item.name}.json',
+            'https://github.com/hugetiny/Kazumi/blob/main/plugins/${item.name}.yaml',
           ),
         ),
       ],

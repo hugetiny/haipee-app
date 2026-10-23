@@ -11,18 +11,18 @@ class Api {
   static const String projectUrl = "https://kazumi.app/";
 
   /// Github 项目主页
-  static const String sourceUrl = "https://github.com/Predidit/Kazumi";
+  static const String sourceUrl = "https://github.com/hugetiny/Kazumi";
 
   /// 图标作者
   static const String iconUrl = "https://www.pixiv.net/users/66219277";
 
   /// 规则仓库
   static const String pluginShop =
-      'https://raw.githubusercontent.com/Predidit/KazumiRules/main/';
+      'https://raw.githubusercontent.com/hugetiny/Kazumi/main/plugins/';
 
   /// 在线升级
   static const String latestApp =
-      'https://api.github.com/repos/Predidit/Kazumi/releases/latest';
+      'https://api.github.com/repos/hugetiny/Kazumi/releases/latest';
 
   /// Github镜像 (动态读取用户配置的生效代理地址)
   static String get gitMirror => GitProxyInterceptor.getEffectiveProxyUrl();

@@ -13,6 +13,7 @@
     "searchURL": "https://dm.xifanacg.com/search.html?wd=@keyword",
     "searchList": "//div[@class='vod-detail style-detail cor4 search-list']",
     "searchName": "//div/div[2]/a/h3",
+    "searchPic": ".//img",
     "searchResult": "//div/div[2]/a",
     "chapterRoads": "//ul[@class='anthology-list-play size']",
     "chapterResult": "//li/a",

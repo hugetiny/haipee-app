@@ -125,6 +125,7 @@ class BilibiliService {
     int cid, {
     Dio? client,
     String? sessData,
+    int? targetQuality,
   }) async {
     final effectiveClient = client ?? _dio;
     if (bvid.isEmpty || cid <= 0) return null;
@@ -152,7 +153,7 @@ class BilibiliService {
       final rawParams = {
         'bvid': bvid,
         'cid': cid,
-        'qn': 80, // 优先 1080P
+        'qn': targetQuality ?? 120, // 优先请求最高 4K / 1080P60 / 1080P
         'fnval': 4048, // 请求 DASH 格式
         'fnver': 0,
         'fourk': 1,
@@ -177,13 +178,37 @@ class BilibiliService {
           final List<dynamic>? videoList = dash['video'];
           final List<dynamic>? audioList = dash['audio'];
 
+          final List<BiliStreamQuality> availableQualities = [];
+          if (videoList != null) {
+            for (final v in videoList) {
+              final id = v['id'] is int ? v['id'] as int : int.tryParse(v['id']?.toString() ?? '0') ?? 0;
+              if (id > 0 && !availableQualities.any((q) => q.id == id)) {
+                availableQualities.add(BiliStreamQuality(
+                  id: id,
+                  label: BiliQualityHelper.getLabel(id),
+                  format: 'dash',
+                ));
+              }
+            }
+            availableQualities.sort((a, b) => b.id.compareTo(a.id));
+          }
+
           String? videoUrl;
           int quality = 80;
           if (videoList != null && videoList.isNotEmpty) {
-            // 选取最高画质
-            final bestVideo = videoList.first as Map<String, dynamic>;
-            videoUrl = bestVideo['baseUrl'] ?? bestVideo['base_url'];
-            quality = bestVideo['id'] is int ? bestVideo['id'] : 80;
+            Map<String, dynamic>? selectedVideo;
+            if (targetQuality != null) {
+              selectedVideo = videoList.firstWhere(
+                (v) => (v['id'] is int ? v['id'] : int.tryParse(v['id']?.toString() ?? '0')) == targetQuality,
+                orElse: () => videoList.first as Map<String, dynamic>,
+              ) as Map<String, dynamic>?;
+            }
+            selectedVideo ??= videoList.first as Map<String, dynamic>;
+
+            videoUrl = selectedVideo['baseUrl'] ?? selectedVideo['base_url'];
+            quality = selectedVideo['id'] is int
+                ? selectedVideo['id'] as int
+                : int.tryParse(selectedVideo['id']?.toString() ?? '80') ?? 80;
           }
 
           String? audioUrl;
@@ -200,6 +225,7 @@ class BilibiliService {
               quality: quality,
               format: 'dash',
               headers: headers,
+              availableQualities: availableQualities,
             );
           }
         }
@@ -215,6 +241,13 @@ class BilibiliService {
               quality: data['quality'] is int ? data['quality'] : 64,
               format: 'durl',
               headers: headers,
+              availableQualities: [
+                BiliStreamQuality(
+                  id: data['quality'] is int ? data['quality'] : 64,
+                  label: BiliQualityHelper.getLabel(data['quality'] is int ? data['quality'] : 64),
+                  format: 'durl',
+                )
+              ],
             );
           }
         }

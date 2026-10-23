@@ -1,0 +1,19 @@
+api: "10"
+type: "douyin"
+name: "抖音"
+version: "1.1"
+muliSources: true
+useWebview: false
+useNativePlayer: true
+usePost: false
+useLegacyParser: false
+adBlocker: false
+userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+baseURL: "https://www.douyin.com/"
+searchURL: "https://www.douyin.com/aweme/v1/web/search/item/?keyword=@keyword"
+searchPic: "$.data[*].aweme_info.video.cover.url_list[0]"
+searchMode: "douyin"
+chapterMode: "douyin"
+chapterRoads: ""
+chapterResult: ""
+referer: "https://www.douyin.com/"

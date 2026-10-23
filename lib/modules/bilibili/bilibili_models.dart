@@ -137,6 +137,7 @@ class BiliPlayUrl {
   final int quality;
   final String format; // 'dash' 或 'durl'
   final Map<String, String> headers;
+  final List<BiliStreamQuality> availableQualities;
 
   const BiliPlayUrl({
     required this.videoUrl,
@@ -144,5 +145,126 @@ class BiliPlayUrl {
     required this.quality,
     this.format = 'dash',
     required this.headers,
+    this.availableQualities = const [],
   });
+
+  String get qualityLabel => BiliQualityHelper.getLabel(quality);
+}
+
+/// 可用画质选项
+class BiliStreamQuality {
+  final int id;
+  final String label;
+  final String format;
+
+  const BiliStreamQuality({
+    required this.id,
+    required this.label,
+    required this.format,
+  });
+}
+
+/// B站扫码登录二维码数据
+class BiliQrCodeData {
+  final String url;
+  final String qrcodeKey;
+
+  const BiliQrCodeData({
+    required this.url,
+    required this.qrcodeKey,
+  });
+}
+
+/// 二维码轮询状态枚举
+enum BiliQrCodeStatus {
+  notScanned(86101, '未扫码，等待扫描'),
+  scannedWaitingConfirmation(86090, '已扫码，请在手机端确认'),
+  expired(86038, '二维码已过期，请刷新'),
+  success(0, '登录成功'),
+  error(-1, '登录异常');
+
+  final int code;
+  final String description;
+  const BiliQrCodeStatus(this.code, this.description);
+}
+
+/// 二维码轮询结果
+class BiliQrCodePollResult {
+  final BiliQrCodeStatus status;
+  final String message;
+  final String? sessData;
+  final String? biliJct;
+  final String? dedeUserId;
+
+  const BiliQrCodePollResult({
+    required this.status,
+    required this.message,
+    this.sessData,
+    this.biliJct,
+    this.dedeUserId,
+  });
+}
+
+/// B站已登录用户画像
+class BiliUserProfile {
+  final bool isLogin;
+  final int mid;
+  final String uname;
+  final String face;
+  final int vipType; // 0: 无, 1: 月度大会员, 2: 年度/十年大会员
+  final String vipLabel;
+  final int vipDueDate;
+
+  const BiliUserProfile({
+    required this.isLogin,
+    required this.mid,
+    required this.uname,
+    required this.face,
+    required this.vipType,
+    required this.vipLabel,
+    required this.vipDueDate,
+  });
+
+  bool get isVip => vipType > 0;
+
+  factory BiliUserProfile.fromJson(Map<String, dynamic> json) {
+    return BiliUserProfile(
+      isLogin: json['isLogin'] == true,
+      mid: json['mid'] is int ? json['mid'] : int.tryParse(json['mid']?.toString() ?? '0') ?? 0,
+      uname: json['uname']?.toString() ?? '',
+      face: json['face']?.toString() ?? '',
+      vipType: json['vipType'] is int ? json['vipType'] : 0,
+      vipLabel: json['vipLabel']?.toString() ?? '',
+      vipDueDate: json['vipDueDate'] is int ? json['vipDueDate'] : 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'isLogin': isLogin,
+        'mid': mid,
+        'uname': uname,
+        'face': face,
+        'vipType': vipType,
+        'vipLabel': vipLabel,
+        'vipDueDate': vipDueDate,
+      };
+}
+
+/// B站清晰度对照字典
+class BiliQualityHelper {
+  static const Map<int, String> qualityMap = {
+    127: '8K 超高清',
+    126: '杜比视界',
+    125: 'HDR 真彩',
+    120: '4K 超清',
+    116: '1080P 60帧',
+    112: '1080P 高码率',
+    80: '1080P 高清',
+    74: '720P 60帧',
+    64: '720P 高清',
+    32: '480P 清晰',
+    16: '360P 流畅',
+  };
+
+  static String getLabel(int quality) => qualityMap[quality] ?? '${quality}P';
 }

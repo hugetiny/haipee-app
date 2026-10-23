@@ -1,0 +1,20 @@
+api: "10"
+type: "maccms"
+name: "快车影视"
+version: "1.2"
+muliSources: true
+useWebview: false
+useNativePlayer: true
+usePost: false
+useLegacyParser: false
+adBlocker: false
+userAgent: "Mozilla/5.0 (Kazumi/Player)"
+baseURL: "https://caiji.kuaichezy.org"
+searchURL: "https://caiji.kuaichezy.org/api.php/provide/vod/?ac=detail&at=json&wd=@keyword"
+searchPic: "$.vod_pic"
+searchList: ""
+searchName: ""
+searchResult: ""
+chapterRoads: ""
+chapterResult: ""
+referer: "https://caiji.kuaichezy.org/"

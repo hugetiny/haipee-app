@@ -1,7 +1,7 @@
-api: "9"
+api: "10"
 type: "bilibili"
 name: "bilibili"
-version: "1.0"
+version: "1.2"
 muliSources: true
 useWebview: false
 useNativePlayer: true
@@ -11,8 +11,13 @@ adBlocker: false
 userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 baseURL: "https://www.bilibili.com/"
 searchURL: "https://api.bilibili.com/x/web-interface/wbi/search/type?search_type=video&keyword=@keyword"
+searchPic: "$.data.result[*].pic"
 searchMode: "bilibili"
 chapterMode: "bilibili"
 chapterRoads: ""
 chapterResult: ""
 referer: "https://www.bilibili.com/"
+auth:
+  type: "bilibili_qrcode"
+  cookieKey: "SESSDATA"
+  desc: "扫码登录解锁 1080P/4K 高清原画"

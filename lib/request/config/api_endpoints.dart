@@ -11,22 +11,22 @@ class ApiEndpoints {
   static const String projectUrl = "https://kazumi.app/";
 
   /// Github 项目主页
-  static const String sourceUrl = "https://github.com/Predidit/Kazumi";
+  static const String sourceUrl = "https://github.com/hugetiny/Kazumi";
 
   /// 图标作者
   static const String iconUrl = "https://www.pixiv.net/users/66219277";
 
   /// 规则仓库
   static const String pluginShop =
-      'https://raw.githubusercontent.com/Predidit/KazumiRules/main/';
+      'https://raw.githubusercontent.com/hugetiny/Kazumi/main/plugins/';
 
   /// 规则仓库镜像
   static const String pluginShopMirror =
-      'https://raw.gitcode.com/gh_mirrors/ka/KazumiRules/raw/main/';
+      'https://raw.githubusercontent.com/hugetiny/Kazumi/main/plugins/';
 
   /// 在线升级
   static const String latestApp =
-      'https://api.github.com/repos/Predidit/Kazumi/releases/latest';
+      'https://api.github.com/repos/hugetiny/Kazumi/releases/latest';
 
   /// Bangumi 镜像测试后端
   static const String bangumiMirrorDomain = 'https://api.kazumi.fyi';

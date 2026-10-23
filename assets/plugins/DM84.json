@@ -11,6 +11,7 @@
     "searchURL":"https://dm84.tv/s----------.html?wd=@keyword",
     "searchList": "//div/div[3]/ul/li",
     "searchName": "//div/a[2]",
+    "searchPic": ".//img",
     "searchResult": "//div/a[2]",
     "chapterRoads": "//div/div[4]/div/ul",
     "chapterResult": "//li/a"

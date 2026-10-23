@@ -38,6 +38,7 @@ class Plugin {
   final String chapterMode;
   final Map<String, dynamic>? chapterApiConfig;
   final bool adBlocker;
+  final Map<String, dynamic>? authConfig;
 
   Plugin({
     required this.api,
@@ -64,7 +65,10 @@ class Plugin {
     this.chapterMode = '',
     this.chapterApiConfig,
     this.adBlocker = false,
+    this.authConfig,
   });
+
+  bool get supportsAuth => authConfig != null || isBilibili;
 
   bool get isMacCms =>
       type.toLowerCase() == 'maccms' ||
@@ -257,7 +261,8 @@ class Plugin {
         searchApiConfig: json['searchApiConfig'] is Map ? Map<String, dynamic>.from(json['searchApiConfig']) : null,
         chapterMode: json['chapterMode']?.toString() ?? '',
         chapterApiConfig: json['chapterApiConfig'] is Map ? Map<String, dynamic>.from(json['chapterApiConfig']) : null,
-        adBlocker: json['adBlocker'] ?? false);
+        adBlocker: json['adBlocker'] ?? false,
+        authConfig: json['auth'] is Map ? Map<String, dynamic>.from(json['auth']) : null);
   }
 
   factory Plugin.fromTemplate() {
@@ -309,6 +314,7 @@ class Plugin {
     data['chapterMode'] = chapterMode;
     data['chapterApiConfig'] = chapterApiConfig;
     data['adBlocker'] = adBlocker;
+    if (authConfig != null) data['auth'] = authConfig;
     return data;
   }
 
@@ -438,17 +444,34 @@ class Plugin {
                   picNode.attributes['data-echo'] ??
                   picNode.text?.trim() ??
                   '';
-              if (picUrl.isNotEmpty) {
-                if (picUrl.startsWith('//')) {
-                  picUrl = 'https:$picUrl';
-                } else if (!picUrl.startsWith('http://') && !picUrl.startsWith('https://')) {
-                  picUrl = baseUrl.endsWith('/')
-                      ? (picUrl.startsWith('/') ? baseUrl + picUrl.substring(1) : '$baseUrl$picUrl')
-                      : (picUrl.startsWith('/') ? '$baseUrl$picUrl' : '$baseUrl/$picUrl');
-                }
-              }
             }
           } catch (_) {}
+        }
+        // 自动回退：当规则未配置 searchPic 或未提取到时，尝试抓取该条目内的首个 img 标签
+        if (picUrl.isEmpty) {
+          try {
+            final fallbackImg = element.queryXPath('.//img').node;
+            if (fallbackImg != null) {
+              picUrl = fallbackImg.attributes['src'] ??
+                  fallbackImg.attributes['data-original'] ??
+                  fallbackImg.attributes['data-src'] ??
+                  fallbackImg.attributes['data-echo'] ??
+                  '';
+            }
+          } catch (_) {}
+        }
+
+        if (picUrl.isNotEmpty) {
+          picUrl = picUrl.trim();
+          if (picUrl.startsWith('//')) {
+            picUrl = 'https:$picUrl';
+          } else if (picUrl.startsWith('http://')) {
+            picUrl = picUrl.replaceFirst('http://', 'https://');
+          } else if (!picUrl.startsWith('https://')) {
+            picUrl = baseUrl.endsWith('/')
+                ? (picUrl.startsWith('/') ? baseUrl + picUrl.substring(1) : '$baseUrl$picUrl')
+                : (picUrl.startsWith('/') ? '$baseUrl$picUrl' : '$baseUrl/$picUrl');
+          }
         }
         SearchItem searchItem = SearchItem(
           name: element.queryXPath(searchName).node!.text?.trim() ?? '',
@@ -573,11 +596,18 @@ class Plugin {
             itemSrc = baseUrl.endsWith('/') ? '$baseUrl$itemId.html' : '$baseUrl/$itemId.html';
           }
           String itemPic = '';
-          if (picKey.isNotEmpty && item[picKey] != null) {
-            itemPic = item[picKey].toString().trim();
+          final rawPic = (picKey.isNotEmpty ? item[picKey] : null) ??
+              item['pic'] ??
+              item['vod_pic'] ??
+              item['cover'] ??
+              item['img'];
+          if (rawPic != null) {
+            itemPic = rawPic.toString().trim();
             if (itemPic.startsWith('//')) {
               itemPic = 'https:$itemPic';
-            } else if (!itemPic.startsWith('http://') && !itemPic.startsWith('https://')) {
+            } else if (itemPic.startsWith('http://')) {
+              itemPic = itemPic.replaceFirst('http://', 'https://');
+            } else if (!itemPic.startsWith('https://')) {
               final cleanPath = itemPic.startsWith('/') ? itemPic.substring(1) : itemPic;
               itemPic = baseUrl.endsWith('/') ? '$baseUrl$cleanPath' : '$baseUrl/$cleanPath';
             }
@@ -635,9 +665,15 @@ class Plugin {
         if (item is Map) {
           final vodName = item['vod_name']?.toString().trim() ?? '';
           final vodId = item['vod_id']?.toString().trim() ?? '';
-          var vodPic = item['vod_pic']?.toString().trim() ?? '';
-          if (vodPic.startsWith('http://')) {
+          var vodPic = item['vod_pic']?.toString().trim() ??
+              item['pic']?.toString().trim() ??
+              '';
+          if (vodPic.startsWith('//')) {
+            vodPic = 'https:$vodPic';
+          } else if (vodPic.startsWith('http://')) {
             vodPic = vodPic.replaceFirst('http://', 'https://');
+          } else if (vodPic.startsWith('/') && baseUrl.isNotEmpty) {
+            vodPic = baseUrl.endsWith('/') ? '$baseUrl${vodPic.substring(1)}' : '$baseUrl$vodPic';
           }
           final vodRemarks = item['vod_remarks']?.toString().trim() ??
               item['vod_sub']?.toString().trim() ??

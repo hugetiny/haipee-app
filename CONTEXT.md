@@ -44,8 +44,16 @@ A declarative site definition specification (aligned with Cardigann / Torznab) d
 _Avoid_: Torrent scraper, tracker script, search plugin
 
 **Plugin Repository**:
-A decentralized remote manifest (JSON index) hosting installable, versioned Plugins that clients can subscribe to and auto-update.
-_Avoid_: Store server, central backend
+A decentralized remote manifest hosting installable, versioned Plugins that clients can subscribe to and auto-update (hosted primarily at `https://github.com/hugetiny/Kazumi` and Git mirrors).
+_Avoid_: Store server, central proprietary backend
+
+**Declarative Plugin YAML Specification (Kazumi 声明式插件 YAML 规范)**:
+The human-readable YAML/JSON schema declaring scraping selectors, search endpoints, thumbnail extraction fields (`searchPic`), and authentication descriptors (`auth`) for video streaming and metadata extractors.
+_Avoid_: Hardcoded site scrapers without schema definitions, monolithic Dart-only plugins
+
+**In-App Plugin Authentication (应用内插件授权与扫码鉴权)**:
+The native in-app authentication flow (e.g., official Bilibili QR code passport login) providing zero-leakage, interactive session (`SESSDATA`) capture directly on mobile and desktop viewports, automatically unlocking high-bitrate media streams (1080P/4K DASH) without manual browser cookie copying.
+_Avoid_: Requiring users to inspect browser DevTools to copy cookies, storing raw passwords in client
 
 **Torznab Category Mapping**:
 The canonical integer-based taxonomy standard (e.g. 2000 for Movies, 5000 for TV, 5070 for Anime, 4000 for Games) used by Indexer Plugins to correlate site-specific sections with unified filter tabs.
