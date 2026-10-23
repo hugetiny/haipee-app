@@ -184,6 +184,25 @@ class VideoPageController extends Notifier<VideoPageState> {
     var urlItem = state.roadList[currentRoad].data[episode - 1];
     final plugin = currentPlugin;
 
+    if (plugin.isBilibili || urlItem.startsWith('bili://')) {
+      String bvid = '';
+      int? cid;
+      if (urlItem.startsWith('bili://')) {
+        final parts = urlItem.substring('bili://'.length).split('/');
+        if (parts.isNotEmpty) bvid = parts[0];
+        if (parts.length >= 2) cid = int.tryParse(parts[1]);
+      } else {
+        cid = int.tryParse(urlItem);
+        final bvMatch = RegExp(r'BV[a-zA-Z0-9]{10}').firstMatch(state.src);
+        bvid = bvMatch?.group(0) ?? state.src;
+      }
+      final normalizedBiliUrl = 'bili://$bvid/${cid ?? 0}';
+      KazumiLogger().log(Level.info, 'B站原生WBI/DASH流直通播放器: $normalizedBiliUrl');
+      loading = false;
+      webviewController.videoParserEventController.add((normalizedBiliUrl, offset));
+      return;
+    }
+
     // 检查是否为直链视频（如 HLS .m3u8、.mp4 直链）或插件显式关闭了 Webview
     final lowerUrl = urlItem.toLowerCase();
     final isDirectStream = !plugin.useWebview ||

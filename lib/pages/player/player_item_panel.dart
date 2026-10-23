@@ -88,6 +88,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
   final TextEditingController textController = TextEditingController();
   final FocusNode textFieldFocus = FocusNode();
   bool _dismissedBiliLoginPrompt = false;
+  bool _initialBiliPromptPhase = true;
   Timer? _biliPromptTimer;
 
   @override
@@ -158,7 +159,10 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
   }
 
   Future<void> _handleDownload(VideoPageState videoState) async {
-    if (videoState.src.isEmpty) {
+    final downloadUrl = videoState.src.isNotEmpty
+        ? videoState.src
+        : playerController.videoUrl;
+    if (downloadUrl.isEmpty) {
       KazumiDialog.showToast(message: '视频地址不可用');
       return;
     }
@@ -170,11 +174,15 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
       final title = _buildTitleText(videoState);
 
       // Get bangumi ID and episode number if available
-      String? bangumiId = videoState.bangumiItem?.id.toString();
-      int? episodeNumber = videoState.currentEpisode;
+      String? bangumiId = playerController.activeLocalVideoArgs != null
+          ? playerController.activeLocalVideoArgs!.bangumiId
+          : videoState.bangumiItem?.id.toString();
+      int? episodeNumber = playerController.activeLocalVideoArgs != null
+          ? playerController.activeLocalVideoArgs!.episode
+          : videoState.currentEpisode;
 
       await downloadController.addDownload(
-        videoState.src,
+        downloadUrl,
         title: title.trim(),
         bangumiId: bangumiId,
         episodeNumber: episodeNumber,
@@ -187,6 +195,10 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
   }
 
   String _buildTitleText(VideoPageState videoState) {
+    final localArgs = playerController.activeLocalVideoArgs;
+    if (localArgs != null && localArgs.title.isNotEmpty) {
+      return ' ${localArgs.title}';
+    }
     final title = videoState.title.isNotEmpty
         ? videoState.title
         : playerController.currentTitle;
@@ -312,6 +324,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                 ),
                 const SizedBox(width: 6),
                 InkWell(
+                  key: const Key('player_bili_login_prompt_close'),
                   borderRadius: BorderRadius.circular(12),
                   onTap: () {
                     _biliPromptTimer?.cancel();
@@ -323,6 +336,75 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                   ),
                 ),
               ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBiliQualityBadge() {
+    if (!playerController.isBiliPlayback) {
+      return const SizedBox.shrink();
+    }
+    return ValueListenableBuilder<BiliUserProfile?>(
+      valueListenable: BiliAuthService().userNotifier,
+      builder: (context, user, _) {
+        final isLogin = BiliAuthService().isLoggedIn && user != null;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: InkWell(
+            key: const Key('player_bili_quality_badge'),
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              widget.cancelHideTimer();
+              playerController.canHidePlayerPanel = false;
+              BiliLoginDialog.show(context).then((_) {
+                if (mounted) {
+                  widget.cancelHideTimer();
+                  widget.startHideTimer();
+                  playerController.canHidePlayerPanel = true;
+                  if (BiliAuthService().isLoggedIn && !isLogin) {
+                    _refreshBiliStreamWithNewAuth();
+                  }
+                }
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isLogin
+                    ? Colors.white.withAlpha(32)
+                    : Colors.pinkAccent.withAlpha(50),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isLogin
+                      ? Colors.white38
+                      : Colors.pinkAccent.withAlpha(180),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isLogin ? Icons.hd_rounded : Icons.lock_open_rounded,
+                    size: 14,
+                    color: isLogin ? Colors.white : Colors.pinkAccent,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isLogin
+                        ? (user.isVip ? '大会员 4K' : '1080P 高清')
+                        : '360P · 登录享高清',
+                    style: TextStyle(
+                      color: isLogin ? Colors.white : Colors.pinkAccent.shade100,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -540,15 +622,11 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
       curve: Curves.easeInOut,
     ));
 
-    // 检测到正在播放 B站 视频且未登录时启动 10 秒提示定时器
-    Future.microtask(() {
-      if (mounted && playerController.isBiliPlayback && !BiliAuthService().isLoggedIn) {
-        _biliPromptTimer = Timer(const Duration(seconds: 10), () {
-          if (mounted) {
-            setState(() {
-              _dismissedBiliLoginPrompt = true;
-            });
-          }
+    // 播放 B站 视频时首屏常驻 12 秒提示，之后随控制栏呼出同步展示（除非用户主动点击关闭）
+    _biliPromptTimer = Timer(const Duration(seconds: 12), () {
+      if (mounted) {
+        setState(() {
+          _initialBiliPromptPhase = false;
         });
       }
     });
@@ -855,8 +933,11 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
               ),
             ),
           ),
-        // 播放 B站 视频且未登录时的上下文智能提示 (非侵入式轻量胶囊，自动渐隐与一键登录)
-        if (playerController.isBiliPlayback && !_dismissedBiliLoginPrompt && !playerState.lockPanel)
+        // 播放 B站 视频且未登录时的上下文智能提示 (首屏常驻 + 呼出控制面板时联动展示，支持一键登录解锁 1080P/4K)
+        if (playerController.isBiliPlayback &&
+            !_dismissedBiliLoginPrompt &&
+            !playerState.lockPanel &&
+            (_initialBiliPromptPhase || playerState.showVideoController))
           Positioned(
             top: 56,
             left: 0,
@@ -1002,9 +1083,11 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                       playerController.playOrPause();
                     },
                   ),
-                  if (videoState.isFullscreen ||
-                      Utils.isTablet() ||
-                      Utils.isDesktop())
+                  if (playerController.activeLocalVideoArgs == null &&
+                      videoState.roadList.isNotEmpty &&
+                      (videoState.isFullscreen ||
+                          Utils.isTablet() ||
+                          Utils.isDesktop()))
                     IconButton(
                       color: Colors.white,
                       icon: const Icon(Icons.skip_next_rounded),
@@ -1065,59 +1148,63 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                IconButton(
-                                  color: Colors.white,
-                                  icon: playerState.danmakuOn
-                                      ? SvgPicture.string(
-                                          svgString,
-                                          height: 24,
-                                        )
-                                      : SvgPicture.asset(
-                                          'assets/images/danmaku_off.svg',
-                                          height: 24,
-                                        ),
-                                  onPressed: widget.handleDanmaku,
-                                  tooltip: playerState.danmakuOn
-                                      ? t.playback.controls.tooltips.danmakuOn
-                                      : t.playback.controls.tooltips.danmakuOff,
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    widget.keyboardFocus.requestFocus();
-                                    showModalBottomSheet(
-                                      isScrollControlled: true,
-                                      constraints: BoxConstraints(
-                                        maxHeight:
-                                            MediaQuery.of(context).size.height *
-                                                3 /
-                                                4,
-                                        maxWidth: (Utils.isDesktop() ||
-                                                Utils.isTablet())
-                                            ? MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                9 /
-                                                16
-                                            : MediaQuery.of(context).size.width,
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      context: context,
-                                      builder: (context) {
-                                        return DanmakuSettingsSheet(
-                                          danmakuController: playerController
-                                              .danmakuController,
-                                        );
-                                      },
-                                    );
-                                  },
-                                  color: Colors.white,
-                                  icon: SvgPicture.asset(
-                                    'assets/images/danmaku_setting.svg',
-                                    height: 24,
+                                if (constraints.maxWidth >= 48)
+                                  IconButton(
+                                    color: Colors.white,
+                                    icon: playerState.danmakuOn
+                                        ? SvgPicture.string(
+                                            svgString,
+                                            height: 24,
+                                          )
+                                        : SvgPicture.asset(
+                                            'assets/images/danmaku_off.svg',
+                                            height: 24,
+                                          ),
+                                    onPressed: widget.handleDanmaku,
+                                    tooltip: playerState.danmakuOn
+                                        ? t.playback.controls.tooltips.danmakuOn
+                                        : t.playback.controls.tooltips.danmakuOff,
                                   ),
-                                ),
+                                if (constraints.maxWidth >= 96)
+                                  IconButton(
+                                    onPressed: () {
+                                      widget.keyboardFocus.requestFocus();
+                                      showModalBottomSheet(
+                                        isScrollControlled: true,
+                                        constraints: BoxConstraints(
+                                          maxHeight:
+                                              MediaQuery.of(context).size.height *
+                                                  3 /
+                                                  4,
+                                          maxWidth: (Utils.isDesktop() ||
+                                                  Utils.isTablet())
+                                              ? MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  9 /
+                                                  16
+                                              : MediaQuery.of(context).size.width,
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        context: context,
+                                        builder: (context) {
+                                          return DanmakuSettingsSheet(
+                                            danmakuController: playerController
+                                                .danmakuController,
+                                          );
+                                        },
+                                      );
+                                    },
+                                    color: Colors.white,
+                                    icon: SvgPicture.asset(
+                                      'assets/images/danmaku_setting.svg',
+                                      height: 24,
+                                    ),
+                                  ),
                                 if (isSpaceEnough)
-                                  buildDanmakuTextField(playerState),
+                                  Flexible(
+                                    child: buildDanmakuTextField(playerState),
+                                  ),
                               ],
                             ),
                           );
@@ -1175,6 +1262,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                     ],
                     if (!playerState.danmakuOn) const Spacer(),
                   ],
+                  _buildBiliQualityBadge(),
                   MenuAnchor(
                     consumeOutsideTap: true,
                     onOpen: () {
@@ -1340,9 +1428,11 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                     ),
                     tooltip: '音频与字幕',
                   ),
-                  (!videoState.isFullscreen &&
-                          !Utils.isTablet() &&
-                          !Utils.isDesktop())
+                  (playerController.activeLocalVideoArgs != null ||
+                          videoState.roadList.isEmpty ||
+                          (!videoState.isFullscreen &&
+                              !Utils.isTablet() &&
+                              !Utils.isDesktop()))
                       ? const SizedBox.shrink()
                       : IconButton(
                           color: Colors.white,
@@ -1437,7 +1527,9 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                     color: Colors.white,
                   ),
                 ),
-              if (videoState.bangumiItem != null)
+              if (playerController.activeLocalVideoArgs == null &&
+                  videoState.bangumiItem != null &&
+                  !videoState.bangumiItem!.isDummyItem)
                 CollectButton(
                   bangumiItem: videoState.bangumiItem!,
                   onOpen: () {

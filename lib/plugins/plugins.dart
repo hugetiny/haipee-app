@@ -911,7 +911,9 @@ class Plugin {
         final bvid = bvMatch?.group(0) ?? url;
         final detail = await BilibiliService.getVideoDetails(bvid);
         if (detail != null && detail.parts.isNotEmpty) {
-          final cids = detail.parts.map((p) => p.cid.toString()).toList();
+          final cids = detail.parts
+              .map((p) => 'bili://$bvid/${p.cid}')
+              .toList();
           final names = detail.parts
               .map((p) => p.part.isNotEmpty
                   ? p.part

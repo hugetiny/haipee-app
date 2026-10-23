@@ -15,6 +15,10 @@ class WebviewAppleItemControllerImpel
 
   @override
   Future<void> init() async {
+    if (webviewController != null) {
+      initEventController.add(true);
+      return;
+    }
     headlessWebView ??= PlatformHeadlessInAppWebView(
       PlatformHeadlessInAppWebViewCreationParams(
         initialUserScripts: UnmodifiableListView<UserScript>([

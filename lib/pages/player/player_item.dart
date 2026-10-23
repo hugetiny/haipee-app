@@ -1204,45 +1204,55 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     ref.watch(collectionsProvider);
     collectType =
         collectController.getCollectType(videoPageController.bangumiItem);
-    return ClipRect(
-      child: Container(
-        color: Colors.black,
-        child: MouseRegion(
-          cursor: (videoState.isFullscreen && !playerState.showVideoController)
-              ? SystemMouseCursors.none
-              : SystemMouseCursors.basic,
-          onHover: (PointerEvent pointerEvent) {
-            // workaround for android.
-            // I don't know why, but android tap event will trigger onHover event.
-            if (Utils.isDesktop()) {
-              if (pointerEvent.position.dy > 50 &&
-                  pointerEvent.position.dy <
-                      MediaQuery.of(context).size.height - 70) {
-                _handleHove();
-              } else {
-                if (!playerController.showVideoController) {
-                  animationController?.forward();
-                  playerController.showVideoController = true;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.sizeOf(context);
+        final double effectiveWidth =
+            constraints.hasBoundedWidth && constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : screenSize.width;
+        final double effectiveHeight =
+            constraints.hasBoundedHeight && constraints.maxHeight.isFinite
+                ? constraints.maxHeight
+                : (videoPageController.isFullscreen
+                    ? screenSize.height
+                    : (effectiveWidth * 9.0 / 16.0));
+        return ClipRect(
+          child: Container(
+            color: Colors.black,
+            child: MouseRegion(
+              cursor: (videoState.isFullscreen && !playerState.showVideoController)
+                  ? SystemMouseCursors.none
+                  : SystemMouseCursors.basic,
+              onHover: (PointerEvent pointerEvent) {
+                // workaround for android.
+                // I don't know why, but android tap event will trigger onHover event.
+                if (Utils.isDesktop()) {
+                  if (pointerEvent.localPosition.dy > 50 &&
+                      pointerEvent.localPosition.dy < effectiveHeight - 70) {
+                    _handleHove();
+                  } else {
+                    if (!playerController.showVideoController) {
+                      animationController?.forward();
+                      playerController.showVideoController = true;
+                    }
+                  }
                 }
-              }
-            }
-          },
-          child: Listener(
-            onPointerSignal: (pointerSignal) {
-              if (pointerSignal is PointerScrollEvent) {
-                _handleMouseScroller();
-                final scrollDelta = pointerSignal.scrollDelta;
-                final double volume =
-                    playerController.volume - scrollDelta.dy / 60;
-                playerController.setVolume(volume);
-              }
-            },
-            child: SizedBox(
-              height: videoPageController.isFullscreen
-                  ? (MediaQuery.of(context).size.height)
-                  : (MediaQuery.of(context).size.width * 9.0 / (16.0)),
-              width: MediaQuery.of(context).size.width,
-              child: Stack(alignment: Alignment.center, children: [
+              },
+              child: Listener(
+                onPointerSignal: (pointerSignal) {
+                  if (pointerSignal is PointerScrollEvent) {
+                    _handleMouseScroller();
+                    final scrollDelta = pointerSignal.scrollDelta;
+                    final double volume =
+                        playerController.volume - scrollDelta.dy / 60;
+                    playerController.setVolume(volume);
+                  }
+                },
+                child: SizedBox(
+                  height: effectiveHeight,
+                  width: effectiveWidth,
+                  child: Stack(alignment: Alignment.center, children: [
                 Center(
                     child: Focus(
                         // workaround for #461
@@ -1399,9 +1409,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: videoPageController.isFullscreen
-                      ? MediaQuery.sizeOf(context).height
-                      : (MediaQuery.sizeOf(context).width * 9 / 16),
+                  height: effectiveHeight,
                   child: DanmakuScreen(
                     key: _danmuKey,
                     createdController: (DanmakuController e) {
@@ -1564,6 +1572,8 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
           ),
         ),
       ),
+    );
+      },
     );
   }
 }

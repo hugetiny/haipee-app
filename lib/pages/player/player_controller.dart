@@ -108,8 +108,20 @@ class PlayerController extends Notifier<PlayerState> {
     if (activeLocalVideoArgs?.biliCid != null && activeLocalVideoArgs!.biliCid! > 0) return true;
     if (activeLocalVideoArgs?.biliBvid != null && activeLocalVideoArgs!.biliBvid!.isNotEmpty) return true;
     final currentUrl = videoUrl.toLowerCase();
-    if (currentUrl.contains('bilivideo.com') || currentUrl.contains('bilibili.com')) return true;
-    if (videoPageController.currentPlugin.isBilibili) return true;
+    if (currentUrl.startsWith('bili://') ||
+        currentUrl.contains('bilivideo.com') ||
+        currentUrl.contains('bilibili.com')) {
+      return true;
+    }
+    final referer =
+        (activeHttpHeaders?['Referer'] ?? activeHttpHeaders?['referer'] ?? '')
+            .toLowerCase();
+    if (referer.contains('bilibili.com')) return true;
+    try {
+      if (videoPageController.currentPluginOrNull?.isBilibili ?? false) {
+        return true;
+      }
+    } catch (_) {}
     return false;
   }
 
@@ -132,11 +144,27 @@ class PlayerController extends Notifier<PlayerState> {
     int? biliCid,
     String? biliBvid,
   }) async {
-    videoUrl = url;
-    activeAudioUrl = audioUrl;
-    activeHttpHeaders = httpHeaders;
-    activeBiliCid = biliCid;
-    activeBiliBvid = biliBvid ?? activeLocalVideoArgs?.biliBvid;
+    String resolvedUrl = url;
+    String? resolvedAudioUrl = audioUrl;
+    Map<String, String>? resolvedHeaders = httpHeaders;
+    int? resolvedBiliCid = biliCid ?? activeLocalVideoArgs?.biliCid;
+    String? resolvedBiliBvid = biliBvid ?? activeLocalVideoArgs?.biliBvid;
+
+    if (url.startsWith('bili://')) {
+      final parts = url.substring('bili://'.length).split('/');
+      if (parts.isNotEmpty && parts[0].isNotEmpty) {
+        resolvedBiliBvid = parts[0];
+      }
+      if (parts.length >= 2) {
+        resolvedBiliCid = int.tryParse(parts[1]) ?? resolvedBiliCid;
+      }
+    }
+
+    videoUrl = resolvedUrl;
+    activeAudioUrl = resolvedAudioUrl;
+    activeHttpHeaders = resolvedHeaders;
+    activeBiliCid = resolvedBiliCid;
+    activeBiliBvid = resolvedBiliBvid;
     state = state.copyWith(
       playing: false,
       loading: true,
@@ -150,12 +178,29 @@ class PlayerController extends Notifier<PlayerState> {
     try {
       await disposeResources(disposeSyncPlayController: false);
     } catch (_) {}
+    activeBiliCid = resolvedBiliCid;
+    activeBiliBvid = resolvedBiliBvid;
+
+    if (url.startsWith('bili://') &&
+        resolvedBiliBvid != null &&
+        resolvedBiliBvid.isNotEmpty &&
+        resolvedBiliCid != null &&
+        resolvedBiliCid > 0) {
+      final streamInfo =
+          await BilibiliService.getPlayUrl(resolvedBiliBvid, resolvedBiliCid);
+      if (streamInfo != null && streamInfo.videoUrl.isNotEmpty) {
+        videoUrl = streamInfo.videoUrl;
+        activeAudioUrl = streamInfo.audioUrl;
+        activeHttpHeaders = streamInfo.headers;
+      }
+    }
+
     final autoSkip = setting.get(SettingBoxKey.autoSkipOpEd, defaultValue: false) as bool;
     state = state.copyWith(autoSkipOpEd: autoSkip);
 
     // 原生官方弹幕优先直载 (B站 视频具有确定的 CID，以官方原生弹幕为准，严禁弹弹play跨站模糊盲搜)
-    if (biliCid != null && biliCid > 0) {
-      await loadBiliDanmaku(biliCid);
+    if (resolvedBiliCid != null && resolvedBiliCid > 0) {
+      await loadBiliDanmaku(resolvedBiliCid);
     } else {
       int episodeFromTitle = 0;
       final bgmItem = videoPageController.state.bangumiItem;
@@ -624,8 +669,9 @@ class PlayerController extends Notifier<PlayerState> {
   }
 
   Future<void> disposeResources({bool disposeSyncPlayController = true}) async {
-    activeBiliCid = null;
     if (disposeSyncPlayController) {
+      activeBiliCid = null;
+      activeBiliBvid = null;
       try {
         state = state.copyWith(syncplayRoom: '', syncplayClientRtt: 0);
         await syncplayController?.disconnect();
@@ -642,6 +688,7 @@ class PlayerController extends Notifier<PlayerState> {
 
   Future<void> stop({bool updateState = true}) async {
     activeBiliCid = null;
+    activeBiliBvid = null;
     try {
       await mediaPlayer?.stop();
       if (updateState) {

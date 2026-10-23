@@ -31,6 +31,12 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
   void initState() {
     super.initState();
     _playerController = ref.read(playerProvider.notifier);
+    // 同步注入上下文参数，确保首帧 PlayerItemPanel / SmallestPlayerItemPanel 能立即识别 B站流状态与标题
+    _playerController.activeLocalVideoArgs = widget.args;
+    _playerController.currentTitle = widget.args.title;
+    _playerController.isAudioMode = widget.args.effectiveIsAudio;
+    _playerController.activeBiliCid = widget.args.biliCid;
+    _playerController.activeBiliBvid = widget.args.biliBvid;
 
     // 启动本地视频播放
     Future.microtask(() async {
@@ -137,6 +143,9 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
   @override
   void dispose() {
     _keyboardFocus.dispose();
+    if (_playerController.activeLocalVideoArgs == widget.args) {
+      _playerController.activeLocalVideoArgs = null;
+    }
     _playerController.stop();
     super.dispose();
   }

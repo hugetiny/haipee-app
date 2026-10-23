@@ -7,9 +7,15 @@ import 'package:hive_ce/hive.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
 import 'package:kazumi/modules/bilibili/bilibili_auth_service.dart';
 import 'package:kazumi/modules/bilibili/widgets/bili_login_dialog.dart';
+import 'package:kazumi/modules/collect/collect_change_module.dart';
+import 'package:kazumi/modules/collect/collect_module.dart';
+import 'package:kazumi/modules/history/history_module.dart';
 import 'package:kazumi/pages/online/online_video_search_page.dart';
+import 'package:kazumi/pages/player/local_video_play_args.dart';
+import 'package:kazumi/pages/player/player_item.dart';
 import 'package:kazumi/pages/player/player_item_panel.dart';
 import 'package:kazumi/pages/player/player_providers.dart';
+import 'package:kazumi/pages/player/smallest_player_item_panel.dart';
 import 'package:kazumi/utils/storage.dart';
 
 void main() {
@@ -22,6 +28,10 @@ void main() {
     tempDir = Directory.systemTemp.createTempSync('bili_widget_test_');
     Hive.init(tempDir.path);
     GStorage.setting = await Hive.openBox('setting_test_widget');
+    GStorage.collectibles = await Hive.openBox<CollectedBangumi>('collectibles_test_widget');
+    GStorage.collectChanges = await Hive.openBox<CollectedBangumiChange>('collect_changes_test_widget');
+    GStorage.histories = await Hive.openBox<History>('histories_test_widget');
+    GStorage.shieldList = await Hive.openBox<String>('shield_list_test_widget');
   });
 
   tearDownAll(() async {
@@ -129,9 +139,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // 验证检测到正在播放 B站 视频且未登录时，播放器浮层展示上下文登录胶囊
+      // 验证检测到正在播放 B站 视频且未登录时，播放器浮层展示上下文登录胶囊与底部画质登录徽标
       expect(find.byKey(const Key('player_bili_login_prompt')), findsOneWidget);
+      expect(find.byKey(const Key('player_bili_quality_badge')), findsOneWidget);
       expect(find.textContaining('当前为访客模式 (限360P) · 登录B站解锁 1080P/4K'), findsOneWidget);
+      expect(find.text('360P · 登录享高清'), findsOneWidget);
 
       final loginBtn = find.byKey(const Key('bili_player_login_button'));
       expect(loginBtn, findsOneWidget);
@@ -147,13 +159,138 @@ void main() {
       await tester.tap(find.text('暂不登录 (保持360P)'));
       await tester.pumpAndSettle();
 
-      // 点击胶囊上的关闭按钮，胶囊自动消失
-      final closeIcon = find.byIcon(Icons.close);
-      expect(closeIcon, findsWidgets);
-      await tester.tap(closeIcon.first);
+      // 点击胶囊上的关闭按钮，胶囊自动消失，但底部控制栏的 360P 试看徽标依然保留以供随时登录
+      final closeBtn = find.byKey(const Key('player_bili_login_prompt_close'));
+      expect(closeBtn, findsOneWidget);
+      await tester.tap(closeBtn);
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('player_bili_login_prompt')), findsNothing);
+      expect(find.byKey(const Key('player_bili_quality_badge')), findsOneWidget);
+    });
+
+    testWidgets('5. disposeResources(disposeSyncPlayController: false) preserves Bilibili playback state and PlayerItem fills full container height', (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final controller = container.read(playerProvider.notifier);
+      controller.activeLocalVideoArgs = const LocalVideoPlayArgs(
+        filePath: 'https://upos-sz-mirrorcos.bilivideo.com/upgcxcode/test.m4s',
+        title: 'B站测试视频',
+        biliCid: 123456,
+        biliBvid: 'BV1xx411c7mD',
+      );
+      controller.activeBiliCid = 123456;
+      controller.activeBiliBvid = 'BV1xx411c7mD';
+
+      // Verify disposeResources(disposeSyncPlayController: false) (called during init) does not wipe activeBiliCid
+      await controller.disposeResources(disposeSyncPlayController: false);
+      expect(controller.activeBiliCid, 123456);
+      expect(controller.activeBiliBvid, 'BV1xx411c7mD');
+      expect(controller.isBiliPlayback, isTrue);
+
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TranslationProvider(
+            child: MaterialApp(
+              home: Scaffold(
+                backgroundColor: Colors.black,
+                body: PlayerItem(
+                  disableAnimations: true,
+                  keyboardFocus: focusNode,
+                  onBackPressed: (_) {},
+                  openMenu: () {},
+                  locateEpisode: () {},
+                  changeEpisode: (_, {currentRoad = 0, offset = 0}) async {},
+                  sendDanmaku: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Verify PlayerItem occupies the full 1000x800 window height (not 1000 * 9 / 16 = 562.5)
+      final playerItemSize = tester.getSize(find.byType(PlayerItem));
+      expect(playerItemSize.width, 1000.0);
+      expect(playerItemSize.height, 800.0);
+
+      // Verify login prompt and quality badge are visible during initial phase
+      expect(find.byKey(const Key('player_bili_login_prompt')), findsOneWidget);
+      expect(find.byKey(const Key('player_bili_quality_badge')), findsOneWidget);
+
+      // Advance past timers (4s hideTimer + 12s initialBiliPromptPhase)
+      await tester.pump(const Duration(seconds: 13));
+
+      // When user wakes up the control panel (showVideoController = true), prompt reappears
+      controller.showVideoController = true;
+      await tester.pump();
+      expect(find.byKey(const Key('player_bili_login_prompt')), findsOneWidget);
+      expect(find.byKey(const Key('player_bili_quality_badge')), findsOneWidget);
+    });
+
+    testWidgets('6. SmallestPlayerItemPanel also displays Bilibili login prompt on narrow windows', (tester) async {
+      tester.view.physicalSize = const Size(700, 600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final controller = container.read(playerProvider.notifier);
+      controller.activeBiliCid = 98765;
+      controller.state = controller.state.copyWith(
+        showVideoController: true,
+        lockPanel: false,
+      );
+
+      final anim = AnimationController(vsync: tester, duration: const Duration(milliseconds: 200));
+      addTearDown(anim.dispose);
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TranslationProvider(
+            child: MaterialApp(
+              home: Scaffold(
+                body: SmallestPlayerItemPanel(
+                  disableAnimations: true,
+                  animationController: anim,
+                  keyboardFocus: focusNode,
+                  onBackPressed: (_) {},
+                  setPlaybackSpeed: (_) async {},
+                  showDanmakuSwitch: () {},
+                  handleFullscreen: () {},
+                  handleProgressBarDragStart: (_) {},
+                  handleProgressBarDragEnd: () {},
+                  handleSuperResolutionChange: (_) async {},
+                  handleHove: () {},
+                  startHideTimer: () {},
+                  cancelHideTimer: () {},
+                  handleDanmaku: () {},
+                  showVideoInfo: () {},
+                  showSyncPlayRoomCreateDialog: () {},
+                  showSyncPlayEndPointSwitchDialog: () {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 13));
+
+      expect(find.byKey(const Key('player_bili_login_prompt')), findsOneWidget);
+      expect(find.byKey(const Key('bili_player_login_button')), findsOneWidget);
     });
 
     testWidgets('4. BiliLoginDialog supports switching between WebView, QR Code, and Cookie tabs', (tester) async {

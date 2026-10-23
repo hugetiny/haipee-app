@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,10 @@ import 'package:kazumi/bean/widget/app_back_button.dart';
 import 'package:kazumi/bean/widget/collect_button.dart';
 import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
+import 'package:kazumi/modules/bilibili/bilibili_auth_service.dart';
+import 'package:kazumi/modules/bilibili/bilibili_models.dart';
+import 'package:kazumi/modules/bilibili/bilibili_service.dart';
+import 'package:kazumi/modules/bilibili/widgets/bili_login_dialog.dart';
 import 'package:kazumi/pages/player/player_controller.dart';
 import 'package:kazumi/pages/player/player_providers.dart';
 import 'package:kazumi/pages/player/player_state.dart';
@@ -17,9 +22,11 @@ import 'package:kazumi/pages/video/providers.dart';
 import 'package:kazumi/pages/video/video_controller.dart';
 import 'package:kazumi/pages/video/video_state.dart';
 import 'package:kazumi/utils/constants.dart';
+import 'package:kazumi/utils/logger.dart';
 import 'package:kazumi/utils/remote.dart';
 import 'package:kazumi/utils/utils.dart';
 import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:logger/logger.dart';
 
 class SmallestPlayerItemPanel extends ConsumerStatefulWidget {
   const SmallestPlayerItemPanel({
@@ -72,6 +79,9 @@ class _SmallestPlayerItemPanelState
   late final PlayerController playerController;
   late Animation<Offset> topOffsetAnimation;
   late Animation<Offset> bottomOffsetAnimation;
+  bool _dismissedBiliLoginPrompt = false;
+  bool _initialBiliPromptPhase = true;
+  Timer? _biliPromptTimer;
 
   @override
   void initState() {
@@ -95,6 +105,148 @@ class _SmallestPlayerItemPanelState
         parent: widget.animationController,
         curve: Curves.easeInOut,
       ),
+    );
+    _biliPromptTimer = Timer(const Duration(seconds: 12), () {
+      if (mounted) {
+        setState(() {
+          _initialBiliPromptPhase = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _biliPromptTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshBiliStreamWithNewAuth() async {
+    final biliCid = playerController.activeBiliCid;
+    final biliBvid = playerController.activeBiliBvid ??
+        playerController.activeLocalVideoArgs?.biliBvid;
+    if (biliCid == null || biliBvid == null || biliBvid.isEmpty) return;
+
+    try {
+      KazumiDialog.showToast(message: '已成功登录！正在为您切换 1080P/4K 高清画质流...');
+      final playUrl = await BilibiliService.getPlayUrl(biliBvid, biliCid);
+      if (playUrl != null && playUrl.videoUrl.isNotEmpty) {
+        final currentPos = playerController.playerPosition;
+        await playerController.init(
+          playUrl.videoUrl,
+          audioUrl: playUrl.audioUrl,
+          httpHeaders: playUrl.headers,
+          biliCid: biliCid,
+          biliBvid: biliBvid,
+        );
+        if (currentPos > Duration.zero) {
+          playerController.seek(currentPos);
+        }
+        playerController.play();
+      }
+    } catch (e) {
+      KazumiLogger().log(Level.warning, '登录后切换高清流失败: $e');
+    }
+  }
+
+  Widget _buildBiliLoginPrompt() {
+    return ValueListenableBuilder<BiliUserProfile?>(
+      valueListenable: BiliAuthService().userNotifier,
+      builder: (context, user, _) {
+        final isLogin = BiliAuthService().isLoggedIn && user != null;
+        if (isLogin || _dismissedBiliLoginPrompt) {
+          return const SizedBox.shrink();
+        }
+        return Material(
+          color: Colors.transparent,
+          child: Container(
+            key: const Key('player_bili_login_prompt'),
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withAlpha(210),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Colors.pinkAccent.withAlpha(140),
+                width: 1,
+              ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black45,
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.tv_rounded,
+                  size: 16,
+                  color: Colors.pinkAccent,
+                ),
+                const SizedBox(width: 6),
+                const Flexible(
+                  child: Text(
+                    '当前为访客模式 (限360P) · 登录解锁 1080P/4K',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  key: const Key('bili_player_login_button'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent,
+                    foregroundColor: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () {
+                    widget.cancelHideTimer();
+                    playerController.canHidePlayerPanel = false;
+                    BiliLoginDialog.show(context).then((_) {
+                      if (mounted) {
+                        widget.cancelHideTimer();
+                        widget.startHideTimer();
+                        playerController.canHidePlayerPanel = true;
+                        if (BiliAuthService().isLoggedIn) {
+                          _refreshBiliStreamWithNewAuth();
+                        }
+                      }
+                    });
+                  },
+                  child: const Text('立即登录', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
+                  key: const Key('player_bili_login_prompt_close'),
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    _biliPromptTimer?.cancel();
+                    setState(() => _dismissedBiliLoginPrompt = true);
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.close, size: 15, color: Colors.white70),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -234,7 +386,7 @@ class _SmallestPlayerItemPanelState
                     children: [
                       const Icon(Icons.brightness_7, color: Colors.white),
                       Text(
-                        '  %',
+                        ' ${(playerState.brightness * 100).toInt()}%',
                         style: const TextStyle(color: Colors.white),
                       ),
                     ],
@@ -250,7 +402,7 @@ class _SmallestPlayerItemPanelState
                     children: [
                       const Icon(Icons.volume_down, color: Colors.white),
                       Text(
-                        ' %',
+                        ' ${playerState.volume.toInt()}%',
                         style: const TextStyle(color: Colors.white),
                       ),
                     ],
@@ -286,6 +438,21 @@ class _SmallestPlayerItemPanelState
                   ),
           ),
         ),
+        if (playerController.isBiliPlayback &&
+            !_dismissedBiliLoginPrompt &&
+            !playerState.lockPanel &&
+            (_initialBiliPromptPhase || playerState.showVideoController))
+          Positioned(
+            top: 48,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: _buildBiliLoginPrompt(),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -353,14 +520,17 @@ class _SmallestPlayerItemPanelState
             onDragEnd: widget.handleProgressBarDragEnd,
           ),
         ),
-        Text(
-          '     / ',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12.0,
-            fontFeatures: [
-              FontFeature.tabularFigures(),
-            ],
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: Text(
+            '${Utils.durationToString(playerState.currentPosition)} / ${Utils.durationToString(playerState.duration)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12.0,
+              fontFeatures: [
+                FontFeature.tabularFigures(),
+              ],
+            ),
           ),
         ),
         videoState.isPip
@@ -404,8 +574,19 @@ class _SmallestPlayerItemPanelState
               widget.onBackPressed(context);
             },
           ),
-          const Expanded(
-            child: dtb.DragToMoveArea(child: SizedBox(height: 40)),
+          Expanded(
+            child: dtb.DragToMoveArea(
+              child: Text(
+                playerController.activeLocalVideoArgs?.title.isNotEmpty == true
+                    ? ' ${playerController.activeLocalVideoArgs!.title}'
+                    : ' ${videoState.title.isNotEmpty ? videoState.title : playerController.currentTitle}',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: Theme.of(context).textTheme.titleSmall?.fontSize ?? 14,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
           ),
           forwardIcon(),
           if (Utils.isDesktop())
@@ -439,18 +620,21 @@ class _SmallestPlayerItemPanelState
                 ? t.playback.controls.tooltips.danmakuOn
                 : t.playback.controls.tooltips.danmakuOff,
           ),
-          CollectButton(
-            bangumiItem: videoPageController.bangumiItem,
-            onOpen: () {
-              widget.cancelHideTimer();
-              playerController.setCanHidePlayerPanel(false);
-            },
-            onClose: () {
-              widget.cancelHideTimer();
-              widget.startHideTimer();
-              playerController.setCanHidePlayerPanel(true);
-            },
-          ),
+          if (playerController.activeLocalVideoArgs == null &&
+              videoState.bangumiItem != null &&
+              !videoState.bangumiItem!.isDummyItem)
+            CollectButton(
+              bangumiItem: videoPageController.bangumiItem,
+              onOpen: () {
+                widget.cancelHideTimer();
+                playerController.setCanHidePlayerPanel(false);
+              },
+              onClose: () {
+                widget.cancelHideTimer();
+                widget.startHideTimer();
+                playerController.setCanHidePlayerPanel(true);
+              },
+            ),
           MenuAnchor(
             consumeOutsideTap: true,
             onOpen: () {
@@ -479,6 +663,39 @@ class _SmallestPlayerItemPanelState
               );
             },
             menuChildren: [
+              if (playerController.isBiliPlayback)
+                ValueListenableBuilder<BiliUserProfile?>(
+                  valueListenable: BiliAuthService().userNotifier,
+                  builder: (context, user, _) {
+                    final isLogin = BiliAuthService().isLoggedIn && user != null;
+                    return MenuItemButton(
+                      onPressed: () {
+                        widget.cancelHideTimer();
+                        playerController.setCanHidePlayerPanel(false);
+                        BiliLoginDialog.show(context).then((_) {
+                          if (mounted) {
+                            widget.cancelHideTimer();
+                            widget.startHideTimer();
+                            playerController.setCanHidePlayerPanel(true);
+                            if (BiliAuthService().isLoggedIn) {
+                              _refreshBiliStreamWithNewAuth();
+                            }
+                          }
+                        });
+                      },
+                      leadingIcon: Icon(
+                        isLogin ? Icons.verified_user_rounded : Icons.login_rounded,
+                        color: Colors.pinkAccent,
+                        size: 20,
+                      ),
+                      child: _buildMenuItem(
+                        title: isLogin
+                            ? 'B站账号: ${user.uname}'
+                            : '登录 B站 账号 (解锁 1080P/4K)',
+                      ),
+                    );
+                  },
+                ),
               SubmenuButton(
                 menuChildren: List<MenuItemButton>.generate(
                   3,

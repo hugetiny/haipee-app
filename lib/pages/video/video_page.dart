@@ -116,22 +116,27 @@ class _VideoPageState extends ConsumerState<VideoPage>
         setting.get(SettingBoxKey.playerDisableAnimations, defaultValue: false);
     // currentRoadProvider has a default of 0; no need to set it here to avoid lifecycle writes
 
-    // Initialize webview controller
-    webviewItemController.init();
-
-    // Initialize video page state after initState completes
-    Future.microtask(() {
-      if (mounted) {
-        _initializeVideoPageState();
-      }
-    });
-
-    // webview events listener
+    // webview events listener (must subscribe before init() to avoid dropping broadcast events)
     _initSubscription = webviewItemController.onInitialized.listen((event) {
-      if (event) {
+      if (event && mounted) {
         changeEpisode(videoPageController.currentEpisode,
             currentRoad: videoPageController.currentRoad,
             offset: videoPageController.historyOffset);
+      }
+    });
+
+    // Initialize video page state and trigger playback after initState completes
+    Future.microtask(() async {
+      if (!mounted) return;
+      _initializeVideoPageState();
+      if (!videoPageController.currentPlugin.useWebview) {
+        await changeEpisode(
+          videoPageController.currentEpisode,
+          currentRoad: videoPageController.currentRoad,
+          offset: videoPageController.historyOffset,
+        );
+      } else {
+        await webviewItemController.init();
       }
     });
     _videoLoadedSubscription =
