@@ -64,8 +64,13 @@ final pluginSortOptionProvider = StateProvider.autoDispose<PluginSortOption>(
 /// Level 4: 规则源市场联动、实时试抓 (Dry-Run)、生命周期管理
 class PluginViewPage extends ConsumerStatefulWidget {
   final bool isEmbedded;
+  final String? initialCategoryKey;
 
-  const PluginViewPage({super.key, this.isEmbedded = false});
+  const PluginViewPage({
+    super.key,
+    this.isEmbedded = false,
+    this.initialCategoryKey,
+  });
 
   @override
   ConsumerState<PluginViewPage> createState() => _PluginViewPageState();
@@ -95,9 +100,20 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
   void initState() {
     super.initState();
     pluginsController = ref.read(pluginsProvider.notifier);
+    if (widget.initialCategoryKey != null) {
+      final key = widget.initialCategoryKey!.toLowerCase().trim();
+      if (key == 'video') {
+        _selectedGroup = PluginCategoryGroup.video;
+      } else if (key == 'live') {
+        _selectedGroup = PluginCategoryGroup.live;
+      } else if (key == 'drive' || key == 'resource') {
+        _selectedGroup = PluginCategoryGroup.resource;
+      }
+    }
     _categoryTabController = TabController(
       length: PluginCategoryGroup.values.length,
       vsync: this,
+      initialIndex: PluginCategoryGroup.values.indexOf(_selectedGroup),
     );
     _categoryTabController.addListener(() {
       if (!_categoryTabController.indexIsChanging && mounted) {
@@ -596,7 +612,13 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                 title: isMultiSelectMode
               ? Text('已选择 ${selectedNames.length} 项')
               : Text(
-                  isWide ? 'Kazumi 视频规则管理' : 'Kazumi 视频规则',
+                  _selectedGroup == PluginCategoryGroup.live
+                      ? '电视直播规则管理'
+                      : (_selectedGroup == PluginCategoryGroup.video
+                          ? '在线视频规则管理'
+                          : (_selectedGroup == PluginCategoryGroup.resource
+                              ? '网盘资源规则管理'
+                              : (isWide ? 'Kazumi 规则管理' : '规则管理'))),
                 ),
           leading: isMultiSelectMode
               ? AppBackButton(
@@ -966,31 +988,21 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     // 结合 L2 属性筛选与关键字过滤
     final query = _searchController.text.trim().toLowerCase();
     final filtered = categoryPlugins.where((p) {
-      // 业务大类与类型过滤
-      if (_typeFilter == 'video' && p.resolvedCategory != PluginCategory.video) {
-        return false;
-      }
-      if (_typeFilter == 'live' && p.resolvedCategory != PluginCategory.live) {
-        return false;
-      }
-      if (_typeFilter == 'drive' && p.resolvedCategory != PluginCategory.drive) {
-        return false;
-      }
-      if (_typeFilter == 'bt' && p.resolvedCategory != PluginCategory.bt) {
-        return false;
-      }
-      if (_typeFilter == 'resource' && !p.isResource) {
-        return false;
-      }
-      if (_typeFilter == 'xpath' && p.type.toLowerCase() != 'xpath') {
-        return false;
-      }
-      if (_typeFilter == 'media' && !p.isBilibili && !p.isDouyin) {
-        return false;
-      }
-      if (_typeFilter == 'maccms' && !p.isMacCms) return false;
-      if (_typeFilter == 'anime' && p.type.toLowerCase() != 'anime') {
-        return false;
+      // 业务大类与七大规则类型过滤
+      if (_typeFilter != 'all') {
+        if (_typeFilter == 'video') {
+          if (p.resolvedCategory != PluginCategory.video) return false;
+        } else if (_typeFilter == 'live') {
+          if (p.resolvedCategory != PluginCategory.live) return false;
+        } else if (_typeFilter == 'drive') {
+          if (p.resolvedCategory != PluginCategory.drive) return false;
+        } else if (_typeFilter == 'bt') {
+          if (p.resolvedCategory != PluginCategory.bt) return false;
+        } else if (_typeFilter == 'resource') {
+          if (!p.isResource) return false;
+        } else if (p.ruleType.id != _typeFilter) {
+          return false;
+        }
       }
 
       // 播放特性过滤
@@ -1192,7 +1204,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             child: Row(
               children: [
                 Text(
-                  '四类划分: ',
+                  '七大类型: ',
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurfaceVariant,
@@ -1200,16 +1212,9 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                 ),
                 _buildFilterChip('全部', 'all', _typeFilter,
                     (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('在线视频', 'video', _typeFilter,
-                    (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('电视直播', 'live', _typeFilter,
-                    (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('网盘资源 (下载类)', 'drive', _typeFilter,
-                    (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('BT磁力 (下载类)', 'bt', _typeFilter,
-                    (val) => setState(() => _typeFilter = val)),
-                _buildFilterChip('仅资源类', 'resource', _typeFilter,
-                    (val) => setState(() => _typeFilter = val)),
+                for (final rType in PluginRuleType.values)
+                  _buildFilterChip(rType.label, rType.id, _typeFilter,
+                      (val) => setState(() => _typeFilter = val)),
                 const SizedBox(width: 16),
                 Text(
                   '播放特性: ',

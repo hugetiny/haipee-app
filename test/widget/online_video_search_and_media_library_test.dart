@@ -102,7 +102,7 @@ void main() {
   });
 
   group('OnlineVideoSearchPage Widget & Search Engine Tests', () {
-    testWidgets('OnlineVideoSearchPage renders centered search engine header with 4 source filter chips',
+    testWidgets('OnlineVideoSearchPage renders centered search engine header with 3 source filter chips',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -149,16 +149,16 @@ void main() {
       expect(find.text('在线视频搜索'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
       expect(
-        find.text('输入作品、频道、网盘文件或粘贴链接 (聚合直搜)'),
+        find.text('输入作品、频道名称或粘贴 B站 BV 号'),
         findsOneWidget,
       );
 
-      // 2. 验证三大分类规则源切换 Chips 及底层技术说明
+      // 2. 验证规则源切换 Chips (无冗余底层技术文本)
       expect(find.text('全部'), findsOneWidget);
       expect(find.text('视频 (1)'), findsOneWidget);
       expect(find.text('直播 (0)'), findsOneWidget);
-      expect(find.text('网盘资源 (0)'), findsOneWidget);
-      expect(find.text('底层技术: 多协议全网并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
+      expect(find.text('网盘资源 (0)'), findsNothing);
+      expect(find.textContaining('底层技术:'), findsNothing);
 
       // 3. 验证快捷操作入口 (视频规则管理与下载管理快捷图标)
       expect(find.byIcon(Icons.video_library_outlined), findsWidgets);
@@ -193,6 +193,7 @@ void main() {
           bvid: 'web_dalvdm_https://example.com/play/1',
           title: '间谍过家家 第二季',
           author: 'dalvdm',
+          tag: 'Web规则',
           pic: '',
           duration: 'Web规则',
           description: 'https://example.com/play/1',
@@ -213,12 +214,13 @@ void main() {
       // 验证 3 种不同源的徽章
       expect(find.text('BiliBili'), findsOneWidget);
       expect(find.text('抖音'), findsOneWidget);
-      expect(find.text('Web · dalvdm'), findsOneWidget);
+      expect(find.text('Web规则 · dalvdm'), findsOneWidget);
 
-      // 验证每种源背后的底层技术机制展示
-      expect(find.text('官方 WBI 签名 · DASH 音画分离'), findsOneWidget);
-      expect(find.text('无水印 CDN 直链'), findsOneWidget);
-      expect(find.text('XPath / DOM 嗅探规则'), findsOneWidget);
+      // 验证简洁清晰标签 (不再展示冗余自报家门底层技术文字)
+      expect(find.text('B站高清'), findsOneWidget);
+      expect(find.text('短视频'), findsOneWidget);
+      expect(find.text('Web规则'), findsWidgets);
+      expect(find.textContaining('官方 WBI 签名'), findsNothing);
 
       // 验证视频条目正常呈现
       expect(find.text('孤独摇滚 第一话'), findsOneWidget);
@@ -455,7 +457,7 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    testWidgets('OnlineVideoSearchPage dynamically switches TextField hint text and tech stack for each filter mode',
+    testWidgets('OnlineVideoSearchPage dynamically switches TextField hint text for each filter mode',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -477,41 +479,34 @@ void main() {
 
       // 1. 全部源默认状态
       expect(
-        find.text('输入作品、频道、网盘文件或粘贴链接 (聚合直搜)'),
+        find.text('输入作品、频道名称或粘贴 B站 BV 号'),
         findsOneWidget,
       );
-      expect(find.text('底层技术: 多协议全网并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
+      expect(find.textContaining('底层技术:'), findsNothing);
 
       // 2. 切换至视频
       await tester.tap(find.text('视频 (0)'));
       await tester.pumpAndSettle();
 
       expect(find.text('搜索在线视频、动漫番剧或粘贴 B站 BV 号'), findsOneWidget);
-      expect(find.text('底层技术: B站官方 4K DASH · 影视CMS采集 · 动漫点播'), findsOneWidget);
+      expect(find.textContaining('底层技术:'), findsNothing);
 
       // 3. 切换至直播
       await tester.tap(find.text('直播 (0)'));
       await tester.pumpAndSettle();
 
       expect(find.text('搜索电视直播频道、央视、卫视或轮播台'), findsOneWidget);
-      expect(find.text('底层技术: IPTV M3U8 · 央视卫视 · 二次元轮播'), findsOneWidget);
+      expect(find.textContaining('底层技术:'), findsNothing);
 
-      // 4. 切换至网盘资源
-      await tester.tap(find.text('网盘资源 (0)'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('搜索网盘影视文件 (AList/WebDAV) 或 BT 资源'), findsOneWidget);
-      expect(find.text('底层技术: 网盘与BT下载资源聚合 · AList直链 · 磁力种子转存下载'), findsOneWidget);
-
-      // 5. 切回全部
+      // 4. 切回全部
       await tester.tap(find.text('全部'));
       await tester.pumpAndSettle();
 
       expect(
-        find.text('输入作品、频道、网盘文件或粘贴链接 (聚合直搜)'),
+        find.text('输入作品、频道名称或粘贴 B站 BV 号'),
         findsOneWidget,
       );
-      expect(find.text('底层技术: 多协议全网并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
+      expect(find.textContaining('底层技术:'), findsNothing);
 
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();

@@ -253,15 +253,13 @@ void main() {
         expect(resGroup.label, equals('网盘资源'));
       });
 
-      test('OnlineSourceFilter 包含视频、直播与网盘资源', () {
+      test('OnlineSourceFilter 专精于在线播放与视听流 (全部、视频、直播)', () {
         final filters = OnlineSourceFilter.values.map((f) => f.id).toList();
         expect(filters, contains('all'));
         expect(filters, contains('video'));
         expect(filters, contains('live'));
-        expect(filters, contains('resource'));
-
-        final resFilter = OnlineSourceFilter.values.firstWhere((f) => f.id == 'resource');
-        expect(resFilter.label, equals('网盘资源'));
+        // 资源类(网盘与BT)收敛至一级菜单「资源/下载」板块，不混杂在在线播放搜索页
+        expect(filters, isNot(contains('resource')));
       });
     });
 

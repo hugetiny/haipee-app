@@ -142,10 +142,9 @@ void main() {
 
       // Verify category navigation tabs (四大分类与规则商店)
       expect(find.text('全部'), findsWidgets);
-      expect(find.text('在线视频'), findsWidgets);
-      expect(find.text('电视直播'), findsWidgets);
-      expect(find.text('网盘资源 (下载类)'), findsWidgets);
-      expect(find.text('BT磁力 (下载类)'), findsWidgets);
+      expect(find.text('视频'), findsWidgets);
+      expect(find.text('直播'), findsWidgets);
+      expect(find.text('网盘资源'), findsWidgets);
       expect(find.text('规则商店'), findsWidgets);
 
       // Verify plugin rows and badges
@@ -213,7 +212,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('已选择 1 项'), findsNothing);
-      expect(find.text('Kazumi 视频规则'), findsOneWidget);
+      expect(find.text('规则管理'), findsOneWidget);
     });
 
     testWidgets('L2 filter chips filter rule grid items accurately',

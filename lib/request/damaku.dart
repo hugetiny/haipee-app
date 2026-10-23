@@ -6,6 +6,7 @@ import 'package:kazumi/modules/danmaku/danmaku_module.dart';
 import 'package:kazumi/modules/danmaku/danmaku_search_response.dart';
 import 'package:kazumi/modules/danmaku/danmaku_episode_response.dart';
 import 'package:kazumi/modules/danmaku/danmaku_ch_convert.dart';
+import 'package:kazumi/modules/danmaku/danmaku_title_cleaner.dart';
 import 'package:kazumi/utils/storage.dart';
 import 'package:kazumi/utils/string_match.dart';
 
@@ -48,17 +49,41 @@ class DanmakuRequest {
     }
   }
 
+  /// 清洗复杂视频文件名/种子标题，提取纯净番剧名称以便弹弹play检索
+  static String cleanAnimeTitleForSearch(String raw) {
+    final extracted = DanmakuTitleCleaner.extractCleanTitle(raw);
+    if (extracted.isNotEmpty) return extracted;
+    var t = raw.trim();
+    // 移除文件后缀
+    t = t.replaceAll(RegExp(r'\.(mp4|mkv|avi|flv|wmv|ts|m4v|mov)$', caseSensitive: false), '');
+    // 移除字幕组前缀
+    t = t.replaceAll(RegExp(r'^[\[【][^\]】]*?[\]】]'), ' ');
+    // 移除常见分辨率、编码与来源标签
+    t = t.replaceAll(RegExp(r'\[[^\]]*?(?:1080|720|2160|4k|x264|x265|hevc|web|aac|chs|cht|gb|big5|bili|baha)[^\]]*?\]', caseSensitive: false), ' ');
+    // 移除集数后缀 如 - 01, 第01话, E01
+    t = t.replaceAll(RegExp(r'(?:第\s*\d+\s*[话集]|[-_]\s*\d+(?:\.5)?\b|\b[Ss]\d{1,2}[Ee]\d{1,2}\b)'), ' ');
+    t = t.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return t.isNotEmpty ? t : raw.trim();
+  }
+
   /// 从标题获取 DanDanBangumiID
   static Future<int> getBangumiIDByTitle(String title,
       {bool silent = true}) async {
-    if (title.trim().isEmpty) return 0;
+    final cleanInput = title.trim();
+    if (cleanInput.isEmpty) return 0;
     if (!GStorage.hasValidDanDanCredentials()) {
       KazumiLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过标题匹配弹幕');
       return 0;
     }
     try {
+      final sanitizedTitle = cleanAnimeTitleForSearch(cleanInput);
       DanmakuSearchResponse danmakuSearchResponse =
-          await getDanmakuSearchResponse(title, silent: silent);
+          await getDanmakuSearchResponse(sanitizedTitle, silent: silent);
+
+      // 若清洗后标题未检索到结果，且与原标题不同，则以原标题回退重试一次
+      if (danmakuSearchResponse.animes.isEmpty && sanitizedTitle != cleanInput) {
+        danmakuSearchResponse = await getDanmakuSearchResponse(cleanInput, silent: silent);
+      }
 
       int bestAnimeId = 0;
       double maxSimilarity = 0;
@@ -70,9 +95,9 @@ class DanmakuRequest {
         }
 
         String animeTitle = anime.animeTitle;
-        double similarity = calculateSimilarity(animeTitle, title);
+        double similarity = calculateSimilarity(animeTitle, sanitizedTitle);
         if (similarity == 1) {
-          KazumiLogger().log(Level.debug, '完全匹配番剧弹幕 $title');
+          KazumiLogger().log(Level.debug, '完全匹配番剧弹幕 $sanitizedTitle');
           return animeId;
         }
 
@@ -80,7 +105,7 @@ class DanmakuRequest {
           maxSimilarity = similarity;
           bestAnimeId = animeId;
           KazumiLogger()
-              .log(Level.debug, '匹配番剧弹幕 $title --- $animeTitle 相似度: $similarity');
+              .log(Level.debug, '匹配番剧弹幕 $sanitizedTitle --- $animeTitle 相似度: $similarity');
         }
       }
       return bestAnimeId;

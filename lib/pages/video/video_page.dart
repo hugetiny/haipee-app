@@ -743,10 +743,9 @@ class _VideoPageState extends ConsumerState<VideoPage>
                       )),
                 ),
               ),
-              // Top control bar: Always visible during loading, fullscreen, or parse failure
-              // This ensures users can always navigate back even when parsing fails
+              // Top control bar: Always visible during loading or parse failure
+              // (Normal fullscreen controls are managed exclusively by PlayerItemPanel to prevent duplicate back buttons)
               if ((isLoading && !isPlayerPlaying) ||
-                  isFullscreen ||
                   (isParseTimedOut && !isPlayerActive))
                 Positioned(
                   top: 0,

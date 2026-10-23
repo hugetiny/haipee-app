@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:kazumi/modules/search/plugin_search_module.dart';
 import 'package:kazumi/modules/roads/road_module.dart';
@@ -68,6 +69,38 @@ enum PluginCategory {
     if (clean == 'drive' || clean == 'alist' || clean == 'pan' || clean == 'webdav') return PluginCategory.drive;
     if (clean == 'bt' || clean == 'torrent' || clean == 'magnet' || clean == 'cardigann') return PluginCategory.bt;
     return PluginCategory.video;
+  }
+}
+
+/// 七大规则类型定义 (明确管理与区分)
+enum PluginRuleType {
+  anime(id: 'anime', label: '动漫番剧', icon: Icons.animation),
+  maccms(id: 'maccms', label: '影视采集', icon: Icons.movie_outlined),
+  bilibili(id: 'bilibili', label: '哔哩哔哩', icon: Icons.play_circle_outline),
+  douyin(id: 'douyin', label: '短视频', icon: Icons.music_note_outlined),
+  live(id: 'live', label: '电视直播', icon: Icons.live_tv_outlined),
+  drive(id: 'drive', label: '网盘资源', icon: Icons.cloud_outlined),
+  bt(id: 'bt', label: 'BT磁力', icon: Icons.downloading_outlined);
+
+  final String id;
+  final String label;
+  final IconData icon;
+
+  const PluginRuleType({
+    required this.id,
+    required this.label,
+    required this.icon,
+  });
+
+  static PluginRuleType fromString(String? val) {
+    final clean = (val ?? '').trim().toLowerCase();
+    if (clean == 'bilibili') return PluginRuleType.bilibili;
+    if (clean == 'douyin') return PluginRuleType.douyin;
+    if (clean == 'live' || clean == 'iptv' || clean == 'm3u') return PluginRuleType.live;
+    if (clean == 'drive' || clean == 'alist' || clean == 'pan' || clean == 'webdav') return PluginRuleType.drive;
+    if (clean == 'bt' || clean == 'torrent' || clean == 'magnet' || clean == 'cardigann') return PluginRuleType.bt;
+    if (clean == 'maccms' || clean == '2') return PluginRuleType.maccms;
+    return PluginRuleType.anime;
   }
 }
 
@@ -168,6 +201,7 @@ class Plugin {
 
   bool get isIptv =>
       type.toLowerCase() == 'iptv' ||
+      type.toLowerCase() == 'live' ||
       type.toLowerCase() == 'm3u' ||
       searchMode.toLowerCase() == 'iptv' ||
       searchURL.toLowerCase().endsWith('.m3u') ||
@@ -184,6 +218,23 @@ class Plugin {
       type.toLowerCase() == 'piped' ||
       type.toLowerCase() == 'youtube' ||
       searchMode.toLowerCase() == 'piped';
+
+  bool get isCardigann =>
+      type.toLowerCase() == 'cardigann' ||
+      type.toLowerCase() == 'torrent' ||
+      type.toLowerCase() == 'bt' ||
+      type.toLowerCase() == 'magnet' ||
+      resolvedCategory == PluginCategory.bt;
+
+  PluginRuleType get ruleType {
+    if (isBilibili) return PluginRuleType.bilibili;
+    if (isDouyin) return PluginRuleType.douyin;
+    if (isIptv || resolvedCategory == PluginCategory.live) return PluginRuleType.live;
+    if (isAlist || resolvedCategory == PluginCategory.drive) return PluginRuleType.drive;
+    if (isCardigann || resolvedCategory == PluginCategory.bt) return PluginRuleType.bt;
+    if (isMacCms || type == '2' || type.toLowerCase() == 'maccms') return PluginRuleType.maccms;
+    return PluginRuleType.anime;
+  }
 
   static dynamic _yamlToDart(dynamic node) {
     if (node is YamlMap) {

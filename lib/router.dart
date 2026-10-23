@@ -259,7 +259,9 @@ final GoRouter router = GoRouter(
         ),
         GoRoute(
           path: 'plugin',
-          builder: (context, state) => const PluginViewPage(),
+          builder: (context, state) => PluginViewPage(
+            initialCategoryKey: state.uri.queryParameters['category'],
+          ),
           routes: [
             GoRoute(
               path: 'editor',

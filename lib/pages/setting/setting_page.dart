@@ -329,10 +329,19 @@ class _SettingPageState extends ConsumerState<SettingPage> {
               ),
               SettingsTile.navigation(
                 onPressed: (_) {
-                  context.push(Routes.settingsPlugin);
+                  context.push('${Routes.settingsPlugin}?category=video');
                 },
-                title: const Text('在线视频与电视直播规则'),
-                description: const Text('管理影视采集(MacCMS/TVBox)、B站、YouTube与电视直播(IPTV)规则'),
+                leading: const Icon(Icons.video_library_outlined),
+                title: const Text('在线视频规则'),
+                description: const Text('管理影视采集(MacCMS)、哔哩哔哩、动漫番剧与短视频规则'),
+              ),
+              SettingsTile.navigation(
+                onPressed: (_) {
+                  context.push('${Routes.settingsPlugin}?category=live');
+                },
+                leading: const Icon(Icons.live_tv_outlined),
+                title: const Text('电视直播规则'),
+                description: const Text('管理电视直播(IPTV)、央视卫视与二次元轮播台规则'),
               ),
             ],
           ),
@@ -343,13 +352,15 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                 onPressed: (_) {
                   context.push(Routes.settingsIndexers);
                 },
+                leading: const Icon(Icons.downloading_outlined),
                 title: const Text('BT / 磁力下载规则'),
                 description: const Text('Cardigann 规则中心、种子索引与 Tracker 管理 (P2P/边下边播)'),
               ),
               SettingsTile.navigation(
                 onPressed: (_) {
-                  context.push(Routes.settingsPlugin);
+                  context.push('${Routes.settingsPlugin}?category=drive');
                 },
+                leading: const Icon(Icons.cloud_outlined),
                 title: const Text('网盘资源规则 (AList / WebDAV)'),
                 description: const Text('网盘资源挂载、原画直链提取与高速转存下载'),
               ),

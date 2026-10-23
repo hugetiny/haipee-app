@@ -89,7 +89,7 @@ void main() {
   group('Decoupled Rule Architecture and Navigation Tests', () {
     testWidgets('SettingPage has strictly separated rules without redundant rule center',
         (tester) async {
-      tester.view.physicalSize = const Size(1200, 1000);
+      tester.view.physicalSize = const Size(1200, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -109,9 +109,10 @@ void main() {
       // 1. 验证“统一规则管理中心”冗余项已被彻底移除
       expect(find.text('统一规则管理中心'), findsNothing);
 
-      // 2. 验证“视听与在线媒体 (点播与直播)”中保留“在线视频与电视直播规则”
+      // 2. 验证“视听与在线媒体 (点播与直播)”中分别包含“在线视频规则”与“电视直播规则”独立入口
       expect(find.text('视听与在线媒体 (点播与直播)'), findsOneWidget);
-      expect(find.text('在线视频与电视直播规则'), findsOneWidget);
+      expect(find.text('在线视频规则'), findsOneWidget);
+      expect(find.text('电视直播规则'), findsOneWidget);
 
       // 3. 验证“资源检索与下载 (网盘与BT)”中保留“BT / 磁力下载规则”
       expect(find.text('资源检索与下载 (网盘与BT)'), findsOneWidget);

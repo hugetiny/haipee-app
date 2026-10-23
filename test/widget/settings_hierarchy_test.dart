@@ -74,11 +74,12 @@ void main() {
     expect(find.text('开源许可证'), findsOneWidget);
     expect(find.text('运行日志与诊断'), findsOneWidget);
 
-    // 3. 验证音视频一级分类下的核心项目
+    // 3. 验证音视频一级分类下的核心项目 (在线视频与电视直播规则已拆分为独立管理入口)
     expect(find.text('播放设置'), findsOneWidget);
     expect(find.text('弹幕设置'), findsOneWidget);
     expect(find.text('媒体元数据与刮削'), findsOneWidget);
-    expect(find.text('在线视频与电视直播规则'), findsOneWidget);
+    expect(find.text('在线视频规则'), findsOneWidget);
+    expect(find.text('电视直播规则'), findsOneWidget);
 
     // 4. 验证资源检索与下载分类下的规则项
     expect(find.text('BT / 磁力下载规则'), findsOneWidget);

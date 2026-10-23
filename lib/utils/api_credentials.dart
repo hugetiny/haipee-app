@@ -26,9 +26,14 @@ class ApiCredentials {
   /// Check whether the given credentials match empty or known upstream dummy placeholders.
   static bool isPlaceholder(String? id, String? key) {
     if (id == null || key == null) return true;
-    final trimmedId = id.trim();
-    final trimmedKey = key.trim();
+    final trimmedId = id.trim().toLowerCase();
+    final trimmedKey = key.trim().toLowerCase();
     if (trimmedId.isEmpty || trimmedKey.isEmpty) return true;
-    return trimmedId == 'kvpx7qkqjh' || trimmedKey == 'rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax';
+    return trimmedId == 'placeholder' ||
+        trimmedId == 'dummy' ||
+        trimmedId == 'your_app_id' ||
+        trimmedKey == 'placeholder' ||
+        trimmedKey == 'dummy' ||
+        trimmedKey == 'your_api_key';
   }
 }

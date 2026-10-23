@@ -177,20 +177,17 @@ class PlayerController extends Notifier<PlayerState> {
         getDanDanmakuByBgmBangumiID(bgmItem.id, episodeFromTitle);
         unawaited(fetchAniSkipIntervals(bgmItem.id, episodeFromTitle));
       } else {
-        // 只有非 HTTP 纯直链外链视频（例如本地番剧或种子下载视频）才根据标题尝试匹配弹弹play
-        final isDirectHttp = url.startsWith('http://') || url.startsWith('https://');
-        if (!isDirectHttp) {
-          final resolvedTitle = currentTitle.isNotEmpty
-              ? currentTitle
-              : (activeLocalVideoArgs?.title.isNotEmpty == true
-                  ? activeLocalVideoArgs!.title
-                  : (videoPageController.state.title.isNotEmpty
-                      ? videoPageController.state.title
-                      : videoPageController.bangumiItem.name));
-          currentTitle = resolvedTitle;
-          if (currentTitle.isNotEmpty && currentTitle != '未知视频') {
-            unawaited(getDanDanmakuByTitle(currentTitle, episodeFromTitle));
-          }
+        // 无官方 Bangumi 条目的流媒体与下载视频（包括影视采集CMS、网盘直链、边下边播与本地文件），统一使用标题匹配弹弹play
+        final resolvedTitle = currentTitle.isNotEmpty
+            ? currentTitle
+            : (activeLocalVideoArgs?.title.isNotEmpty == true
+                ? activeLocalVideoArgs!.title
+                : (videoPageController.state.title.isNotEmpty
+                    ? videoPageController.state.title
+                    : videoPageController.bangumiItem.name));
+        currentTitle = resolvedTitle;
+        if (currentTitle.isNotEmpty && currentTitle != '未知视频') {
+          unawaited(getDanDanmakuByTitle(currentTitle, episodeFromTitle));
         }
       }
     }
@@ -687,6 +684,7 @@ class PlayerController extends Notifier<PlayerState> {
         bangumiID = bId;
         final res = await DanmakuRequest.getDanDanmaku(bId, episode, silent: true);
         addDanmakus(res);
+        unawaited(fetchAniSkipIntervals(bId, episode));
       }
     } catch (e) {
       KazumiLogger().log(Level.warning, '根据标题获取弹幕错误: ${e.toString()}');

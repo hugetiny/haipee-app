@@ -30,37 +30,26 @@ enum OnlineSourceFilter {
   all(
     id: 'all',
     label: '全部',
-    techStack: '多协议全网并发聚合调度 · 毫秒级原生直出',
     icon: Icons.all_inclusive,
   ),
   video(
     id: 'video',
     label: '视频',
-    techStack: 'B站官方 4K DASH · 影视CMS采集 · 动漫点播',
     icon: Icons.video_library_outlined,
   ),
   live(
     id: 'live',
     label: '直播',
-    techStack: 'IPTV M3U8 · 央视卫视 · 二次元轮播',
     icon: Icons.live_tv_outlined,
-  ),
-  resource(
-    id: 'resource',
-    label: '网盘资源',
-    techStack: '网盘与BT下载资源聚合 · AList直链 · 磁力种子转存下载',
-    icon: Icons.cloud_download_outlined,
   );
 
   final String id;
   final String label;
-  final String techStack;
   final IconData icon;
 
   const OnlineSourceFilter({
     required this.id,
     required this.label,
-    required this.techStack,
     required this.icon,
   });
 }
@@ -200,9 +189,6 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
             }
             if (_selectedFilter == OnlineSourceFilter.live) {
               return plugin.resolvedCategory == PluginCategory.live;
-            }
-            if (_selectedFilter == OnlineSourceFilter.resource) {
-              return plugin.isResource; // 网盘和 BT 属于资源类 (也就是下载类)
             }
             return true;
           }).toList();
@@ -778,9 +764,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                       ? '搜索在线视频、动漫番剧或粘贴 B站 BV 号'
                       : (_selectedFilter == OnlineSourceFilter.live
                           ? '搜索电视直播频道、央视、卫视或轮播台'
-                          : (_selectedFilter == OnlineSourceFilter.resource
-                              ? '搜索网盘影视文件 (AList/WebDAV) 或 BT 资源'
-                              : '输入作品、频道、网盘文件或粘贴链接 (聚合直搜)')),
+                          : '输入作品、频道名称或粘贴 B站 BV 号'),
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -837,11 +821,6 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                     .where((p) => p.resolvedCategory == PluginCategory.live)
                     .length;
                 labelText = '${filter.label} ($liveCount)';
-              } else if (filter == OnlineSourceFilter.resource) {
-                final resCount = pluginsState.enabledPlugins
-                    .where((p) => p.isResource)
-                    .length;
-                labelText = '${filter.label} ($resCount)';
               }
               return ChoiceChip(
                 avatar: Icon(filter.icon, size: 16),
@@ -859,39 +838,6 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
             }).toList(),
           ),
           const SizedBox(height: 8),
-
-          // 底层机制技术说明条
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.25),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.memory_outlined, size: 13, color: colorScheme.primary),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    '底层技术: ${_selectedFilter.techStack}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
 
           // 哔哩哔哩专属：扫码登录与 1080P/4K 解锁指示条
           if (_selectedFilter == OnlineSourceFilter.video || _selectedFilter == OnlineSourceFilter.all)
@@ -1137,12 +1083,10 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                             ),
                             child: Text(
                               item.bvid.startsWith('douyin_')
-                                  ? '无水印 CDN 直链'
+                                  ? '短视频'
                                   : (item.bvid.startsWith('web_')
-                                      ? (item.tag == '苹果CMS'
-                                          ? '苹果CMS V10 标准 JSON 协议'
-                                          : 'XPath / DOM 嗅探规则')
-                                      : '官方 WBI 签名 · DASH 音画分离'),
+                                      ? item.tag
+                                      : 'B站高清'),
                               style: TextStyle(
                                 fontSize: 10,
                                 color: colorScheme.onSurfaceVariant,

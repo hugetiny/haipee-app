@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:canvas_danmaku/models/danmaku_content_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:kazumi/modules/playback/subtitle_matcher.dart';
 import 'package:kazumi/pages/player/player_controller.dart';
 import 'package:kazumi/pages/player/player_item.dart';
@@ -74,14 +72,14 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
         unawaited(_autoMatchCompanionSubtitle(widget.args.filePath));
       }
 
-      // 自动加载弹幕与 AniSkip 片头片尾 (原生 B站 弹幕由 biliCid 精确直载，严禁跨站模糊猜测)
+      // 自动加载弹幕与 AniSkip 片头片尾 (原生 B站 弹幕由 biliCid 精确直载，其他全源一律直通弹弹play)
       if (widget.args.biliCid == null || widget.args.biliCid! <= 0) {
         final ep = widget.args.episode ?? 1;
         final bgmId = int.tryParse(widget.args.bangumiId ?? '');
         if (bgmId != null && bgmId > 0) {
           await _playerController.getDanDanmakuByBgmBangumiID(bgmId, ep);
           unawaited(_playerController.fetchAniSkipIntervals(bgmId, ep));
-        } else if (widget.args.title.isNotEmpty && !isHttp) {
+        } else if (widget.args.title.isNotEmpty) {
           await _playerController.getDanDanmakuByTitle(widget.args.title, ep);
         }
       }
@@ -156,56 +154,13 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
       body: SafeArea(
         top: false,
         bottom: false,
-        child: Stack(
-          children: [
-            // 播放器本体
-            Center(
-              child: PlayerItem(
-                keyboardFocus: _keyboardFocus,
-                onBackPressed: (ctx) => Navigator.of(ctx).maybePop(),
-                openMenu: () {},
-                locateEpisode: () {},
-                changeEpisode: (ep, {currentRoad = 0, offset = 0}) async {},
-                sendDanmaku: _sendDanmaku,
-              ),
-            ),
-
-            // 顶部返回按钮与标题
-            Positioned(
-              top: MediaQuery.paddingOf(context).top + (Platform.isMacOS ? 4 : 8),
-              left: 0,
-              right: 16,
-              child: DesktopWindowControlsSafeArea(
-                child: Row(
-                  children: [
-                    AppBackButton(
-                      color: Colors.white,
-                      onPressed: () => Navigator.of(context).maybePop(),
-                    ),
-                    const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      widget.args.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 4,
-                            color: Colors.black54,
-                          ),
-                        ],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          ],
+        child: PlayerItem(
+          keyboardFocus: _keyboardFocus,
+          onBackPressed: (ctx) => Navigator.of(ctx).maybePop(),
+          openMenu: () {},
+          locateEpisode: () {},
+          changeEpisode: (ep, {currentRoad = 0, offset = 0}) async {},
+          sendDanmaku: _sendDanmaku,
         ),
       ),
     );

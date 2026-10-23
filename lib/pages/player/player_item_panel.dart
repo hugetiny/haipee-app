@@ -177,7 +177,10 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
   }
 
   String _buildTitleText(VideoPageState videoState) {
-    final buffer = StringBuffer(' ${videoState.title}');
+    final title = videoState.title.isNotEmpty
+        ? videoState.title
+        : playerController.currentTitle;
+    final buffer = StringBuffer(' $title');
     if (videoState.roadList.isNotEmpty &&
         videoState.currentRoad < videoState.roadList.length) {
       final road = videoState.roadList[videoState.currentRoad];
