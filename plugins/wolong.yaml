@@ -1,0 +1,19 @@
+api: "1"
+name: "卧龙资源"
+version: "1.0"
+type: "2"
+baseURL: "https://collect.wolongzyw.com/"
+searchURL: "https://collect.wolongzyw.com/api.php/provide/vod/?ac=detail&at=json&wd=@keyword"
+muliSources: true
+useWebview: false
+useNativePlayer: true
+usePost: false
+useLegacyParser: false
+userAgent: "Mozilla/5.0 (Kazumi/Player)"
+referer: "https://collect.wolongzyw.com/"
+searchList: ""
+searchName: "vod_name"
+searchResult: "vod_id"
+chapterRoads: ""
+chapterResult: ""
+searchPic: "vod_pic"

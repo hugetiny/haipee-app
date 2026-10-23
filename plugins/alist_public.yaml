@@ -1,0 +1,19 @@
+api: "1"
+name: "AList 网盘聚合"
+version: "1.0"
+type: "alist"
+baseURL: "https://al.chirmyram.com"
+searchURL: "https://al.chirmyram.com"
+muliSources: true
+useWebview: false
+useNativePlayer: true
+usePost: false
+useLegacyParser: false
+userAgent: "Mozilla/5.0 (Kazumi/AList)"
+referer: "https://al.chirmyram.com"
+searchList: ""
+searchName: ""
+searchResult: ""
+chapterRoads: ""
+chapterResult: ""
+searchPic: ""

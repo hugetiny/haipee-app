@@ -1,0 +1,19 @@
+api: "1"
+name: "IPTV 电视直播"
+version: "1.0"
+type: "iptv"
+baseURL: "https://live.fanmingming.com/tv/m3u/ipv6.m3u"
+searchURL: "https://live.fanmingming.com/tv/m3u/ipv6.m3u"
+muliSources: true
+useWebview: false
+useNativePlayer: true
+usePost: false
+useLegacyParser: false
+userAgent: "Mozilla/5.0 (Kazumi/IPTV; Player)"
+referer: ""
+searchList: ""
+searchName: ""
+searchResult: ""
+chapterRoads: ""
+chapterResult: ""
+searchPic: ""

@@ -1,0 +1,19 @@
+api: "https://pipedapi.kavin.rocks"
+name: "YouTube (Piped)"
+version: "1.0"
+type: "piped"
+baseURL: "https://pipedapi.kavin.rocks"
+searchURL: "https://pipedapi.kavin.rocks/search?q=@keyword&filter=videos"
+muliSources: true
+useWebview: false
+useNativePlayer: true
+usePost: false
+useLegacyParser: false
+userAgent: "Mozilla/5.0 (Kazumi/Piped)"
+referer: "https://piped.video"
+searchList: ""
+searchName: ""
+searchResult: ""
+chapterRoads: ""
+chapterResult: ""
+searchPic: ""

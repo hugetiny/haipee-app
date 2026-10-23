@@ -12,6 +12,10 @@ import 'package:kazumi/utils/utils.dart';
 import 'package:yaml/yaml.dart';
 import 'package:kazumi/modules/bilibili/bilibili_service.dart';
 import 'package:kazumi/modules/douyin/douyin_service.dart';
+import 'package:kazumi/modules/tvbox/tvbox_importer.dart';
+import 'package:kazumi/modules/iptv/iptv_service.dart';
+import 'package:kazumi/modules/alist/alist_service.dart';
+import 'package:kazumi/modules/piped/piped_service.dart';
 
 class Plugin {
   String api;
@@ -71,6 +75,7 @@ class Plugin {
   bool get supportsAuth => authConfig != null || isBilibili;
 
   bool get isMacCms =>
+      type == '2' ||
       type.toLowerCase() == 'maccms' ||
       type.toLowerCase() == 'applecms' ||
       searchURL.contains('/api.php/provide/vod');
@@ -84,6 +89,25 @@ class Plugin {
       type.toLowerCase() == 'douyin' ||
       name.toLowerCase() == 'douyin' ||
       searchMode.toLowerCase() == 'douyin';
+
+  bool get isIptv =>
+      type.toLowerCase() == 'iptv' ||
+      type.toLowerCase() == 'm3u' ||
+      searchMode.toLowerCase() == 'iptv' ||
+      searchURL.toLowerCase().endsWith('.m3u') ||
+      searchURL.toLowerCase().endsWith('.m3u8') ||
+      baseUrl.toLowerCase().endsWith('.m3u') ||
+      baseUrl.toLowerCase().endsWith('.m3u8');
+
+  bool get isAlist =>
+      type.toLowerCase() == 'alist' ||
+      name.toLowerCase().contains('alist') ||
+      searchMode.toLowerCase() == 'alist';
+
+  bool get isPiped =>
+      type.toLowerCase() == 'piped' ||
+      type.toLowerCase() == 'youtube' ||
+      searchMode.toLowerCase() == 'piped';
 
   static dynamic _yamlToDart(dynamic node) {
     if (node is YamlMap) {
@@ -135,10 +159,16 @@ class Plugin {
     return results;
   }
 
-  /// 万能批量解析器：智能识别单条/数组 JSON、YAML 规则清单、Base64 口令及多文档 YAML
+  /// 万能批量解析器：智能识别单条/数组 JSON、YAML 规则清单、TVBox 订阅、Base64 口令及多文档 YAML
   static List<Plugin> parseMany(String content) {
     final clean = content.trim();
     if (clean.isEmpty) return const [];
+
+    // 0. 尝试识别 TVBox / FongMi 规范订阅并一键转换
+    if (TvBoxImporter.isTvBoxConfig(clean)) {
+      final tvboxPlugins = TvBoxImporter.convertToPlugins(clean);
+      if (tvboxPlugins.isNotEmpty) return tvboxPlugins;
+    }
 
     // 1. 尝试直接作为 JSON / JSON 数组解析
     try {
@@ -364,6 +394,39 @@ class Plugin {
         return PluginSearchResponse(pluginName: name, data: items);
       } catch (e) {
         KazumiLogger().log(Level.warning, 'Douyin 规则搜索异常: $e');
+        if (shouldRethrow) rethrow;
+        return PluginSearchResponse(pluginName: name, data: const []);
+      }
+    }
+
+    if (isIptv) {
+      try {
+        final m3uUrl = searchURL.isNotEmpty ? searchURL : baseUrl;
+        return await IptvService.searchChannels(name, m3uUrl, keyword);
+      } catch (e) {
+        KazumiLogger().log(Level.warning, 'IPTV 规则搜索异常: $e');
+        if (shouldRethrow) rethrow;
+        return PluginSearchResponse(pluginName: name, data: const []);
+      }
+    }
+
+    if (isAlist) {
+      try {
+        final targetBase = baseUrl.isNotEmpty ? baseUrl : searchURL;
+        return await AlistService.search(name, targetBase, keyword);
+      } catch (e) {
+        KazumiLogger().log(Level.warning, 'AList 规则搜索异常: $e');
+        if (shouldRethrow) rethrow;
+        return PluginSearchResponse(pluginName: name, data: const []);
+      }
+    }
+
+    if (isPiped) {
+      try {
+        final host = baseUrl.isNotEmpty ? baseUrl : api;
+        return await PipedService.search(name, host, keyword);
+      } catch (e) {
+        KazumiLogger().log(Level.warning, 'Piped/YouTube 规则搜索异常: $e');
         if (shouldRethrow) rethrow;
         return PluginSearchResponse(pluginName: name, data: const []);
       }
@@ -745,6 +808,36 @@ class Plugin {
         KazumiLogger().log(Level.warning, '抖音规则选集解析异常: $e');
       }
       return [];
+    }
+
+    if (isIptv) {
+      try {
+        final m3uUrl = searchURL.isNotEmpty ? searchURL : baseUrl;
+        return await IptvService.queryChapterRoads(m3uUrl, url);
+      } catch (e) {
+        KazumiLogger().log(Level.warning, 'IPTV 选集解析异常: $e');
+        return [];
+      }
+    }
+
+    if (isAlist) {
+      try {
+        final targetBase = baseUrl.isNotEmpty ? baseUrl : searchURL;
+        return await AlistService.queryChapterRoads(targetBase, url);
+      } catch (e) {
+        KazumiLogger().log(Level.warning, 'AList 选集解析异常: $e');
+        return [];
+      }
+    }
+
+    if (isPiped) {
+      try {
+        final host = baseUrl.isNotEmpty ? baseUrl : api;
+        return await PipedService.queryChapterRoads(host, url);
+      } catch (e) {
+        KazumiLogger().log(Level.warning, 'Piped 选集解析异常: $e');
+        return [];
+      }
     }
 
     if (isMacCms || url.contains('/api.php/provide/vod')) {

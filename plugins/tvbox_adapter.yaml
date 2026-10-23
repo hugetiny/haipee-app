@@ -1,0 +1,19 @@
+api: "1"
+name: "TVBox 聚合适配器"
+version: "1.0"
+type: "2"
+baseURL: "https://api.guangsuapi.com/"
+searchURL: "https://api.guangsuapi.com/api.php/provide/vod/?ac=detail&at=json&wd=@keyword"
+muliSources: true
+useWebview: false
+useNativePlayer: true
+usePost: false
+useLegacyParser: false
+userAgent: "Mozilla/5.0 (Kazumi/TVBox)"
+referer: "https://api.guangsuapi.com/"
+searchList: ""
+searchName: "vod_name"
+searchResult: "vod_id"
+chapterRoads: ""
+chapterResult: ""
+searchPic: "vod_pic"

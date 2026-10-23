@@ -18,6 +18,60 @@
     "lastUpdate": 1792400000000
   },
   {
+    "name": "IPTV 电视直播",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "IPTV M3U 官方直播源",
+    "baseURL": "https://live.fanmingming.com/tv/m3u/ipv6.m3u",
+    "lastUpdate": 1792400000000
+  },
+  {
+    "name": "AList 网盘聚合",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "AList V3 网盘规范",
+    "baseURL": "https://al.chirmyram.com",
+    "lastUpdate": 1792400000000
+  },
+  {
+    "name": "YouTube (Piped)",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Piped 开放流媒体规范",
+    "baseURL": "https://pipedapi.kavin.rocks",
+    "lastUpdate": 1792400000000
+  },
+  {
+    "name": "光速资源",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Maccms JSON 官方源",
+    "baseURL": "https://api.guangsuapi.com/",
+    "lastUpdate": 1792400000000
+  },
+  {
+    "name": "卧龙资源",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "Maccms JSON 官方源",
+    "baseURL": "https://collect.wolongzyw.com/",
+    "lastUpdate": 1792400000000
+  },
+  {
+    "name": "TVBox 聚合适配器",
+    "version": "1.0",
+    "useNativePlayer": true,
+    "antiCrawlerEnabled": false,
+    "author": "TVBox 盒装生态规范",
+    "baseURL": "https://api.guangsuapi.com/",
+    "lastUpdate": 1792400000000
+  },
+  {
     "name": "量子影视",
     "version": "1.2",
     "useNativePlayer": true,
