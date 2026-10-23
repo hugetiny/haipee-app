@@ -933,14 +933,18 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                               color: isLogin ? Colors.pink : colorScheme.primary,
                             ),
                           const SizedBox(width: 6),
-                          Text(
-                            isLogin
-                                ? '${user.uname} · 已解锁 ${user.isVip ? "4K / 1080P60" : "1080P 高清"}'
-                                : 'B站未登录 (360P) · 点击扫码解锁 1080P/4K',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isLogin ? Colors.pink : colorScheme.primary,
+                          Flexible(
+                            child: Text(
+                              isLogin
+                                  ? '${user.uname} · 已解锁 ${user.isVip ? "4K / 1080P60" : "1080P 高清"}'
+                                  : 'B站未登录 (360P) · 点击扫码解锁 1080P/4K',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isLogin ? Colors.pink : colorScheme.primary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                         ],
@@ -1082,7 +1086,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                         item.bvid.startsWith('douyin_')
                             ? '抖音'
                             : (item.bvid.startsWith('web_')
-                                ? '${item.tag} · ${item.author}'
+                                ? (item.tag.isNotEmpty ? '${item.tag} · ${item.author}' : 'Web · ${item.author}')
                                 : 'BiliBili'),
                         style: const TextStyle(
                           color: Colors.white,

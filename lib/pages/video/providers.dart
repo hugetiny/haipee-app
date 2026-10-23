@@ -35,9 +35,15 @@ class EpisodeCommentsNotifier
     final (bangumiId, episode) = arg;
 
     try {
+      if (bangumiId <= 0) {
+        return <EpisodeCommentItem>[];
+      }
       // Load episode info
       final episodeInfo =
           await BangumiHTTP.getBangumiEpisodeByID(bangumiId, episode);
+      if (episodeInfo.id <= 0) {
+        return <EpisodeCommentItem>[];
+      }
 
       // Load comments for this episode
       final result =

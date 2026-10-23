@@ -38,8 +38,10 @@ void main() {
   });
 
   testWidgets('验证设置中心五大顶级一级分类排序与层级结构', (tester) async {
-    tester.view.physicalSize = const Size(1200, 1200);
+    tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -58,10 +60,10 @@ void main() {
     expect(tester.takeException(), isNull,
         reason: '设置主页面在宽屏 1200 宽度下不得存在任何 RenderFlex 像素溢出');
 
-    // 1. 验证通用在最顶部，随后是视听与媒体
+    // 1. 验证通用在最顶部，随后是视听与在线媒体及资源检索
     expect(find.text('通用'), findsOneWidget); // 通用在最顶部
-    expect(find.text('视听与媒体'), findsOneWidget); // 音视频一级大项
-    expect(find.text('资源检索与下载'), findsOneWidget);
+    expect(find.text('视听与在线媒体 (点播与直播)'), findsOneWidget); // 视听点播与直播
+    expect(find.text('资源检索与下载 (网盘与BT)'), findsOneWidget); // 资源下载类
     expect(find.text('数据与云同步'), findsOneWidget);
     expect(find.text('其他'), findsNothing, reason: '其他分类已移除，实用功能收敛入通用');
 
@@ -76,10 +78,10 @@ void main() {
     expect(find.text('播放设置'), findsOneWidget);
     expect(find.text('弹幕设置'), findsOneWidget);
     expect(find.text('媒体元数据与刮削'), findsOneWidget);
-    expect(find.text('Kazumi 视频规则'), findsOneWidget);
+    expect(find.text('在线视频与电视直播规则'), findsOneWidget);
 
     // 4. 验证资源检索与下载分类下的规则项
-    expect(find.text('Cardigann 规则'), findsOneWidget);
+    expect(find.text('BT / 磁力下载规则'), findsOneWidget);
   });
 
   testWidgets('验证媒体元数据与刮削独立子页面 (Bangumi 与 TMDB)', (tester) async {

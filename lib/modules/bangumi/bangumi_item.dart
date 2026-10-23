@@ -37,6 +37,9 @@ class BangumiItem {
   @HiveField(14, defaultValue: '')
   String info;
 
+  /// 标记是否为回退虚拟/非真实 Bangumi 主体条目 (避免向上游 bgm.tv 发送无效请求)
+  bool isDummy;
+
   BangumiItem({
     required this.id,
     required this.type,
@@ -53,6 +56,7 @@ class BangumiItem {
     required this.votes,
     required this.votesCount,
     required this.info,
+    this.isDummy = false,
   });
 
   /// 动态构造安全的回退/非番剧元数据对象 (如 Bilibili、抖音、自定义 Web 规则源或直链)
@@ -86,9 +90,13 @@ class BangumiItem {
       ratingScore: 0.0,
       votes: 0,
       votesCount: [],
-      info: '',
+      info: '__DUMMY__',
+      isDummy: true,
     );
   }
+
+  /// 判断是否为虚拟/非真实 Bangumi 条目
+  bool get isDummyItem => isDummy || info == '__DUMMY__';
 
   /// 从番剧 info 元数据智能提取总集数/话数 (Animeko MediaSelector 对齐辅助)
   int? get totalEpisodes {

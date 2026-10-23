@@ -155,6 +155,7 @@ class InfoController extends Notifier<InfoState> {
   }
 
   Future<void> queryBangumiCommentsByID(int id, {int offset = 0}) async {
+    if (id <= 0) return;
     final existing = offset == 0
         ? <CommentItem>[]
         : List<CommentItem>.from(state.commentsList);
@@ -165,6 +166,7 @@ class InfoController extends Notifier<InfoState> {
   }
 
   Future<void> queryBangumiCharactersByID(int id) async {
+    if (id <= 0) return;
     final result = await BangumiHTTP.getCharatersByBangumiID(id);
     final characters = result.charactersList;
     const relationValue = {'主角': 1, '配角': 2, '客串': 3};
@@ -188,6 +190,7 @@ class InfoController extends Notifier<InfoState> {
   }
 
   Future<void> queryBangumiStaffsByID(int id) async {
+    if (id <= 0) return;
     final result = await BangumiHTTP.getBangumiStaffByID(id);
     final staff = result.data;
     state = state.copyWith(staffList: staff);

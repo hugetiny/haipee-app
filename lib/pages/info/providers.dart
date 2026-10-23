@@ -34,6 +34,7 @@ class BangumiCommentsNotifier
   @override
   Future<List<CommentItem>> build() async {
     final (bangumiId, offset) = arg;
+    if (bangumiId <= 0) return <CommentItem>[];
 
     try {
       final result = await BangumiHTTP.getBangumiCommentsByID(
@@ -73,6 +74,7 @@ class BangumiCharactersNotifier
 
   @override
   Future<List<CharacterItem>> build() async {
+    if (bangumiId <= 0) return <CharacterItem>[];
     try {
       final result = await BangumiHTTP.getCharatersByBangumiID(bangumiId);
       final characters = result.charactersList;
@@ -126,6 +128,7 @@ class BangumiStaffsNotifier
 
   @override
   Future<List<StaffFullItem>> build() async {
+    if (bangumiId <= 0) return <StaffFullItem>[];
     try {
       final result = await BangumiHTTP.getBangumiStaffByID(bangumiId);
       final staff = result.data;

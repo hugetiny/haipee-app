@@ -168,7 +168,7 @@ class VideoPageController extends Notifier<VideoPageState> {
     final chapterName = state.roadList[currentRoad].identifier[episode - 1];
     KazumiLogger().log(Level.info, '跳转到$chapterName');
 
-    if (state.bangumiItem != null) {
+    if (state.bangumiItem != null && !state.bangumiItem!.isDummyItem) {
       final resolution = MediaSelector.resolve(
         rawIndex: episode,
         identifier: chapterName,
@@ -230,7 +230,13 @@ class VideoPageController extends Notifier<VideoPageState> {
 
   Future<void> queryBangumiEpisodeCommentsByID(int id, int episode) async {
     clearEpisodeComments();
+    if (state.bangumiItem?.isDummyItem == true || id <= 0) {
+      return;
+    }
     episodeInfo = await BangumiHTTP.getBangumiEpisodeByID(id, episode);
+    if (episodeInfo.id <= 0) {
+      return;
+    }
     final result =
         await BangumiHTTP.getBangumiCommentsByEpisodeID(episodeInfo.id);
     addEpisodeComments(result.commentList);

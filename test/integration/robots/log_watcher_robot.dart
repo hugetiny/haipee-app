@@ -129,6 +129,10 @@ class LogWatcherRobot {
     final error = tester.takeException();
     if (error != null) {
       if (error is FlutterError) {
+        debugPrint('[FLUTTER_ERROR_DETAIL]:\n${error.toStringDeep()}');
+        for (final d in error.diagnostics) {
+          debugPrint('[DIAG_NODE]: ${d.name} -> ${d.toString()}');
+        }
         for (int i = 0; i < error.diagnostics.length; i++) {
           final n = error.diagnostics[i];
           debugPrint('[DIAG_NODE $i ${n.name}]: ${n.toDescription()}');

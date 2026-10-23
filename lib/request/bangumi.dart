@@ -250,6 +250,9 @@ class BangumiHTTP {
 
   static Future<EpisodeInfo> getBangumiEpisodeByID(int id, int episode) async {
     EpisodeInfo episodeInfo = EpisodeInfo.fromTemplate();
+    if (id <= 0) {
+      return episodeInfo;
+    }
     var params = <String, dynamic>{
       'subject_id': id,
       'offset': episode - 1,
@@ -260,8 +263,14 @@ class BangumiHTTP {
         Api.bangumiAPIDomain + Api.bangumiEpisodeByID,
         data: params,
       );
-      final jsonData = res.data['data'][0];
-      episodeInfo = EpisodeInfo.fromJson(jsonData);
+      if (res.data is Map &&
+          res.data['data'] is List &&
+          (res.data['data'] as List).isNotEmpty) {
+        final jsonData = res.data['data'][0];
+        if (jsonData is Map<String, dynamic>) {
+          episodeInfo = EpisodeInfo.fromJson(jsonData);
+        }
+      }
     } catch (e) {
       KazumiLogger()
           .log(Level.error, 'Resolve bangumi episode failed ${e.toString()}');
@@ -272,13 +281,17 @@ class BangumiHTTP {
   static Future<CommentResponse> getBangumiCommentsByID(int id,
       {int offset = 0}) async {
     CommentResponse commentResponse = CommentResponse.fromTemplate();
+    if (id <= 0) return commentResponse;
     try {
       final res = await Request().get(
         Api.formatUrl(Api.bangumiAPINextDomain + Api.bangumiCommentsByIDNext,
             [id, 20, offset]),
       );
       final jsonData = res.data;
-      commentResponse = CommentResponse.fromJson(jsonData);
+      if (jsonData is Map<String, dynamic> &&
+          (jsonData.containsKey('list') || jsonData.containsKey('data'))) {
+        commentResponse = CommentResponse.fromJson(jsonData);
+      }
     } catch (e) {
       KazumiLogger()
           .log(Level.error, 'Resolve bangumi comments failed ${e.toString()}');
@@ -290,6 +303,9 @@ class BangumiHTTP {
       int id) async {
     EpisodeCommentResponse commentResponse =
         EpisodeCommentResponse.fromTemplate();
+    if (id <= 0) {
+      return commentResponse;
+    }
     try {
       final res = await Request().get(
         Api.formatUrl(
@@ -297,7 +313,9 @@ class BangumiHTTP {
             [id]),
       );
       final jsonData = res.data;
-      commentResponse = EpisodeCommentResponse.fromJson(jsonData);
+      if (jsonData is List) {
+        commentResponse = EpisodeCommentResponse.fromJson(jsonData);
+      }
     } catch (e) {
       KazumiLogger().log(Level.error,
           'Resolve bangumi episode comments failed ${e.toString()}');
@@ -309,6 +327,7 @@ class BangumiHTTP {
       int id) async {
     CharacterCommentResponse commentResponse =
         CharacterCommentResponse.fromTemplate();
+    if (id <= 0) return commentResponse;
     try {
       final res = await Request().get(
         Api.formatUrl(
@@ -316,7 +335,9 @@ class BangumiHTTP {
             [id]),
       );
       final jsonData = res.data;
-      commentResponse = CharacterCommentResponse.fromJson(jsonData);
+      if (jsonData is List) {
+        commentResponse = CharacterCommentResponse.fromJson(jsonData);
+      }
     } catch (e) {
       KazumiLogger().log(Level.error,
           'Resolve bangumi character comments failed ${e.toString()}');
@@ -326,13 +347,16 @@ class BangumiHTTP {
 
   static Future<StaffResponse> getBangumiStaffByID(int id) async {
     StaffResponse staffResponse = StaffResponse.fromTemplate();
+    if (id <= 0) return staffResponse;
     try {
       final res = await Request().get(
         Api.formatUrl(
             Api.bangumiAPINextDomain + Api.bangumiStaffByIDNext, [id]),
       );
       final jsonData = res.data;
-      staffResponse = StaffResponse.fromJson(jsonData);
+      if (jsonData is Map<String, dynamic>) {
+        staffResponse = StaffResponse.fromJson(jsonData);
+      }
     } catch (e) {
       KazumiLogger()
           .log(Level.error, 'Resolve bangumi staff failed ${e.toString()}');
@@ -342,12 +366,15 @@ class BangumiHTTP {
 
   static Future<CharactersResponse> getCharatersByBangumiID(int id) async {
     CharactersResponse charactersResponse = CharactersResponse.fromTemplate();
+    if (id <= 0) return charactersResponse;
     try {
       final res = await Request().get(
         Api.formatUrl(Api.bangumiAPIDomain + Api.bangumiCharacterByID, [id]),
       );
       final jsonData = res.data;
-      charactersResponse = CharactersResponse.fromJson(jsonData);
+      if (jsonData is List) {
+        charactersResponse = CharactersResponse.fromJson(jsonData);
+      }
     } catch (e) {
       KazumiLogger().log(
           Level.error, 'Resolve bangumi characters failed ${e.toString()}');
@@ -357,6 +384,7 @@ class BangumiHTTP {
 
   static Future<CharacterFullItem> getCharacterByCharacterID(int id) async {
     CharacterFullItem characterFullItem = CharacterFullItem.fromTemplate();
+    if (id <= 0) return characterFullItem;
     try {
       final res = await Request().get(
         Api.formatUrl(
@@ -365,7 +393,9 @@ class BangumiHTTP {
             [id]),
       );
       final jsonData = res.data;
-      characterFullItem = CharacterFullItem.fromJson(jsonData);
+      if (jsonData is Map<String, dynamic> && jsonData.containsKey('id')) {
+        characterFullItem = CharacterFullItem.fromJson(jsonData);
+      }
     } catch (e) {
       KazumiLogger()
           .log(Level.error, 'Resolve character info failed ${e.toString()}');

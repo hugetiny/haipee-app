@@ -109,13 +109,13 @@ void main() {
       // 1. 验证“统一规则管理中心”冗余项已被彻底移除
       expect(find.text('统一规则管理中心'), findsNothing);
 
-      // 2. 验证“视听与媒体”中仅保留“Kazumi 视频规则”
-      expect(find.text('视听与媒体'), findsOneWidget);
-      expect(find.text('Kazumi 视频规则'), findsOneWidget);
+      // 2. 验证“视听与在线媒体 (点播与直播)”中保留“在线视频与电视直播规则”
+      expect(find.text('视听与在线媒体 (点播与直播)'), findsOneWidget);
+      expect(find.text('在线视频与电视直播规则'), findsOneWidget);
 
-      // 3. 验证“资源检索与下载”中仅保留“Cardigann 规则”
-      expect(find.text('资源检索与下载'), findsOneWidget);
-      expect(find.text('Cardigann 规则'), findsOneWidget);
+      // 3. 验证“资源检索与下载 (网盘与BT)”中保留“BT / 磁力下载规则”
+      expect(find.text('资源检索与下载 (网盘与BT)'), findsOneWidget);
+      expect(find.text('BT / 磁力下载规则'), findsOneWidget);
     });
 
     testWidgets('OnlineVideoSearchPage has dedicated contextual rule button for Kazumi video rules',

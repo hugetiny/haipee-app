@@ -149,16 +149,16 @@ void main() {
       expect(find.text('在线视频搜索'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
       expect(
-        find.text('输入作品、关键词或粘贴链接 (B站 / 苹果CMS / Web规则源)'),
+        find.text('输入作品、频道、网盘文件或粘贴链接 (聚合直搜)'),
         findsOneWidget,
       );
 
-      // 2. 验证 3 大在线规则源切换 Chips 及底层技术说明
+      // 2. 验证四大分类规则源切换 Chips 及底层技术说明
       expect(find.text('全部源'), findsOneWidget);
-      expect(find.text('哔哩哔哩'), findsOneWidget);
-      expect(find.text('Web 规则源 (1 个)'), findsOneWidget);
-      expect(find.text('抖音短视频'), findsNothing); // 已从主过滤器移除脆弱的抖音专有标签
-      expect(find.text('底层技术: 多协议并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
+      expect(find.text('在线视频 (1)'), findsOneWidget);
+      expect(find.text('电视直播 (0)'), findsOneWidget);
+      expect(find.text('资源下载 (0)'), findsOneWidget);
+      expect(find.text('底层技术: 多协议全网并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
 
       // 3. 验证快捷操作入口 (视频规则管理与下载管理快捷图标)
       expect(find.byIcon(Icons.video_library_outlined), findsWidgets);
@@ -277,7 +277,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify initial rendering
-      expect(find.text('Web 规则源 (1 个)'), findsOneWidget);
+      expect(find.text('在线视频 (1)'), findsOneWidget);
 
       // Mutate pluginsProvider state as if catalog/disabled state loaded asynchronously
       final controller = container.read(pluginsProvider.notifier);
@@ -287,7 +287,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify reactive update succeeded without ProviderException
-      expect(find.text('Web 规则源 (0 个)'), findsOneWidget);
+      expect(find.text('在线视频 (0)'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       tester.view.resetPhysicalSize();
@@ -387,8 +387,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // 切换至 Web 规则源
-      await tester.tap(find.text('Web 规则源 (0 个)'));
+      // 切换至在线视频分类
+      await tester.tap(find.text('在线视频 (0)'));
       await tester.pumpAndSettle();
 
       // 输入普通搜索关键词（当前无插件匹配）
@@ -477,34 +477,34 @@ void main() {
 
       // 1. 全部源默认状态
       expect(
-        find.text('输入作品、关键词或粘贴链接 (B站 / 苹果CMS / Web规则源)'),
+        find.text('输入作品、频道、网盘文件或粘贴链接 (聚合直搜)'),
         findsOneWidget,
       );
-      expect(find.text('底层技术: 多协议并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
+      expect(find.text('底层技术: 多协议全网并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
 
-      // 2. 切换至哔哩哔哩
-      await tester.tap(find.text('哔哩哔哩'));
+      // 2. 切换至在线视频
+      await tester.tap(find.text('在线视频 (0)'));
       await tester.pumpAndSettle();
 
-      expect(find.text('搜索 Bilibili 视频关键词或粘贴 BV 号'), findsOneWidget);
-      expect(find.text('底层技术: 官方 WBI 签名 · DASH 音画分离'), findsOneWidget);
+      expect(find.text('搜索在线视频、动漫番剧或粘贴 B站 BV 号'), findsOneWidget);
+      expect(find.text('底层技术: B站官方 4K DASH · 影视CMS采集 · 动漫点播'), findsOneWidget);
 
-      // 3. 切换至 Web 规则源
-      await tester.tap(find.text('Web 规则源 (0 个)'));
+      // 3. 切换至电视直播
+      await tester.tap(find.text('电视直播 (0)'));
       await tester.pumpAndSettle();
 
-      expect(find.text('搜索苹果CMS及Web规则源，或输入番剧片名'), findsOneWidget);
-      expect(find.text('底层技术: 苹果CMS V10 JSON · 声明式规则体系'), findsOneWidget);
+      expect(find.text('搜索电视直播频道、央视、卫视或轮播台'), findsOneWidget);
+      expect(find.text('底层技术: IPTV M3U8 · 央视卫视 · 二次元轮播'), findsOneWidget);
 
       // 4. 切回全部源
       await tester.tap(find.text('全部源'));
       await tester.pumpAndSettle();
 
       expect(
-        find.text('输入作品、关键词或粘贴链接 (B站 / 苹果CMS / Web规则源)'),
+        find.text('输入作品、频道、网盘文件或粘贴链接 (聚合直搜)'),
         findsOneWidget,
       );
-      expect(find.text('底层技术: 多协议并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
+      expect(find.text('底层技术: 多协议全网并发聚合调度 · 毫秒级原生直出'), findsOneWidget);
 
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();

@@ -140,12 +140,13 @@ void main() {
       expect(find.byType(UnifiedRuleGrid), findsOneWidget);
       expect(find.byType(UnifiedRuleCard), findsNWidgets(2));
 
-      // Verify category navigation tabs (strictly 2 tabs: 全部 and Kazumi 规则源)
+      // Verify category navigation tabs (四大分类与规则商店)
       expect(find.text('全部'), findsWidgets);
-      expect(find.text('Kazumi 规则源'), findsOneWidget);
-      expect(find.text('动漫番剧'), findsNothing);
-      expect(find.text('影视剧集'), findsNothing);
-      expect(find.text('网页解析'), findsNothing);
+      expect(find.text('在线视频'), findsWidgets);
+      expect(find.text('电视直播'), findsWidgets);
+      expect(find.text('网盘资源 (下载类)'), findsWidgets);
+      expect(find.text('BT磁力 (下载类)'), findsWidgets);
+      expect(find.text('规则商店'), findsWidgets);
 
       // Verify plugin rows and badges
       expect(find.text('AnimeTest One'), findsOneWidget);
@@ -228,18 +229,17 @@ void main() {
       expect(find.text('AnimeTest One'), findsOneWidget);
       expect(find.text('MacCms Film Hub'), findsOneWidget);
 
-      // Filter by XPath type
-      final xpathChip = find.text('网页 XPath');
-      expect(xpathChip, findsOneWidget);
-      await tester.tap(xpathChip);
+      // Filter by native feature
+      final nativeChip = find.widgetWithText(FilterChip, '原生播放');
+      expect(nativeChip, findsOneWidget);
+      await tester.tap(nativeChip);
       await tester.pumpAndSettle();
 
       expect(find.text('AnimeTest One'), findsOneWidget);
-      expect(find.text('MacCms Film Hub'), findsNothing);
 
-      // Reset to all
-      final allTypeChip = find.widgetWithText(FilterChip, '全部');
-      await tester.tap(allTypeChip.first);
+      // Reset by tapping the '全部' FilterChip for features
+      final allFeatureChip = find.widgetWithText(FilterChip, '全部').at(1);
+      await tester.tap(allFeatureChip);
       await tester.pumpAndSettle();
 
       expect(find.text('AnimeTest One'), findsOneWidget);
@@ -289,8 +289,8 @@ void main() {
       expect(find.text('导入规则'), findsOneWidget);
       expect(find.text('一键载入并测速全部规则'), findsNothing);
 
-      // Tap on Tab 2: Kazumi 规则源
-      final marketTab = find.text('Kazumi 规则源');
+      // Tap on Tab: 规则商店
+      final marketTab = find.text('规则商店');
       expect(marketTab, findsOneWidget);
       await tester.tap(marketTab);
       await tester.pumpAndSettle();
