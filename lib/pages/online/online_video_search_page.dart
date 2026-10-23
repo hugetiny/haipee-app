@@ -822,8 +822,20 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                 labelText = '${filter.label} ($liveCount)';
               }
               return ChoiceChip(
-                avatar: Icon(filter.icon, size: 16),
-                label: Text(labelText),
+                showCheckmark: false,
+                avatar: Icon(
+                  filter.icon,
+                  size: 16,
+                  color: isSelected
+                      ? colorScheme.onSecondaryContainer
+                      : colorScheme.onSurfaceVariant,
+                ),
+                label: Text(
+                  labelText,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
                 selected: isSelected,
                 onSelected: (selected) {
                   if (selected) {

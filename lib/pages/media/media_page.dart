@@ -720,6 +720,7 @@ class _MediaChannelViewState extends State<_MediaChannelView>
               final isSelected = tag == _selectedTag;
               return Center(
                 child: ChoiceChip(
+                  showCheckmark: false,
                   label: Text(tag),
                   selected: isSelected,
                   onSelected: (selected) {

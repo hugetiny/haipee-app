@@ -299,6 +299,7 @@ class _AppWidgetState extends ConsumerState<AppWidget>
         progressIndicatorTheme: progressIndicatorTheme2024,
         sliderTheme: sliderTheme2024,
         pageTransitionsTheme: pageTransitionsTheme2024,
+        chipTheme: const ChipThemeData(showCheckmark: false),
       );
     }
     return ThemeData(
@@ -323,6 +324,7 @@ class _AppWidgetState extends ConsumerState<AppWidget>
       progressIndicatorTheme: progressIndicatorTheme2024,
       sliderTheme: sliderTheme2024,
       pageTransitionsTheme: pageTransitionsTheme2024,
+      chipTheme: const ChipThemeData(showCheckmark: false),
     );
   }
 
@@ -357,6 +359,7 @@ class _AppWidgetState extends ConsumerState<AppWidget>
         progressIndicatorTheme: progressIndicatorTheme2024,
         sliderTheme: sliderTheme2024,
         pageTransitionsTheme: pageTransitionsTheme2024,
+        chipTheme: const ChipThemeData(showCheckmark: false),
       );
     } else {
       base = ThemeData(
@@ -381,6 +384,7 @@ class _AppWidgetState extends ConsumerState<AppWidget>
         progressIndicatorTheme: progressIndicatorTheme2024,
         sliderTheme: sliderTheme2024,
         pageTransitionsTheme: pageTransitionsTheme2024,
+        chipTheme: const ChipThemeData(showCheckmark: false),
       );
     }
     return oledEnhance ? Utils.oledDarkTheme(base) : base;

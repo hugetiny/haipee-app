@@ -289,6 +289,7 @@ class _GitProxyDialogState extends ConsumerState<GitProxyDialog> {
                                   current == cleanPreset.replaceAll(RegExp(r'/+$'), '');
 
                               return ChoiceChip(
+                                showCheckmark: false,
                                 label: Text(
                                   cleanPreset == 'https://ghfast.top/'
                                       ? 'ghfast.top (推荐)'

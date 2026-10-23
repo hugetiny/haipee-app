@@ -374,6 +374,7 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                         final ep = sortedEpisodes[index];
                         final isSelected = ep == _selectedEpisodeFilter;
                         return ChoiceChip(
+                          showCheckmark: false,
                           label: Text(ep == '全部' ? '全部资源' : '第 $ep 集'),
                           selected: isSelected,
                           onSelected: (selected) {

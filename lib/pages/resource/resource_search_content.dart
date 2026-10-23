@@ -721,6 +721,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
                 key: ValueKey('category_chip_${cat.name}'),
+                showCheckmark: false,
                 avatar: Icon(
                   icon,
                   size: 15,
@@ -900,6 +901,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
 
             // 隐藏 CAM/TS 枪版开关
             FilterChip(
+              showCheckmark: false,
               avatar: Icon(
                 searchState.hideCam ? Icons.visibility_off : Icons.visibility,
                 size: 14,
@@ -926,6 +928,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
+                    showCheckmark: false,
                     label: Text(res),
                     selected: isSelected,
                     onSelected: (val) {
@@ -952,6 +955,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
+                    showCheckmark: false,
                     label: Text(idx),
                     selected: isSelected,
                     onSelected: (val) {

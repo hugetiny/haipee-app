@@ -441,6 +441,7 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
   /// 模式切换器 (SegmentedButton)
   Widget _buildTabSelector(ColorScheme colorScheme) {
     return SegmentedButton<BiliLoginTab>(
+      showSelectedIcon: false,
       style: const ButtonStyle(
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,

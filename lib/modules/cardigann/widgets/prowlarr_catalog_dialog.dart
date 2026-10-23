@@ -529,6 +529,7 @@ class _ProwlarrCatalogDialogState extends ConsumerState<ProwlarrCatalogDialog> {
       padding: const EdgeInsets.only(right: 6),
       child: FilterChip(
         selected: selected,
+        showCheckmark: false,
         label: Text(label),
         labelStyle: TextStyle(
           fontSize: 11,
