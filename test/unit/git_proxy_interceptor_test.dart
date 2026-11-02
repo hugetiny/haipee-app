@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/request/core/dio_factory.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/request/core/dio_factory.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -60,17 +60,17 @@ void main() {
       );
 
       // 3. GitHub API 接口
-      const apiUrl = 'https://api.github.com/repos/Predidit/Kazumi/releases/latest';
+      const apiUrl = 'https://api.github.com/repos/hugetiny/haipee/releases/latest';
       expect(
         GitProxyInterceptor.applyProxy(apiUrl),
-        equals('https://ghfast.top/https://api.github.com/repos/Predidit/Kazumi/releases/latest'),
+        equals('https://ghfast.top/https://api.github.com/repos/hugetiny/haipee/releases/latest'),
       );
 
       // 4. GitHub 主站与 github.io
-      const repoUrl = 'https://github.com/Predidit/Kazumi';
+      const repoUrl = 'https://github.com/hugetiny/haipee';
       expect(
         GitProxyInterceptor.applyProxy(repoUrl),
-        equals('https://ghfast.top/https://github.com/Predidit/Kazumi'),
+        equals('https://ghfast.top/https://github.com/hugetiny/haipee'),
       );
     });
 
@@ -140,14 +140,14 @@ void main() {
       // Case 2: baseUrl 模式
       final options2 = RequestOptions(
         baseUrl: 'https://api.github.com',
-        path: '/repos/Predidit/Kazumi/releases/latest',
+        path: '/repos/hugetiny/haipee/releases/latest',
       );
       interceptor.onRequest(options2, RequestInterceptorHandler());
       expect(
         options2.baseUrl,
         equals('https://ghfast.top/https://api.github.com'),
       );
-      expect(options2.path, equals('/repos/Predidit/Kazumi/releases/latest'));
+      expect(options2.path, equals('/repos/hugetiny/haipee/releases/latest'));
 
       // Case 3: 非 GitHub 请求
       final options3 = RequestOptions(

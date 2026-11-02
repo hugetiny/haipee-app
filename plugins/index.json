@@ -5,7 +5,7 @@
     "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
-    "author": "hugetiny/Kazumi",
+    "author": "hugetiny/Haipee",
     "baseURL": "https://www.bilibili.com/",
     "lastUpdate": 1792400000000
   },
@@ -15,7 +15,7 @@
     "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
-    "author": "hugetiny/Kazumi",
+    "author": "hugetiny/Haipee",
     "baseURL": "https://www.douyin.com/",
     "lastUpdate": 1792400000000
   },
@@ -155,7 +155,7 @@
     "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": true,
-    "author": "hugetiny/Kazumi",
+    "author": "hugetiny/Haipee",
     "baseURL": "https://www.sbdl.cc/",
     "lastUpdate": 1792400000000
   },
@@ -165,7 +165,7 @@
     "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
-    "author": "hugetiny/Kazumi",
+    "author": "hugetiny/Haipee",
     "baseURL": "https://www.2kdm.com/",
     "lastUpdate": 1792400000000
   },
@@ -175,7 +175,7 @@
     "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
-    "author": "hugetiny/Kazumi",
+    "author": "hugetiny/Haipee",
     "baseURL": "https://anime7.top/",
     "lastUpdate": 1792400000000
   },
@@ -185,7 +185,7 @@
     "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
-    "author": "hugetiny/Kazumi",
+    "author": "hugetiny/Haipee",
     "baseURL": "https://dm.xifanacg.com/",
     "lastUpdate": 1792400000000
   },
@@ -195,7 +195,7 @@
     "category": "video",
     "useNativePlayer": true,
     "antiCrawlerEnabled": false,
-    "author": "hugetiny/Kazumi",
+    "author": "hugetiny/Haipee",
     "baseURL": "https://dm84.tv/",
     "lastUpdate": 1792400000000
   }

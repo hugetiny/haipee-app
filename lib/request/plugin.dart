@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/modules/plugin/plugin_http_module.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/modules/plugin/plugin_http_module.dart';
 
 class PluginHTTP {
   /// 从本地打包的预置资源中加载官方规则市场索引（零延迟瞬间就绪）

@@ -1,5 +1,5 @@
 import 'package:yaml/yaml.dart';
-import 'package:kazumi/modules/cardigann/cardigann_torznab.dart';
+import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
 
 /// Cardigann indexer definition AST, 1:1 aligned with Jackett / Prowlarr Cardigann specification.
 class CardigannDefinition {

@@ -8,7 +8,7 @@
 // 2. Blob + Iframe: https://dm84.net/p/71-1-1147.html
 
 import 'package:flutter/material.dart';
-import 'package:kazumi/pages/webview/webview_controller_impel/webview_windows_controller_impel.dart';
+import 'package:haipee/pages/webview/webview_controller_impel/webview_windows_controller_impel.dart';
 
 void main() {
   runApp(const DM84TestApp());

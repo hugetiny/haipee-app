@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:kazumi/services/logging/logger.dart';
+import 'package:haipee/services/logging/logger.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -9,7 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 class DioLoggerInterceptor extends TalkerDioLogger {
   DioLoggerInterceptor({Talker? talker})
       : super(
-          talker: talker ?? KazumiLogger().talker,
+          talker: talker ?? HaipeeLogger().talker,
           settings: const TalkerDioLoggerSettings(
             printRequestHeaders: false,
             printResponseHeaders: false,
@@ -25,8 +25,9 @@ class DioLoggerInterceptor extends TalkerDioLogger {
     if (!settings.enabled) return;
     try {
       final url = err.requestOptions.uri.toString();
-      KazumiLogger().talker.warning(
-        '[HTTP] $url (${err.type}): ${err.message ?? err.error}',
+      final respData = err.response?.data != null ? ' | Response: ${err.response?.data}' : '';
+      HaipeeLogger().talker.warning(
+        '[HTTP] $url (${err.type}): ${err.message ?? err.error}$respData',
       );
     } catch (_) {}
   }

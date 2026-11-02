@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
-import 'package:kazumi/modules/torrent_search/parser/torrent_file_parser.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
+import 'package:haipee/modules/torrent_search/parser/torrent_file_parser.dart';
 
 void main() {
   group('TorrentFileParser & Bencode Decoder Tests', () {
@@ -37,7 +37,7 @@ void main() {
       expect(parsed.totalBytes, equals(2235000));
       expect(parsed.files.length, equals(4));
 
-      // 验证序号均为 1-based (用于 aria2 select-file)
+      // 验证序号均为 1-based (用于下载任务 select-file)
       expect(parsed.files[0].index, equals(1));
       expect(parsed.files[0].path, equals('Season 1/EP01.mkv'));
       expect(parsed.files[0].name, equals('EP01.mkv'));

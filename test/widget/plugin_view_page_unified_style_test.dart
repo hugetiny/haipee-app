@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/widget/rule/unified_rule_card.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/parse_failure/parse_failure_module.dart';
-import 'package:kazumi/pages/plugin_editor/plugin_view_page.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/widget/rule/unified_rule_card.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/parse_failure/parse_failure_module.dart';
+import 'package:haipee/pages/plugin_editor/plugin_view_page.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/utils/storage.dart';
 
 class MockPluginsControllerWithPlugins extends PluginsController {
   final List<Plugin> initialPlugins;
@@ -42,6 +42,8 @@ void main() {
     GStorage.setting = box;
     GStorage.parseFailures =
         await Hive.openBox<ParseFailureRecord>('parseFailures');
+    GStorage.indexerPlugins = await Hive.openBox('indexerPlugins');
+    GStorage.indexerRepos = await Hive.openBox('indexerRepos');
     LocaleSettings.setLocale(AppLocale.zhCn);
   });
 
@@ -118,9 +120,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PluginViewPage), findsOneWidget);
-      expect(find.text('暂无 Kazumi 视频规则'), findsOneWidget);
+      expect(find.text('暂无 Haipee 视频规则'), findsOneWidget);
       expect(find.text('载入并测速精选规则'), findsOneWidget);
-      expect(find.text('前往 Kazumi 规则源'), findsOneWidget);
+      expect(find.text('手动添加规则'), findsWidgets);
     });
 
     testWidgets(
@@ -140,12 +142,21 @@ void main() {
       expect(find.byType(UnifiedRuleGrid), findsOneWidget);
       expect(find.byType(UnifiedRuleCard), findsNWidgets(2));
 
-      // Verify category navigation tabs (四大分类与规则商店)
+      // Verify category navigation tabs (七大规则协议分类，无冗余规则商店)
       expect(find.text('全部'), findsWidgets);
-      expect(find.text('视频'), findsWidgets);
-      expect(find.text('直播'), findsWidgets);
-      expect(find.text('网盘资源'), findsWidgets);
-      expect(find.text('规则商店'), findsWidgets);
+      expect(find.text('Haipee 规则'), findsWidgets);
+      expect(find.text('MacCMS 规则'), findsWidgets);
+      expect(find.text('TVBox 规则'), findsWidgets);
+      expect(find.text('IPTV 规则'), findsWidgets);
+      expect(find.text('Piped 规则'), findsWidgets);
+      expect(find.text('AList 规则'), findsWidgets);
+      expect(find.text('Cardigann 规则'), findsWidgets);
+      expect(find.text('规则商店'), findsNothing);
+
+      // Verify prominent L2 toolbar buttons
+      expect(find.byKey(const Key('plugin_btn_add_manual')), findsOneWidget);
+      expect(find.byKey(const Key('plugin_btn_import')), findsOneWidget);
+      expect(find.byKey(const Key('plugin_btn_auto_test')), findsOneWidget);
 
       // Verify plugin rows and badges
       expect(find.text('AnimeTest One'), findsOneWidget);
@@ -228,17 +239,18 @@ void main() {
       expect(find.text('AnimeTest One'), findsOneWidget);
       expect(find.text('MacCms Film Hub'), findsOneWidget);
 
-      // Filter by native feature
-      final nativeChip = find.widgetWithText(FilterChip, '原生播放');
-      expect(nativeChip, findsOneWidget);
-      await tester.tap(nativeChip);
+      // Filter by enabled/disabled status
+      final enabledChip = find.widgetWithText(FilterChip, '已启用 (2)');
+      expect(enabledChip, findsOneWidget);
+      await tester.tap(enabledChip);
       await tester.pumpAndSettle();
 
       expect(find.text('AnimeTest One'), findsOneWidget);
+      expect(find.text('MacCms Film Hub'), findsOneWidget);
 
-      // Reset by tapping the '全部' FilterChip for features
-      final allFeatureChip = find.widgetWithText(FilterChip, '全部').at(1);
-      await tester.tap(allFeatureChip);
+      // Reset by tapping the '全部 (2)' FilterChip
+      final allChip = find.widgetWithText(FilterChip, '全部 (2)');
+      await tester.tap(allChip);
       await tester.pumpAndSettle();
 
       expect(find.text('AnimeTest One'), findsOneWidget);
@@ -274,9 +286,9 @@ void main() {
     });
 
     testWidgets(
-        'Switching to Kazumi 规则源 tab updates AppBar actions and displays market catalog',
+        'Simplified Rule Management removes 规则商店 and provides 手动添加规则 & 一键测速',
         (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -284,20 +296,21 @@ void main() {
       await tester.pumpWidget(buildTestApp(plugins: dummyPlugins));
       await tester.pumpAndSettle();
 
-      // In Tab 1 (全部), AppBar shows '导入规则'
-      expect(find.text('导入规则'), findsOneWidget);
-      expect(find.text('一键载入并测速全部规则'), findsNothing);
+      // Verify 规则商店 is completely removed
+      expect(find.text('规则商店'), findsNothing);
+      expect(find.text('规则市场'), findsNothing);
 
-      // Tap on Tab: 规则商店
-      final marketTab = find.text('规则商店');
-      expect(marketTab, findsOneWidget);
-      await tester.tap(marketTab);
+      // Verify 手动添加规则, 导入规则, and 一键测速 buttons are prominently displayed
+      expect(find.byKey(const Key('plugin_btn_add_manual')), findsOneWidget);
+      expect(find.byKey(const Key('plugin_btn_import')), findsOneWidget);
+      expect(find.byKey(const Key('plugin_btn_auto_test')), findsOneWidget);
+
+      // Tap 手动添加规则 to open the manual rule creation page
+      await tester.tap(find.byKey(const Key('plugin_btn_add_manual')));
       await tester.pumpAndSettle();
 
-      // In Tab 2 (Kazumi 规则源), AppBar dynamically switches to '一键载入并测速全部规则' and '刷新规则市场'
-      expect(find.text('一键载入并测速全部规则'), findsOneWidget);
-      expect(find.text('导入规则'), findsNothing);
-      expect(find.byTooltip('刷新规则市场'), findsOneWidget);
+      expect(find.text('手动添加规则'), findsWidgets);
+      expect(find.text('快捷选择规则协议类型'), findsOneWidget);
     });
   });
 }

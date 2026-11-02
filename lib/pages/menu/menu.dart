@@ -2,11 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/layout/app_bar_config.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/bean/widget/embedded_native_control_area.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/layout/app_bar_config.dart';
+import 'package:haipee/modules/rule_speed_test/widgets/rule_speed_test_banner.dart';
 import 'navigation_provider.dart';
 
 class ScaffoldMenu extends ConsumerStatefulWidget {
@@ -92,7 +93,12 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
 
     return Scaffold(
       appBar: _buildUnifiedAppBar(appBarConfig, hasLeadingRail: false),
-      body: widget.child ?? const SizedBox.shrink(),
+      body: Column(
+        children: [
+          const RuleSpeedTestBanner(),
+          Expanded(child: widget.child ?? const SizedBox.shrink()),
+        ],
+      ),
       bottomNavigationBar: state.isHidden
           ? const SizedBox(height: 0)
           : NavigationBar(
@@ -235,7 +241,12 @@ class _ScaffoldMenu extends ConsumerState<ScaffoldMenu> {
             child: Scaffold(
               appBar: _buildUnifiedAppBar(appBarConfig,
                   hasLeadingRail: hasLeadingRail),
-              body: widget.child ?? const SizedBox.shrink(),
+              body: Column(
+                children: [
+                  const RuleSpeedTestBanner(),
+                  Expanded(child: widget.child ?? const SizedBox.shrink()),
+                ],
+              ),
             ),
           ),
         ],

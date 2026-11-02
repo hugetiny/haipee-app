@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/bean/widget/modal_sheet/kazumi_modal_sheet.dart';
-import 'package:kazumi/modules/desktop/global_hotkey_manager.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
+import 'package:haipee/modules/desktop/global_hotkey_manager.dart';
 
 void main() {
   group('GlobalHotKeyManager Architecture Tests', () {
@@ -127,8 +127,8 @@ void main() {
     });
   });
 
-  group('KazumiModalSheet Wolt Modal Tests', () {
-    testWidgets('KazumiModalSheet.buildPage constructs WoltModalSheetPage correctly',
+  group('HaipeeModalSheet Wolt Modal Tests', () {
+    testWidgets('HaipeeModalSheet.buildPage constructs WoltModalSheetPage correctly',
         (tester) async {
       late BuildContext capturedContext;
 
@@ -143,7 +143,7 @@ void main() {
         ),
       );
 
-      final page = KazumiModalSheet.buildPage(
+      final page = HaipeeModalSheet.buildPage(
         context: capturedContext,
         title: '测试弹窗',
         child: const Text('内容区域'),
@@ -154,7 +154,7 @@ void main() {
       expect(page.isTopBarLayerAlwaysVisible, isTrue);
     });
 
-    testWidgets('KazumiModalSheet.showConfirmation renders buttons and handles dismiss',
+    testWidgets('HaipeeModalSheet.showConfirmation renders buttons and handles dismiss',
         (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -163,7 +163,7 @@ void main() {
               builder: (context) {
                 return ElevatedButton(
                   onPressed: () {
-                    KazumiModalSheet.showConfirmation(
+                    HaipeeModalSheet.showConfirmation(
                       context: context,
                       title: '确认删除',
                       message: '确认删除当前任务吗？',

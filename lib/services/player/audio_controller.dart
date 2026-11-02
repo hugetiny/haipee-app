@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:audio_session/audio_session.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_service_mpris/audio_service_mpris.dart';
-import 'package:kazumi/services/logging/logger.dart';
-import 'package:kazumi/services/network/proxy_aware_image_cache_manager.dart';
-import 'package:kazumi/utils/async_session.dart';
+import 'package:haipee/services/logging/logger.dart';
+import 'package:haipee/services/network/proxy_aware_image_cache_manager.dart';
+import 'package:haipee/utils/async_session.dart';
 
 typedef AudioCallback = Future<void> Function();
 typedef AudioSeekCallback = Future<void> Function(Duration position);
@@ -13,7 +13,7 @@ typedef AudioSeekCallback = Future<void> Function(Duration position);
 class AudioController {
   AudioController();
 
-  _KazumiAudioHandler? _handler;
+  _HaipeeAudioHandler? _handler;
   Future<void>? _initFuture;
   String? _lastMediaItemCacheKey;
   AudioSession? _audioSession;
@@ -34,11 +34,11 @@ class AudioController {
   }
 
   Future<void> _initialize() async {
-    late _KazumiAudioHandler rawHandler;
+    late _HaipeeAudioHandler rawHandler;
     if (Platform.isLinux) {
       AudioServiceMpris.init(
-        dBusName: 'io.github.Predidit.Kazumi.channel.audio',
-        identity: 'Kazumi Playback',
+        dBusName: 'io.github.hugetiny.haipee.channel.audio',
+        identity: 'Haipee Playback',
         canControl: true,
         canPlay: true,
         canPause: true,
@@ -48,12 +48,12 @@ class AudioController {
     }
     await AudioService.init(
       builder: () {
-        rawHandler = _KazumiAudioHandler();
+        rawHandler = _HaipeeAudioHandler();
         return rawHandler;
       },
       config: const AudioServiceConfig(
-        androidNotificationChannelId: 'io.github.Predidit.Kazumi.channel.audio',
-        androidNotificationChannelName: 'Kazumi Playback',
+        androidNotificationChannelId: 'io.github.hugetiny.haipee.channel.audio',
+        androidNotificationChannelName: 'Haipee Playback',
         androidNotificationOngoing: true,
       ),
     );
@@ -81,7 +81,7 @@ class AudioController {
         });
       }
     } catch (e) {
-      KazumiLogger().w('AudioController: audio_session init failed', error: e);
+      HaipeeLogger().w('AudioController: audio_session init failed', error: e);
     }
   }
 
@@ -115,7 +115,7 @@ class AudioController {
         await _onPause!();
       }
     } catch (e) {
-      KazumiLogger().w('AudioController: interruption pause failed', error: e);
+      HaipeeLogger().w('AudioController: interruption pause failed', error: e);
     }
   }
 
@@ -125,7 +125,7 @@ class AudioController {
         await _onPlay!();
       }
     } catch (e) {
-      KazumiLogger().w('AudioController: interruption resume failed', error: e);
+      HaipeeLogger().w('AudioController: interruption resume failed', error: e);
     }
   }
 
@@ -135,7 +135,7 @@ class AudioController {
     try {
       await _audioSession?.setActive(active);
     } catch (e) {
-      KazumiLogger().w('AudioController: setActive($active) failed', error: e);
+      HaipeeLogger().w('AudioController: setActive($active) failed', error: e);
     }
   }
 
@@ -296,7 +296,7 @@ class AudioController {
           .timeout(const Duration(seconds: 8));
       resolved = Uri.file(file.path);
     } catch (e) {
-      KazumiLogger().w('AudioController: artwork resolution failed', error: e);
+      HaipeeLogger().w('AudioController: artwork resolution failed', error: e);
     }
     if (binding.isStale) return;
     _artworkUri = resolved;
@@ -353,7 +353,7 @@ class AudioController {
   }
 }
 
-class _KazumiAudioHandler extends BaseAudioHandler with SeekHandler {
+class _HaipeeAudioHandler extends BaseAudioHandler with SeekHandler {
   AudioCallback? _onPlay;
   AudioCallback? _onPause;
   AudioCallback? _onSkipToNext;

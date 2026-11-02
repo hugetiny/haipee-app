@@ -1,16 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/pages/info/info_controller.dart';
-import 'package:kazumi/modules/comments/comment_item.dart';
-import 'package:kazumi/modules/characters/character_item.dart';
-import 'package:kazumi/modules/staff/staff_item.dart';
-import 'package:kazumi/request/bangumi.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/pages/info/info_controller.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
+import 'package:haipee/modules/characters/character_item.dart';
+import 'package:haipee/modules/staff/staff_item.dart';
+import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
 
 // ✅ 导出 Info 页面 UI 状态管理
-export 'package:kazumi/pages/info/info_ui_state.dart';
+export 'package:haipee/pages/info/info_ui_state.dart';
 
 /// 番剧详情页 Provider
 ///
@@ -41,10 +41,10 @@ class BangumiCommentsNotifier
         bangumiId,
         offset: offset,
       );
-      KazumiLogger().log(Level.info, '已加载评论列表长度 ${result.commentList.length}');
+      HaipeeLogger().log(Level.info, '已加载评论列表长度 ${result.commentList.length}');
       return result.commentList;
     } catch (error, stackTrace) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.error,
         '加载评论失败: $error',
         error: error,
@@ -87,7 +87,7 @@ class BangumiCharactersNotifier
           return valueA.compareTo(valueB);
         });
       } catch (e) {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: t.library.info.toast.characterSortFailed.replaceFirst(
             '{details}',
             e.toString(),
@@ -95,10 +95,10 @@ class BangumiCharactersNotifier
         );
       }
 
-      KazumiLogger().log(Level.info, '已加载角色列表长度 ${characters.length}');
+      HaipeeLogger().log(Level.info, '已加载角色列表长度 ${characters.length}');
       return characters;
     } catch (error, stackTrace) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.error,
         '加载角色列表失败: $error',
         error: error,
@@ -132,10 +132,10 @@ class BangumiStaffsNotifier
     try {
       final result = await BangumiHTTP.getBangumiStaffByID(bangumiId);
       final staff = result.data;
-      KazumiLogger().log(Level.info, '已加载制作人员列表长度 ${staff.length}');
+      HaipeeLogger().log(Level.info, '已加载制作人员列表长度 ${staff.length}');
       return staff;
     } catch (error, stackTrace) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.error,
         '加载制作人员列表失败: $error',
         error: error,

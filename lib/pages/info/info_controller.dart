@@ -1,22 +1,22 @@
 import 'dart:ui' as ui;
 
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/comments/comment_item.dart';
-import 'package:kazumi/modules/characters/character_item.dart';
-import 'package:kazumi/modules/metadata_sync/metadata_sync_controller.dart';
-import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
-import 'package:kazumi/modules/staff/staff_item.dart';
-import 'package:kazumi/pages/my/my_controller.dart';
-import 'package:kazumi/pages/my/providers.dart';
-import 'package:kazumi/providers/media_suite_providers.dart';
-import 'package:kazumi/request/bangumi.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
+import 'package:haipee/modules/characters/character_item.dart';
+import 'package:haipee/modules/metadata_sync/metadata_sync_controller.dart';
+import 'package:haipee/modules/metadata_sync/models/metadata_record.dart';
+import 'package:haipee/modules/staff/staff_item.dart';
+import 'package:haipee/pages/my/my_controller.dart';
+import 'package:haipee/pages/my/providers.dart';
+import 'package:haipee/providers/media_suite_providers.dart';
+import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 part 'info_controller.freezed.dart';
 
@@ -144,7 +144,7 @@ class InfoController extends Notifier<InfoState> {
         state = state.copyWith(metadataLoading: false);
       }
     } catch (error, stackTrace) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[InfoController] Metadata refresh failed for bangumi ${current.id}: $error',
         error: error,
@@ -162,7 +162,7 @@ class InfoController extends Notifier<InfoState> {
     final result = await BangumiHTTP.getBangumiCommentsByID(id, offset: offset);
     final updated = [...existing, ...result.commentList];
     state = state.copyWith(commentsList: updated);
-    KazumiLogger().log(Level.info, '已加载评论列表长度 ${updated.length}');
+    HaipeeLogger().log(Level.info, '已加载评论列表长度 ${updated.length}');
   }
 
   Future<void> queryBangumiCharactersByID(int id) async {
@@ -178,7 +178,7 @@ class InfoController extends Notifier<InfoState> {
         return valueA.compareTo(valueB);
       });
     } catch (e) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: t.library.info.toast.characterSortFailed.replaceFirst(
           '{details}',
           e.toString(),
@@ -186,7 +186,7 @@ class InfoController extends Notifier<InfoState> {
       );
     }
     state = state.copyWith(characterList: characters);
-    KazumiLogger().log(Level.info, '已加载角色列表长度 ${characters.length}');
+    HaipeeLogger().log(Level.info, '已加载角色列表长度 ${characters.length}');
   }
 
   Future<void> queryBangumiStaffsByID(int id) async {
@@ -194,7 +194,7 @@ class InfoController extends Notifier<InfoState> {
     final result = await BangumiHTTP.getBangumiStaffByID(id);
     final staff = result.data;
     state = state.copyWith(staffList: staff);
-    KazumiLogger().log(Level.info, '已加载制作人员列表长度 ${staff.length}');
+    HaipeeLogger().log(Level.info, '已加载制作人员列表长度 ${staff.length}');
   }
 
   static final BangumiItem _emptyBangumiItem = BangumiItem(

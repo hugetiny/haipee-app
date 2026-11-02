@@ -4,29 +4,29 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/pages/download/providers.dart';
-import 'package:kazumi/pages/player/local_player_page.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
-import 'package:kazumi/modules/torrent_stream/widgets/torrent_stream_dialog.dart';
-import 'package:kazumi/modules/torrent_search/widgets/selective_download_dialog.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
-import 'package:kazumi/modules/torrent_search/widgets/torrent_link_badge.dart';
-import 'package:kazumi/modules/torrent_search/utils/torrent_download_helper.dart';
-import 'package:kazumi/modules/torrent_search/parser/torrent_file_parser.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/pages/download/providers.dart';
+import 'package:haipee/pages/player/local_player_page.dart';
+import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
+import 'package:haipee/modules/torrent_stream/widgets/torrent_stream_dialog.dart';
+import 'package:haipee/modules/torrent_search/widgets/selective_download_dialog.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_link_badge.dart';
+import 'package:haipee/modules/torrent_search/utils/torrent_download_helper.dart';
+import 'package:haipee/modules/torrent_search/parser/torrent_file_parser.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/modules/search/search_history_provider.dart';
-import 'package:kazumi/router_constants.dart';
+import 'package:haipee/modules/search/search_history_provider.dart';
+import 'package:haipee/router_constants.dart';
 
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/bean/widget/adaptive_data_view.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/bean/widget/adaptive_data_view.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
 
 /// 全网资源搜索视图显示模式（统一对齐全局 AdaptiveViewMode 规范）
 typedef ResourceViewMode = AdaptiveViewMode;
@@ -137,7 +137,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         onSelected: () async {
           await Clipboard.setData(ClipboardData(text: item.title));
           if (mounted) {
-            KazumiDialog.showToast(message: '已复制资源全称', context: context);
+            HaipeeDialog.showToast(message: '已复制资源全称', context: context);
           }
         },
       ),
@@ -149,41 +149,41 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
   Future<void> _copyMagnet(TorrentItem item) async {
     final magnet = item.effectiveMagnetUrl ?? item.magnetUrl;
     if (magnet.isEmpty) {
-      KazumiDialog.showToast(message: '未找到有效的磁力链接', context: context);
+      HaipeeDialog.showToast(message: '未找到有效的磁力链接', context: context);
       return;
     }
     await Clipboard.setData(ClipboardData(text: magnet));
     if (mounted) {
-      KazumiDialog.showToast(message: '已复制磁力链接', context: context);
+      HaipeeDialog.showToast(message: '已复制磁力链接', context: context);
     }
   }
 
   Future<void> _copyTorrentUrl(TorrentItem item) async {
     final url = item.effectiveTorrentUrl;
     if (url == null || url.isEmpty) {
-      KazumiDialog.showToast(message: '未找到有效的种子下载链接', context: context);
+      HaipeeDialog.showToast(message: '未找到有效的种子下载链接', context: context);
       return;
     }
     await Clipboard.setData(ClipboardData(text: url));
     if (mounted) {
-      KazumiDialog.showToast(message: '已复制种子下载链接', context: context);
+      HaipeeDialog.showToast(message: '已复制种子下载链接', context: context);
     }
   }
 
   Future<void> _saveTorrentFile(TorrentItem item) async {
     final url = item.effectiveTorrentUrl;
     if (url == null || url.isEmpty) {
-      KazumiDialog.showToast(message: '未找到有效的种子下载链接', context: context);
+      HaipeeDialog.showToast(message: '未找到有效的种子下载链接', context: context);
       return;
     }
 
-    KazumiDialog.showLoading(msg: '正在下载种子文件 (.torrent)...');
+    HaipeeDialog.showLoading(msg: '正在下载种子文件 (.torrent)...');
     try {
       final bytes = await TorrentDownloadHelper.fetchTorrentBytes(url);
-      KazumiDialog.dismiss();
+      HaipeeDialog.dismiss();
       if (bytes == null || bytes.isEmpty) {
         if (mounted) {
-          KazumiDialog.showToast(
+          HaipeeDialog.showToast(
             message: '下载种子文件失败，可能是网络问题或防盗链拦截',
             context: context,
           );
@@ -196,12 +196,12 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         defaultFileName: '${item.title}.torrent',
       );
       if (file != null && mounted) {
-        KazumiDialog.showToast(message: '种子已保存至: ${file.path}', context: context);
+        HaipeeDialog.showToast(message: '种子已保存至: ${file.path}', context: context);
       }
     } catch (e) {
-      KazumiDialog.dismiss();
+      HaipeeDialog.dismiss();
       if (mounted) {
-        KazumiDialog.showToast(message: '保存种子异常: $e', context: context);
+        HaipeeDialog.showToast(message: '保存种子异常: $e', context: context);
       }
     }
   }
@@ -214,11 +214,11 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         mode: LaunchMode.externalApplication,
       );
       if (!success && mounted) {
-        KazumiDialog.showToast(message: '无法在浏览器中打开链接', context: context);
+        HaipeeDialog.showToast(message: '无法在浏览器中打开链接', context: context);
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '打开链接失败: $e', context: context);
+        HaipeeDialog.showToast(message: '打开链接失败: $e', context: context);
       }
     }
   }
@@ -229,7 +229,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         (item.effectiveMagnetUrl != null || item.magnetUrl.isNotEmpty);
 
     if (!hasTorrent && !hasMagnet) {
-      KazumiDialog.showToast(message: '未找到有效的下载链接', context: context);
+      HaipeeDialog.showToast(message: '未找到有效的下载链接', context: context);
       return;
     }
 
@@ -276,25 +276,29 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
           return;
         }
       } catch (e) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '优先下载种子文件失败，平滑降级至磁力链接添加: $e',
         );
       }
     }
 
-    // 种子不存在或种子拉取失败/超时：平滑降级使用磁力链接
+    // 种子内存下载失败或超时：平滑降级使用磁力链接；若无磁力链接则直接将原种子 URL 交付 Gopeed 引擎后台下载
     final fallbackMagnet = item.effectiveMagnetUrl ?? item.magnetUrl;
-    if (fallbackMagnet.isEmpty) {
+    final fallbackUrl = fallbackMagnet.isNotEmpty
+        ? fallbackMagnet
+        : (item.effectiveTorrentUrl ?? item.torrentUrl ?? '');
+
+    if (fallbackUrl.isEmpty) {
       if (mounted) {
-        KazumiDialog.showToast(message: '种子下载失败且无可用磁力链接', context: context);
+        HaipeeDialog.showToast(message: '未找到可用的下载链接', context: context);
       }
       return;
     }
 
     try {
       await downloadCtrl.addUris(
-        [fallbackMagnet],
+        [fallbackUrl],
         title: downloadTitle,
         episodeNumber: episodeNumber,
       );
@@ -302,7 +306,11 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('已添加磁力下载任务至队列: $downloadTitle'),
+            content: Text(
+              fallbackUrl.startsWith('magnet:?')
+                  ? '已添加磁力下载任务至队列: $downloadTitle'
+                  : '已添加下载任务至队列: $downloadTitle',
+            ),
             action: SnackBarAction(
               label: '查看下载',
               onPressed: () {
@@ -314,7 +322,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '添加下载失败: $e', context: context);
+        HaipeeDialog.showToast(message: '添加下载失败: $e', context: context);
       }
     }
   }
@@ -326,7 +334,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         (item.effectiveMagnetUrl != null || item.magnetUrl.isNotEmpty);
 
     if (!hasTorrent && !hasMagnet) {
-      KazumiDialog.showToast(message: '未找到有效的下载链接', context: context);
+      HaipeeDialog.showToast(message: '未找到有效的下载链接', context: context);
       return;
     }
 
@@ -346,7 +354,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
 
     // 1. 默认优先种子：尝试通过 HTTP 下载 .torrent 文件并在 0ms 瞬间解析文件树
     if (hasTorrent) {
-      KazumiDialog.showLoading(
+      HaipeeDialog.showLoading(
         msg: '正在极速下载种子元数据 (.torrent)...',
         onCancel: () {
           cancelToken.cancel();
@@ -366,7 +374,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         );
 
         if (cancelToken.isCancelled) {
-          KazumiDialog.dismiss();
+          HaipeeDialog.dismiss();
           return;
         }
 
@@ -377,7 +385,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
           }
         }
       } catch (e) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '种子秒级解析失败，准备降级为磁力 DHT 解析: $e',
         );
@@ -387,20 +395,20 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
     // 2. 如果无种子或种子拉取失败，平滑降级到磁力 DHT 与 Tracker 解析
     if (entries == null || entries.isEmpty) {
       if (cancelToken.isCancelled) {
-        KazumiDialog.dismiss();
+        HaipeeDialog.dismiss();
         return;
       }
 
       final fallbackMagnet = item.effectiveMagnetUrl ?? item.magnetUrl;
       if (fallbackMagnet.isEmpty) {
-        KazumiDialog.dismiss();
+        HaipeeDialog.dismiss();
         if (mounted) {
-          KazumiDialog.showToast(message: '未能下载种子文件且无磁力链接', context: context);
+          HaipeeDialog.showToast(message: '未能下载种子文件且无磁力链接', context: context);
         }
         return;
       }
 
-      KazumiDialog.showLoading(
+      HaipeeDialog.showLoading(
         msg: hasTorrent
             ? '种子拉取受阻，正在通过 DHT 解析磁力元数据...'
             : '正在通过 DHT 与 Tracker 解析磁力元数据...',
@@ -419,27 +427,27 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
           fallbackMagnet,
           cancelToken: cancelToken,
           onProgress: (status) {
-            KazumiDialog.showLoading(msg: status);
+            HaipeeDialog.showLoading(msg: status);
           },
         );
       } on TorrentStreamCancelledException {
-        KazumiDialog.dismiss();
+        HaipeeDialog.dismiss();
         return;
       } catch (e) {
-        KazumiDialog.dismiss();
+        HaipeeDialog.dismiss();
         if (mounted) {
-          KazumiDialog.showToast(message: '解析磁力元数据失败: $e', context: context);
+          HaipeeDialog.showToast(message: '解析磁力元数据失败: $e', context: context);
         }
         return;
       }
     }
 
     isCompleted = true;
-    KazumiDialog.dismiss();
+    HaipeeDialog.dismiss();
     if (!mounted) return;
 
     if (entries.isEmpty) {
-      KazumiDialog.showToast(message: '未能获取到该资源的文件列表', context: context);
+      HaipeeDialog.showToast(message: '未能获取到该资源的文件列表', context: context);
       return;
     }
 
@@ -498,7 +506,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
   Future<void> _handleStreamPlay(TorrentItem item) async {
     final magnet = item.magnetUrl;
     if (magnet.isEmpty) {
-      KazumiDialog.showToast(message: '未找到有效的下载链接', context: context);
+      HaipeeDialog.showToast(message: '未找到有效的下载链接', context: context);
       return;
     }
 
@@ -596,7 +604,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '流式播放启动异常: $e', context: context);
+        HaipeeDialog.showToast(message: '流式播放启动异常: $e', context: context);
       }
     }
   }
@@ -667,12 +675,9 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
 
         return Column(
           children: [
-            // 迅雷风格分类导航选项卡（全部 / 视频 / 音乐 / 软件 / 游戏 / 文档 / 其它）
-            _buildXunleiCategoryTabs(theme, searchState),
-
-            // 迅雷风格次级工具栏（条目计数统计 + 视图切换 + 枪版/分辨率/站点筛选）
-            if (searchState.items.isNotEmpty)
-              _buildArrFilterBar(theme, searchState, isTableView: isTableView),
+            // Cardigann 规范多行参数筛选体系 (分类 cat / 性质 type / 站点 indexer / 排序 sort)
+            _buildCardigannFilterSection(theme, searchState,
+                isTableView: isTableView),
 
             // 渐进式流式抓取进度条（首屏已呈现，后台索引器仍在并发追加）
             if (searchState.isLoading && searchState.items.isNotEmpty)
@@ -688,15 +693,14 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
     );
   }
 
-  /// 迅雷风格分类导航栏
-  Widget _buildXunleiCategoryTabs(
-      ThemeData theme, TorrentSearchState searchState) {
-    final notifier = ref.read(torrentSearchProvider.notifier);
-    final counts = searchState.categoryCounts;
-
+  /// Cardigann 规范多行参数筛选体系 (分类 cat / 访问类型 type / 索引器 indexer / 排序规则 sort)
+  Widget _buildCardigannFilterSection(
+    ThemeData theme,
+    TorrentSearchState searchState, {
+    required bool isTableView,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
         border: Border(
@@ -706,58 +710,391 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
           ),
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: TorrentCategory.values.map((cat) {
-            final isSelected = searchState.categoryFilter == cat;
-            final count = cat == TorrentCategory.all
-                ? searchState.items.length
-                : (counts[cat] ?? 0);
-            final icon = _getCategoryIcon(cat);
-            final color = _getCategoryColor(cat, theme);
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 第 1 行: Cardigann 分类参数 (cat / category)
+          _buildCategoryFilterRow(theme, searchState),
 
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                key: ValueKey('category_chip_${cat.name}'),
-                showCheckmark: false,
-                avatar: Icon(
-                  icon,
-                  size: 15,
-                  color: isSelected ? theme.colorScheme.onPrimary : color,
-                ),
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(cat.label),
-                    if (searchState.items.isNotEmpty && count > 0) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        '($count)',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected
-                              ? theme.colorScheme.onPrimary.withAlpha(220)
-                              : theme.colorScheme.outline,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                selected: isSelected,
-                onSelected: (_) => notifier.setCategoryFilter(cat),
-              ),
-            );
-          }).toList(),
-        ),
+          if (searchState.items.isNotEmpty) ...[
+            Divider(
+                height: 1,
+                thickness: 0.5,
+                color: theme.dividerColor.withAlpha(25)),
+            // 第 2 行: Cardigann 站点访问性质 (type: public / semi-private / private)
+            _buildTrackerTypeFilterRow(theme, searchState),
+
+            Divider(
+                height: 1,
+                thickness: 0.5,
+                color: theme.dividerColor.withAlpha(25)),
+            // 第 3 行: Cardigann 来源站点 (indexer)
+            _buildIndexerFilterRow(theme, searchState),
+
+            Divider(
+                height: 1,
+                thickness: 0.5,
+                color: theme.dividerColor.withAlpha(25)),
+            // 第 4 行: Cardigann 排序参数 (sort) + 视图切换与条目统计
+            _buildSortFilterRow(theme, searchState, isTableView: isTableView),
+          ],
+        ],
       ),
     );
   }
 
-  /// 迅雷风格交互式工具栏与筛选栏
-  Widget _buildArrFilterBar(
+  /// 封装每行筛选项的标准布局：左侧参数标签 + 中间可横向滑动选项 + 右侧可选操作区
+  Widget _buildFilterRowContainer({
+    required ThemeData theme,
+    required String label,
+    required IconData icon,
+    required List<Widget> children,
+    Widget? trailing,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          // 左侧参数标签 (固定宽度保持对齐)
+          SizedBox(
+            width: 95,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: theme.colorScheme.primary.withAlpha(200),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 中间水平滑动选项与操作区
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ...children,
+                  if (trailing != null) ...[
+                    const SizedBox(
+                      height: 18,
+                      child: VerticalDivider(width: 16, thickness: 1),
+                    ),
+                    trailing,
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 第 1 行: Cardigann 分类参数 (cat / category) 筛选行
+  Widget _buildCategoryFilterRow(
+      ThemeData theme, TorrentSearchState searchState) {
+    final notifier = ref.read(torrentSearchProvider.notifier);
+    final counts = searchState.categoryCounts;
+    final activeProtocol = searchState.ruleProtocolFilter ?? 'all';
+    final alistCount =
+        searchState.items.where(TorrentSearchState.isAlistItem).length;
+    final cardigannCount = searchState.items.length - alistCount;
+
+    return _buildFilterRowContainer(
+      theme: theme,
+      label: '分类 (cat)',
+      icon: Icons.category_outlined,
+      children: [
+        ...TorrentCategory.values.map((cat) {
+          final isSelected = searchState.categoryFilter == cat;
+          final count = cat == TorrentCategory.all
+              ? searchState.items.length
+              : (counts[cat] ?? 0);
+          final icon = _getCategoryIcon(cat);
+          final color = _getCategoryColor(cat, theme);
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              key: ValueKey('category_chip_${cat.name}'),
+              showCheckmark: false,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              avatar: Icon(
+                icon,
+                size: 14,
+                color: isSelected ? theme.colorScheme.onPrimary : color,
+              ),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(cat.label, style: const TextStyle(fontSize: 12)),
+                  if (searchState.items.isNotEmpty && count > 0) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      '($count)',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? theme.colorScheme.onPrimary.withAlpha(220)
+                            : theme.colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (_) => notifier.setCategoryFilter(cat),
+            ),
+          );
+        }),
+        const SizedBox(
+          height: 18,
+          child: VerticalDivider(width: 14, thickness: 1),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: ChoiceChip(
+            key: const Key('resource_rule_chip_cardigann'),
+            showCheckmark: false,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            avatar: Icon(
+              Icons.downloading_outlined,
+              size: 14,
+              color: activeProtocol == 'cardigann'
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.primary,
+            ),
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Cardigann 规则', style: TextStyle(fontSize: 12)),
+                if (searchState.items.isNotEmpty && cardigannCount > 0) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    '($cardigannCount)',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: activeProtocol == 'cardigann'
+                          ? theme.colorScheme.onPrimary.withAlpha(220)
+                          : theme.colorScheme.outline,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            selected: activeProtocol == 'cardigann',
+            onSelected: (_) => notifier.setRuleProtocolFilter(
+              activeProtocol == 'cardigann' ? 'all' : 'cardigann',
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: ChoiceChip(
+            key: const Key('resource_rule_chip_alist'),
+            showCheckmark: false,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            avatar: Icon(
+              Icons.cloud_outlined,
+              size: 14,
+              color: activeProtocol == 'alist'
+                  ? theme.colorScheme.onPrimary
+                  : Colors.blue.shade600,
+            ),
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('AList 规则', style: TextStyle(fontSize: 12)),
+                if (searchState.items.isNotEmpty && alistCount > 0) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    '($alistCount)',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: activeProtocol == 'alist'
+                          ? theme.colorScheme.onPrimary.withAlpha(220)
+                          : theme.colorScheme.outline,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            selected: activeProtocol == 'alist',
+            onSelected: (_) => notifier.setRuleProtocolFilter(
+              activeProtocol == 'alist' ? 'all' : 'alist',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 第 2 行: Cardigann 站点访问性质 (type: public / semi-private / private) 筛选行
+  Widget _buildTrackerTypeFilterRow(
+      ThemeData theme, TorrentSearchState searchState) {
+    final notifier = ref.read(torrentSearchProvider.notifier);
+    final currentType = searchState.trackerTypeFilter ?? 'all';
+
+    int publicCount = 0;
+    int semiPrivateCount = 0;
+    int privateCount = 0;
+    for (final item in searchState.items) {
+      if (item.isPrivateTracker) {
+        privateCount++;
+      } else if (item.isSemiPrivateTracker) {
+        semiPrivateCount++;
+      } else {
+        publicCount++;
+      }
+    }
+
+    final types = [
+      ('all', '全部性质', searchState.items.length, Icons.all_inclusive),
+      ('public', '公开 Public', publicCount, Icons.public),
+      ('semi-private', '半私有 Semi', semiPrivateCount, Icons.lock_open_outlined),
+      ('private', '私有 PT', privateCount, Icons.lock_outlined),
+    ];
+
+    return _buildFilterRowContainer(
+      theme: theme,
+      label: '性质 (type)',
+      icon: Icons.shield_outlined,
+      children: [
+        ...types.map((entry) {
+          final isSelected = currentType == entry.$1;
+          final count = entry.$3;
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              key: ValueKey('tracker_type_chip_${entry.$1}'),
+              showCheckmark: false,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              avatar: Icon(
+                entry.$4,
+                size: 13,
+                color: isSelected
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(entry.$2, style: const TextStyle(fontSize: 12)),
+                  if (count > 0) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      '($count)',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? theme.colorScheme.onPrimary.withAlpha(220)
+                            : theme.colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (_) => notifier.setTrackerTypeFilter(entry.$1),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  /// 第 3 行: Cardigann 来源站点 (indexer) 筛选行
+  Widget _buildIndexerFilterRow(
+      ThemeData theme, TorrentSearchState searchState) {
+    final notifier = ref.read(torrentSearchProvider.notifier);
+    final currentIndexer = searchState.indexerFilter ?? '全部';
+
+    final indexerCounts = <String, int>{};
+    for (final item in searchState.items) {
+      final name = item.effectiveSourceName;
+      indexerCounts[name] = (indexerCounts[name] ?? 0) + 1;
+    }
+
+    return _buildFilterRowContainer(
+      theme: theme,
+      label: '站点 (indexer)',
+      icon: Icons.hub_outlined,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: ChoiceChip(
+            key: const Key('indexer_chip_all'),
+            showCheckmark: false,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            label: Text(
+              '全部站点 (${searchState.items.length})',
+              style: const TextStyle(fontSize: 12),
+            ),
+            selected: currentIndexer == '全部',
+            onSelected: (_) => notifier.setIndexerFilter(null),
+          ),
+        ),
+        ...indexerCounts.entries.map((entry) {
+          final isSelected = currentIndexer == entry.key;
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              key: ValueKey('indexer_chip_${entry.key}'),
+              showCheckmark: false,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              label: Text(
+                '${entry.key} (${entry.value})',
+                style: const TextStyle(fontSize: 12),
+              ),
+              selected: isSelected,
+              onSelected: (val) {
+                notifier.setIndexerFilter(val ? entry.key : null);
+              },
+            ),
+          );
+        }),
+        const SizedBox(width: 4),
+        ActionChip(
+          key: const Key('indexer_rule_manage_btn'),
+          avatar: const Icon(Icons.rule_folder_outlined, size: 14),
+          label: const Text('规则管理', style: TextStyle(fontSize: 12)),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          tooltip: '前往设置管理 Cardigann 索引规则 (多级分类与市场)',
+          onPressed: () => context.push(Routes.settingsIndexers),
+        ),
+      ],
+    );
+  }
+
+  /// 第 4 行: Cardigann 排序参数 (sort) 与控制栏
+  Widget _buildSortFilterRow(
     ThemeData theme,
     TorrentSearchState searchState, {
     required bool isTableView,
@@ -766,217 +1103,108 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
     final filteredCount = searchState.filteredItems.length;
     final totalCount = searchState.items.length;
 
-    // 收集所有出现的分辨率
-    final resolutions = <String>{'全部'};
-    for (final item in searchState.items) {
-      if (item.resolution != null && item.resolution!.isNotEmpty) {
-        resolutions.add(item.resolution!);
-      }
-    }
+    final sortOptions = [
+      (TorrentSortMode.smart, '智能综合', Icons.auto_awesome),
+      (TorrentSortMode.seeders, '做种优先', Icons.arrow_upward),
+      (TorrentSortMode.age, '发布时间', Icons.schedule),
+      (TorrentSortMode.size, '文件体积', Icons.data_usage),
+      (TorrentSortMode.leechers, '下载热度', Icons.arrow_downward),
+      (TorrentSortMode.title, '资源名称', Icons.sort_by_alpha),
+    ];
 
-    // 收集所有来源索引器
-    final indexers = <String>{'全部'};
-    for (final item in searchState.items) {
-      indexers.add(item.effectiveSourceName);
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      color: theme.colorScheme.surfaceContainerLowest,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            // 资源计数统计
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withAlpha(120),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                filteredCount == totalCount
-                    ? '共 $totalCount 项资源'
-                    : '显示 $filteredCount / $totalCount 项',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
+    return _buildFilterRowContainer(
+      theme: theme,
+      label: '排序 (sort)',
+      icon: Icons.sort_outlined,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 升序/降序快速切换按钮
+          IconButton(
+            tooltip: searchState.sortAscending
+                ? '当前升序 (点击切换为降序)'
+                : '当前降序 (点击切换为升序)',
+            icon: Icon(
+              searchState.sortAscending ? Icons.north : Icons.south,
+              size: 16,
+              color: theme.colorScheme.primary,
+            ),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            onPressed: () => notifier.setSortMode(
+              searchState.sortMode,
+              ascending: !searchState.sortAscending,
+            ),
+          ),
+          const SizedBox(width: 4),
+          const SizedBox(
+            height: 16,
+            child: VerticalDivider(width: 10, thickness: 1),
+          ),
+          // 响应式视图切换器（自动 / 表格 / 卡片）
+          AdaptiveViewSwitcher(
+            viewMode: _viewMode,
+            isTableView: isTableView,
+            onModeChanged: (mode) {
+              setState(() {
+                _viewMode = mode;
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+          // 统计计数徽章
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withAlpha(120),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Text(
+              filteredCount == totalCount
+                  ? '共 $totalCount 项'
+                  : '$filteredCount / $totalCount 项',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
               ),
             ),
-            const SizedBox(width: 10),
-
-            // 响应式视图切换器（自动响应式 / 强制表格 / 强制卡片）
-            AdaptiveViewSwitcher(
-              viewMode: _viewMode,
-              isTableView: isTableView,
-              onModeChanged: (mode) {
-                setState(() {
-                  _viewMode = mode;
-                });
+          ),
+        ],
+      ),
+      children: [
+        ...sortOptions.map((entry) {
+          final isSelected = searchState.sortMode == entry.$1;
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              key: ValueKey('sort_chip_${entry.$1.name}'),
+              showCheckmark: false,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              avatar: Icon(
+                entry.$3,
+                size: 13,
+                color: isSelected
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+              label: Text(entry.$2, style: const TextStyle(fontSize: 12)),
+              selected: isSelected,
+              onSelected: (_) {
+                if (isSelected) {
+                  // 点击已选中的排序方式时，反转升降序
+                  notifier.setSortMode(entry.$1,
+                      ascending: !searchState.sortAscending);
+                } else {
+                  notifier.setSortMode(entry.$1);
+                }
               },
             ),
-            const SizedBox(width: 8),
-
-            // 排序方式（迅雷核心要素：做种数 / 最新发布 / 体积 / 下载数 / 名称 / 站点）
-            PopupMenuButton<TorrentSortMode>(
-              tooltip: '更改排序方式',
-              initialValue: searchState.sortMode,
-              onSelected: (mode) => notifier.setSortMode(mode),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.sort,
-                        size: 16,
-                        color: theme.colorScheme.onSecondaryContainer),
-                    const SizedBox(width: 4),
-                    Text(
-                      switch (searchState.sortMode) {
-                        TorrentSortMode.seeders =>
-                          '做种数${searchState.sortAscending ? ' (升序)' : ' (降序)'}',
-                        TorrentSortMode.age =>
-                          '发布时间${searchState.sortAscending ? ' (最早)' : ' (最新)'}',
-                        TorrentSortMode.size =>
-                          '体积${searchState.sortAscending ? ' (从小到大)' : ' (从大到小)'}',
-                        TorrentSortMode.leechers =>
-                          '下载数${searchState.sortAscending ? ' (升序)' : ' (降序)'}',
-                        TorrentSortMode.title =>
-                          '名称${searchState.sortAscending ? ' (A-Z)' : ' (Z-A)'}',
-                        TorrentSortMode.source =>
-                          '站点${searchState.sortAscending ? ' (A-Z)' : ' (Z-A)'}',
-                        TorrentSortMode.smart =>
-                          '智能排序',
-                      },
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSecondaryContainer,
-                      ),
-                    ),
-                    const Icon(Icons.arrow_drop_down, size: 16),
-                  ],
-                ),
-              ),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: TorrentSortMode.smart,
-                  child: Text('智能综合排序'),
-                ),
-                const PopupMenuItem(
-                  value: TorrentSortMode.seeders,
-                  child: Text('做种数 (Seeders) 优先'),
-                ),
-                const PopupMenuItem(
-                  value: TorrentSortMode.age,
-                  child: Text('最新发布时间 (Age) 优先'),
-                ),
-                const PopupMenuItem(
-                  value: TorrentSortMode.size,
-                  child: Text('文件体积 (Size) 优先'),
-                ),
-                const PopupMenuItem(
-                  value: TorrentSortMode.leechers,
-                  child: Text('下载热度 (Leechers) 优先'),
-                ),
-                const PopupMenuItem(
-                  value: TorrentSortMode.title,
-                  child: Text('资源名称 (A-Z) 排序'),
-                ),
-                const PopupMenuItem(
-                  value: TorrentSortMode.source,
-                  child: Text('来源站点 排序'),
-                ),
-              ],
-            ),
-            const SizedBox(width: 8),
-
-            // 隐藏 CAM/TS 枪版开关
-            FilterChip(
-              showCheckmark: false,
-              avatar: Icon(
-                searchState.hideCam ? Icons.visibility_off : Icons.visibility,
-                size: 14,
-              ),
-              label: const Text('隐藏 CAM 枪版'),
-              selected: searchState.hideCam,
-              onSelected: (_) => notifier.toggleHideCam(),
-            ),
-            const SizedBox(width: 8),
-
-            // 分辨率筛选（仅在“全部”或“视频”分类下有意义）
-            if ((searchState.categoryFilter == TorrentCategory.all ||
-                    searchState.categoryFilter == TorrentCategory.video) &&
-                resolutions.length > 2) ...[
-              Text(
-                '画质: ',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              ...resolutions.map((res) {
-                final isSelected =
-                    (searchState.resolutionFilter ?? '全部') == res;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    showCheckmark: false,
-                    label: Text(res),
-                    selected: isSelected,
-                    onSelected: (val) {
-                      if (val) {
-                        notifier.setResolutionFilter(res == '全部' ? null : res);
-                      }
-                    },
-                  ),
-                );
-              }),
-            ],
-
-            // 索引器来源筛选
-            if (indexers.length > 2) ...[
-              const VerticalDivider(width: 12),
-              Text(
-                '站点: ',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              ...indexers.map((idx) {
-                final isSelected = (searchState.indexerFilter ?? '全部') == idx;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    showCheckmark: false,
-                    label: Text(idx),
-                    selected: isSelected,
-                    onSelected: (val) {
-                      if (val) {
-                        notifier.setIndexerFilter(idx == '全部' ? null : idx);
-                      }
-                    },
-                  ),
-                );
-              }),
-              const SizedBox(width: 4),
-              ActionChip(
-                avatar: const Icon(Icons.rule_folder_outlined, size: 14),
-                label: const Text('规则管理'),
-                tooltip: '前往设置管理 Cardigann 索引规则 (多级分类与市场)',
-                onPressed: () => context.push(Routes.settingsIndexers),
-              ),
-            ],
-          ],
-        ),
-      ),
+          );
+        }),
+      ],
     );
   }
 
@@ -1076,7 +1304,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
               ),
             ),
             Text(
-              '可尝试切换“全部”分类、取消“隐藏 CAM 枪版”或切换画质与站点',
+              '可尝试切换“全部”分类或重置画质与站点筛选',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,
               ),
@@ -1485,7 +1713,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
           ),
           child: Row(
             children: [
-              // 1. 资源名称（分类色彩图标 + 完整标题 + 字幕组/Freeleech/CAM 徽章）
+              // 1. 资源名称（分类色彩图标 + 完整标题 + 字幕组/Freeleech 徽章）
               Expanded(
                 child: _buildTitleCell(theme, item, isDead),
               ),
@@ -1752,24 +1980,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
                     ),
                   ),
                 ],
-                if (item.isVideo && item.isCam) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: Colors.deepOrange.withAlpha(30),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: const Text(
-                      'CAM 枪版',
-                      style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.deepOrange,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
+
                 if (item.isArchive) ...[
                   const SizedBox(width: 6),
                   Container(
@@ -1795,6 +2006,49 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 站点访问性质标签（公开 / 半私有 / 私有 PT / 网盘）
+  Widget _buildTrackerNatureTag(ThemeData theme, TorrentItem item) {
+    final bool isAlist = TorrentSearchState.isAlistItem(item);
+    final String label;
+    final Color bgColor;
+    final Color fgColor;
+
+    if (isAlist) {
+      label = '网盘';
+      bgColor = Colors.blue.withAlpha(30);
+      fgColor = Colors.blue;
+    } else if (item.isPrivateTracker) {
+      label = '私有 PT';
+      bgColor = theme.colorScheme.errorContainer.withAlpha(160);
+      fgColor = theme.colorScheme.error;
+    } else if (item.isSemiPrivateTracker) {
+      label = '半私有';
+      bgColor = Colors.orange.withAlpha(35);
+      fgColor = Colors.orange.shade800;
+    } else {
+      label = '公开';
+      bgColor = Colors.green.withAlpha(30);
+      fgColor = Colors.green.shade700;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: fgColor.withAlpha(70), width: 0.8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: fgColor,
+        ),
       ),
     );
   }
@@ -1841,20 +2095,30 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
         ? 'Torznab / Cardigann P2P 种子索引\n点击在浏览器中打开原始发布页:\n${item.pageUrl}'
         : 'Torznab / Cardigann P2P 种子索引';
 
-    if (hasPageUrl) {
-      return Tooltip(
-        message: tooltipMsg,
-        child: InkWell(
-          onTap: () => _openBrowserUrl(item.pageUrl!),
-          borderRadius: BorderRadius.circular(4),
-          child: badge,
-        ),
-      );
-    }
+    final siteWidget = hasPageUrl
+        ? Tooltip(
+            message: tooltipMsg,
+            child: InkWell(
+              onTap: () => _openBrowserUrl(item.pageUrl!),
+              borderRadius: BorderRadius.circular(4),
+              child: badge,
+            ),
+          )
+        : Tooltip(
+            message: tooltipMsg,
+            child: badge,
+          );
 
-    return Tooltip(
-      message: tooltipMsg,
-      child: badge,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          siteWidget,
+          const SizedBox(width: 4),
+          _buildTrackerNatureTag(theme, item),
+        ],
+      ),
     );
   }
 
@@ -2083,6 +2347,29 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
               runSpacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
+                // 协议类型徽标 (区分 CARDIGANN 与 ALIST)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: TorrentSearchState.isAlistItem(item)
+                        ? Colors.blue.withValues(alpha: 0.15)
+                        : theme.colorScheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    TorrentSearchState.isAlistItem(item)
+                        ? 'ALIST'
+                        : 'CARDIGANN',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: TorrentSearchState.isAlistItem(item)
+                          ? Colors.blue.shade700
+                          : theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
                 // 站点
                 Tooltip(
                   message: 'Torznab / Cardigann P2P 种子索引',
@@ -2103,6 +2390,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
                     ),
                   ),
                 ),
+                _buildTrackerNatureTag(theme, item),
 
                 // 链接类型徽章（标清楚是磁力还是种子，还是两者都有）
                 if (item.linkType != TorrentLinkType.none)
@@ -2235,23 +2523,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
                     ),
                   ),
 
-                if (item.isCam)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.deepOrange.withAlpha(40),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'CAM 枪版',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.deepOrange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+
 
                 // 体积
                 if (item.displayFileSize.isNotEmpty &&
@@ -2604,18 +2876,10 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        '全网资源聚合检索',
+                        '资源检索',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '在上方搜索框直接输入作品名称，支持动漫、影视、音乐、游戏与各类资源',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
                         ),
                       ),
                     ],
@@ -2654,9 +2918,9 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
                           color: theme.colorScheme.primary,
                         ),
                         const SizedBox(width: 6),
-                        Flexible(
+                         Flexible(
                           child: Text(
-                            'Cardigann 引擎就绪 · 已激活 $activeCount 个索引规则',
+                            'Cardigann 规则就绪 (已激活 $activeCount 个 BT/磁力索引源) · AList 规则就绪 (网盘挂载直搜)',
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: theme.colorScheme.outline,
                               fontSize: 11,

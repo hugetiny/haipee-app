@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/playback/media_selector.dart';
+import 'package:haipee/modules/playback/media_selector.dart';
 
 void main() {
   group('Animeko MediaSelector Episode Alignment Tests', () {

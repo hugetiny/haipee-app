@@ -10,7 +10,7 @@ useWebview: false
 useNativePlayer: true
 usePost: false
 useLegacyParser: false
-userAgent: "Mozilla/5.0 (Kazumi/Torrent)"
+userAgent: "Mozilla/5.0 (Haipee/Torrent)"
 referer: "https://nyaa.si/"
 searchList: ""
 searchName: ""

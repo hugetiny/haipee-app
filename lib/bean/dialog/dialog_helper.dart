@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart' show Level;
 
 // A simple dialog helper class to show dialogs and toasts based on flutter native implementation (replace flutter_smart_dialog)
@@ -9,11 +9,11 @@ import 'package:logger/logger.dart' show Level;
 // It's powerful but can't behave like the default showDialog, e.g. the lack of mask animation. the lack of snackbar.
 // Use the implementation should be careful, because shared route stack with the whole app, it may cause some unexpected behaviors.
 // Don't use it in double PopScope widget.
-class KazumiDialog {
+class HaipeeDialog {
   /// The global observer that tracks contexts across the application
-  static final KazumiDialogObserver observer = KazumiDialogObserver();
+  static final HaipeeDialogObserver observer = HaipeeDialogObserver();
 
-  KazumiDialog._internal();
+  HaipeeDialog._internal();
 
   static Future<T?> show<T>({
     BuildContext? context,
@@ -28,19 +28,45 @@ class KazumiDialog {
           context: ctx,
           barrierDismissible: clickMaskDismiss ?? true,
           builder: builder,
-          routeSettings: const RouteSettings(name: 'KazumiDialog'),
+          routeSettings: const RouteSettings(name: 'HaipeeDialog'),
         );
         onDismiss?.call();
         return result;
       } catch (e) {
-        debugPrint('Kazumi Dialog Error: Failed to show dialog: $e');
+        debugPrint('Haipee Dialog Error: Failed to show dialog: $e');
         return null;
       }
     } else {
       debugPrint(
-          'Kazumi Dialog Error: No context available to show the dialog');
+          'Haipee Dialog Error: No context available to show the dialog');
       return null;
     }
+  }
+
+  /// 将底层非结构化、数字代码或含混晦涩的错误信息清洗为对用户友好、具可读性的中文提示
+  static String sanitizeUserMessage(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '操作完成';
+    final lower = trimmed.toLowerCase();
+    if (lower == '1' ||
+        lower == 'error 1' ||
+        lower == 'error: 1' ||
+        lower == 'exception: 1' ||
+        lower == 'failed: 1') {
+      return '播放或请求发生底层异常 (错误码: 1)，建议切换播放线路或视频规则';
+    }
+    if (lower == 'null' || lower == 'undefined' || lower == '[object object]') {
+      return '发生未知异常，请稍后重试';
+    }
+    if (RegExp(r'^(.*?[失败|错误|异常][：:]\s*)(1|error\s*1)$', caseSensitive: false)
+        .hasMatch(trimmed)) {
+      final prefix = RegExp(r'^(.*?[失败|错误|异常][：:]\s*)', caseSensitive: false)
+              .firstMatch(trimmed)
+              ?.group(1) ??
+          '操作失败: ';
+      return '$prefix底层接口返回代码 1，请尝试更换线路';
+    }
+    return raw;
   }
 
   static void showToast({
@@ -53,19 +79,20 @@ class KazumiDialog {
     bool isError = false,
     dynamic error,
   }) {
+    final displayMessage = sanitizeUserMessage(message);
     final ctx = context ?? observer.scaffoldContext;
     if (ctx != null && ctx.mounted) {
       try {
         final bool isErr = isError ||
             error != null ||
-            message.contains('失败') ||
-            message.contains('错误') ||
-            message.contains('异常');
+            displayMessage.contains('失败') ||
+            displayMessage.contains('错误') ||
+            displayMessage.contains('异常');
 
         if (isErr) {
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.warning,
-            'Toast Message: $message${error != null ? "\n$error" : ""}',
+            'Toast Message: $displayMessage${error != null ? "\n$error" : ""}',
             error: error,
           );
         }
@@ -78,7 +105,7 @@ class KazumiDialog {
           ..removeCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: SelectionArea(child: Text(message)),
+              content: SelectionArea(child: Text(displayMessage)),
               behavior: SnackBarBehavior.floating,
               width: MediaQuery.sizeOf(ctx).width >
                       LayoutBreakpoint.medium['width']!
@@ -97,11 +124,11 @@ class KazumiDialog {
             ),
           );
       } catch (e) {
-        debugPrint('Kazumi Dialog Error: Failed to show toast: $e');
+        debugPrint('Haipee Dialog Error: Failed to show toast: $e');
       }
     } else {
       debugPrint(
-          'Kazumi Dialog Error: No Scaffold context available to show Toast');
+          'Haipee Dialog Error: No Scaffold context available to show Toast');
     }
   }
 
@@ -114,7 +141,7 @@ class KazumiDialog {
     Function()? onDismiss,
     VoidCallback? onCancel,
   }) async {
-    if (_loadingMessageNotifier != null && observer.hasKazumiDialog) {
+    if (_loadingMessageNotifier != null && observer.hasHaipeeDialog) {
       _loadingMessageNotifier!.value = msg ?? 'Loading...';
       return;
     }
@@ -165,11 +192,11 @@ class KazumiDialog {
               ),
             );
           },
-          routeSettings: const RouteSettings(name: 'KazumiDialog'),
+          routeSettings: const RouteSettings(name: 'HaipeeDialog'),
         );
         onDismiss?.call();
       } catch (e) {
-        debugPrint('Kazumi Dialog Error: Failed to show loading dialog: $e');
+        debugPrint('Haipee Dialog Error: Failed to show loading dialog: $e');
       } finally {
         if (_loadingMessageNotifier == notifier) {
           _loadingMessageNotifier = null;
@@ -177,7 +204,7 @@ class KazumiDialog {
       }
     } else {
       debugPrint(
-          'Kazumi Dialog Error: No context available to show the loading dialog');
+          'Haipee Dialog Error: No context available to show the loading dialog');
     }
   }
 
@@ -191,12 +218,13 @@ class KazumiDialog {
     final ctx = context ?? observer.currentContext;
     if (ctx != null && ctx.mounted) {
       try {
+        final displayMessage = sanitizeUserMessage(message);
         await showDialog(
           context: ctx,
           builder: (BuildContext dialogContext) {
             final dialogTitle = title ?? '错误';
             final fullCopy =
-                '【$dialogTitle】\n$message${error != null ? "\n$error" : ""}';
+                '【$dialogTitle】\n$displayMessage${error != null ? "\n$error" : ""}';
             return AlertDialog(
               title: SelectableText(dialogTitle),
               content: SingleChildScrollView(
@@ -204,7 +232,7 @@ class KazumiDialog {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SelectableText(message),
+                    SelectableText(displayMessage),
                     if (error != null) ...[
                       const SizedBox(height: 12),
                       SelectableText(
@@ -236,10 +264,10 @@ class KazumiDialog {
               ],
             );
           },
-          routeSettings: const RouteSettings(name: 'KazumiErrorDialog'),
+          routeSettings: const RouteSettings(name: 'HaipeeErrorDialog'),
         );
       } catch (e) {
-        debugPrint('Kazumi Dialog Error: Failed to show error dialog: $e');
+        debugPrint('Haipee Dialog Error: Failed to show error dialog: $e');
       }
     }
   }
@@ -280,48 +308,48 @@ class KazumiDialog {
           isDismissible: isDismissible,
           enableDrag: enableDrag,
           routeSettings:
-              routeSettings ?? const RouteSettings(name: 'KazumiBottomSheet'),
+              routeSettings ?? const RouteSettings(name: 'HaipeeBottomSheet'),
           transitionAnimationController: transitionAnimationController,
           anchorPoint: anchorPoint,
           useSafeArea: useSafeArea,
         );
         return result;
       } catch (e) {
-        debugPrint('Kazumi Dialog Error: Failed to show bottom sheet: $e');
+        debugPrint('Haipee Dialog Error: Failed to show bottom sheet: $e');
         return null;
       }
     } else {
       debugPrint(
-          'Kazumi Dialog Error: No context available to show the bottom sheet');
+          'Haipee Dialog Error: No context available to show the bottom sheet');
       return null;
     }
   }
 
-  static void dismiss([BuildContext? context]) {
+  static void dismiss({BuildContext? context, dynamic popWith}) {
     if (context != null && context.mounted) {
-      Navigator.maybePop(context);
+      Navigator.maybePop(context, popWith);
       return;
     }
-    if (observer.hasKazumiDialog && observer._kazumiDialogRoutes.isNotEmpty) {
+    if (observer.hasHaipeeDialog && observer._haipeeDialogRoutes.isNotEmpty) {
       try {
-        final route = observer._kazumiDialogRoutes.last;
+        final route = observer._haipeeDialogRoutes.last;
         if (route.navigator != null) {
-          route.navigator!.pop();
+          route.navigator!.pop(popWith);
           return;
         }
       } catch (e) {
-        debugPrint('Kazumi Dialog Error: Failed to dismiss dialog: $e');
+        debugPrint('Haipee Dialog Error: Failed to dismiss dialog: $e');
       }
     } else {
-      debugPrint('Kazumi Dialog Debug: No active KazumiDialog to dismiss');
+      debugPrint('Haipee Dialog Debug: No active HaipeeDialog to dismiss');
     }
   }
 }
 
 /// Navigator observer to track contexts and dialog routes
-class KazumiDialogObserver extends NavigatorObserver {
+class HaipeeDialogObserver extends NavigatorObserver {
   /// List of active dialog routes
-  final List<Route<dynamic>> _kazumiDialogRoutes = [];
+  final List<Route<dynamic>> _haipeeDialogRoutes = [];
 
   /// The most recent context from any MaterialPageRoute or PopupRoute
   BuildContext? _currentContext;
@@ -340,17 +368,17 @@ class KazumiDialogObserver extends NavigatorObserver {
   BuildContext? get rootContext =>
       _rootContext ?? _scaffoldContext ?? _currentContext;
 
-  bool get hasKazumiDialog => _kazumiDialogRoutes.isNotEmpty;
+  bool get hasHaipeeDialog => _haipeeDialogRoutes.isNotEmpty;
 
-  BuildContext? get kazumiDialogContext => _kazumiDialogRoutes.isNotEmpty
-      ? _kazumiDialogRoutes.last.navigator?.context
+  BuildContext? get haipeeDialogContext => _haipeeDialogRoutes.isNotEmpty
+      ? _haipeeDialogRoutes.last.navigator?.context
       : null;
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
-    if (_isKazumiDialogRoute(route)) {
-      _kazumiDialogRoutes.add(route);
+    if (_isHaipeeDialogRoute(route)) {
+      _haipeeDialogRoutes.add(route);
     }
     if (route.navigator?.context != null) {
       _updateContexts(route.navigator!.context, route);
@@ -361,8 +389,8 @@ class KazumiDialogObserver extends NavigatorObserver {
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPop(route, previousRoute);
     _removeCurrentSnackBar(route);
-    if (_isKazumiDialogRoute(route)) {
-      _kazumiDialogRoutes.remove(route);
+    if (_isHaipeeDialogRoute(route)) {
+      _haipeeDialogRoutes.remove(route);
     }
     if (previousRoute?.navigator?.context != null) {
       _updateContexts(previousRoute!.navigator!.context, previousRoute);
@@ -372,11 +400,11 @@ class KazumiDialogObserver extends NavigatorObserver {
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-    if (_isKazumiDialogRoute(oldRoute!)) {
-      _kazumiDialogRoutes.remove(oldRoute);
+    if (_isHaipeeDialogRoute(oldRoute!)) {
+      _haipeeDialogRoutes.remove(oldRoute);
     }
-    if (_isKazumiDialogRoute(newRoute!)) {
-      _kazumiDialogRoutes.add(newRoute);
+    if (_isHaipeeDialogRoute(newRoute!)) {
+      _haipeeDialogRoutes.add(newRoute);
     }
     if (newRoute.navigator?.context != null) {
       _updateContexts(newRoute.navigator!.context, newRoute);
@@ -387,8 +415,8 @@ class KazumiDialogObserver extends NavigatorObserver {
   void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didRemove(route, previousRoute);
 
-    if (_isKazumiDialogRoute(route)) {
-      _kazumiDialogRoutes.remove(route);
+    if (_isHaipeeDialogRoute(route)) {
+      _haipeeDialogRoutes.remove(route);
     }
 
     if (previousRoute?.navigator?.context != null) {
@@ -410,9 +438,9 @@ class KazumiDialogObserver extends NavigatorObserver {
     return Scaffold.maybeOf(context) != null;
   }
 
-  bool _isKazumiDialogRoute(Route<dynamic> route) {
-    return route.settings.name == 'KazumiDialog' ||
-        route.settings.name == 'KazumiBottomSheet';
+  bool _isHaipeeDialogRoute(Route<dynamic> route) {
+    return route.settings.name == 'HaipeeDialog' ||
+        route.settings.name == 'HaipeeBottomSheet';
   }
 
   void _removeCurrentSnackBar(Route<dynamic>? route) {

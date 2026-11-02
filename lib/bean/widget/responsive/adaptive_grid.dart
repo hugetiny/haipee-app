@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/bean/widget/responsive/breakpoints.dart';
+import 'package:haipee/bean/widget/responsive/breakpoints.dart';
 
 /// 统一响应式自适应网格组件
 /// 自动根据可用容器宽度计算最适宜的列数与卡片高度，消除手动计算与视口像素溢出

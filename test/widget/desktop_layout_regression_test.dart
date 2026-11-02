@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/menu/menu.dart';
-import 'package:kazumi/pages/popular/popular_controller.dart';
-import 'package:kazumi/pages/popular/popular_page.dart';
-import 'package:kazumi/pages/popular/providers.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/menu/menu.dart';
+import 'package:haipee/pages/popular/popular_controller.dart';
+import 'package:haipee/pages/popular/popular_page.dart';
+import 'package:haipee/pages/popular/providers.dart';
+import 'package:haipee/utils/storage.dart';
 
 class _FakePopularController extends PopularController {
   _FakePopularController(this._initialState);

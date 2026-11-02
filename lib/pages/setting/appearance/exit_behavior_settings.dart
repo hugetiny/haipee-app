@@ -1,10 +1,10 @@
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 /// Provider for exit behavior setting
 final exitBehaviorProvider = StateProvider.autoDispose<int>((ref) {

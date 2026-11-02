@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/bean/widget/responsive/breakpoints.dart';
+import 'package:haipee/bean/widget/responsive/breakpoints.dart';
 
 /// 统一受约束内容容器组件
 /// 针对宽屏/桌面端强制限制最大内容宽度并水平居中，防止表单、详情或列表在 2K/4K 大屏无限拉伸

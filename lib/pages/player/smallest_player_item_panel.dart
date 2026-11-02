@@ -4,28 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:kazumi/bean/appbar/drag_to_move_bar.dart' as dtb;
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/collect_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
-import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
-import 'package:kazumi/modules/bilibili/bilibili_auth_service.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/modules/bilibili/bilibili_service.dart';
-import 'package:kazumi/modules/bilibili/widgets/bili_login_dialog.dart';
-import 'package:kazumi/pages/player/player_controller.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/pages/player/player_state.dart';
-import 'package:kazumi/pages/settings/danmaku/danmaku_settings_sheet.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/pages/video/video_state.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/remote.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/appbar/drag_to_move_bar.dart' as dtb;
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/collect_button.dart';
+import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:haipee/bean/widget/embedded_native_control_area.dart';
+import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/bilibili/bilibili_service.dart';
+import 'package:haipee/modules/bilibili/widgets/bili_login_dialog.dart';
+import 'package:haipee/pages/player/player_controller.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/pages/player/player_state.dart';
+import 'package:haipee/pages/settings/danmaku/danmaku_settings_sheet.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/pages/video/video_state.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/remote.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:logger/logger.dart';
 
 class SmallestPlayerItemPanel extends ConsumerStatefulWidget {
@@ -128,7 +128,7 @@ class _SmallestPlayerItemPanelState
     if (biliCid == null || biliBvid == null || biliBvid.isEmpty) return;
 
     try {
-      KazumiDialog.showToast(message: '已成功登录！正在为您切换 1080P/4K 高清画质流...');
+      HaipeeDialog.showToast(message: '已成功登录！正在为您切换 1080P/4K 高清画质流...');
       final playUrl = await BilibiliService.getPlayUrl(biliBvid, biliCid);
       if (playUrl != null && playUrl.videoUrl.isNotEmpty) {
         final currentPos = playerController.playerPosition;
@@ -145,7 +145,7 @@ class _SmallestPlayerItemPanelState
         playerController.play();
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '登录后切换高清流失败: $e');
+      HaipeeLogger().log(Level.warning, '登录后切换高清流失败: $e');
     }
   }
 
@@ -252,7 +252,7 @@ class _SmallestPlayerItemPanelState
 
   void showForwardChange() {
     final t = context.t;
-    KazumiDialog.show(builder: (context) {
+    HaipeeDialog.show(builder: (context) {
       String input = '';
       return AlertDialog(
         title: Text(t.playback.controls.skip.title),
@@ -270,7 +270,7 @@ class _SmallestPlayerItemPanelState
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => KazumiDialog.dismiss(),
+            onPressed: () => HaipeeDialog.dismiss(),
             child: Text(
               t.app.cancel,
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -281,7 +281,7 @@ class _SmallestPlayerItemPanelState
               if (input.isNotEmpty) {
                 playerController.setForwardTime(int.parse(input));
               }
-              KazumiDialog.dismiss();
+              HaipeeDialog.dismiss();
             },
             child: Text(t.app.confirm),
           ),

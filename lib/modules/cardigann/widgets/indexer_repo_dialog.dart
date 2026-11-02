@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 
 /// Dialog to manage and synchronize decentralized Cardigann indexer repositories.
 class IndexerRepoDialog extends ConsumerStatefulWidget {
@@ -34,7 +34,7 @@ class _IndexerRepoDialogState extends ConsumerState<IndexerRepoDialog> {
   Future<void> _addRepo() async {
     final url = _urlController.text.trim();
     if (url.isEmpty || (!url.startsWith('http://') && !url.startsWith('https://'))) {
-      KazumiDialog.showToast(message: '请输入有效的 http/https 清单地址', context: context);
+      HaipeeDialog.showToast(message: '请输入有效的 http/https 清单地址', context: context);
       return;
     }
 
@@ -46,11 +46,11 @@ class _IndexerRepoDialogState extends ConsumerState<IndexerRepoDialog> {
       _urlController.clear();
       _nameController.clear();
       if (mounted) {
-        KazumiDialog.showToast(message: '已添加并同步仓库', context: context);
+        HaipeeDialog.showToast(message: '已添加并同步仓库', context: context);
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '添加仓库失败: $e', context: context);
+        HaipeeDialog.showToast(message: '添加仓库失败: $e', context: context);
       }
     } finally {
       if (mounted) {
@@ -66,11 +66,11 @@ class _IndexerRepoDialogState extends ConsumerState<IndexerRepoDialog> {
           .read(indexerPluginsProvider.notifier)
           .syncSubscription(id);
       if (mounted) {
-        KazumiDialog.showToast(message: '同步完成，已更新 $count 个索引器', context: context);
+        HaipeeDialog.showToast(message: '同步完成，已更新 $count 个索引器', context: context);
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '同步出错: $e', context: context);
+        HaipeeDialog.showToast(message: '同步出错: $e', context: context);
       }
     } finally {
       if (mounted) {
@@ -82,7 +82,7 @@ class _IndexerRepoDialogState extends ConsumerState<IndexerRepoDialog> {
   Future<void> _deleteRepo(String id) async {
     await ref.read(indexerPluginsProvider.notifier).removeSubscription(id);
     if (mounted) {
-      KazumiDialog.showToast(message: '已删除仓库订阅', context: context);
+      HaipeeDialog.showToast(message: '已删除仓库订阅', context: context);
     }
   }
 

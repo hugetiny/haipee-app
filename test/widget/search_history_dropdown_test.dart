@@ -6,16 +6,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/search/search_history_dropdown.dart';
-import 'package:kazumi/modules/search/search_history_module.dart';
-import 'package:kazumi/modules/search/search_history_provider.dart';
-import 'package:kazumi/pages/popular/popular_controller.dart';
-import 'package:kazumi/pages/popular/providers.dart';
-import 'package:kazumi/pages/resource/resource_search_page.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/search/search_history_dropdown.dart';
+import 'package:haipee/modules/search/search_history_module.dart';
+import 'package:haipee/modules/search/search_history_provider.dart';
+import 'package:haipee/pages/popular/popular_controller.dart';
+import 'package:haipee/pages/popular/providers.dart';
+import 'package:haipee/pages/resource/resource_search_page.dart';
+import 'package:haipee/utils/storage.dart';
 
 class _FakeSearchHistoryNotifier extends SearchHistoryNotifier {
   final List<SearchHistory> initial;

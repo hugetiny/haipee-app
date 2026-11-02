@@ -2,10 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/card/episode_comments_card.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/card/episode_comments_card.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 class EpisodeCommentsSheet extends ConsumerStatefulWidget {
   const EpisodeCommentsSheet({super.key});
@@ -137,7 +137,7 @@ class _EpisodeCommentsSheetState extends ConsumerState<EpisodeCommentsSheet> {
   void showEpisodeSelection() {
     final TextEditingController textController = TextEditingController();
     final t = context.t;
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (context) {
         return AlertDialog(
           title: Text(t.playback.comments.dialogTitle),
@@ -149,7 +149,7 @@ class _EpisodeCommentsSheetState extends ConsumerState<EpisodeCommentsSheet> {
           ),
           actions: [
             TextButton(
-              onPressed: () => KazumiDialog.dismiss(),
+              onPressed: () => HaipeeDialog.dismiss(),
               child: Text(
                 t.app.cancel,
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -158,7 +158,7 @@ class _EpisodeCommentsSheetState extends ConsumerState<EpisodeCommentsSheet> {
             TextButton(
               onPressed: () {
                 if (textController.text.isEmpty) {
-                  KazumiDialog.showToast(
+                  HaipeeDialog.showToast(
                     message: t.playback.comments.dialogEmpty,
                   );
                   return;
@@ -170,7 +170,7 @@ class _EpisodeCommentsSheetState extends ConsumerState<EpisodeCommentsSheet> {
                 // ✅ Update selected episode via Riverpod provider
                 ref.read(selectedEpisodeProvider.notifier).state = newEp;
                 _refreshIndicatorKey.currentState?.show();
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               },
               child: Text(t.playback.comments.dialogConfirm),
             ),

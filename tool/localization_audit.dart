@@ -37,8 +37,8 @@ final List<_PatternCheck> _checks = <_PatternCheck>[
   ),
   _PatternCheck(
     RegExp(
-        r'''KazumiDialog\.showToast\([^)]*message:\s*[rR]?(['"])([^'"]+?)\1'''),
-    'KazumiDialog.showToast uses a hardcoded string',
+        r'''HaipeeDialog\.showToast\([^)]*message:\s*[rR]?(['"])([^'"]+?)\1'''),
+    'HaipeeDialog.showToast uses a hardcoded string',
   ),
 ];
 

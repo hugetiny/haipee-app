@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
 
 /// 统一在线视频规则源订阅对话框 (对标 IndexerRepoDialog)
 /// 支持管理远程规则仓库、一键拉取并批量导入全套主流 Web 视频规则
@@ -38,7 +38,7 @@ class _PluginSubscriptionDialogState
   Future<void> _addRepo() async {
     final url = _urlController.text.trim();
     if (url.isEmpty || (!url.startsWith('http://') && !url.startsWith('https://'))) {
-      KazumiDialog.showToast(message: '请输入有效的 http/https 规则订阅地址');
+      HaipeeDialog.showToast(message: '请输入有效的 http/https 规则订阅地址');
       return;
     }
 
@@ -53,11 +53,11 @@ class _PluginSubscriptionDialogState
       _urlController.clear();
       _nameController.clear();
       if (mounted) {
-        KazumiDialog.showToast(message: '已成功添加并同步视频规则订阅');
+        HaipeeDialog.showToast(message: '已成功添加并同步视频规则订阅');
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '添加订阅失败: $e');
+        HaipeeDialog.showToast(message: '添加订阅失败: $e');
       }
     } finally {
       if (mounted) {
@@ -72,11 +72,11 @@ class _PluginSubscriptionDialogState
       final count =
           await ref.read(pluginsProvider.notifier).syncSubscription(id);
       if (mounted) {
-        KazumiDialog.showToast(message: '同步完成，已批量导入/更新 $count 个视频规则');
+        HaipeeDialog.showToast(message: '同步完成，已批量导入/更新 $count 个视频规则');
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '同步订阅失败: $e');
+        HaipeeDialog.showToast(message: '同步订阅失败: $e');
       }
     } finally {
       if (mounted) {
@@ -91,11 +91,11 @@ class _PluginSubscriptionDialogState
       final count =
           await ref.read(pluginsProvider.notifier).syncAllSubscriptions();
       if (mounted) {
-        KazumiDialog.showToast(message: '全部订阅同步完成，已更新 $count 个视频规则');
+        HaipeeDialog.showToast(message: '全部订阅同步完成，已更新 $count 个视频规则');
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '同步订阅失败: $e');
+        HaipeeDialog.showToast(message: '同步订阅失败: $e');
       }
     } finally {
       if (mounted) {
@@ -107,7 +107,7 @@ class _PluginSubscriptionDialogState
   Future<void> _deleteRepo(String id) async {
     await ref.read(pluginsProvider.notifier).removeSubscription(id);
     if (mounted) {
-      KazumiDialog.showToast(message: '已删除订阅源');
+      HaipeeDialog.showToast(message: '已删除订阅源');
     }
   }
 

@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/extension.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/extension.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 class NetworkImgLayer extends StatelessWidget {
@@ -81,7 +81,7 @@ class NetworkImgLayer extends StatelessWidget {
                   fadeInDuration ?? const Duration(milliseconds: 120),
               filterQuality: FilterQuality.high,
               errorListener: (e) {
-                KazumiLogger().log(Level.warning, "网络图片加载错误 ${e.toString()}");
+                HaipeeLogger().log(Level.warning, "网络图片加载错误 ${e.toString()}");
               },
               errorWidget: (BuildContext context, String url, Object error) =>
                   placeholder(context),

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/cardigann/cardigann_torznab.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 
 void main() {
   group('Cross-Domain Resource Linkage & Torznab Category Mapping', () {

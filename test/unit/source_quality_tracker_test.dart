@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/modules/source_quality/source_quality_tracker.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/source_quality/source_quality_tracker.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

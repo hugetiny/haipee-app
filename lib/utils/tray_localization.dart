@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/providers/translations_provider.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/providers/translations_provider.dart';
 
 /// Immutable snapshot of tray labels for the current locale.
 class TrayLabels {
@@ -16,8 +16,8 @@ class TrayLabels {
 }
 
 /// Helper responsible for retrieving locale-aware tray strings without a BuildContext.
-class KazumiTrayLabels {
-  const KazumiTrayLabels._();
+class HaipeeTrayLabels {
+  const HaipeeTrayLabels._();
 
   /// Returns the tray labels for the active [LocaleSettings.currentLocale].
   static TrayLabels current() {

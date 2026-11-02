@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 enum PluginSearchStatus { pending, success, error }
@@ -306,7 +306,7 @@ class SourceSearchController
       if (_isDisposed) {
         return;
       }
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '源 ${plugin.name} 检索失败: $error',
       );

@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/comments/comment_item.dart';
-import 'package:kazumi/modules/playback/media_selector.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/pages/video/video_state.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
-import 'package:kazumi/request/bangumi.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
+import 'package:haipee/modules/playback/media_selector.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/pages/video/video_state.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
+import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// 视频播放页面 Provider
@@ -49,14 +49,14 @@ class EpisodeCommentsNotifier
       final result =
           await BangumiHTTP.getBangumiCommentsByEpisodeID(episodeInfo.id);
 
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '已加载评论列表长度 ${result.commentList.length}',
       );
 
       return result.commentList;
     } catch (error, stackTrace) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.error,
         '加载评论失败: $error',
         error: error,

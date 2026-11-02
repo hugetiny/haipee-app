@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/playback/aniskip_model.dart';
-import 'package:kazumi/modules/playback/aniskip_service.dart';
+import 'package:haipee/modules/playback/aniskip_model.dart';
+import 'package:haipee/modules/playback/aniskip_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

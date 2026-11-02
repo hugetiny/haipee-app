@@ -4,9 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/cardigann/cardigann_torznab.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
 
 class ProwlarrCatalogEntry {
   final String id;

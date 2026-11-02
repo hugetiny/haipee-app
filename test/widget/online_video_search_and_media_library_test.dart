@@ -4,34 +4,83 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/modules/collect/collect_module.dart';
-import 'package:kazumi/modules/history/history_module.dart';
-import 'package:kazumi/modules/parse_failure/parse_failure_module.dart';
-import 'package:kazumi/modules/search/search_history_module.dart';
-import 'package:kazumi/modules/search/search_history_provider.dart';
-import 'package:kazumi/pages/media_library/media_library_page.dart';
-import 'package:kazumi/pages/online/online_video_search_page.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/bangumi/bangumi_tag.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/collect/collect_module.dart';
+import 'package:haipee/modules/history/history_module.dart';
+import 'package:haipee/modules/parse_failure/parse_failure_module.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/modules/search/search_history_module.dart';
+import 'package:haipee/modules/search/search_history_provider.dart';
+import 'package:haipee/pages/media_library/media_library_page.dart';
+import 'package:haipee/pages/online/online_video_search_page.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/utils/storage.dart';
 
 class MockPluginsControllerForTest extends PluginsController {
   final List<Plugin> initialPlugins;
-  MockPluginsControllerForTest(this.initialPlugins);
+  final bool enableBilibili;
+  MockPluginsControllerForTest(this.initialPlugins, {this.enableBilibili = false});
 
   @override
   PluginsState build() {
-    return PluginsState(pluginList: initialPlugins);
+    return PluginsState(
+      pluginList: initialPlugins,
+      disabledPluginNames: enableBilibili ? const {} : const {'bilibili'},
+    );
   }
 
   @override
-  bool isPluginEnabled(String name) => true;
+  bool isPluginEnabled(String name) {
+    if (name == 'bilibili') return enableBilibili;
+    return true;
+  }
+}
+
+class FakePlugin extends Plugin {
+  final Future<PluginSearchResponse> Function(String keyword)? onQuery;
+  final PluginCategory fakeCategory;
+
+  FakePlugin({
+    required super.name,
+    this.fakeCategory = PluginCategory.video,
+    this.onQuery,
+  }) : super(
+          version: '1.0.0',
+          type: fakeCategory.id,
+          api: '1',
+          baseUrl: 'https://example.com',
+          searchURL: '',
+          searchList: '',
+          searchName: '',
+          searchResult: '',
+          chapterRoads: '',
+          chapterResult: '',
+          referer: '',
+          muliSources: false,
+          useWebview: false,
+          useNativePlayer: true,
+          usePost: false,
+          useLegacyParser: false,
+          userAgent: '',
+        );
+
+  @override
+  PluginCategory get resolvedCategory => fakeCategory;
+
+  @override
+  Future<PluginSearchResponse> queryBangumi(String keyword,
+      {bool shouldRethrow = false}) async {
+    if (onQuery != null) {
+      return await onQuery!(keyword);
+    }
+    return PluginSearchResponse(pluginName: name, data: const []);
+  }
 }
 
 class FakeSearchHistoryNotifier extends SearchHistoryNotifier {
@@ -153,10 +202,10 @@ void main() {
         findsOneWidget,
       );
 
-      // 2. 验证规则源切换 Chips (无冗余底层技术文本)
+      // 2. 验证规则源切换 Chips (无冗余底层技术文本与生硬数字)
       expect(find.text('全部'), findsOneWidget);
-      expect(find.text('视频 (1)'), findsOneWidget);
-      expect(find.text('直播 (0)'), findsOneWidget);
+      expect(find.text('视频'), findsOneWidget);
+      expect(find.text('直播'), findsOneWidget);
       expect(find.text('网盘资源 (0)'), findsNothing);
       expect(find.textContaining('底层技术:'), findsNothing);
 
@@ -211,10 +260,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 验证 3 种不同源的徽章
+      // 验证 3 种不同源的徽章 (左上角纯来源标签，不与右上角类型重复)
       expect(find.text('BiliBili'), findsOneWidget);
       expect(find.text('抖音'), findsOneWidget);
-      expect(find.text('Web规则 · dalvdm'), findsOneWidget);
+      expect(find.text('dalvdm'), findsOneWidget);
 
       // 验证简洁清晰标签 (不再展示冗余自报家门底层技术文字)
       expect(find.text('B站高清'), findsOneWidget);
@@ -279,7 +328,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify initial rendering
-      expect(find.text('视频 (1)'), findsOneWidget);
+      expect(find.text('视频'), findsOneWidget);
 
       // Mutate pluginsProvider state as if catalog/disabled state loaded asynchronously
       final controller = container.read(pluginsProvider.notifier);
@@ -289,7 +338,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify reactive update succeeded without ProviderException
-      expect(find.text('视频 (0)'), findsOneWidget);
+      expect(find.text('视频'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       tester.view.resetPhysicalSize();
@@ -390,7 +439,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       // 切换至视频分类
-      await tester.tap(find.text('视频 (0)'));
+      await tester.tap(find.byKey(const Key('online_search_chip_video')));
       await tester.pumpAndSettle();
 
       // 输入普通搜索关键词（当前无插件匹配）
@@ -485,21 +534,21 @@ void main() {
       expect(find.textContaining('底层技术:'), findsNothing);
 
       // 2. 切换至视频
-      await tester.tap(find.text('视频 (0)'));
+      await tester.tap(find.byKey(const Key('online_search_chip_video')));
       await tester.pumpAndSettle();
 
       expect(find.text('搜索在线视频、动漫番剧或粘贴 B站 BV 号'), findsOneWidget);
       expect(find.textContaining('底层技术:'), findsNothing);
 
       // 3. 切换至直播
-      await tester.tap(find.text('直播 (0)'));
+      await tester.tap(find.byKey(const Key('online_search_chip_live')));
       await tester.pumpAndSettle();
 
       expect(find.text('搜索电视直播频道、央视、卫视或轮播台'), findsOneWidget);
       expect(find.textContaining('底层技术:'), findsNothing);
 
       // 4. 切回全部
-      await tester.tap(find.text('全部'));
+      await tester.tap(find.byKey(const Key('online_search_chip_all')));
       await tester.pumpAndSettle();
 
       expect(
@@ -510,6 +559,597 @@ void main() {
 
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('OnlineVideoSearchPage progressive streaming search displays items as soon as any source returns',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+
+      final fastPlugin = FakePlugin(
+        name: 'fast_source',
+        fakeCategory: PluginCategory.video,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 40));
+          return PluginSearchResponse(
+            pluginName: 'fast_source',
+            data: [
+              SearchItem(name: '进击的巨人 第一季', src: '/video/1'),
+            ],
+          );
+        },
+      );
+
+      final slowPlugin = FakePlugin(
+        name: 'slow_live_source',
+        fakeCategory: PluginCategory.live,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 180));
+          return PluginSearchResponse(
+            pluginName: 'slow_live_source',
+            data: [
+              SearchItem(name: '进击的巨人 24H 轮播直播', src: '/live/1'),
+            ],
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            pluginsProvider.overrideWith(
+                () => MockPluginsControllerForTest([fastPlugin, slowPlugin])),
+          ],
+          child: TranslationProvider(
+            child: const MaterialApp(
+              home: OnlineVideoSearchPage(initialPopularVideos: []),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 发起检索
+      await tester.enterText(find.byType(TextField), '进击');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+
+      // 1. 验证刚开始检索时，未返回任何结果时显示全网并发检索进度
+      expect(find.textContaining('正在全网并发检索在线视频与直播流'), findsOneWidget);
+
+      // 2. 快源返回：40ms 后 fast_source 已完成，但 slowPlugin 仍在执行
+      await tester.pump(const Duration(milliseconds: 60));
+
+      // 验证流式渐进呈现：快源结果立刻上屏，无需等待慢源
+      expect(find.text('进击的巨人 第一季'), findsOneWidget);
+      expect(find.textContaining('找到 1 条视听内容'), findsOneWidget);
+      expect(find.textContaining('正在并发检索 (1/2 个源)'), findsOneWidget);
+
+      // 3. 慢源返回：再过 150ms 后，慢源直播频道也增量展示出来
+      await tester.pump(const Duration(milliseconds: 160));
+      await tester.pumpAndSettle();
+
+      expect(find.text('进击的巨人 第一季'), findsOneWidget);
+      expect(find.text('进击的巨人 24H 轮播直播'), findsOneWidget);
+      expect(find.textContaining('找到 2 条视听内容'), findsOneWidget);
+      expect(find.text('已检索全部 2 个源'), findsOneWidget);
+
+      // 验证 Chips 纯净展示「全部」「视频」「直播」，绝不附带任何生硬杂乱的数字
+      expect(find.text('全部'), findsOneWidget);
+      expect(find.text('视频'), findsOneWidget);
+      expect(find.text('直播'), findsOneWidget);
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('OnlineVideoSearchPage switching filter chips does not interrupt ongoing search',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+
+      final fastPlugin = FakePlugin(
+        name: 'fast_video',
+        fakeCategory: PluginCategory.video,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 30));
+          return PluginSearchResponse(
+            pluginName: 'fast_video',
+            data: [
+              SearchItem(name: '孤独摇滚 正片', src: '/video/bocchi'),
+            ],
+          );
+        },
+      );
+
+      final slowPlugin = FakePlugin(
+        name: 'slow_live',
+        fakeCategory: PluginCategory.live,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 150));
+          return PluginSearchResponse(
+            pluginName: 'slow_live',
+            data: [
+              SearchItem(name: '孤独摇滚 音乐电台直播', src: '/live/bocchi'),
+            ],
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            pluginsProvider.overrideWith(
+                () => MockPluginsControllerForTest([fastPlugin, slowPlugin])),
+          ],
+          child: TranslationProvider(
+            child: const MaterialApp(
+              home: OnlineVideoSearchPage(initialPopularVideos: []),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 发起检索
+      await tester.enterText(find.byType(TextField), '孤独摇滚');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // 快源视频已展示
+      expect(find.text('孤独摇滚 正片'), findsOneWidget);
+
+      // 切换至“直播”标签（慢源此时仍在网络请求中）
+      await tester.tap(find.byKey(const Key('online_search_chip_live')));
+      await tester.pump();
+
+      // 切换标签不会打断后台慢源请求，当前直播分类显示占位提示
+      expect(find.text('孤独摇滚 正片'), findsNothing);
+      expect(find.text('当前分类暂未检索到直播频道，其余源检索中...'), findsOneWidget);
+
+      // 等待慢源请求完成
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.pumpAndSettle();
+
+      // 慢源结果直接流式呈现在当前直播视图中
+      expect(find.text('孤独摇滚 音乐电台直播'), findsOneWidget);
+      expect(find.text('找到 1 个直播频道'), findsOneWidget);
+
+      // 再次切回“视频”标签，原先的视频结果依然保留无需重新检索
+      await tester.tap(find.byKey(const Key('online_search_chip_video')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('孤独摇滚 正片'), findsOneWidget);
+      expect(find.text('找到 1 条视频'), findsOneWidget);
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('OnlineVideoSearchPage renders with zero overflow on mobile viewport (375x812) during streaming search and completion',
+        (tester) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1.0;
+
+      final fastPlugin = FakePlugin(
+        name: 'mobile_fast_video',
+        fakeCategory: PluginCategory.video,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 30));
+          return PluginSearchResponse(
+            pluginName: 'mobile_fast_video',
+            data: [
+              SearchItem(name: '葬送的芙莉莲 剧集', src: '/video/frieren'),
+            ],
+          );
+        },
+      );
+
+      final slowPlugin = FakePlugin(
+        name: 'mobile_slow_live',
+        fakeCategory: PluginCategory.live,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 100));
+          return PluginSearchResponse(
+            pluginName: 'mobile_slow_live',
+            data: [
+              SearchItem(name: '芙莉莲 24H 慢直播', src: '/live/frieren'),
+            ],
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            pluginsProvider.overrideWith(
+                () => MockPluginsControllerForTest([fastPlugin, slowPlugin])),
+          ],
+          child: TranslationProvider(
+            child: const MaterialApp(
+              home: OnlineVideoSearchPage(initialPopularVideos: []),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Trigger search
+      await tester.enterText(find.byType(TextField), '芙莉莲');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+
+      // Active searching state with zero overflow
+      expect(tester.takeException(), isNull);
+
+      // Fast plugin returns
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(find.text('葬送的芙莉莲 剧集'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Slow plugin returns
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+      expect(find.text('芙莉莲 24H 慢直播'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('OnlineVideoSearchPage handles synchronous plugin exceptions without crashing or blocking search completion',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+
+      final throwingPlugin = FakePlugin(
+        name: 'throwing_crash_plugin',
+        fakeCategory: PluginCategory.video,
+        onQuery: (keyword) {
+          throw StateError('Simulated synchronous plugin crash');
+        },
+      );
+
+      final healthyPlugin = FakePlugin(
+        name: 'healthy_video_plugin',
+        fakeCategory: PluginCategory.video,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 30));
+          return PluginSearchResponse(
+            pluginName: 'healthy_video_plugin',
+            data: [
+              SearchItem(name: '健康的在线视频剧集', src: '/video/healthy'),
+            ],
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            pluginsProvider.overrideWith(
+                () => MockPluginsControllerForTest([throwingPlugin, healthyPlugin])),
+          ],
+          child: TranslationProvider(
+            child: const MaterialApp(
+              home: OnlineVideoSearchPage(initialPopularVideos: []),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '容错测试');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+
+      // Ensure no unhandled framework exception from the throwing plugin
+      expect(tester.takeException(), isNull);
+
+      // Advance clock for the healthy plugin
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
+
+      // Healthy plugin result is presented and search completes with all 2 sources accounted for
+      expect(find.text('健康的在线视频剧集'), findsOneWidget);
+      expect(find.text('已检索全部 2 个源'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('OnlineVideoSearchPage clearing search bar invalidates pending in-flight requests and discards ghost results',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+
+      final slowPlugin = FakePlugin(
+        name: 'slow_ghost_video',
+        fakeCategory: PluginCategory.video,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 150));
+          return PluginSearchResponse(
+            pluginName: 'slow_ghost_video',
+            data: [
+              SearchItem(name: '延迟返回的幽灵结果', src: '/video/ghost'),
+            ],
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            pluginsProvider.overrideWith(
+                () => MockPluginsControllerForTest([slowPlugin])),
+          ],
+          child: TranslationProvider(
+            child: const MaterialApp(
+              home: OnlineVideoSearchPage(initialPopularVideos: []),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 1. 发起搜索
+      await tester.enterText(find.byType(TextField), '幽灵测试');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+
+      // 搜索正在进行中
+      expect(find.textContaining('正在全网并发检索在线视频与直播流'), findsOneWidget);
+
+      // 2. 在慢源返回前，用户点击清空搜索框 (X 按钮)
+      final clearBtn = find.byIcon(Icons.clear);
+      expect(clearBtn, findsOneWidget);
+      await tester.tap(clearBtn);
+      await tester.pumpAndSettle();
+
+      // 验证已回到空闲状态 (去除了「全网热门推荐流」文本)
+      expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, isEmpty);
+      expect(find.text('全网热门推荐流'), findsNothing);
+
+      // 3. 推进时间，让慢源请求在后台完成
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+
+      // 4. 验证幽灵数据被成功丢弃，不会重新蹦出来污染界面
+      expect(find.text('延迟返回的幽灵结果'), findsNothing);
+      expect(find.text('全网热门推荐流'), findsNothing);
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('OnlineVideoSearchPage empty state card provides one-click navigation to all results when matches exist in other categories',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+
+      final videoOnlyPlugin = FakePlugin(
+        name: 'video_only_plugin',
+        fakeCategory: PluginCategory.video,
+        onQuery: (keyword) async {
+          return PluginSearchResponse(
+            pluginName: 'video_only_plugin',
+            data: [
+              SearchItem(name: '仅视频有结果的正片', src: '/video/exclusive'),
+            ],
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            pluginsProvider.overrideWith(
+                () => MockPluginsControllerForTest([videoOnlyPlugin])),
+          ],
+          child: TranslationProvider(
+            child: const MaterialApp(
+              home: OnlineVideoSearchPage(initialPopularVideos: []),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 发起检索
+      await tester.enterText(find.byType(TextField), '独家正片');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+
+      expect(find.text('仅视频有结果的正片'), findsOneWidget);
+
+      // 切换到“直播”标签
+      await tester.tap(find.byKey(const Key('online_search_chip_live')));
+      await tester.pumpAndSettle();
+
+      // 直播分类下无结果，呈现具有数量提示的直观引导卡片
+      expect(find.text('未找到匹配的直播频道'), findsOneWidget);
+      final navBtn = find.text('查看全部分类检索结果 (1)');
+      expect(navBtn, findsOneWidget);
+
+      // 点击引导按钮
+      await tester.tap(navBtn);
+      await tester.pumpAndSettle();
+
+      // 验证无缝切回全部并展示该内容
+      expect(find.text('仅视频有结果的正片'), findsOneWidget);
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('OnlineVideoSearchPage renders with zero overflow on narrow mobile viewport (320x568)',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+
+      final fastPlugin = FakePlugin(
+        name: 'narrow_plugin_1',
+        fakeCategory: PluginCategory.video,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 30));
+          return PluginSearchResponse(
+            pluginName: 'narrow_plugin_1',
+            data: [
+              SearchItem(name: '超窄屏测试视频第一集', src: '/video/narrow'),
+            ],
+          );
+        },
+      );
+
+      final slowPlugin = FakePlugin(
+        name: 'narrow_plugin_2',
+        fakeCategory: PluginCategory.live,
+        onQuery: (keyword) async {
+          await Future.delayed(const Duration(milliseconds: 100));
+          return PluginSearchResponse(
+            pluginName: 'narrow_plugin_2',
+            data: [
+              SearchItem(name: '超窄屏测试直播', src: '/live/narrow'),
+            ],
+          );
+        },
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            pluginsProvider.overrideWith(
+                () => MockPluginsControllerForTest([fastPlugin, slowPlugin])),
+          ],
+          child: TranslationProvider(
+            child: const MaterialApp(
+              home: OnlineVideoSearchPage(initialPopularVideos: []),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      await tester.enterText(find.byType(TextField), '超窄屏');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(find.text('超窄屏测试视频第一集'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('找到 2 条视听内容'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // 视口高度有限，向下滚动以使第二个结果卡片进入视口
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -350));
+      await tester.pumpAndSettle();
+      expect(find.text('超窄屏测试直播'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    testWidgets('OnlineVideoSearchProvider decouples request lifecycle from filter switching with real-time state accumulation and pure chip labels',
+        (tester) async {
+      // 1. 验证底部导航与多语言命名已统一为「视频直播」
+      expect(t.navigation.tabs.media, equals('视频直播'));
+
+      final container = ProviderContainer(
+        overrides: [
+          pluginsProvider.overrideWith(
+            () => MockPluginsControllerForTest([
+              FakePlugin(
+                name: 'p_video',
+                fakeCategory: PluginCategory.video,
+                onQuery: (keyword) async {
+                  await Future.delayed(const Duration(milliseconds: 50));
+                  return PluginSearchResponse(
+                    pluginName: 'p_video',
+                    data: [
+                      SearchItem(name: '并发视频结果', src: '/video/1'),
+                    ],
+                  );
+                },
+              ),
+              FakePlugin(
+                name: 'p_live',
+                fakeCategory: PluginCategory.live,
+                onQuery: (keyword) async {
+                  await Future.delayed(const Duration(milliseconds: 100));
+                  return PluginSearchResponse(
+                    pluginName: 'p_live',
+                    data: [
+                      SearchItem(name: '并发直播结果', src: '/live/1'),
+                    ],
+                  );
+                },
+              ),
+            ]),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(onlineVideoSearchProvider.notifier);
+
+      // 2. 发起搜索
+      notifier.search('测试解耦并发');
+      var state = container.read(onlineVideoSearchProvider);
+      expect(state.isSearching, isTrue);
+      expect(state.totalSources, equals(2));
+      expect(state.completedSources, equals(0));
+      expect(state.allResults, isEmpty);
+
+      // 3. 此时用户瞬间切换分类到「直播」—— 0延迟切换，绝不中断请求
+      notifier.setFilter(OnlineSourceFilter.live);
+      state = container.read(onlineVideoSearchProvider);
+      expect(state.selectedFilter, equals(OnlineSourceFilter.live));
+      expect(state.isSearching, isTrue);
+
+      // 4. 等待快源（视频）返回 —— 实时保存在状态 allResults 中
+      await tester.pump(const Duration(milliseconds: 60));
+      state = container.read(onlineVideoSearchProvider);
+      expect(state.allResults.length, equals(1));
+      expect(state.allResults.first.title, equals('并发视频结果'));
+      // 当前在「直播」分类下，因此 currentFilteredResults 为空，但全局状态已保存该结果
+      expect(state.currentFilteredResults, isEmpty);
+      expect(state.completedSources, equals(1));
+      expect(state.isSearching, isTrue);
+
+      // 5. 瞬间切回「全部」分类 —— 0延迟即可看到已累积的视频结果，且慢源请求未受任何干扰
+      notifier.setFilter(OnlineSourceFilter.all);
+      state = container.read(onlineVideoSearchProvider);
+      expect(state.currentFilteredResults.length, equals(1));
+      expect(state.currentFilteredResults.first.title, equals('并发视频结果'));
+
+      // 6. 等待慢源（直播）返回 —— 全部完成
+      await tester.pump(const Duration(milliseconds: 60));
+      state = container.read(onlineVideoSearchProvider);
+      expect(state.allResults.length, equals(2));
+      expect(state.completedSources, equals(2));
+      expect(state.isSearching, isFalse);
+      expect(state.currentFilteredResults.length, equals(2));
+
+      // 7. 切到「视频」分类 —— 瞬间得到 1 条，无任何冗余请求
+      notifier.setFilter(OnlineSourceFilter.video);
+      state = container.read(onlineVideoSearchProvider);
+      expect(state.currentFilteredResults.length, equals(1));
+      expect(state.currentFilteredResults.first.title, equals('并发视频结果'));
+
+      // 8. 切到「直播」分类 —— 瞬间得到 1 条，无任何冗余请求
+      notifier.setFilter(OnlineSourceFilter.live);
+      state = container.read(onlineVideoSearchProvider);
+      expect(state.currentFilteredResults.length, equals(1));
+      expect(state.currentFilteredResults.first.title, equals('并发直播结果'));
     });
   });
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/search/search_history_provider.dart';
+import 'package:haipee/modules/search/search_history_provider.dart';
 
 /// 全局通用的搜索历史下拉浮层组件
 /// 基于现代 Flutter 的 [OverlayPortal.overlayChildLayoutBuilder] 构建，

@@ -3,13 +3,13 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_service.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 
 void main([List<String> args = const []]) async {
   if (Platform.environment.containsKey('FLUTTER_TEST')) {
-    test('Kazumi Flutter 自动化流程: 全网搜索 nds 并下载到指定目录 (Gopeed)', () async {
+    test('Haipee Flutter 自动化流程: 全网搜索 nds 并下载到指定目录 (Gopeed)', () async {
       await runAutomation(args);
     }, timeout: const Timeout(Duration(minutes: 5)));
   } else {
@@ -25,7 +25,7 @@ void main([List<String> args = const []]) async {
 /// 5. 实时监控下载进度并验证全流程打通
 Future<void> runAutomation([List<String> args = const []]) async {
   print('===============================================================');
-  print('  Kazumi Flutter 自动化流程: 全网搜索 nds 并下载到指定目录 (Gopeed 2.0)');
+  print('  Haipee Flutter 自动化流程: 全网搜索 nds 并下载到指定目录 (Gopeed 2.0)');
   print('===============================================================');
 
   // 1. 参数解析
@@ -53,7 +53,7 @@ Future<void> runAutomation([List<String> args = const []]) async {
 
   // 检查写入权限
   try {
-    final testFile = File('${downloadDirectory.path}/.kazumi_write_test');
+    final testFile = File('${downloadDirectory.path}/.haipee_write_test');
     await testFile.writeAsString('test');
     if (await testFile.exists()) {
       await testFile.delete();

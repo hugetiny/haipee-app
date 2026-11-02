@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:kazumi/request/api.dart';
+import 'package:haipee/request/api.dart';
 
 class StyleString {
   static const double cardSpace = 8;
@@ -106,7 +106,7 @@ const List<String> acceptLanguageList = [
 /// Bangumi API 文档要求的UA格式
 Map<String, String> bangumiHTTPHeader = {
   'user-agent':
-      'Predidit/Kazumi/${Api.version} (Android) (https://github.com/Predidit/Kazumi)',
+      'hugetiny/haipee/${Api.version} (Android) (https://github.com/hugetiny/haipee)',
   'referer': '',
   'content-type': 'application/json'
 };
@@ -208,3 +208,77 @@ final List<String> defaultAnimeTags = const [
   '治愈',
   '异世界',
 ];
+
+/// 默认播放器快捷键
+final Map<String, List<String>> defaultShortcuts = const {
+  'playorpause': [' '],
+  'forward': ['Arrow Right'],
+  'rewind': ['Arrow Left'],
+  'next': ['N'],
+  'prev': ['P'],
+  'volumeup': ['Arrow Up'],
+  'volumedown': ['Arrow Down'],
+  'togglemute': ['M'],
+  'fullscreen': ['F'],
+  'exitfullscreen': ['Escape'],
+  'toggledanmaku': ['D'],
+  'screenshot': ['S'],
+  'skip': ['K'],
+  'speed1': ['1'],
+  'speed2': ['2'],
+  'speed3': ['3'],
+  'speedup': ['X'],
+  'speeddown': ['Z'],
+};
+
+/// 键位别名
+final Map<String, String> keyAliases = {
+  ' ': '空格',
+  'Arrow Up': '↑',
+  'Arrow Down': '↓',
+  'Arrow Left': '←',
+  'Arrow Right': '→',
+  'Enter': '回车',
+  'Tab': 'Tab',
+  'Escape': 'Esc',
+  'Backspace': '退格',
+};
+
+/// 功能中文名对应
+final Map<String, String> shortcutsChineseName = {
+  'playorpause': '播放 / 暂停',
+  'forward': '快进 / 长按倍速',
+  'rewind': '快退',
+  'next': '下一集',
+  'prev': '上一集',
+  'volumeup': '音量加',
+  'volumedown': '音量减',
+  'togglemute': '静音',
+  'fullscreen': '全屏',
+  'exitfullscreen': '退出全屏',
+  'toggledanmaku': '弹幕开关',
+  'screenshot': '截图',
+  'skip': '跳过',
+  'speed1': '倍速：1x',
+  'speed2': '倍速：2x',
+  'speed3': '倍速：3x',
+  'speedup': '倍速加',
+  'speeddown': '倍速减',
+};
+
+/// 安卓视频渲染器列表
+const Map<String, String> androidVideoRenderersList = {
+  'auto': '自动选择',
+  'gpu': '基于 OpenGL, 通用和稳健的选项',
+  'gpu-next': '基于 Vulkan, 在新设备上表现最好',
+  'mediacodec_embed': '功耗最低，不支持超分辨率',
+};
+
+/// 播放器日志等级
+const Map<int, String> playerLogLevelMap = {
+  0: "错误",
+  1: "警告",
+  2: "简略",
+  3: "详细",
+};
+

@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
-import 'package:kazumi/request/core/bangumi_transport.dart';
-import 'package:kazumi/request/core/dio_logger_interceptor.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/request/core/network_config.dart';
-import 'package:kazumi/request/interceptor.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/request/core/bangumi_transport.dart';
+import 'package:haipee/request/core/dio_logger_interceptor.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/request/core/network_config.dart';
+import 'package:haipee/request/interceptor.dart';
+import 'package:haipee/utils/utils.dart';
 
 class Request {
   static final Request _instance = Request._internal();

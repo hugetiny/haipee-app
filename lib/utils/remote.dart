@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:dlna_dart/dlna.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/logger.dart';
 
 /// Provider for DLNA device list in remote play dialog
 final dlnaDeviceListProvider =
@@ -17,7 +17,7 @@ class RemotePlay {
   Future<void> castVideo(String video, String referer) async {
     final searcher = DLNAManager();
     final dlna = await searcher.start();
-    await KazumiDialog.show(builder: (BuildContext context) {
+    await HaipeeDialog.show(builder: (BuildContext context) {
       return Consumer(builder: (dialogContext, ref, child) {
         final remoteTexts = dialogContext.t.playback.remote;
         final closeLabel = dialogContext.t.app.cancel;
@@ -35,7 +35,7 @@ class RemotePlay {
             const SizedBox(width: 20),
             TextButton(
               onPressed: () {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               },
               child: Text(
                 closeLabel,
@@ -47,7 +47,7 @@ class RemotePlay {
             TextButton(
                 onPressed: () {
                   ref.read(dlnaDeviceListProvider.notifier).state = [];
-                  KazumiDialog.showToast(
+                  HaipeeDialog.showToast(
                     message: remoteTexts.toast.searching,
                   );
                   dlna.devices.stream.listen((deviceList) {
@@ -63,7 +63,7 @@ class RemotePlay {
                           subtitle: Text(value.info.deviceType.split(':')[3]),
                           onTap: () {
                             try {
-                              KazumiDialog.showToast(
+                              HaipeeDialog.showToast(
                                 message: remoteTexts.toast.casting.replaceFirst(
                                   '{device}',
                                   value.info.friendlyName,
@@ -72,8 +72,8 @@ class RemotePlay {
                               DLNADevice(value.info).setUrl(video);
                               DLNADevice(value.info).play();
                             } catch (e) {
-                              KazumiLogger().log(Level.error, 'DLNA Error: $e');
-                              KazumiDialog.showToast(
+                              HaipeeLogger().log(Level.error, 'DLNA Error: $e');
+                              HaipeeDialog.showToast(
                                 message: remoteTexts.toast.error.replaceFirst(
                                   '{details}',
                                   e.toString(),

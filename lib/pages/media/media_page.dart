@@ -2,18 +2,18 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/card/bangumi_card.dart';
-import 'package:kazumi/bean/widget/responsive/responsive.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/request/bangumi.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/card/bangumi_card.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 /// 元数据信息源定义（支持未来扩展多站点）
 class MetadataProviderInfo {

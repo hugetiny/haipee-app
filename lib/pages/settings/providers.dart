@@ -1,1 +1,1 @@
-export 'package:kazumi/pages/setting/providers.dart';
+export 'package:haipee/pages/setting/providers.dart';

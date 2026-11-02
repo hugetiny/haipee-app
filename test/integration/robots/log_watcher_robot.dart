@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/services/logging/app_log.dart';
+import 'package:haipee/services/logging/app_log.dart';
 
 enum BugSeverity { fatal, warning, overflow }
 

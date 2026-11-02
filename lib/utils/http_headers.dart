@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:kazumi/utils/constants.dart';
+import 'package:haipee/utils/constants.dart';
 
 final _random = Random();
 

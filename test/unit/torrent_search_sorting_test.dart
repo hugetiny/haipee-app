@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 
 void main() {
   group('全网资源搜索多维度多方向即时排序测试 (Multi-field & Bi-directional Sorting)', () {

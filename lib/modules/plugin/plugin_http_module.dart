@@ -1,3 +1,5 @@
+import 'package:haipee/plugins/plugins.dart';
+
 class PluginHTTPItem {
   String name;
   String version;
@@ -5,6 +7,8 @@ class PluginHTTPItem {
   String author;
   int lastUpdate;
   String baseURL;
+  String category;
+  String type;
 
   PluginHTTPItem({
     required this.name,
@@ -13,7 +17,12 @@ class PluginHTTPItem {
     required this.author,
     required this.lastUpdate,
     this.baseURL = '',
+    this.category = '',
+    this.type = '',
   });
+
+  PluginRuleType get ruleType =>
+      PluginRuleType.fromString(type.isNotEmpty ? type : category);
 
   /// 社区官方规则知名源地址映射表（当远端索引未携带 baseURL 时的智能兜底）
   static const Map<String, String> defaultCommunityPluginBaseUrls = {
@@ -52,6 +61,8 @@ class PluginHTTPItem {
       author: json['author'] ?? '',
       lastUpdate: json['lastUpdate'] ?? 0,
       baseURL: json['baseURL'] ?? json['baseUrl'] ?? '',
+      category: json['category'] ?? '',
+      type: json['type'] ?? '',
     );
   }
 }

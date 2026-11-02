@@ -1,5 +1,5 @@
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/modules/characters/character_item.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/modules/characters/character_item.dart';
 
 /// The response from [Api.bangumiInfoByID]
 /// It contains a list of [CharacterItem]

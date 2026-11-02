@@ -1,0 +1,32 @@
+# Kazumi Coding Agent & Cursor Rules (.cursorrules)
+
+You are working on the Kazumi Flutter codebase. Follow these engineering invariants and AI tooling protocols strictly.
+
+## 1. Zero-Screenshot Verification Standard
+- NEVER take screenshots (`screencapture`, `flutter screenshot`) or perform blind pixel clicking.
+- Level 1: In-memory headless unit & widget tests (`flutter test`).
+- Level 2: Runtime Dart VM Service WebSocket introspection (`dart tool/inspect_app.dart --check-overflow` / `--tree` / `--find`).
+- Level 3: Strong semantic keys (`Key('...')`) on all functional widgets.
+- Level 4: Structured telemetry via `AppLog`.
+
+## 2. Native Dart MCP Server
+The Dart SDK provides the official MCP server. Use its standard MCP tools:
+- `analyze_files`: Fetch compile-time diagnostics directly from the analysis server.
+- `hot_reload` / `hot_restart`: Apply code changes instantly to the running Flutter app.
+- `widget_inspector`: Programmatically query widget tree bounds and layout constraints.
+- `get_runtime_errors` / `get_app_logs`: Inspect real-time runtime errors.
+
+## 3. Architecture & Domain Invariants
+- **Routing & State**: Flutter 3.47+ with `go_router` and `flutter_riverpod`.
+- **Download Engine**: Unified in-process `Gopeed 2.0 FFI` for all multi-threaded downloads (HTTP/M3U8 chunks and BitTorrent/Magnet). Zero Aria2 dependencies.
+- **Settings Taxonomy**: 4 canonical primary groups:
+  1. `播放` (Playback): Player settings, Danmaku settings, Keyboard shortcuts, Metadata scraper.
+  2. `资源` (Resources): `规则管理` (Plugin manager with 7 discrete categories: Anime, MacCMS, Bilibili, Douyin, Live, Drive, Cardigann BT) and `下载设置` (Gopeed multi-connection downloads).
+  3. `应用` (Application): Theme, Interface, Language, Sync (Bangumi & WebDAV), Network (Proxy & ECH).
+  4. `其他` (Other): Updates, Storage & Logs, Developer HUD, About.
+
+## 4. Delivery Quality Gates
+Before declaring any task complete:
+1. `flutter analyze` must output: "No issues found!".
+2. `flutter test` must pass 100% green.
+3. If the app is running in dev mode: `dart tool/inspect_app.dart --check-overflow` must report 0 overflows.

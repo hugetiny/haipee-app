@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
-import 'package:kazumi/request/metadata_client.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/metadata_sync/models/metadata_record.dart';
+import 'package:haipee/request/metadata_client.dart';
+import 'package:haipee/utils/storage.dart';
 
 class MetadataCacheRepository {
   MetadataCacheRepository({

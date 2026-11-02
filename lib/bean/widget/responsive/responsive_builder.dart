@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/bean/widget/responsive/breakpoints.dart';
+import 'package:haipee/bean/widget/responsive/breakpoints.dart';
 
 /// 响应式组件构建函数签名
 typedef ResponsiveWidgetBuilder = Widget Function(

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/plugin_editor/widgets/plugin_dry_run_dialog.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/plugin_editor/widgets/plugin_dry_run_dialog.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 class PluginEditorPage extends ConsumerStatefulWidget {
   const PluginEditorPage({
@@ -93,6 +93,13 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
   }
 
   void _savePlugin() {
+    final cleanName = nameController.text.trim().isEmpty
+        ? widget.plugin.name.trim()
+        : nameController.text.trim();
+    if (cleanName.isEmpty) {
+      HaipeeDialog.showToast(message: '请填写规则名称');
+      return;
+    }
     final Plugin plugin = widget.plugin;
     plugin.api = apiController.text.trim().isEmpty
         ? (widget.plugin.api.isEmpty ? '4' : widget.plugin.api)
@@ -100,10 +107,10 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
     plugin.type = typeController.text.trim().isEmpty
         ? (widget.plugin.type.isEmpty ? 'xpath' : widget.plugin.type)
         : typeController.text.trim();
-    plugin.name = nameController.text.trim().isEmpty
-        ? widget.plugin.name
-        : nameController.text.trim();
-    plugin.version = versionController.text.trim();
+    plugin.name = cleanName;
+    plugin.version = versionController.text.trim().isEmpty
+        ? '1.0'
+        : versionController.text.trim();
     plugin.userAgent = userAgentController.text;
     plugin.baseUrl = baseURLController.text.trim();
     plugin.searchURL = searchURLController.text.trim();
@@ -122,8 +129,64 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
         ref.read(pluginEditorUIProvider).useLegacyParser;
     plugin.referer = refererController.text;
     pluginsController.updatePlugin(plugin);
-    KazumiDialog.showToast(message: '已保存规则: ${plugin.name}');
+    pluginsController.togglePluginEnabled(plugin.name, true);
+    HaipeeDialog.showToast(message: '已保存并启用规则: ${plugin.name}');
     Navigator.of(context).pop();
+  }
+
+  Widget _buildRuleTypeSelector(ThemeData theme, ColorScheme colorScheme) {
+    final currentType = typeController.text.trim().toLowerCase();
+    const protocols = [
+      ('xpath', 'Haipee 规则'),
+      ('maccms', 'MacCMS 规则'),
+      ('tvbox', 'TVBox 规则'),
+      ('iptv', 'IPTV 规则'),
+      ('piped', 'Piped 规则'),
+      ('alist', 'AList 规则'),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '快捷选择规则协议类型',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: protocols.map((entry) {
+              final code = entry.$1;
+              final label = entry.$2;
+              final isSelected = currentType == code ||
+                  (code == 'xpath' && (currentType == 'anime' || currentType == 'kazumi' || currentType == 'haipee'));
+              return ChoiceChip(
+                label: Text(label),
+                selected: isSelected,
+                visualDensity: VisualDensity.compact,
+                onSelected: (_) {
+                  setState(() {
+                    typeController.text = code;
+                    if (code == 'iptv') {
+                      widget.plugin.category = 'live';
+                    } else if (code == 'alist') {
+                      widget.plugin.category = 'drive';
+                    } else {
+                      widget.plugin.category = 'video';
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildFieldTile({
@@ -146,10 +209,13 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
   @override
   Widget build(BuildContext context) {
     final editorTexts = context.t.settings.plugins.editor;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isNewRule = widget.plugin.name.trim().isEmpty;
 
     return Scaffold(
       appBar: SysAppBar(
-        title: Text(editorTexts.title),
+        title: Text(isNewRule ? '手动添加规则' : editorTexts.title),
         actions: [
           IconButton(
             tooltip: '测试抓取 (Dry-Run)',
@@ -206,6 +272,7 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
           SettingsSection(
             title: const Text('基本信息'),
             tiles: [
+              _buildRuleTypeSelector(theme, colorScheme),
               _buildFieldTile(
                 controller: nameController,
                 label: editorTexts.fields.name,
@@ -216,7 +283,7 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
               ),
               _buildFieldTile(
                 controller: typeController,
-                label: '规则类型 (如 xpath, maccms, anime)',
+                label: '规则类型 (如 xpath, maccms, tvbox, iptv, piped, alist)',
               ),
               _buildFieldTile(
                 controller: apiController,

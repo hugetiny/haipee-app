@@ -1,6 +1,6 @@
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/modules/bangumi/bangumi_tag.dart';
 
 part 'bangumi_item.g.dart';
 

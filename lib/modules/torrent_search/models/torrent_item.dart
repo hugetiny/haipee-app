@@ -93,6 +93,8 @@ class TorrentItem {
   final String? language;
   final TorrentCategory? customCategory;
   final TorrentSortMode? sortMode;
+  /// 索引器/站点访问性质：'public' (公开免登), 'semi-private' (半私有), 'private' (私有 PT)
+  final String? trackerType;
 
   const TorrentItem({
     required this.title,
@@ -122,7 +124,18 @@ class TorrentItem {
     this.language,
     this.customCategory,
     this.sortMode,
+    this.trackerType,
   });
+
+  bool get isPrivateTracker => trackerType?.toLowerCase() == 'private';
+  bool get isSemiPrivateTracker => trackerType?.toLowerCase() == 'semi-private';
+  bool get isPublicTracker => trackerType == null || trackerType?.toLowerCase() == 'public';
+
+  String get trackerTypeLabel {
+    if (isPrivateTracker) return '私有 PT';
+    if (isSemiPrivateTracker) return '半私有';
+    return '公开';
+  }
 
   TorrentItem copyWith({
     String? title,
@@ -152,6 +165,7 @@ class TorrentItem {
     String? language,
     TorrentCategory? customCategory,
     TorrentSortMode? sortMode,
+    String? trackerType,
   }) {
     return TorrentItem(
       title: title ?? this.title,
@@ -181,6 +195,7 @@ class TorrentItem {
       language: language ?? this.language,
       customCategory: customCategory ?? this.customCategory,
       sortMode: sortMode ?? this.sortMode,
+      trackerType: trackerType ?? this.trackerType,
     );
   }
 

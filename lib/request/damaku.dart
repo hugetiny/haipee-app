@@ -1,14 +1,14 @@
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/request/api.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/request/api.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/modules/danmaku/danmaku_module.dart';
-import 'package:kazumi/modules/danmaku/danmaku_search_response.dart';
-import 'package:kazumi/modules/danmaku/danmaku_episode_response.dart';
-import 'package:kazumi/modules/danmaku/danmaku_ch_convert.dart';
-import 'package:kazumi/modules/danmaku/danmaku_title_cleaner.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/string_match.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/modules/danmaku/danmaku_module.dart';
+import 'package:haipee/modules/danmaku/danmaku_search_response.dart';
+import 'package:haipee/modules/danmaku/danmaku_episode_response.dart';
+import 'package:haipee/modules/danmaku/danmaku_ch_convert.dart';
+import 'package:haipee/modules/danmaku/danmaku_title_cleaner.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/string_match.dart';
 
 class DanmakuRequest {
   /// 从 BgmBangumiID 获取 DanDanBangumiID
@@ -21,7 +21,7 @@ class DanmakuRequest {
       return 0;
     }
     if (!GStorage.hasValidDanDanCredentials()) {
-      KazumiLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过弹幕番剧ID检索');
+      HaipeeLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过弹幕番剧ID检索');
       return 0;
     }
     try {
@@ -42,7 +42,7 @@ class DanmakuRequest {
           DanmakuEpisodeResponse.fromJson(jsonData);
       return danmakuEpisodeResponse.bangumiId;
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
           Level.warning, '通过BgmId获取DanDanBangumiID失败 ($bgmBangumiID): $e');
       if (silent) return 0;
       rethrow;
@@ -72,7 +72,7 @@ class DanmakuRequest {
     final cleanInput = title.trim();
     if (cleanInput.isEmpty) return 0;
     if (!GStorage.hasValidDanDanCredentials()) {
-      KazumiLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过标题匹配弹幕');
+      HaipeeLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过标题匹配弹幕');
       return 0;
     }
     try {
@@ -97,14 +97,14 @@ class DanmakuRequest {
         String animeTitle = anime.animeTitle;
         double similarity = calculateSimilarity(animeTitle, sanitizedTitle);
         if (similarity == 1) {
-          KazumiLogger().log(Level.debug, '完全匹配番剧弹幕 $sanitizedTitle');
+          HaipeeLogger().log(Level.debug, '完全匹配番剧弹幕 $sanitizedTitle');
           return animeId;
         }
 
         if (similarity > maxSimilarity) {
           maxSimilarity = similarity;
           bestAnimeId = animeId;
-          KazumiLogger()
+          HaipeeLogger()
               .log(Level.debug, '匹配番剧弹幕 $sanitizedTitle --- $animeTitle 相似度: $similarity');
         }
       }
@@ -123,7 +123,7 @@ class DanmakuRequest {
       return DanmakuEpisodeResponse.fromTemplate();
     }
     if (!GStorage.hasValidDanDanCredentials()) {
-      KazumiLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过分集数据检索');
+      HaipeeLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过分集数据检索');
       return DanmakuEpisodeResponse.fromTemplate();
     }
     try {
@@ -144,7 +144,7 @@ class DanmakuRequest {
           DanmakuEpisodeResponse.fromJson(jsonData);
       return danmakuEpisodeResponse;
     } catch (e) {
-      KazumiLogger().log(Level.warning, '获取DanDan分集数据失败 ($bangumiID): $e');
+      HaipeeLogger().log(Level.warning, '获取DanDan分集数据失败 ($bangumiID): $e');
       if (silent) return DanmakuEpisodeResponse.fromTemplate();
       rethrow;
     }
@@ -162,7 +162,7 @@ class DanmakuRequest {
       );
     }
     if (!GStorage.hasValidDanDanCredentials()) {
-      KazumiLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过搜索请求');
+      HaipeeLogger().log(Level.debug, 'DanDanPlay 凭据未配置，跳过搜索请求');
       return DanmakuSearchResponse(
         animes: [],
         errorCode: -1,
@@ -231,7 +231,7 @@ class DanmakuRequest {
         'withRelated': 'true',
         'chConvert': conversion.value.toString(),
       };
-      KazumiLogger().log(Level.info, "弹幕请求最终URL $endPoint");
+      HaipeeLogger().log(Level.info, "弹幕请求最终URL $endPoint");
       final res = await Request().get(
         endPoint,
         data: queryParameters,

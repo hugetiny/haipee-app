@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/settings/download/download_settings.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/settings/download/download_settings.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -40,7 +40,7 @@ void main() {
       ProviderScope(
         child: TranslationProvider(
           child: MaterialApp(
-            navigatorObservers: [KazumiDialog.observer],
+            navigatorObservers: [HaipeeDialog.observer],
             home: const Scaffold(
               body: DownloadSettingsPage(),
             ),

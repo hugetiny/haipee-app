@@ -1,0 +1,22 @@
+{
+  "api": "1",
+  "type": "maccms",
+  "category": "video",
+  "name": "海豚资源",
+  "version": "1.2",
+  "muliSources": true,
+  "useWebview": false,
+  "useNativePlayer": true,
+  "usePost": false,
+  "useLegacyParser": false,
+  "userAgent": "Mozilla/5.0 (Haipee/Player)",
+  "baseURL": "https://hhzyapi.com",
+  "searchURL": "https://hhzyapi.com/api.php/provide/vod/?ac=detail&at=json&wd=@keyword",
+  "searchList": "",
+  "searchName": "",
+  "searchPic": "$.vod_pic",
+  "searchResult": "",
+  "chapterRoads": "",
+  "chapterResult": "",
+  "referer": "https://hhzyapi.com/"
+}

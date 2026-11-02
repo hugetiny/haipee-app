@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:antlr4/antlr4.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/bbcode/bbcode_elements.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/bbcode/bbcode_elements.dart';
 
 import 'generated/BBCodeListener.dart';
 import 'generated/BBCodeParser.dart';
@@ -62,7 +62,7 @@ class BBCodeBaseListener implements BBCodeListener {
         bbCodeTag.color = bbcode.length;
         break;
       default:
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.error, '未识别 Tag: ${ctx.text}, 请提交 issue 包含 log, 番剧及集数');
         break;
     }
@@ -171,7 +171,7 @@ class BBCodeBaseListener implements BBCodeListener {
         }
         break;
       default:
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.error, '未识别 Tag: ${ctx.text}, 请提交 issue 包含 log, 番剧及集数');
         break;
     }

@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/modules/bilibili/bilibili_wbi.dart';
-import 'package:kazumi/modules/danmaku/danmaku_module.dart';
-import 'package:kazumi/utils/danmaku.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/bilibili/bilibili_wbi.dart';
+import 'package:haipee/modules/danmaku/danmaku_module.dart';
+import 'package:haipee/utils/danmaku.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// Bilibili 原生数据抓取与流媒体抽取服务
@@ -15,7 +15,7 @@ import 'package:logger/logger.dart';
 /// 1. 搜索与推荐：支持 WBI 签名逆向、关键词模糊检索、UP主与分P解析
 /// 2. 分P提取与选集：解析多P CID
 /// 3. DASH 双流抽取：提取 1080P/720P DASH 视频流及 192K/132K 独立音频流
-/// 4. 实时弹幕：获取原生 XML/protobuf 弹幕并实时灌入 Kazumi 弹幕层
+/// 4. 实时弹幕：获取原生 XML/protobuf 弹幕并实时灌入 Haipee 弹幕层
 class BilibiliService {
   static final Dio _dio = Dio(
     BaseOptions(
@@ -67,7 +67,7 @@ class BilibiliService {
             .toList();
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, 'B站 WBI 搜索异常，尝试回退标准搜索: $e');
+      HaipeeLogger().log(Level.warning, 'B站 WBI 搜索异常，尝试回退标准搜索: $e');
       // 容错回退接口
       try {
         final fallbackRes = await effectiveClient.get<Map<String, dynamic>>(
@@ -87,7 +87,7 @@ class BilibiliService {
               .toList();
         }
       } catch (err) {
-        KazumiLogger().log(Level.error, 'B站回退搜索亦失败: $err');
+        HaipeeLogger().log(Level.error, 'B站回退搜索亦失败: $err');
       }
     }
 
@@ -113,7 +113,7 @@ class BilibiliService {
         return BiliVideoDetail.fromJson(data);
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, '获取 B站 视频详情失败 bvid=$bvid: $e');
+      HaipeeLogger().log(Level.error, '获取 B站 视频详情失败 bvid=$bvid: $e');
     }
 
     return null;
@@ -253,7 +253,7 @@ class BilibiliService {
         }
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, '获取 B站 播放直链失败 bvid=$bvid cid=$cid: $e');
+      HaipeeLogger().log(Level.error, '获取 B站 播放直链失败 bvid=$bvid cid=$cid: $e');
     }
 
     return null;
@@ -309,7 +309,7 @@ class BilibiliService {
         return parseDanmakuXml(xmlContent);
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '获取 B站 弹幕 XML 失败 cid=$cid: $e');
+      HaipeeLogger().log(Level.warning, '获取 B站 弹幕 XML 失败 cid=$cid: $e');
     }
 
     return const [];
@@ -401,7 +401,7 @@ class BilibiliService {
             .toList();
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '获取 B站 热门流失败: $e');
+      HaipeeLogger().log(Level.warning, '获取 B站 热门流失败: $e');
     }
 
     return const [];

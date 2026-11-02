@@ -12,7 +12,7 @@ import AVKit
         let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
         
         // Intent channel for opening videos with referer
-        let intentChannel = FlutterMethodChannel(name: "com.predidit.kazumi/intent",
+        let intentChannel = FlutterMethodChannel(name: "com.hugetiny.haipee/intent",
                                            binaryMessenger: controller.binaryMessenger)
         intentChannel.setMethodCallHandler({
             (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
@@ -23,6 +23,20 @@ import AVKit
                    let referer = myArgs["referer"] as? String {
                     self.openVideoWithReferer(url: url, referer: referer)
                 }
+                result(nil)
+            } else if call.method == "isFirebaseTestLab" {
+                let isTestLab = ProcessInfo.processInfo.environment["FIREBASE_TEST_LAB"] == "true" ||
+                                ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
+                                UserDefaults.standard.bool(forKey: "firebase.test.lab")
+                result(isTestLab)
+            } else if call.method == "logNative" {
+                guard let args = call.arguments as? [String: Any],
+                      let message = args["message"] as? String else {
+                    result(nil)
+                    return
+                }
+                let level = (args["level"] as? String) ?? "I"
+                NSLog("[haipee:%@] %@", level, message)
                 result(nil)
             } else {
                 result(FlutterMethodNotImplemented)

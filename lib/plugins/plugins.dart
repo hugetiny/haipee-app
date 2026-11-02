@@ -1,22 +1,22 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/modules/roads/road_module.dart';
-import 'package:kazumi/request/request.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/modules/roads/road_module.dart';
+import 'package:haipee/request/request.dart';
 import 'package:html/parser.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:xpath_selector_html_parser/xpath_selector_html_parser.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:yaml/yaml.dart';
-import 'package:kazumi/modules/bilibili/bilibili_service.dart';
-import 'package:kazumi/modules/douyin/douyin_service.dart';
-import 'package:kazumi/modules/tvbox/tvbox_importer.dart';
-import 'package:kazumi/modules/iptv/iptv_service.dart';
-import 'package:kazumi/modules/alist/alist_service.dart';
-import 'package:kazumi/modules/piped/piped_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_service.dart';
+import 'package:haipee/modules/douyin/douyin_service.dart';
+import 'package:haipee/modules/tvbox/tvbox_importer.dart';
+import 'package:haipee/modules/iptv/iptv_service.dart';
+import 'package:haipee/modules/alist/alist_service.dart';
+import 'package:haipee/modules/piped/piped_service.dart';
 
 /// 规则与媒体源一级分类枚举 (四大分类架构，网盘与BT明确归属为资源类/下载类)
 enum PluginCategory {
@@ -72,15 +72,15 @@ enum PluginCategory {
   }
 }
 
-/// 七大规则类型定义 (明确管理与区分)
+/// 七大规则协议类型定义 (按规则引擎/协议规范划分：5大视听流媒体规则 + 2大资源下载规则)
 enum PluginRuleType {
-  anime(id: 'anime', label: '动漫番剧', icon: Icons.animation),
-  maccms(id: 'maccms', label: '影视采集', icon: Icons.movie_outlined),
-  bilibili(id: 'bilibili', label: '哔哩哔哩', icon: Icons.play_circle_outline),
-  douyin(id: 'douyin', label: '短视频', icon: Icons.music_note_outlined),
-  live(id: 'live', label: '电视直播', icon: Icons.live_tv_outlined),
-  drive(id: 'drive', label: '网盘资源', icon: Icons.cloud_outlined),
-  bt(id: 'bt', label: 'BT磁力', icon: Icons.downloading_outlined);
+  haipee(id: 'haipee', label: 'Haipee 规则', icon: Icons.extension_rounded),
+  maccms(id: 'maccms', label: 'MacCMS 规则', icon: Icons.movie_outlined),
+  tvbox(id: 'tvbox', label: 'TVBox 规则', icon: Icons.widgets_outlined),
+  iptv(id: 'iptv', label: 'IPTV 规则', icon: Icons.live_tv_outlined),
+  piped(id: 'piped', label: 'Piped 规则', icon: Icons.play_circle_outline_rounded),
+  alist(id: 'alist', label: 'AList 规则', icon: Icons.cloud_outlined),
+  cardigann(id: 'cardigann', label: 'Cardigann 规则', icon: Icons.downloading_outlined);
 
   final String id;
   final String label;
@@ -92,15 +92,43 @@ enum PluginRuleType {
     required this.icon,
   });
 
+  /// 是否属于全网资源下载域 (AList 网盘 + Cardigann BT磁力)
+  bool get isResourceDomain =>
+      this == PluginRuleType.alist || this == PluginRuleType.cardigann;
+
+  /// 是否属于视频直播视听流媒体域 (Haipee / MacCMS / TVBox / IPTV / Piped)
+  bool get isStreamingDomain => !isResourceDomain;
+
+  // Backward compatibility alias accessors
+  static PluginRuleType get kazumi => haipee;
+  static PluginRuleType get anime => haipee;
+  static PluginRuleType get bilibili => piped;
+  static PluginRuleType get douyin => piped;
+  static PluginRuleType get live => iptv;
+  static PluginRuleType get drive => alist;
+  static PluginRuleType get bt => cardigann;
+
   static PluginRuleType fromString(String? val) {
     final clean = (val ?? '').trim().toLowerCase();
-    if (clean == 'bilibili') return PluginRuleType.bilibili;
-    if (clean == 'douyin') return PluginRuleType.douyin;
-    if (clean == 'live' || clean == 'iptv' || clean == 'm3u') return PluginRuleType.live;
-    if (clean == 'drive' || clean == 'alist' || clean == 'pan' || clean == 'webdav') return PluginRuleType.drive;
-    if (clean == 'bt' || clean == 'torrent' || clean == 'magnet' || clean == 'cardigann') return PluginRuleType.bt;
-    if (clean == 'maccms' || clean == '2') return PluginRuleType.maccms;
-    return PluginRuleType.anime;
+    if (clean == 'tvbox' || clean == 'fongmi' || clean == 'box') {
+      return PluginRuleType.tvbox;
+    }
+    if (clean == 'maccms' || clean == '2' || clean == 'vod' || clean == 'applecms') {
+      return PluginRuleType.maccms;
+    }
+    if (clean == 'iptv' || clean == 'live' || clean == 'm3u' || clean == 'm3u8') {
+      return PluginRuleType.iptv;
+    }
+    if (clean == 'piped' || clean == 'youtube' || clean == 'bilibili' || clean == 'douyin') {
+      return PluginRuleType.piped;
+    }
+    if (clean == 'alist' || clean == 'drive' || clean == 'pan' || clean == 'webdav') {
+      return PluginRuleType.alist;
+    }
+    if (clean == 'cardigann' || clean == 'bt' || clean == 'torrent' || clean == 'magnet') {
+      return PluginRuleType.cardigann;
+    }
+    return PluginRuleType.haipee;
   }
 }
 
@@ -219,6 +247,13 @@ class Plugin {
       type.toLowerCase() == 'youtube' ||
       searchMode.toLowerCase() == 'piped';
 
+  bool get isTvBox =>
+      type.toLowerCase() == 'tvbox' ||
+      type.toLowerCase() == 'fongmi' ||
+      name.toLowerCase().contains('tvbox') ||
+      userAgent.toLowerCase().contains('kazumi/tvbox') ||
+      searchMode.toLowerCase() == 'tvbox';
+
   bool get isCardigann =>
       type.toLowerCase() == 'cardigann' ||
       type.toLowerCase() == 'torrent' ||
@@ -227,13 +262,25 @@ class Plugin {
       resolvedCategory == PluginCategory.bt;
 
   PluginRuleType get ruleType {
-    if (isBilibili) return PluginRuleType.bilibili;
-    if (isDouyin) return PluginRuleType.douyin;
-    if (isIptv || resolvedCategory == PluginCategory.live) return PluginRuleType.live;
-    if (isAlist || resolvedCategory == PluginCategory.drive) return PluginRuleType.drive;
-    if (isCardigann || resolvedCategory == PluginCategory.bt) return PluginRuleType.bt;
-    if (isMacCms || type == '2' || type.toLowerCase() == 'maccms') return PluginRuleType.maccms;
-    return PluginRuleType.anime;
+    if (isCardigann || resolvedCategory == PluginCategory.bt) {
+      return PluginRuleType.cardigann;
+    }
+    if (isAlist || resolvedCategory == PluginCategory.drive) {
+      return PluginRuleType.alist;
+    }
+    if (isIptv || resolvedCategory == PluginCategory.live) {
+      return PluginRuleType.iptv;
+    }
+    if (isTvBox) {
+      return PluginRuleType.tvbox;
+    }
+    if (isMacCms || type == '2' || type.toLowerCase() == 'maccms') {
+      return PluginRuleType.maccms;
+    }
+    if (isPiped || isBilibili || isDouyin) {
+      return PluginRuleType.piped;
+    }
+    return PluginRuleType.haipee;
   }
 
   static dynamic _yamlToDart(dynamic node) {
@@ -340,10 +387,12 @@ class Plugin {
       }
     } catch (_) {}
 
-    // 2. 尝试 kazumi:// 或标准 Base64 编码口令
+    // 2. 尝试 haipee:// 或 kazumi:// 或标准 Base64 编码口令
     try {
       String b64 = clean;
-      if (b64.startsWith('kazumi://')) {
+      if (b64.startsWith('haipee://')) {
+        b64 = b64.substring(9);
+      } else if (b64.startsWith('kazumi://')) {
         b64 = b64.substring(9);
       }
       final decodedStr = utf8.decode(base64.decode(b64.trim()));
@@ -491,6 +540,190 @@ class Plugin {
     return clean.isEmpty ? keyword.trim() : clean;
   }
 
+  /// 智能规则测速与连通性检测（基于 HTTP 响应状态码及协议连通性，彻底杜绝因特定搜索词无结果而误判失效）
+  Future<(bool isSuccess, int latencyMs, String? error)> testConnectivity({
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      // 1. IPTV 直播规则 (以 M3U 订阅连通性与 HTTP 状态码为唯一事实依据)
+      if (isIptv) {
+        final m3uUrl = searchURL.isNotEmpty ? searchURL : baseUrl;
+        if (m3uUrl.trim().isEmpty) {
+          stopwatch.stop();
+          return (false, 0, 'IPTV 订阅地址为空');
+        }
+        final resp = await Request().get(
+          m3uUrl.trim(),
+          options: Options(
+            headers: {
+              'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Haipee/IPTV; Player)',
+              'Accept': '*/*',
+            },
+          ),
+          shouldRethrow: true,
+        ).timeout(timeout);
+        stopwatch.stop();
+
+        final status = resp.statusCode ?? 200;
+        if (status >= 200 && status < 400) {
+          return (true, stopwatch.elapsedMilliseconds, null);
+        } else {
+          return (false, stopwatch.elapsedMilliseconds, 'HTTP $status 响应异常');
+        }
+      }
+
+      // 2. 苹果 CMS (MacCMS) / TVBox VOD 规则
+      if (isMacCms || (isTvBox && searchURL.contains('/api.php/provide/vod'))) {
+        try {
+          final res = await queryBangumi('海贼王', shouldRethrow: true).timeout(timeout);
+          if (res.data.isNotEmpty) {
+            stopwatch.stop();
+            return (true, stopwatch.elapsedMilliseconds, null);
+          }
+        } catch (_) {
+          // 搜索特定词失败，回退探测 MacCMS 根采集接口
+        }
+
+        final rootUrl = searchURL.isNotEmpty
+            ? searchURL.replaceAll(RegExp(r'[?&]wd=[^&]*'), '').replaceAll('@keyword', '')
+            : (baseUrl.endsWith('/')
+                ? '${baseUrl}api.php/provide/vod/?ac=detail&at=json'
+                : '$baseUrl/api.php/provide/vod/?ac=detail&at=json');
+
+        final resp = await Request().get(
+          rootUrl,
+          options: Options(
+            headers: {
+              'referer': baseUrl.isNotEmpty ? '$baseUrl/' : '',
+              'Accept': 'application/json, text/plain, */*',
+              'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Haipee/Player)',
+            },
+          ),
+          shouldRethrow: true,
+        ).timeout(const Duration(seconds: 6));
+        stopwatch.stop();
+
+        final status = resp.statusCode ?? 200;
+        if (status >= 200 && status < 400) {
+          return (true, stopwatch.elapsedMilliseconds, null);
+        } else {
+          return (false, stopwatch.elapsedMilliseconds, 'HTTP $status 接口异常');
+        }
+      }
+
+      // 3. AList 开放网盘挂载规则
+      if (isAlist) {
+        final targetBase = baseUrl.isNotEmpty ? baseUrl : searchURL;
+        final cleanBase = targetBase.endsWith('/') ? targetBase.substring(0, targetBase.length - 1) : targetBase;
+        final resp = await Request().get(
+          '$cleanBase/api/public/settings',
+          options: Options(
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Haipee/AList; Player)',
+            },
+          ),
+          shouldRethrow: false,
+        ).timeout(timeout);
+        stopwatch.stop();
+
+        final status = resp.statusCode ?? 200;
+        if (status >= 200 && status < 400) {
+          return (true, stopwatch.elapsedMilliseconds, null);
+        }
+        final searchRes = await AlistService.search(name, cleanBase, '1').timeout(const Duration(seconds: 6));
+        return (searchRes.data.isNotEmpty || status == 200, stopwatch.elapsedMilliseconds, null);
+      }
+
+      // 4. Piped (YouTube 镜像前端) 规则
+      if (isPiped) {
+        final host = baseUrl.isNotEmpty ? baseUrl : api;
+        final cleanHost = host.isNotEmpty
+            ? (host.endsWith('/') ? host.substring(0, host.length - 1) : host)
+            : PipedService.defaultApi;
+
+        final resp = await Request().get(
+          '$cleanHost/trending?region=US',
+          options: Options(
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Haipee/Piped)',
+            },
+          ),
+          shouldRethrow: true,
+        ).timeout(timeout);
+        stopwatch.stop();
+
+        final status = resp.statusCode ?? 200;
+        if (status >= 200 && status < 400) {
+          return (true, stopwatch.elapsedMilliseconds, null);
+        } else {
+          return (false, stopwatch.elapsedMilliseconds, 'HTTP $status 节点异常');
+        }
+      }
+
+      // 5. Bilibili / 抖音
+      if (isBilibili) {
+        final biliResults = await BilibiliService.searchVideos('海贼王').timeout(timeout);
+        stopwatch.stop();
+        return (biliResults.isNotEmpty, stopwatch.elapsedMilliseconds, null);
+      }
+      if (isDouyin) {
+        final douyinResults = await DouyinService.searchVideos('海贼王').timeout(timeout);
+        stopwatch.stop();
+        return (douyinResults.isNotEmpty, stopwatch.elapsedMilliseconds, null);
+      }
+
+      // 6. 常规网页爬虫规则 (Haipee 规则)
+      var res = await queryBangumi('海贼王', shouldRethrow: true).timeout(timeout);
+      if (res.data.isNotEmpty) {
+        stopwatch.stop();
+        return (true, stopwatch.elapsedMilliseconds, null);
+      }
+
+      res = await queryBangumi('柯南', shouldRethrow: true).timeout(const Duration(seconds: 6));
+      if (res.data.isNotEmpty) {
+        stopwatch.stop();
+        return (true, stopwatch.elapsedMilliseconds, null);
+      }
+
+      // 若两组特定词搜索均为空（如某些特定专精影视站点），基于根站点 HTTP 状态码探测站点可用性
+      final pingUrl = baseUrl.isNotEmpty ? baseUrl : searchURL.replaceAll('@keyword', '1');
+      if (pingUrl.isNotEmpty) {
+        final resp = await Request().get(
+          pingUrl,
+          options: Options(
+            headers: {
+              'User-Agent': userAgent.isNotEmpty ? userAgent : Utils.getRandomUA(),
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            },
+          ),
+          shouldRethrow: true,
+        ).timeout(const Duration(seconds: 6));
+        stopwatch.stop();
+
+        final status = resp.statusCode ?? 200;
+        if (status >= 200 && status < 400) {
+          return (true, stopwatch.elapsedMilliseconds, null);
+        } else {
+          return (false, stopwatch.elapsedMilliseconds, 'HTTP $status 站点异常');
+        }
+      }
+
+      stopwatch.stop();
+      return (true, stopwatch.elapsedMilliseconds, null);
+    } on DioException catch (e) {
+      stopwatch.stop();
+      final status = e.response?.statusCode;
+      final errMsg = status != null ? 'HTTP $status 访问失败' : (e.message ?? '连接超时或失败');
+      return (false, stopwatch.elapsedMilliseconds, errMsg);
+    } catch (e) {
+      stopwatch.stop();
+      return (false, stopwatch.elapsedMilliseconds, e.toString());
+    }
+  }
+
   Future<PluginSearchResponse> queryBangumi(String keyword,
       {bool shouldRethrow = false}) async {
     if (isBilibili) {
@@ -504,7 +737,7 @@ class Plugin {
             .toList();
         return PluginSearchResponse(pluginName: name, data: items);
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'Bilibili 规则搜索异常: $e');
+        HaipeeLogger().log(Level.warning, 'Bilibili 规则搜索异常: $e');
         if (shouldRethrow) rethrow;
         return PluginSearchResponse(pluginName: name, data: const []);
       }
@@ -523,7 +756,7 @@ class Plugin {
             .toList();
         return PluginSearchResponse(pluginName: name, data: items);
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'Douyin 规则搜索异常: $e');
+        HaipeeLogger().log(Level.warning, 'Douyin 规则搜索异常: $e');
         if (shouldRethrow) rethrow;
         return PluginSearchResponse(pluginName: name, data: const []);
       }
@@ -534,7 +767,7 @@ class Plugin {
         final m3uUrl = searchURL.isNotEmpty ? searchURL : baseUrl;
         return await IptvService.searchChannels(name, m3uUrl, keyword);
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'IPTV 规则搜索异常: $e');
+        HaipeeLogger().log(Level.warning, 'IPTV 规则搜索异常: $e');
         if (shouldRethrow) rethrow;
         return PluginSearchResponse(pluginName: name, data: const []);
       }
@@ -545,7 +778,7 @@ class Plugin {
         final targetBase = baseUrl.isNotEmpty ? baseUrl : searchURL;
         return await AlistService.search(name, targetBase, keyword);
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'AList 规则搜索异常: $e');
+        HaipeeLogger().log(Level.warning, 'AList 规则搜索异常: $e');
         if (shouldRethrow) rethrow;
         return PluginSearchResponse(pluginName: name, data: const []);
       }
@@ -556,7 +789,7 @@ class Plugin {
         final host = baseUrl.isNotEmpty ? baseUrl : api;
         return await PipedService.search(name, host, keyword);
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'Piped/YouTube 规则搜索异常: $e');
+        HaipeeLogger().log(Level.warning, 'Piped/YouTube 规则搜索异常: $e');
         if (shouldRethrow) rethrow;
         return PluginSearchResponse(pluginName: name, data: const []);
       }
@@ -565,7 +798,7 @@ class Plugin {
     if (searchMode.toLowerCase() == 'api' && searchApiConfig != null) {
       return _queryApiBangumi(keyword, shouldRethrow: shouldRethrow);
     }
-    if (isMacCms) {
+    if (isMacCms || (isTvBox && searchURL.contains('/api.php/provide/vod'))) {
       return _queryMacCmsBangumi(keyword, shouldRethrow: shouldRethrow);
     }
 
@@ -673,7 +906,7 @@ class Plugin {
           category: resolvedCategory.id,
         );
         searchItems.add(searchItem);
-        KazumiLogger().log(Level.info,
+        HaipeeLogger().log(Level.info,
             '$name ${element.queryXPath(searchName).node!.text ?? ''} $fullUrl');
       } catch (_) {}
     });
@@ -812,7 +1045,7 @@ class Plugin {
             pic: itemPic,
             category: resolvedCategory.id,
           ));
-          KazumiLogger().log(Level.info, '$name [API] $itemName -> $itemSrc');
+          HaipeeLogger().log(Level.info, '$name [API] $itemName -> $itemSrc');
         }
       }
     }
@@ -844,7 +1077,7 @@ class Plugin {
       'referer': '$baseUrl/',
       'Accept': 'application/json, text/plain, */*',
       'Accept-Language': Utils.getRandomAcceptedLanguage(),
-      'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Kazumi/Player)',
+      'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Haipee/Player)',
     };
 
     final resp = await Request().get(
@@ -890,7 +1123,7 @@ class Plugin {
               remarks: vodRemarks,
               category: resolvedCategory.id,
             ));
-            KazumiLogger().log(Level.info, '$name [MacCMS] $vodName $detailSrc');
+            HaipeeLogger().log(Level.info, '$name [MacCMS] $vodName $detailSrc');
           }
         }
       }
@@ -928,7 +1161,7 @@ class Plugin {
           ];
         }
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'B站规则选集解析异常: $e');
+        HaipeeLogger().log(Level.warning, 'B站规则选集解析异常: $e');
       }
       return [];
     }
@@ -952,7 +1185,7 @@ class Plugin {
           ];
         }
       } catch (e) {
-        KazumiLogger().log(Level.warning, '抖音规则选集解析异常: $e');
+        HaipeeLogger().log(Level.warning, '抖音规则选集解析异常: $e');
       }
       return [];
     }
@@ -962,7 +1195,7 @@ class Plugin {
         final m3uUrl = searchURL.isNotEmpty ? searchURL : baseUrl;
         return await IptvService.queryChapterRoads(m3uUrl, url);
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'IPTV 选集解析异常: $e');
+        HaipeeLogger().log(Level.warning, 'IPTV 选集解析异常: $e');
         return [];
       }
     }
@@ -972,7 +1205,7 @@ class Plugin {
         final targetBase = baseUrl.isNotEmpty ? baseUrl : searchURL;
         return await AlistService.queryChapterRoads(targetBase, url);
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'AList 选集解析异常: $e');
+        HaipeeLogger().log(Level.warning, 'AList 选集解析异常: $e');
         return [];
       }
     }
@@ -982,7 +1215,7 @@ class Plugin {
         final host = baseUrl.isNotEmpty ? baseUrl : api;
         return await PipedService.queryChapterRoads(host, url);
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'Piped 选集解析异常: $e');
+        HaipeeLogger().log(Level.warning, 'Piped 选集解析异常: $e');
         return [];
       }
     }
@@ -1064,7 +1297,7 @@ class Plugin {
       'referer': '$baseUrl/',
       'Accept': 'application/json, text/plain, */*',
       'Accept-Language': Utils.getRandomAcceptedLanguage(),
-      'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Kazumi/Player)',
+      'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Haipee/Player)',
     };
 
     try {
@@ -1122,7 +1355,7 @@ class Plugin {
         }
       }
     } catch (e, stack) {
-      KazumiLogger().log(Level.error, 'MacCMS 解析选集失败: $e', stackTrace: stack);
+      HaipeeLogger().log(Level.error, 'MacCMS 解析选集失败: $e', stackTrace: stack);
     }
 
     return roadList;

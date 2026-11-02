@@ -1,0 +1,112 @@
+[
+  {
+    "eventType": "VIEW_CLICKED",
+    "description": "Accept Disclaimer dialog if presented on initial setup",
+    "elementDescriptors": [
+      {
+        "className": "android.widget.Button",
+        "text": "已阅读并同意"
+      },
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "已阅读并同意"
+      }
+    ]
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "description": "Confirm default update mirror source if prompted",
+    "elementDescriptors": [
+      {
+        "className": "android.widget.Button",
+        "text": "GitHub"
+      },
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "GitHub"
+      }
+    ]
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "description": "Navigate to Online Resources (Tab 2)",
+    "elementDescriptors": [
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "全网资源"
+      }
+    ]
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "description": "Navigate to Media Library (Tab 3)",
+    "elementDescriptors": [
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "媒体库"
+      }
+    ]
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "description": "Open Bangumi Timeline Calendar",
+    "elementDescriptors": [
+      {
+        "className": "android.view.View",
+        "contentDescription": "追番日历"
+      }
+    ]
+  },
+  {
+    "eventType": "PRESSED_BACK",
+    "description": "Return from Calendar"
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "description": "Navigate to Task and Download Manager (Tab 4)",
+    "elementDescriptors": [
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "任务与下载"
+      },
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "下载管理"
+      }
+    ]
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "description": "Navigate to Settings (Tab 5)",
+    "elementDescriptors": [
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "设置"
+      }
+    ]
+  },
+  {
+    "eventType": "VIEW_SWIPED",
+    "description": "Scroll down Settings list",
+    "swipeDirection": "Up",
+    "elementDescriptors": [
+      {
+        "className": "android.widget.ScrollView"
+      }
+    ]
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "description": "Navigate to Live / Video Stream (Tab 1)",
+    "elementDescriptors": [
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "视频直播"
+      },
+      {
+        "className": "android.widget.Button",
+        "contentDescription": "影视"
+      }
+    ]
+  }
+]

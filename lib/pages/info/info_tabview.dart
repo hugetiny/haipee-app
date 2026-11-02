@@ -3,20 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/bean/card/comments_card.dart';
-import 'package:kazumi/bean/card/character_card.dart';
-import 'package:kazumi/bean/card/staff_card.dart';
-import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/bean/card/comments_card.dart';
+import 'package:haipee/bean/card/character_card.dart';
+import 'package:haipee/bean/card/staff_card.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/comments/comment_item.dart';
-import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
-import 'package:kazumi/pages/info/providers.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
+import 'package:haipee/modules/metadata_sync/models/metadata_record.dart';
+import 'package:haipee/pages/info/providers.dart';
 
 class InfoTabView extends ConsumerStatefulWidget {
   const InfoTabView({
@@ -393,7 +393,7 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: title));
             if (context.mounted) {
-              KazumiDialog.showToast(message: '已复制剧集标题', context: context);
+              HaipeeDialog.showToast(message: '已复制剧集标题', context: context);
             }
           },
         ),
@@ -404,7 +404,7 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
             onSelected: () async {
               await Clipboard.setData(ClipboardData(text: synopsis));
               if (context.mounted) {
-                KazumiDialog.showToast(message: '已复制本集简介', context: context);
+                HaipeeDialog.showToast(message: '已复制本集简介', context: context);
               }
             },
           ),

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:kazumi/modules/torrent_stream/torrserver_process_manager.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/torrent_stream/torrserver_process_manager.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// TorrServer 文件信息项
@@ -104,7 +104,7 @@ class TorrServerTorrent {
 class TorrServerClient {
   final String baseUrl;
   final http.Client _httpClient;
-  final KazumiLogger _logger = KazumiLogger();
+  final HaipeeLogger _logger = HaipeeLogger();
 
   TorrServerClient({
     String? baseUrl,

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/pages/player/local_video_play_args.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/pages/player/local_video_play_args.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/utils.dart';
 
 /// 全局常驻迷你播放控制条（GlobalMiniPlayerBar）
 ///
@@ -245,7 +245,7 @@ class GlobalMiniPlayerBar extends ConsumerWidget {
                           ),
                           onPressed: () async {
                             await playerController.stopAndRelease();
-                            KazumiDialog.showToast(message: '已停止播放');
+                            HaipeeDialog.showToast(message: '已停止播放');
                           },
                           visualDensity: VisualDensity.compact,
                         ),

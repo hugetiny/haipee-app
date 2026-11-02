@@ -10,11 +10,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -269,18 +269,21 @@ class Utils {
     }
   }
 
-  static String jsonToKazumiBase64(String jsonStr) {
+  static String jsonToHaipeeBase64(String jsonStr) {
     String base64Str = base64Encode(utf8.encode(jsonStr));
-    return 'kazumi://$base64Str';
+    return 'haipee://$base64Str';
   }
 
-  static String kazumiBase64ToJson(String kazumiBase64Str) {
-    if (!kazumiBase64Str.startsWith('kazumi://')) {
+  static String haipeeBase64ToJson(String str) {
+    String base64Str = '';
+    if (str.startsWith('haipee://')) {
+      base64Str = str.substring(9);
+    } else if (str.startsWith('kazumi://')) {
+      base64Str = str.substring(9);
+    } else {
       return '';
     }
-    String base64Str = kazumiBase64Str.substring(9);
-    String jsonStr = utf8.decode(base64.decode(base64Str));
-    return jsonStr;
+    return utf8.decode(base64.decode(base64Str));
   }
 
   static String durationToString(Duration duration) {
@@ -371,13 +374,13 @@ class Utils {
   /// 判断是否分屏模式 (android only)
   static Future<bool> isInMultiWindowMode() async {
     if (Platform.isAndroid) {
-      const platform = MethodChannel('com.predidit.kazumi/intent');
+      const platform = MethodChannel('com.hugetiny.haipee/intent');
       try {
         final bool result =
             await platform.invokeMethod('checkIfInMultiWindowMode');
         return result;
       } on PlatformException catch (e) {
-        KazumiLogger().log(Level.warning,
+        HaipeeLogger().log(Level.warning,
             "Failed to check multi window mode: '${e.message}'.");
         return false;
       }
@@ -440,7 +443,7 @@ class Utils {
         }
       }
     } catch (exception, stacktrace) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, exception.toString(), stackTrace: stacktrace);
     }
   }
@@ -460,7 +463,7 @@ class Utils {
         );
       }
     } catch (exception, stacktrace) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, exception.toString(), stackTrace: stacktrace);
     }
   }

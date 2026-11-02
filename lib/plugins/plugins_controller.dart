@@ -1,20 +1,21 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show rootBundle, AssetManifest;
+import 'package:flutter/services.dart'
+    show rootBundle, AssetManifest, MissingPluginException;
 import 'package:path_provider/path_provider.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugin_validity_tracker.dart';
-import 'package:kazumi/plugins/plugin_install_time_tracker.dart';
-import 'package:kazumi/request/plugin.dart';
-import 'package:kazumi/modules/plugin/plugin_http_module.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugin_validity_tracker.dart';
+import 'package:haipee/plugins/plugin_install_time_tracker.dart';
+import 'package:haipee/request/plugin.dart';
+import 'package:haipee/modules/plugin/plugin_http_module.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/request/api.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/request/api.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:kazumi/modules/plugin/plugin_subscription.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/plugin/plugin_subscription.dart';
+import 'package:haipee/utils/storage.dart';
 
 // 从 1.5.1 版本开始，规则文件储存在单一的 plugins.json 文件中。
 // 之前的版本中，规则以分离文件形式存储，版本更新后将这些分离文件合并为单一的 plugins.json 文件。
@@ -57,17 +58,120 @@ class PluginsState {
 
 class PluginsController extends Notifier<PluginsState> {
   static const List<String> bundledPluginAssets = [
-    'assets/plugins/liangzi.json',
-    'assets/plugins/ffzy.json',
-    'assets/plugins/bfzy.json',
-    'assets/plugins/jyzy.json',
-    'assets/plugins/bilibili.json',
-    'assets/plugins/douyin.json',
+    // 1. Haipee 规则 (36个官方及社区精选动漫/视频源)
     'assets/plugins/mutefun.json',
     'assets/plugins/dalvdm.json',
     'assets/plugins/anime7.json',
     'assets/plugins/DM84.json',
     'assets/plugins/xfdm.json',
+    'assets/plugins/7sefun.json',
+    'assets/plugins/AGE.json',
+    'assets/plugins/AnFuns.json',
+    'assets/plugins/Fantuan.json',
+    'assets/plugins/LMM.json',
+    'assets/plugins/MXdm.json',
+    'assets/plugins/aafun.json',
+    'assets/plugins/akianime.json',
+    'assets/plugins/baimao.json',
+    'assets/plugins/ciyuancheng.json',
+    'assets/plugins/clicli.json',
+    'assets/plugins/ezdmw.json',
+    'assets/plugins/giriGiriLove.json',
+    'assets/plugins/libvio.json',
+    'assets/plugins/mandao.json',
+    'assets/plugins/mengfan.json',
+    'assets/plugins/mgnacg.json',
+    'assets/plugins/mifun.json',
+    'assets/plugins/milimili.json',
+    'assets/plugins/moefan.json',
+    'assets/plugins/moonci.json',
+    'assets/plugins/nekodm.json',
+    'assets/plugins/nyafun.json',
+    'assets/plugins/omofun.json',
+    'assets/plugins/qimi.json',
+    'assets/plugins/skr.json',
+    'assets/plugins/sorani.json',
+    'assets/plugins/xfdmneo.json',
+    'assets/plugins/xfdmnext.json',
+    'assets/plugins/xiaobao.json',
+    'assets/plugins/yinghua.json',
+    // 2. MacCMS 规则 (24个主流苹果CMS V10 JSON 采集源)
+    'assets/plugins/liangzi.json',
+    'assets/plugins/ffzy.json',
+    'assets/plugins/bfzy.json',
+    'assets/plugins/jyzy.json',
+    'assets/plugins/suoni.json',
+    'assets/plugins/wolong.json',
+    'assets/plugins/guangsu.json',
+    'assets/plugins/kuaiche.json',
+    'assets/plugins/hongniu.json',
+    'assets/plugins/jisu.json',
+    'assets/plugins/wujin.json',
+    'assets/plugins/zuida.json',
+    'assets/plugins/baiduyun.json',
+    'assets/plugins/yinghuazy.json',
+    'assets/plugins/shandian.json',
+    'assets/plugins/xinlang.json',
+    'assets/plugins/huya.json',
+    'assets/plugins/piaoling.json',
+    'assets/plugins/haitun.json',
+    'assets/plugins/youzhi.json',
+    'assets/plugins/ikun.json',
+    'assets/plugins/subo.json',
+    'assets/plugins/heimuer.json',
+    'assets/plugins/zy360.json',
+    // 3. TVBox 规则 (12个主流 TVBox 点播配置源)
+    'assets/plugins/tvbox_guangsu.json',
+    'assets/plugins/tvbox_wolong.json',
+    'assets/plugins/tvbox_liangzi.json',
+    'assets/plugins/tvbox_feifan.json',
+    'assets/plugins/tvbox_baofeng.json',
+    'assets/plugins/tvbox_jisu.json',
+    'assets/plugins/tvbox_hongniu.json',
+    'assets/plugins/tvbox_zuida.json',
+    'assets/plugins/tvbox_haohua.json',
+    'assets/plugins/tvbox_1080p.json',
+    'assets/plugins/tvbox_suoni.json',
+    'assets/plugins/tvbox_360.json',
+    // 4. IPTV 规则 (12个主流 M3U/M3U8 全球与中文电视直播源)
+    'assets/plugins/iptv.json',
+    'assets/plugins/iptv_cn.json',
+    'assets/plugins/iptv_zho.json',
+    'assets/plugins/iptv_hk.json',
+    'assets/plugins/iptv_tw.json',
+    'assets/plugins/iptv_jp.json',
+    'assets/plugins/iptv_us.json',
+    'assets/plugins/iptv_anim.json',
+    'assets/plugins/iptv_movies.json',
+    'assets/plugins/iptv_music.json',
+    'assets/plugins/iptv_fmm.json',
+    'assets/plugins/iptv_yang.json',
+    // 5. Piped 规则 (12个哔哩哔哩、抖音及全球 YouTube Piped 实例节点)
+    'assets/plugins/bilibili.json',
+    'assets/plugins/douyin.json',
+    'assets/plugins/piped_kavin.json',
+    'assets/plugins/piped_libre.json',
+    'assets/plugins/piped_adminforge.json',
+    'assets/plugins/piped_smnz.json',
+    'assets/plugins/piped_drgns.json',
+    'assets/plugins/piped_duinocoin.json',
+    'assets/plugins/piped_privacydev.json',
+    'assets/plugins/piped_projectsegfau.json',
+    'assets/plugins/piped_darkness.json',
+    'assets/plugins/piped_ngn.json',
+    // 6. AList 规则 (12个主流 AList V3 聚合网盘搜索源)
+    'assets/plugins/alist.json',
+    'assets/plugins/alist_chirmyram.json',
+    'assets/plugins/alist_xiaoya.json',
+    'assets/plugins/alist_chuguang.json',
+    'assets/plugins/alist_jlbx.json',
+    'assets/plugins/alist_shenzjd.json',
+    'assets/plugins/alist_hikerfans.json',
+    'assets/plugins/alist_bashroot.json',
+    'assets/plugins/alist_ecve.json',
+    'assets/plugins/alist_zi0.json',
+    'assets/plugins/alist_52qy.json',
+    'assets/plugins/alist_haojia.json',
   ];
 
   bool _isDisposed = false;
@@ -149,7 +253,11 @@ class PluginsController extends Notifier<PluginsState> {
       if (_isDisposed) return;
       await _loadInitialMarketCatalog();
     } catch (e, stack) {
-      KazumiLogger().log(Level.error, 'PluginsController init 异常: $e\n$stack');
+      if (e is! MissingPluginException) {
+        HaipeeLogger().log(Level.error, 'PluginsController init 异常: $e\n$stack');
+      } else {
+        HaipeeLogger().log(Level.debug, 'PluginsController init path_provider unavailable in test: $e');
+      }
     }
   }
 
@@ -161,7 +269,7 @@ class PluginsController extends Notifier<PluginsState> {
           _setState(_currentState.copyWith(
             pluginHTTPList: List<PluginHTTPItem>.unmodifiable(bundled),
           ));
-          KazumiLogger().log(Level.info, '已就绪官方规则市场预置索引: ${bundled.length} 项');
+          HaipeeLogger().log(Level.info, '已就绪官方规则市场预置索引: ${bundled.length} 项');
         }
       } catch (_) {}
     }
@@ -171,7 +279,7 @@ class PluginsController extends Notifier<PluginsState> {
   Future<void> loadAllPlugins() async {
     try {
       if (newPluginDirectory == null) return;
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.info, 'Plugins Directory: ${newPluginDirectory!.path}');
       if (await newPluginDirectory!.exists()) {
         final pluginsFile = File('${newPluginDirectory!.path}/$pluginsFileName');
@@ -182,14 +290,14 @@ class PluginsController extends Notifier<PluginsState> {
             if (plugins.isNotEmpty) {
               await _ensureWorkingPlugins(plugins);
               _setPluginList(plugins);
-              KazumiLogger()
+              HaipeeLogger()
                   .log(Level.info, 'Current Plugin number: ${plugins.length}');
             } else {
-              KazumiLogger().log(Level.warning, 'plugins.json 为空或损坏，正在重置恢复预置规则');
+              HaipeeLogger().log(Level.warning, 'plugins.json 为空或损坏，正在重置恢复预置规则');
               await resetAllBundledPlugins();
             }
           } catch (e) {
-            KazumiLogger().log(Level.error, '读取 plugins.json 失败, 尝试重置恢复预置规则: $e');
+            HaipeeLogger().log(Level.error, '读取 plugins.json 失败, 尝试重置恢复预置规则: $e');
             await resetAllBundledPlugins();
           }
         } else {
@@ -211,72 +319,71 @@ class PluginsController extends Notifier<PluginsState> {
           savePlugins();
         }
       } else {
-        KazumiLogger().log(Level.warning, 'Plugin directory does not exist');
+        HaipeeLogger().log(Level.warning, 'Plugin directory does not exist');
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, 'loadAllPlugins 异常: $e');
+      HaipeeLogger().log(Level.error, 'loadAllPlugins 异常: $e');
     }
   }
 
-  /// 确保关键高质量视频源（如 Maccms 影视源、mutefun, dalvdm）在本地规则列表中存在
+  /// 确保关键高质量视频源（如 Maccms 影视源、IPTV、AList、mutefun, dalvdm）在本地规则列表中存在且无同名重复
   Future<void> _ensureWorkingPlugins(List<Plugin> plugins) async {
     bool changed = false;
-    final workingAssets = [
-      'assets/plugins/liangzi.json',
-      'assets/plugins/ffzy.json',
-      'assets/plugins/bfzy.json',
-      'assets/plugins/jyzy.json',
-      'assets/plugins/bilibili.json',
-      'assets/plugins/douyin.json',
-      'assets/plugins/mutefun.json',
-      'assets/plugins/dalvdm.json',
-    ];
 
-    for (final assetPath in workingAssets) {
-      final name = assetPath.split('/').last.replaceAll(RegExp(r'\.(json|yaml|yml)$'), '');
-      final existingIndex = plugins.indexWhere((p) => p.name == name);
-      if (existingIndex == -1) {
+    // 1. 先按规则名称去重（清理历史重复追加项）
+    final seenNames = <String>{};
+    final deduped = <Plugin>[];
+    for (final p in plugins) {
+      if (seenNames.add(p.name)) {
+        deduped.add(p);
+      } else {
+        changed = true;
+      }
+    }
+    if (changed) {
+      plugins
+        ..clear()
+        ..addAll(deduped);
+    }
+
+    for (final assetPath in bundledPluginAssets) {
+      try {
+        String content;
         try {
-          String content;
-          try {
-            content = await rootBundle.loadString(assetPath);
-          } catch (_) {
-            content = File(assetPath).readAsStringSync();
-          }
-          final plugin = assetPath.endsWith('.yaml') || assetPath.endsWith('.yml')
-              ? Plugin.fromYaml(content)
-              : Plugin.fromJson(jsonDecode(content));
+          content = await rootBundle.loadString(assetPath);
+        } catch (_) {
+          content = File(assetPath).readAsStringSync();
+        }
+        final plugin = assetPath.endsWith('.yaml') || assetPath.endsWith('.yml')
+            ? Plugin.fromYaml(content)
+            : Plugin.fromJson(jsonDecode(content));
+        final fileStem =
+            assetPath.split('/').last.replaceAll(RegExp(r'\.(json|yaml|yml)$'), '');
+        final existingIndex = plugins.indexWhere(
+          (p) => p.name == plugin.name || p.name == fileStem,
+        );
+        if (existingIndex == -1) {
           plugins.add(plugin);
           changed = true;
-          KazumiLogger().log(Level.info, '已自动补充工作视频源: $name');
-        } catch (e) {
-          KazumiLogger().log(Level.warning, '加载预置规则失败 $assetPath: $e');
-        }
-      } else if (name == 'mutefun') {
-        final p = plugins[existingIndex];
-        // 若 mutefun 仍为旧版包含 voddetail 的 baseURL 或缺少 sourceTemplate，自动更新
-        if (p.baseUrl.contains('/voddetail') ||
-            p.searchApiConfig?['sourceTemplate'] == null) {
-          try {
-            String jsonString;
-            try {
-              jsonString = await rootBundle.loadString(assetPath);
-            } catch (_) {
-              jsonString = File(assetPath).readAsStringSync();
-            }
-            final updatedPlugin = Plugin.fromJson(jsonDecode(jsonString));
-            plugins[existingIndex] = updatedPlugin;
+          HaipeeLogger().log(Level.info, '已自动补充工作视频源: ${plugin.name}');
+        } else if (fileStem == 'mutefun' || plugin.name == 'mutefun') {
+          final p = plugins[existingIndex];
+          // 若 mutefun 仍为旧版包含 voddetail 的 baseURL 或缺少 sourceTemplate，自动更新
+          if (p.baseUrl.contains('/voddetail') ||
+              p.searchApiConfig?['sourceTemplate'] == null) {
+            plugins[existingIndex] = plugin;
             changed = true;
-            KazumiLogger().log(Level.info,
-                '已自动升级 mutefun 规则为规范根域名与 sourceTemplate: ${updatedPlugin.baseUrl}');
-          } catch (e) {
-            KazumiLogger().log(Level.warning, '升级 mutefun 预置规则失败: $e');
+            HaipeeLogger().log(Level.info,
+                '已自动升级 mutefun 规则为规范根域名与 sourceTemplate: ${plugin.baseUrl}');
           }
         }
+      } catch (e) {
+        HaipeeLogger().log(Level.warning, '加载预置规则失败 $assetPath: $e');
       }
     }
 
     if (changed) {
+      _setPluginList(plugins);
       await savePlugins();
     }
   }
@@ -332,7 +439,7 @@ class PluginsController extends Notifier<PluginsState> {
     }
     _setPluginList(plugins);
     await savePlugins();
-    KazumiLogger().log(Level.info,
+    HaipeeLogger().log(Level.info,
         '${plugins.length} plugin files saved to ${newPluginDirectory!.path}');
   }
 
@@ -349,7 +456,7 @@ class PluginsController extends Notifier<PluginsState> {
     try {
       final dynamic decoded = jsonDecode(jsonString);
       if (decoded is! List) {
-        KazumiLogger().log(Level.warning, 'plugins.json 顶层非 List 结构');
+        HaipeeLogger().log(Level.warning, 'plugins.json 顶层非 List 结构');
         return [];
       }
       final List<Plugin> plugins = [];
@@ -365,12 +472,12 @@ class PluginsController extends Notifier<PluginsState> {
             plugins.add(p);
           }
         } catch (e) {
-          KazumiLogger().log(Level.warning, '解析单项规则失败: $e');
+          HaipeeLogger().log(Level.warning, '解析单项规则失败: $e');
         }
       }
       return plugins;
     } catch (e) {
-      KazumiLogger().log(Level.error, '解析 plugins.json 失败: $e');
+      HaipeeLogger().log(Level.error, '解析 plugins.json 失败: $e');
       return [];
     }
   }
@@ -412,7 +519,7 @@ class PluginsController extends Notifier<PluginsState> {
     final jsonData = jsonEncode(pluginListToJson());
     final pluginsFile = File('${newPluginDirectory!.path}/$pluginsFileName');
     await pluginsFile.writeAsString(jsonData);
-    KazumiLogger().log(Level.info, '已更新源文件 $pluginsFileName');
+    HaipeeLogger().log(Level.info, '已更新源文件 $pluginsFileName');
   }
 
   Future<void> queryPluginHTTPList() async {
@@ -502,11 +609,19 @@ class PluginsController extends Notifier<PluginsState> {
 
   static const List<String> bundledPluginNames = [
     'liangzi',
+    '量子影视',
     'ffzy',
+    '非凡影视',
     'bfzy',
+    '暴风影视',
     'jyzy',
+    '金鹰影视',
     'bilibili',
     'douyin',
+    'iptv',
+    '全球电视直播',
+    'alist',
+    'AList 聚合网盘',
     'mutefun',
     'dalvdm',
     'anime7',
@@ -528,6 +643,7 @@ class PluginsController extends Notifier<PluginsState> {
 
   void _loadDisabledPlugins() {
     try {
+      if (!GStorage.isSettingInitialized) return;
       final list = GStorage.setting.get(SettingBoxKey.disabledVideoPlugins, defaultValue: <dynamic>[]);
       if (list is List) {
         final disabled = list.map((e) => e.toString()).toSet();
@@ -538,6 +654,7 @@ class PluginsController extends Notifier<PluginsState> {
 
   void _saveDisabledPlugins(Set<String> disabled) {
     try {
+      if (!GStorage.isSettingInitialized) return;
       GStorage.setting.put(SettingBoxKey.disabledVideoPlugins, disabled.toList());
     } catch (_) {}
   }
@@ -574,6 +691,7 @@ class PluginsController extends Notifier<PluginsState> {
 
   void _loadSubscriptions() {
     try {
+      if (!GStorage.isSettingInitialized) return;
       final raw = GStorage.setting.get(SettingBoxKey.webRuleSubscriptions);
       if (raw != null) {
         final List<dynamic> list = raw is String ? jsonDecode(raw) : (raw as List);
@@ -584,17 +702,18 @@ class PluginsController extends Notifier<PluginsState> {
         _setState(_currentState.copyWith(subscriptions: subs));
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '加载规则订阅列表失败: $e');
+      HaipeeLogger().log(Level.warning, '加载规则订阅列表失败: $e');
     }
   }
 
   Future<void> _saveSubscriptions(List<PluginSubscription> subs) async {
     try {
+      if (!GStorage.isSettingInitialized) return;
       final jsonList = subs.map((s) => s.toJson()).toList();
       await GStorage.setting.put(SettingBoxKey.webRuleSubscriptions, jsonList);
       _setState(_currentState.copyWith(subscriptions: subs));
     } catch (e) {
-      KazumiLogger().log(Level.warning, '保存规则订阅列表失败: $e');
+      HaipeeLogger().log(Level.warning, '保存规则订阅列表失败: $e');
     }
   }
 
@@ -654,7 +773,7 @@ class PluginsController extends Notifier<PluginsState> {
         return importedCount;
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, '同步订阅失败: ${sub.name} ($id): $e');
+      HaipeeLogger().log(Level.error, '同步订阅失败: ${sub.name} ($id): $e');
       rethrow;
     }
     return 0;
@@ -702,7 +821,7 @@ class PluginsController extends Notifier<PluginsState> {
     _saveDisabledPlugins(disabledSet);
     _setPluginList(currentList);
     await savePlugins();
-    KazumiLogger().log(Level.info, '批量导入成功: $count 条规则，当前规则库总数: ${currentList.length}');
+    HaipeeLogger().log(Level.info, '批量导入成功: $count 条规则，当前规则库总数: ${currentList.length}');
     return count;
   }
 
@@ -730,48 +849,21 @@ class PluginsController extends Notifier<PluginsState> {
         validityTracker.markTesting(plugin.name);
         onProgress?.call(plugin.name, PluginHealthStatus.testing);
 
-        final stopwatch = Stopwatch()..start();
-        try {
-          var res = await plugin.queryBangumi(
-            keyword,
-            shouldRethrow: true,
-          ).timeout(const Duration(seconds: 8));
-
-          if (res.data.isEmpty) {
-            res = await plugin.queryBangumi(
-              '柯南',
-              shouldRethrow: true,
-            ).timeout(const Duration(seconds: 6));
-          }
-
-          stopwatch.stop();
-
-          if (res.data.isNotEmpty) {
-            validityTracker.markValid(
-              plugin.name,
-              latencyMs: stopwatch.elapsedMilliseconds,
-            );
-            results[plugin.name] = true;
-            passedNames.add(plugin.name);
-            togglePluginEnabled(plugin.name, true);
-            onProgress?.call(plugin.name, PluginHealthStatus.passed);
-          } else {
-            validityTracker.markInvalid(
-              plugin.name,
-              error: '搜索返回 0 项结果',
-              latencyMs: stopwatch.elapsedMilliseconds,
-            );
-            results[plugin.name] = false;
-            failedNames.add(plugin.name);
-            togglePluginEnabled(plugin.name, false);
-            onProgress?.call(plugin.name, PluginHealthStatus.failed);
-          }
-        } catch (e) {
-          stopwatch.stop();
+        final (isPassed, latency, error) = await plugin.testConnectivity();
+        if (isPassed) {
+          validityTracker.markValid(
+            plugin.name,
+            latencyMs: latency,
+          );
+          results[plugin.name] = true;
+          passedNames.add(plugin.name);
+          togglePluginEnabled(plugin.name, true);
+          onProgress?.call(plugin.name, PluginHealthStatus.passed);
+        } else {
           validityTracker.markInvalid(
             plugin.name,
-            error: e.toString(),
-            latencyMs: stopwatch.elapsedMilliseconds,
+            error: error ?? 'HTTP 响应异常',
+            latencyMs: latency,
           );
           results[plugin.name] = false;
           failedNames.add(plugin.name);
@@ -830,21 +922,21 @@ class PluginsController extends Notifier<PluginsState> {
     for (final assetPath in bundledPluginAssets) {
       final assetName =
           assetPath.split('/').last.replaceAll(RegExp(r'\.(json|yaml|yml)$'), '');
-      if (assetName == name) {
+      try {
+        String content;
         try {
-          String content;
-          try {
-            content = await rootBundle.loadString(assetPath);
-          } catch (_) {
-            content = File(assetPath).readAsStringSync();
-          }
-          final plugin = assetPath.endsWith('.yaml') || assetPath.endsWith('.yml')
-              ? Plugin.fromYaml(content)
-              : Plugin.fromJson(jsonDecode(content));
+          content = await rootBundle.loadString(assetPath);
+        } catch (_) {
+          content = File(assetPath).readAsStringSync();
+        }
+        final plugin = assetPath.endsWith('.yaml') || assetPath.endsWith('.yml')
+            ? Plugin.fromYaml(content)
+            : Plugin.fromJson(jsonDecode(content));
+        if (assetName == name || plugin.name == name) {
           updatePlugin(plugin);
           return true;
-        } catch (_) {}
-      }
+        }
+      } catch (_) {}
     }
     return false;
   }
@@ -853,8 +945,15 @@ class PluginsController extends Notifier<PluginsState> {
     if (_isDisposed) {
       return;
     }
+    final seen = <String>{};
+    final deduped = <Plugin>[];
+    for (final p in plugins) {
+      if (seen.add(p.name)) {
+        deduped.add(p);
+      }
+    }
     _setState(_currentState.copyWith(
-      pluginList: List<Plugin>.unmodifiable(plugins),
+      pluginList: List<Plugin>.unmodifiable(deduped),
     ));
   }
 }

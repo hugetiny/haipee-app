@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
-import 'package:kazumi/pages/webview/webview_controller_impel/webview_android_controller_impel.dart';
-import 'package:kazumi/pages/webview/webview_item_impel/webview_android_item_impel.dart';
-import 'package:kazumi/pages/webview/webview_item_impel/webview_item_impel.dart';
-import 'package:kazumi/pages/webview/webview_item_impel/webview_linux_item_impel.dart';
-import 'package:kazumi/pages/webview/webview_item_impel/webview_apple_item_impel.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
+import 'package:haipee/pages/webview/webview_controller_impel/webview_android_controller_impel.dart';
+import 'package:haipee/pages/webview/webview_item_impel/webview_android_item_impel.dart';
+import 'package:haipee/pages/webview/webview_item_impel/webview_item_impel.dart';
+import 'package:haipee/pages/webview/webview_item_impel/webview_linux_item_impel.dart';
+import 'package:haipee/pages/webview/webview_item_impel/webview_apple_item_impel.dart';
+import 'package:haipee/utils/utils.dart';
 
 class WebviewItem extends StatefulWidget {
   const WebviewItem({

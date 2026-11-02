@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/services/logging/app_log.dart' hide KazumiLogger;
-import 'package:kazumi/services/logging/log_module.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/services/logging/app_log.dart' hide HaipeeLogger;
+import 'package:haipee/services/logging/log_module.dart';
 import 'package:logger/logger.dart';
 
 /// 专为流媒体在线播放设计的 TorrServer (MatriX) 本地子进程管理器。
@@ -28,7 +28,7 @@ class TorrServerProcessManager {
   bool _isRunning = false;
   int _activePort = defaultPort;
   String _activeHost = '127.0.0.1';
-  final KazumiLogger _logger = KazumiLogger();
+  final HaipeeLogger _logger = HaipeeLogger();
 
   bool get isRunning => _isRunning;
   int get activePort => _activePort;

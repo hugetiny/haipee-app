@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// B站账号鉴权与扫码登录服务 (单例)
@@ -24,6 +24,8 @@ class BiliAuthService {
 
   /// 响应式当前用户画像通知器
   final ValueNotifier<BiliUserProfile?> userNotifier = ValueNotifier<BiliUserProfile?>(null);
+
+  BiliUserProfile? get currentUser => userNotifier.value;
 
   bool get isLoggedIn {
     final sessData = getSessData();
@@ -148,7 +150,7 @@ class BiliAuthService {
           try {
             await fetchUserProfile();
           } catch (e) {
-            KazumiLogger().log(Level.warning, '[BiliAuth] 刷新用户资料异常: $e');
+            HaipeeLogger().log(Level.warning, '[BiliAuth] 刷新用户资料异常: $e');
           }
 
           return BiliQrCodePollResult(
@@ -250,7 +252,7 @@ class BiliAuthService {
         return null;
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '[BiliAuth] 获取用户资料失败: $e');
+      HaipeeLogger().log(Level.warning, '[BiliAuth] 获取用户资料失败: $e');
       return userNotifier.value;
     }
   }

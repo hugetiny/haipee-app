@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
 import 'my_controller.dart';
 
 /// 收藏管理 Provider

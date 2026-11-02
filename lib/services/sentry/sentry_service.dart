@@ -3,16 +3,16 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:kazumi/services/logging/app_log.dart';
-import 'package:kazumi/services/logging/log_module.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
 
-/// Production-ready Sentry integration service for Kazumi.
+/// Production-ready Sentry integration service for Haipee.
 ///
 /// Features:
 /// 1. Zero-leakage secure initialization (reads DSN via compile-time `--dart-define=SENTRY_DSN=...` or settings).
 /// 2. Graceful no-op fallback when Sentry DSN is empty (offline & private builds remain 100% functional).
 /// 3. Firebase Test Lab awareness (tags environment as 'testlab' and elevates sample rates to 100%).
-/// 4. Bi-directional log bridging from Kazumi's [Talker] logger into Sentry Breadcrumbs and Events.
+/// 4. Bi-directional log bridging from Haipee's [Talker] logger into Sentry Breadcrumbs and Events.
 /// 5. Visual crash analytics (screenshots & view hierarchy on supported mobile platforms).
 class SentryService {
   SentryService._internal();

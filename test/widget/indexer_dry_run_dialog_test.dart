@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/cardigann/models/indexer_plugin.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -64,7 +64,7 @@ search:
       ProviderScope(
         child: TranslationProvider(
           child: MaterialApp(
-            navigatorObservers: [KazumiDialog.observer],
+            navigatorObservers: [HaipeeDialog.observer],
             home: Scaffold(
               body: Builder(
                 builder: (context) => ElevatedButton(

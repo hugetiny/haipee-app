@@ -3,13 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/main.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugin_validity_tracker.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/pages/info/source_search_provider.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/main.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugin_validity_tracker.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/pages/info/source_search_provider.dart';
 
 class TestablePluginsController extends PluginsController {
   final List<Plugin> initialList;

@@ -1,7 +1,7 @@
 {
   "@@locale": "en-US",
   "app": {
-    "title": "Kazumi",
+    "title": "haipee",
     "loading": "Loading…",
     "retry": "Retry",
     "confirm": "Confirm",
@@ -19,7 +19,7 @@
   },
   "downloads": {
     "sectionTitle": "Download Queue",
-    "aria2Offline": "aria2 not connected",
+    "downloadOffline": "Download engine not connected",
     "queued": "Queued",
     "running": "Downloading",
     "completed": "Completed",
@@ -182,7 +182,7 @@
       "languageDesc": "Choose the display language for the app interface",
       "followSystem": "System",
       "exitBehavior": "On Close",
-      "exitApp": "Exit Kazumi",
+      "exitApp": "Exit haipee",
       "minimizeToTray": "Minimize to Tray",
       "askEveryTime": "Ask Every Time"
     },
@@ -287,7 +287,7 @@
         "repoMissing": "The repository does not contain this rule.",
         "alreadyLatest": "Rule is already the latest.",
         "updateSuccess": "Update successful.",
-        "updateIncompatible": "Kazumi is too old; this rule is incompatible.",
+        "updateIncompatible": "haipee is too old; this rule is incompatible.",
         "updateFailed": "Failed to update rule.",
         "copySuccess": "Copied to clipboard."
       },
@@ -573,7 +573,7 @@
         },
         "complete": {
           "title": "Download complete",
-          "message": "Kazumi {version} downloaded.",
+          "message": "haipee {version} downloaded.",
           "quitNotice": "The app will exit during installation.",
           "fileLocation": "File saved to",
           "buttons": {
@@ -628,15 +628,15 @@
   },
   "exitDialog": {
     "title": "Exit Confirmation",
-    "message": "Do you want to exit Kazumi?",
+    "message": "Do you want to exit haipee?",
     "dontAskAgain": "Don't ask again",
-    "exit": "Exit Kazumi",
+    "exit": "Exit haipee",
     "minimize": "Minimize to Tray",
     "cancel": "Cancel"
   },
   "tray": {
     "showWindow": "Show Window",
-    "exit": "Exit Kazumi"
+    "exit": "Exit haipee"
   },
   "navigation": {
     "tabs": {
@@ -688,7 +688,7 @@
     "common": {
       "emptyState": "No content found",
       "retry": "Tap to retry",
-      "backHint": "Press again to exit Kazumi",
+      "backHint": "Press again to exit haipee",
       "toast": {
         "editMode": "Edit mode is active."
       }
@@ -697,7 +697,7 @@
       "title": "Home",
       "allTag": "Home",
       "toast": {
-        "backPress": "Press again to exit Kazumi"
+        "backPress": "Press again to exit haipee"
       }
     },
     "timeline": {

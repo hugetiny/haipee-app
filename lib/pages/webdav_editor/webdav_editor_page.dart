@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/webdav_editor/providers.dart';
-import 'package:kazumi/providers/translations_provider.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/webdav.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/webdav_editor/providers.dart';
+import 'package:haipee/providers/translations_provider.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/webdav.dart';
 
 /// Provider for password visibility toggle
 final webdavPasswordVisibleProvider =
@@ -120,7 +120,7 @@ class _WebDavEditorPageState extends ConsumerState<WebDavEditorPage> {
           try {
             await webDav.init();
           } catch (e) {
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
               message: t.settings.webdav.editor.toast.saveFailed
                   .replaceFirst('{error}', e.toString()),
             );
@@ -130,16 +130,16 @@ class _WebDavEditorPageState extends ConsumerState<WebDavEditorPage> {
                 .refreshFromStorage();
             return;
           }
-          KazumiDialog.showToast(
+          HaipeeDialog.showToast(
             message: t.settings.webdav.editor.toast.saveSuccess,
           );
           try {
             await webDav.ping();
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
               message: t.settings.webdav.editor.toast.testSuccess,
             );
           } catch (e) {
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
               message: t.settings.webdav.editor.toast.testFailed
                   .replaceFirst('{error}', e.toString()),
             );

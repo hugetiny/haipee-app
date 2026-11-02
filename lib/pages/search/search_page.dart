@@ -1,15 +1,15 @@
-import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/card/bangumi_card.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/pages/search/providers.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/bean/widget/responsive/responsive.dart';
+import 'package:haipee/bean/card/bangumi_card.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/pages/search/providers.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key, this.inputTag = ''});

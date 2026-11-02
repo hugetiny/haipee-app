@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/services/sentry/sentry_service.dart';
+import 'package:haipee/services/sentry/sentry_service.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 void main() {

@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
 import 'package:flutter_inappwebview_platform_interface/flutter_inappwebview_platform_interface.dart';
 
 class WebviewAppleItemControllerImpel
@@ -24,6 +26,16 @@ class WebviewAppleItemControllerImpel
         initialUserScripts: UnmodifiableListView<UserScript>([
           UserScript(
             source: '''
+            (function() {
+              window.alert = function(msg) { console.warn('[Sniffer JS Alert suppressed]:', msg); };
+              window.confirm = function(msg) { console.warn('[Sniffer JS Confirm suppressed]:', msg); return true; };
+              window.prompt = function(msg, defaultText) { console.warn('[Sniffer JS Prompt suppressed]:', msg); return defaultText || ''; };
+            })();
+            ''',
+            injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+          ),
+          UserScript(
+            source: '''
             function removeLazyLoading() {
               document.querySelectorAll('iframe[loading="lazy"]').forEach(iframe => {
                 iframe.removeAttribute('loading');
@@ -42,7 +54,7 @@ class WebviewAppleItemControllerImpel
           userAgent: Utils.getRandomUA(),
           mediaPlaybackRequiresUserGesture: true,
           allowsInlineMediaPlayback: true,
-          javaScriptCanOpenWindowsAutomatically: true,
+          javaScriptCanOpenWindowsAutomatically: false,
           useOnLoadResource: false,
           cacheEnabled: false,
           isInspectable: false,
@@ -122,6 +134,37 @@ class WebviewAppleItemControllerImpel
           logEventController.add('loading completed: $url');
           _scanPageForMediaAndIframes();
         },
+        onJsAlert: (controller, jsAlertRequest) async {
+          AppLog.w(LogModule.stream,
+              '[WebView Alert 拦截]: ${jsAlertRequest.message} (url: ${jsAlertRequest.url})');
+          return JsAlertResponse(
+            handledByClient: true,
+            action: JsAlertResponseAction.CONFIRM,
+          );
+        },
+        onJsConfirm: (controller, jsConfirmRequest) async {
+          AppLog.w(LogModule.stream,
+              '[WebView Confirm 拦截]: ${jsConfirmRequest.message} (url: ${jsConfirmRequest.url})');
+          return JsConfirmResponse(
+            handledByClient: true,
+            action: JsConfirmResponseAction.CONFIRM,
+          );
+        },
+        onJsPrompt: (controller, jsPromptRequest) async {
+          AppLog.w(LogModule.stream,
+              '[WebView Prompt 拦截]: ${jsPromptRequest.message} (url: ${jsPromptRequest.url})');
+          return JsPromptResponse(
+            handledByClient: true,
+            action: JsPromptResponseAction.CONFIRM,
+            value: '',
+          );
+        },
+        onJsBeforeUnload: (controller, jsBeforeUnloadRequest) async {
+          return JsBeforeUnloadResponse(
+            handledByClient: true,
+            action: JsBeforeUnloadResponseAction.CONFIRM,
+          );
+        },
         onReceivedError: (controller, request, error) {
           debugPrint(
               '[WebView] Error: ${error.toString()} - Request: ${request.url}');
@@ -158,6 +201,7 @@ class WebviewAppleItemControllerImpel
     );
 
     logEventController.add('🔍 开始解析: $normalizedUrl');
+    AppLog.i(LogModule.stream, '开始嗅探网页视频流: $normalizedUrl');
 
     await webviewController?.loadUrl(urlRequest: URLRequest(url: WebUri(normalizedUrl)));
 
@@ -180,6 +224,10 @@ class WebviewAppleItemControllerImpel
           logEventController.add('❌ 解析视频资源超时');
           logEventController.add('💡 请切换到其他播放列表或视频源');
           logEventController.add('showDebug');
+          AppLog.w(
+            LogModule.stream,
+            'WebView 视频资源嗅探超时 (30s): 目标地址=$normalizedUrl, 最后重定向iframe=$_lastRedirectedIframeUrl',
+          );
         }
       }
     });
@@ -193,6 +241,7 @@ class WebviewAppleItemControllerImpel
     videoLoadingEventController.add(false);
     logEventController.add('clear');
     logEventController.add('🎉 视频解析成功: $mediaUrl');
+    AppLog.i(LogModule.stream, '视频流嗅探成功 ($count秒): 提取到媒体直链=$mediaUrl');
     unloadPage();
     videoParserEventController.add((mediaUrl, offset));
   }
@@ -428,8 +477,8 @@ class WebviewAppleItemControllerImpel
 
       // 1. Hook window.fetch
       try {
-        if (typeof window.fetch === 'function' && !window.__kazumi_fetch_wrapped) {
-          window.__kazumi_fetch_wrapped = true;
+        if (typeof window.fetch === 'function' && !window.__haipee_fetch_wrapped) {
+          window.__haipee_fetch_wrapped = true;
           const _fetch = window.fetch;
           window.fetch = async function (...args) {
             let url = '';
@@ -489,8 +538,8 @@ class WebviewAppleItemControllerImpel
 
       // 2. Hook Response.prototype.text
       try {
-        if (window.Response && window.Response.prototype && !window.__kazumi_resp_wrapped) {
-          window.__kazumi_resp_wrapped = true;
+        if (window.Response && window.Response.prototype && !window.__haipee_resp_wrapped) {
+          window.__haipee_resp_wrapped = true;
           const _r_text = window.Response.prototype.text;
           window.Response.prototype.text = function () {
             return new Promise((resolve, reject) => {
@@ -512,8 +561,8 @@ class WebviewAppleItemControllerImpel
 
       // 3. Hook XMLHttpRequest
       try {
-        if (window.XMLHttpRequest && window.XMLHttpRequest.prototype && !window.__kazumi_xhr_wrapped) {
-          window.__kazumi_xhr_wrapped = true;
+        if (window.XMLHttpRequest && window.XMLHttpRequest.prototype && !window.__haipee_xhr_wrapped) {
+          window.__haipee_xhr_wrapped = true;
           const _open = window.XMLHttpRequest.prototype.open;
           window.XMLHttpRequest.prototype.open = function (...args) {
             try {
@@ -593,8 +642,8 @@ class WebviewAppleItemControllerImpel
           medias[m].volume = 0;
         }
       } catch(e) {}
-      if (!window.__kazumi_mute_listener) {
-        window.__kazumi_mute_listener = true;
+      if (!window.__haipee_mute_listener) {
+        window.__haipee_mute_listener = true;
         document.addEventListener('play', function(e) {
           try {
             if (e.target && (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO')) {

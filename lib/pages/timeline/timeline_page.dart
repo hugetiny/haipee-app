@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/pages/timeline/timeline_controller.dart';
-import 'package:kazumi/pages/timeline/providers.dart';
-import 'package:kazumi/bean/card/bangumi_timeline_card.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/pages/layout/app_bar_config.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/pages/timeline/timeline_controller.dart';
+import 'package:haipee/pages/timeline/providers.dart';
+import 'package:haipee/bean/card/bangumi_timeline_card.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/pages/layout/app_bar_config.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 const int _weekdayCount = 7;
 const List<_TimelineSeason> _seasonSelectionOrder = <_TimelineSeason>[
@@ -67,8 +67,8 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
   }
 
   void _onBackPressed(BuildContext context) {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
       return;
     }
     ref.read(navigationProvider.notifier).updateSelectedIndex(0);
@@ -141,7 +141,7 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
       }
     }
 
-    KazumiDialog.showBottomSheet(
+    HaipeeDialog.showBottomSheet(
       // context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
@@ -383,7 +383,7 @@ class _TimelinePageState extends ConsumerState<TimelinePage>
   }
 
   void showSortSwitcher() {
-    KazumiDialog.showBottomSheet(
+    HaipeeDialog.showBottomSheet(
       // context: context,
       isScrollControlled: true,
       builder: (context) {

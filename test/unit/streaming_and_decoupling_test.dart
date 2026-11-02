@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/pages/player/local_player_page.dart';
-import 'package:kazumi/pages/player/player_item_surface.dart';
-import 'package:kazumi/pages/search/search_controller.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
+import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/pages/player/local_player_page.dart';
+import 'package:haipee/pages/player/player_item_surface.dart';
+import 'package:haipee/pages/search/search_controller.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
 
 /// Fake test adapter that simulates libtorrent engine without native C++ dylibs.
 class _FakeEngineAdapter implements TorrentEngineAdapter {

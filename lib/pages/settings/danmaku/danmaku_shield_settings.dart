@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/setting/setting_controller.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/setting/setting_controller.dart';
 
 class DanmakuShieldSettings extends ConsumerStatefulWidget {
   const DanmakuShieldSettings({super.key});

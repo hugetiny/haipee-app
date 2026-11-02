@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
-import 'package:kazumi/modules/cardigann/widgets/prowlarr_catalog_dialog.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/cardigann/widgets/prowlarr_catalog_dialog.dart';
 
 void main() {
   group('Prowlarr Catalog & Pre-bundled Cardigann Indexers Tests', () {

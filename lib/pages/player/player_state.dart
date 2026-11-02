@@ -1,5 +1,5 @@
-import 'package:kazumi/modules/danmaku/danmaku_module.dart';
-import 'package:kazumi/modules/playback/aniskip_model.dart';
+import 'package:haipee/modules/danmaku/danmaku_module.dart';
+import 'package:haipee/modules/playback/aniskip_model.dart';
 import 'package:media_kit/media_kit.dart';
 
 const Object _sentinel = Object();

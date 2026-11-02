@@ -3,7 +3,7 @@ import 'package:flutter/services.dart' show rootBundle, AssetManifest;
 import 'package:path_provider/path_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/logger.dart';
 
 class ShadersController {
   Directory? _shadersDirectory;
@@ -24,7 +24,7 @@ class ShadersController {
   Directory get shadersDirectory {
     if (_shadersDirectory != null) return _shadersDirectory!;
     // Fallback temporary location to prevent LateInitializationError if accessed synchronously
-    return Directory(path.join(Directory.systemTemp.path, 'kazumi_shaders'));
+    return Directory(path.join(Directory.systemTemp.path, 'haipee_shaders'));
   }
 
   set shadersDirectory(Directory dir) {
@@ -54,7 +54,7 @@ class ShadersController {
       _shadersDirectory = Directory(path.join(directory.path, 'anime_shaders'));
     } catch (_) {
       _shadersDirectory =
-          Directory(path.join(Directory.systemTemp.path, 'kazumi_shaders'));
+          Directory(path.join(Directory.systemTemp.path, 'haipee_shaders'));
     }
     return _shadersDirectory!;
   }
@@ -65,10 +65,10 @@ class ShadersController {
     if (!await _shadersDirectory!.exists()) {
       try {
         await _shadersDirectory!.create(recursive: true);
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.info, 'Create GLSL Shader: ${_shadersDirectory!.path}');
       } catch (e) {
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.warning, 'Could not create shaders directory: $e');
       }
     }
@@ -82,7 +82,7 @@ class ShadersController {
               asset.startsWith('assets/shaders/') && asset.endsWith('.glsl'))
           .toList();
     } catch (e) {
-      KazumiLogger().log(Level.warning, 'AssetManifest load shaders failed: $e');
+      HaipeeLogger().log(Level.warning, 'AssetManifest load shaders failed: $e');
     }
 
     if (shaderFiles.isEmpty) {
@@ -97,7 +97,7 @@ class ShadersController {
       final fileName = filePath.split('/').last;
       final targetFile = File(path.join(_shadersDirectory!.path, fileName));
       if (await targetFile.exists() && await targetFile.length() >= 100) {
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.info, 'GLSL Shader exists, skip: ${targetFile.path}');
         continue;
       }
@@ -107,13 +107,13 @@ class ShadersController {
         final List<int> bytes = data.buffer.asUint8List();
         await targetFile.writeAsBytes(bytes);
         copiedFilesCount++;
-        KazumiLogger().log(Level.info, 'Copy: ${targetFile.path}');
+        HaipeeLogger().log(Level.info, 'Copy: ${targetFile.path}');
       } catch (e) {
-        KazumiLogger().log(Level.warning, 'Copy: ($filePath): $e');
+        HaipeeLogger().log(Level.warning, 'Copy: ($filePath): $e');
       }
     }
 
-    KazumiLogger().log(Level.info,
+    HaipeeLogger().log(Level.info,
         '$copiedFilesCount GLSL files copied to ${_shadersDirectory!.path}');
   }
 }

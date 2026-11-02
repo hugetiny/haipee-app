@@ -15,11 +15,11 @@ void main() {
     // 允许使用原生 AppBar 的白名单（基础建设实现组件）
     const allowedFiles = <String>{
       'lib/bean/appbar/sys_app_bar.dart',
-      'lib/ui/appbar/kazumi_app_bar.dart',
+      'lib/ui/appbar/haipee_app_bar.dart',
     };
 
     // 匹配如 appBar: AppBar( 或 return AppBar( 或 child: AppBar(
-    final rawAppBarRegex = RegExp(r'(?<!Sys)(?<!Kazumi)\bAppBar\s*\(');
+    final rawAppBarRegex = RegExp(r'(?<!Sys)(?<!Kazumi)(?<!Haipee)\bAppBar\s*\(');
 
     for (final file in dartFiles) {
       final normalizedPath = file.path.replaceAll(r'\', '/');

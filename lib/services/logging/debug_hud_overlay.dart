@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kazumi/services/logging/app_log.dart';
+import 'package:haipee/services/logging/app_log.dart';
 
 /// Global overlay providing:
 /// 1. Desktop keyboard shortcuts (`F12`, `Cmd+Shift+L`, `Ctrl+Shift+L`) for instant log toggling.

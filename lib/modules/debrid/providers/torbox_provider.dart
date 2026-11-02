@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/debrid/debrid_provider.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/debrid/debrid_provider.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// TorBox 云端离线中枢适配器 (https://torbox.app)
@@ -76,7 +76,7 @@ class TorBoxProvider implements DebridProvider {
         if (data['success'] == true) {
           final list = data['data'];
           if (list is List && list.contains(hash)) {
-            KazumiLogger().log(
+            HaipeeLogger().log(
               Level.info,
               '[TorBox] Hit instant cloud cache for hash $hash!',
             );
@@ -85,7 +85,7 @@ class TorBoxProvider implements DebridProvider {
         }
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.debug,
         '[TorBox] Check instant cache failed: $e',
       );
@@ -122,14 +122,14 @@ class TorBoxProvider implements DebridProvider {
 
       final link = dlResponse.data?['data'] as String?;
       if (link != null && link.isNotEmpty) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.info,
           '[TorBox] Successfully resolved cloud stream URL: $link',
         );
         return link;
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '[TorBox] Stream resolve failed: $e');
+      HaipeeLogger().log(Level.warning, '[TorBox] Stream resolve failed: $e');
     }
 
     return null;

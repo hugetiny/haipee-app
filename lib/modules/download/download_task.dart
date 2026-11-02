@@ -1,6 +1,6 @@
 import 'package:hive_ce/hive.dart';
 import 'package:path/path.dart' as p;
-import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_models.dart';
 
 part 'download_task.g.dart';
 

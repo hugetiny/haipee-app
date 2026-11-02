@@ -1,4 +1,4 @@
-import 'package:kazumi/services/player/syncplay_endpoint.dart';
+import 'package:haipee/services/player/syncplay_endpoint.dart';
 
 enum SettingGroup {
   player,
@@ -210,7 +210,7 @@ class SettingsKeys {
   );
   static const defaultTorrentStreamEngine = SettingKey<String>(
     _SettingBoxKey.defaultTorrentStreamEngine,
-    'aria2',
+    'auto',
     group: SettingGroup.download,
   );
   static const danmakuEnabledByDefault = SettingKey<bool>(
@@ -321,7 +321,7 @@ class SettingsKeys {
   );
   static const defaultStartupPage = SettingKey<String>(
     _SettingBoxKey.defaultStartupPage,
-    '/tab/popular/',
+    '/tab/online',
     group: SettingGroup.interface,
   );
   static const webDavEnable = SettingKey<bool>(

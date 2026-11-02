@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
 
 class WebviewLinuxItemImpel extends StatefulWidget {
   const WebviewLinuxItemImpel({

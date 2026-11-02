@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/io_client.dart';
-import 'package:kazumi/services/logging/logger.dart';
-import 'package:kazumi/services/network/bangumi_ech_image_service.dart';
-import 'package:kazumi/services/network/image_acceleration.dart';
-import 'package:kazumi/services/network/image_file_service.dart';
-import 'package:kazumi/services/network/proxy_utils.dart';
-import 'package:kazumi/services/network/system_proxy_service.dart';
-import 'package:kazumi/services/storage/storage.dart';
+import 'package:haipee/services/logging/logger.dart';
+import 'package:haipee/services/network/bangumi_ech_image_service.dart';
+import 'package:haipee/services/network/image_acceleration.dart';
+import 'package:haipee/services/network/image_file_service.dart';
+import 'package:haipee/services/network/proxy_utils.dart';
+import 'package:haipee/services/network/system_proxy_service.dart';
+import 'package:haipee/services/storage/storage.dart';
 
 class ProxyAwareImageCacheManager extends CacheManager with ImageCacheManager {
   static final ProxyAwareImageCacheManager instance =
@@ -67,7 +67,7 @@ class ProxyAwareImageCacheManager extends CacheManager with ImageCacheManager {
     final proxyUrl = GStorage.getSetting(SettingsKeys.proxyUrl);
     final parsed = ProxyUtils.parseProxyUrl(proxyUrl);
     if (parsed == null) {
-      KazumiLogger().w('Proxy: 图片缓存代理地址格式错误或为空');
+      HaipeeLogger().w('Proxy: 图片缓存代理地址格式错误或为空');
     }
     return parsed;
   }

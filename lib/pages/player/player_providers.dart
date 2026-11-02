@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/pages/player/player_controller.dart';
-import 'package:kazumi/pages/player/player_state.dart';
-import 'package:kazumi/services/player/audio_controller.dart';
-import 'package:kazumi/services/player/screenshot_export_service.dart';
+import 'package:haipee/pages/player/player_controller.dart';
+import 'package:haipee/pages/player/player_state.dart';
+import 'package:haipee/services/player/audio_controller.dart';
+import 'package:haipee/services/player/screenshot_export_service.dart';
 
 /// 播放器控制 Provider
 ///

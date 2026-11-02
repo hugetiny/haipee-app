@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/modules/bilibili/bilibili_auth_service.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

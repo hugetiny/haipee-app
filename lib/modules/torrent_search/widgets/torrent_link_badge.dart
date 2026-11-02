@@ -2,7 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 
 /// 迅雷与现代 BT 风格的资源链接类型徽章（标清楚是磁力还是种子，还是两者都有）
 class TorrentLinkBadge extends StatelessWidget {

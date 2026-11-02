@@ -1,13 +1,13 @@
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/comments/comment_response.dart';
-import 'package:kazumi/modules/characters/characters_response.dart';
-import 'package:kazumi/modules/bangumi/episode_item.dart';
-import 'package:kazumi/modules/character/character_full_item.dart';
-import 'package:kazumi/modules/staff/staff_response.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/comments/comment_response.dart';
+import 'package:haipee/modules/characters/characters_response.dart';
+import 'package:haipee/modules/bangumi/episode_item.dart';
+import 'package:haipee/modules/character/character_full_item.dart';
+import 'package:haipee/modules/staff/staff_response.dart';
 
 class BangumiHTTP {
   // why the api havn't been replaced by getCalendarBySearch?
@@ -36,7 +36,7 @@ class BangumiHTTP {
         }
       }
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'Resolve calendar failed ${e.toString()}');
     }
     return bangumiCalendar;
@@ -79,7 +79,7 @@ class BangumiHTTP {
         }
       }
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'Resolve bangumi list failed ${e.toString()}');
     }
     try {
@@ -93,7 +93,7 @@ class BangumiHTTP {
         bangumiCalendar.add(bangumiDayList);
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
           Level.error, 'Fetch bangumi item to calendar failed ${e.toString()}');
     }
     return bangumiCalendar;
@@ -146,7 +146,7 @@ class BangumiHTTP {
         }
       }
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'Resolve bangumi list failed ${e.toString()}');
     }
     return bangumiList;
@@ -181,7 +181,7 @@ class BangumiHTTP {
         }
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
           Level.error, 'Resolve bangumi trends list failed ${e.toString()}');
     }
     return bangumiList;
@@ -222,7 +222,7 @@ class BangumiHTTP {
                   bangumiList.add(bangumiItem);
                 }
               } catch (e) {
-                KazumiLogger().log(
+                HaipeeLogger().log(
                     Level.error, 'Resolve search results failed ${e.toString()}');
               }
             }
@@ -230,7 +230,7 @@ class BangumiHTTP {
         }
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, 'Unknown search problem ${e.toString()}');
+      HaipeeLogger().log(Level.error, 'Unknown search problem ${e.toString()}');
     }
     return bangumiList;
   }
@@ -242,7 +242,7 @@ class BangumiHTTP {
       );
       return BangumiItem.fromJson(res.data);
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'Resolve bangumi item failed ${e.toString()}');
       return null;
     }
@@ -272,7 +272,7 @@ class BangumiHTTP {
         }
       }
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'Resolve bangumi episode failed ${e.toString()}');
     }
     return episodeInfo;
@@ -293,7 +293,7 @@ class BangumiHTTP {
         commentResponse = CommentResponse.fromJson(jsonData);
       }
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'Resolve bangumi comments failed ${e.toString()}');
     }
     return commentResponse;
@@ -317,7 +317,7 @@ class BangumiHTTP {
         commentResponse = EpisodeCommentResponse.fromJson(jsonData);
       }
     } catch (e) {
-      KazumiLogger().log(Level.error,
+      HaipeeLogger().log(Level.error,
           'Resolve bangumi episode comments failed ${e.toString()}');
     }
     return commentResponse;
@@ -339,7 +339,7 @@ class BangumiHTTP {
         commentResponse = CharacterCommentResponse.fromJson(jsonData);
       }
     } catch (e) {
-      KazumiLogger().log(Level.error,
+      HaipeeLogger().log(Level.error,
           'Resolve bangumi character comments failed ${e.toString()}');
     }
     return commentResponse;
@@ -358,7 +358,7 @@ class BangumiHTTP {
         staffResponse = StaffResponse.fromJson(jsonData);
       }
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'Resolve bangumi staff failed ${e.toString()}');
     }
     return staffResponse;
@@ -376,7 +376,7 @@ class BangumiHTTP {
         charactersResponse = CharactersResponse.fromJson(jsonData);
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
           Level.error, 'Resolve bangumi characters failed ${e.toString()}');
     }
     return charactersResponse;
@@ -397,7 +397,7 @@ class BangumiHTTP {
         characterFullItem = CharacterFullItem.fromJson(jsonData);
       }
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'Resolve character info failed ${e.toString()}');
     }
     return characterFullItem;

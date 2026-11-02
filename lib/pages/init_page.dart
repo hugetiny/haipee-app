@@ -5,20 +5,21 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/my/my_controller.dart';
-import 'package:kazumi/pages/my/providers.dart';
-import 'package:kazumi/pages/setting/setting_controller.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/shaders/providers.dart';
-import 'package:kazumi/shaders/shaders_controller.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/webdav.dart';
-import 'package:kazumi/providers/translations_provider.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/my/my_controller.dart';
+import 'package:haipee/pages/my/providers.dart';
+import 'package:haipee/pages/setting/setting_controller.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/shaders/providers.dart';
+import 'package:haipee/shaders/shaders_controller.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/webdav.dart';
+import 'package:haipee/providers/translations_provider.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/storage/storage.dart';
 import 'package:logger/logger.dart';
 
 class InitPage extends ConsumerStatefulWidget {
@@ -65,15 +66,15 @@ class _InitPageState extends ConsumerState<InitPage> {
     if (!webDavEnable) return;
 
     final webDav = WebDav();
-    KazumiLogger().log(Level.info, '开始从WEBDAV同步记录');
+    HaipeeLogger().log(Level.info, '开始从WEBDAV同步记录');
     try {
       await webDav.init();
       await webDav.downloadAndPatchHistory();
-      KazumiLogger().log(Level.info, '同步观看记录完成');
+      HaipeeLogger().log(Level.info, '同步观看记录完成');
     } catch (e) {
-      KazumiLogger().log(Level.error, 'WebDav同步失败: $e');
+      HaipeeLogger().log(Level.error, 'WebDav同步失败: $e');
       final translations = ref.read(translationsProvider);
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: translations.dialogs.webdav.syncFailed
             .replaceFirst('{error}', e.toString()),
       );
@@ -91,8 +92,18 @@ class _InitPageState extends ConsumerState<InitPage> {
 
     if (!mounted) return;
 
+    if (AppLog.isFirebaseTestLab) {
+      if (pluginsController.pluginList.isEmpty) {
+        try {
+          await pluginsController.copyPluginsToExternalDirectory();
+        } catch (_) {}
+      }
+      _goHome();
+      return;
+    }
+
     if (pluginsController.pluginList.isEmpty) {
-      await KazumiDialog.show(
+      await HaipeeDialog.show(
         clickMaskDismiss: false,
         builder: (dialogContext) {
           final t = dialogContext.t;
@@ -119,7 +130,7 @@ class _InitPageState extends ConsumerState<InitPage> {
                     try {
                       await pluginsController.copyPluginsToExternalDirectory();
                     } catch (_) {}
-                    KazumiDialog.dismiss();
+                    HaipeeDialog.dismiss();
                     if (!Platform.isAndroid) {
                       _goHome();
                     } else {
@@ -139,7 +150,7 @@ class _InitPageState extends ConsumerState<InitPage> {
   }
 
   Future<void> _switchUpdateMirror() async {
-    await KazumiDialog.show(
+    await HaipeeDialog.show(
       clickMaskDismiss: false,
       builder: (dialogContext) {
         final t = dialogContext.t;
@@ -165,7 +176,7 @@ class _InitPageState extends ConsumerState<InitPage> {
               TextButton(
                 onPressed: () {
                   setting.put(SettingBoxKey.autoUpdate, true);
-                  KazumiDialog.dismiss();
+                  HaipeeDialog.dismiss();
                   _goHome();
                 },
                 child: Text(t.dialogs.updateMirror.options.github),
@@ -173,7 +184,7 @@ class _InitPageState extends ConsumerState<InitPage> {
               TextButton(
                 onPressed: () {
                   setting.put(SettingBoxKey.autoUpdate, false);
-                  KazumiDialog.dismiss();
+                  HaipeeDialog.dismiss();
                   _goHome();
                 },
                 child: Text(t.dialogs.updateMirror.options.fdroid),
@@ -207,7 +218,7 @@ class _InitPageState extends ConsumerState<InitPage> {
     }
     if (count != 0) {
       final translations = ref.read(translationsProvider);
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: translations.dialogs.pluginUpdates.toast
             .replaceFirst('{count}', '$count'),
       );
@@ -216,7 +227,17 @@ class _InitPageState extends ConsumerState<InitPage> {
 
   void _goHome() {
     if (!mounted) return;
-    context.go(Routes.media);
+    String defaultStartupPage =
+        GStorage.getSetting<String>(SettingsKeys.defaultStartupPage).trim();
+    if (defaultStartupPage.endsWith('/') && defaultStartupPage.length > 1) {
+      defaultStartupPage =
+          defaultStartupPage.substring(0, defaultStartupPage.length - 1);
+    }
+    if (defaultStartupPage.isNotEmpty) {
+      context.go(defaultStartupPage);
+    } else {
+      context.go(Routes.onlineVideo);
+    }
   }
 
   @override
@@ -227,9 +248,9 @@ class _InitPageState extends ConsumerState<InitPage> {
             9 / 16);
 
     if (isWideScreen) {
-      KazumiLogger().log(Level.info, '当前设备宽屏');
+      HaipeeLogger().log(Level.info, '当前设备宽屏');
     } else {
-      KazumiLogger().log(Level.info, '当前设备非宽屏');
+      HaipeeLogger().log(Level.info, '当前设备非宽屏');
     }
     setting.put(SettingBoxKey.isWideScreen, isWideScreen);
     return const LoadingWidget();

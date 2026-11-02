@@ -1,49 +1,57 @@
-import 'package:kazumi/pages/player/local_player_page.dart';
+import 'package:haipee/pages/player/local_player_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/pages/online/online_video_search_page.dart';
-import 'package:kazumi/pages/media_library/media_library_page.dart';
-import 'package:kazumi/pages/resource/resource_search_page.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/pages/about/about_page.dart';
-import 'package:kazumi/pages/about/license_page.dart';
-import 'package:kazumi/pages/my/favorites_page.dart';
-import 'package:kazumi/pages/my/my_page.dart';
-import 'package:kazumi/pages/info/info_page.dart';
-import 'package:kazumi/pages/init_page.dart';
-import 'package:kazumi/pages/menu/menu.dart';
-import 'package:kazumi/pages/setting/setting_page.dart';
-import 'package:kazumi/pages/search/search_page.dart';
-import 'package:kazumi/pages/settings/decoder_settings.dart';
-import 'package:kazumi/pages/settings/displaymode_settings.dart';
-import 'package:kazumi/pages/settings/player_settings.dart';
-import 'package:kazumi/pages/settings/super_resolution_settings.dart';
-import 'package:kazumi/pages/settings/theme_settings_page.dart';
-import 'package:kazumi/pages/setting/appearance/language_settings.dart';
-import 'package:kazumi/pages/setting/appearance/exit_behavior_settings.dart';
-import 'package:kazumi/pages/settings/danmaku/danmaku_settings.dart';
-import 'package:kazumi/pages/settings/danmaku/danmaku_shield_settings.dart';
-import 'package:kazumi/pages/settings/download/download_settings.dart';
-import 'package:kazumi/pages/timeline/timeline_page.dart';
-import 'package:kazumi/pages/video/video_page.dart';
-import 'package:kazumi/pages/plugin_editor/plugin_view_page.dart';
-import 'package:kazumi/pages/plugin_editor/plugin_editor_page.dart';
-import 'package:kazumi/pages/plugin_editor/plugin_shop_page.dart';
-import 'package:kazumi/pages/webdav_editor/webdav_editor_page.dart';
-import 'package:kazumi/pages/webdav_editor/webdav_setting.dart';
-import 'package:kazumi/pages/logs/logs_page.dart';
-import 'package:kazumi/pages/history/history_page.dart';
-import 'package:kazumi/pages/download/download_page.dart';
-import 'package:kazumi/pages/setting/indexer/indexer_settings_page.dart';
-import 'package:kazumi/pages/setting/media/media_settings_page.dart';
-import 'package:kazumi/pages/setting/metadata/metadata_settings_page.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/services/logging/app_log.dart';
-import 'package:kazumi/services/sentry/sentry_service.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/pages/online/online_video_search_page.dart';
+import 'package:haipee/pages/media_library/media_library_page.dart';
+import 'package:haipee/pages/resource/resource_search_page.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/pages/about/about_page.dart';
+import 'package:haipee/pages/about/license_page.dart';
+import 'package:haipee/pages/my/favorites_page.dart';
+import 'package:haipee/pages/my/my_page.dart';
+import 'package:haipee/pages/info/info_page.dart';
+import 'package:haipee/pages/init_page.dart';
+import 'package:haipee/pages/menu/menu.dart';
+import 'package:haipee/pages/setting/setting_page.dart';
+import 'package:haipee/pages/search/search_page.dart';
+import 'package:haipee/pages/settings/decoder_settings.dart';
+import 'package:haipee/pages/settings/displaymode_settings.dart';
+import 'package:haipee/pages/settings/player_settings.dart';
+import 'package:haipee/pages/settings/super_resolution_settings.dart';
+import 'package:haipee/pages/settings/theme_settings_page.dart';
+import 'package:haipee/pages/setting/appearance/language_settings.dart';
+import 'package:haipee/pages/setting/appearance/exit_behavior_settings.dart';
+import 'package:haipee/pages/settings/danmaku/danmaku_settings.dart';
+import 'package:haipee/pages/settings/danmaku/danmaku_shield_settings.dart';
+import 'package:haipee/pages/settings/download/download_settings.dart';
+import 'package:haipee/pages/timeline/timeline_page.dart';
+import 'package:haipee/pages/video/video_page.dart';
+import 'package:haipee/pages/plugin_editor/plugin_view_page.dart';
+import 'package:haipee/pages/plugin_editor/plugin_editor_page.dart';
+import 'package:haipee/pages/plugin_editor/plugin_shop_page.dart';
+import 'package:haipee/pages/webdav_editor/webdav_editor_page.dart';
+import 'package:haipee/pages/webdav_editor/webdav_setting.dart';
+import 'package:haipee/pages/logs/logs_page.dart';
+import 'package:haipee/pages/history/history_page.dart';
+import 'package:haipee/pages/download/download_page.dart';
+import 'package:haipee/pages/setting/indexer/indexer_settings_page.dart';
+import 'package:haipee/pages/setting/media/media_settings_page.dart';
+import 'package:haipee/pages/setting/metadata/metadata_settings_page.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/settings/keyboard_settings.dart';
+import 'package:haipee/pages/settings/interface_settings.dart';
+import 'package:haipee/pages/settings/renderer_settings.dart';
+import 'package:haipee/pages/settings/sync/sync_settings_page.dart';
+import 'package:haipee/pages/settings/proxy/proxy_settings_page.dart';
+import 'package:haipee/pages/settings/proxy/proxy_editor_page.dart';
+import 'package:haipee/pages/settings/update_settings.dart';
+import 'package:haipee/pages/settings/storage_settings.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/sentry/sentry_service.dart';
 
 /// 全局路由配置
 ///
@@ -60,7 +68,7 @@ final GlobalKey<NavigatorState> rootNavigatorKey = () {
 final GoRouter router = GoRouter(
   navigatorKey: rootNavigatorKey,
   observers: [
-    KazumiDialog.observer,
+    HaipeeDialog.observer,
     SentryService.navigatorObserver,
   ],
 
@@ -186,11 +194,19 @@ final GoRouter router = GoRouter(
       path: Routes.settingsRoot,
       redirect: (context, state) {
         if (state.uri.path == Routes.settingsRoot) {
-          return Routes.settingsTheme;
+          return Routes.settingsPlayer;
         }
         return null;
       },
       routes: [
+        GoRoute(
+          path: 'interface',
+          builder: (context, state) => const InterfaceSettingsPage(),
+        ),
+        GoRoute(
+          path: 'keyboard',
+          builder: (context, state) => const KeyboardSettingsPage(),
+        ),
         GoRoute(
           path: 'language',
           builder: (context, state) => const LanguageSettings(),
@@ -218,6 +234,10 @@ final GoRouter router = GoRouter(
               builder: (context, state) => const DecoderSettings(),
             ),
             GoRoute(
+              path: 'renderer',
+              builder: (context, state) => const RendererSettingsPage(),
+            ),
+            GoRoute(
               path: 'super',
               builder: (context, state) => const SuperResolutionSettings(),
             ),
@@ -233,7 +253,7 @@ final GoRouter router = GoRouter(
             ),
             GoRoute(
               path: 'license',
-              builder: (context, state) => const KazumiLicensePage(),
+              builder: (context, state) => const HaipeeLicensePage(),
             ),
           ],
         ),
@@ -261,6 +281,7 @@ final GoRouter router = GoRouter(
           path: 'plugin',
           builder: (context, state) => PluginViewPage(
             initialCategoryKey: state.uri.queryParameters['category'],
+            initialRuleTypeKey: state.uri.queryParameters['type'],
           ),
           routes: [
             GoRoute(
@@ -281,6 +302,38 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: 'download',
           builder: (context, state) => const DownloadSettingsPage(),
+        ),
+        GoRoute(
+          path: 'download-settings',
+          redirect: (context, state) => Routes.settingsDownload,
+        ),
+        GoRoute(
+          path: 'sync',
+          builder: (context, state) => const SyncSettingsPage(),
+        ),
+        GoRoute(
+          path: 'proxy',
+          builder: (context, state) => const ProxySettingsPage(),
+          routes: [
+            GoRoute(
+              path: 'editor',
+              builder: (context, state) => const ProxyEditorPage(),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: 'update',
+          builder: (context, state) => const UpdateSettingsPage(),
+        ),
+        GoRoute(
+          path: 'storage',
+          builder: (context, state) => const StorageSettingsPage(),
+          routes: [
+            GoRoute(
+              path: 'logs',
+              redirect: (context, state) => Routes.settingsAboutLogs,
+            ),
+          ],
         ),
         GoRoute(
           path: 'rules',

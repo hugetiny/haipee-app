@@ -1,29 +1,28 @@
-import 'package:kazumi/modules/parse_failure/parse_failure_module.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:logger/logger.dart';
+import 'package:haipee/modules/parse_failure/parse_failure_module.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
+import 'package:haipee/utils/storage.dart';
 
 /// 解析失败记录辅助类
 class ParseFailureHelper {
-  /// 记录解析失败
+  /// 记录解析失败，自动持久化至本地数据库并写入统一全链路日志系统 (AppLog / haipee.log)
   static Future<void> recordFailure({
     required int bangumiId,
     required String pluginName,
     required String src,
+    String? bangumiTitle,
+    String? episodeTitle,
     String reason = 'timeout',
   }) async {
     try {
       final key = '${bangumiId}_${pluginName}_$src';
       final existing = GStorage.parseFailures.get(key);
+      final count = existing != null ? existing.failureCount + 1 : 1;
 
       if (existing != null) {
         // 增加失败次数
         final updated = existing.incrementFailure(newReason: reason);
         await GStorage.parseFailures.put(key, updated);
-        KazumiLogger().log(
-          Level.warning,
-          '解析失败记录更新: $pluginName (第 ${updated.failureCount} 次)',
-        );
       } else {
         // 创建新记录
         final record = ParseFailureRecord(
@@ -35,13 +34,28 @@ class ParseFailureHelper {
           reason: reason,
         );
         await GStorage.parseFailures.put(key, record);
-        KazumiLogger().log(
-          Level.warning,
-          '解析失败记录创建: $pluginName',
-        );
       }
+
+      final titleInfo = bangumiTitle != null && bangumiTitle.isNotEmpty ? ' 作品=[$bangumiTitle]' : '';
+      final epInfo = episodeTitle != null && episodeTitle.isNotEmpty ? ' 选集=[$episodeTitle]' : '';
+      AppLog.w(
+        LogModule.stream,
+        '视频资源解析失败 (第 $count 次): 规则=[$pluginName]$titleInfo$epInfo, 页面地址=[$src], 失败原因=[$reason]',
+      );
+    } catch (e, stack) {
+      AppLog.e(LogModule.stream, '记录解析失败异常: $e', error: e, stackTrace: stack);
+    }
+  }
+
+  /// 获取最近发生解析失败的记录列表 (按最近失败时间降序排列)
+  static List<ParseFailureRecord> getRecentFailures({int limit = 20}) {
+    try {
+      final records = GStorage.parseFailures.values.toList();
+      records.sort((a, b) => b.lastFailureTime.compareTo(a.lastFailureTime));
+      return records.take(limit).toList();
     } catch (e) {
-      KazumiLogger().log(Level.error, '记录解析失败时出错: $e');
+      AppLog.w(LogModule.stream, '获取最近解析失败记录出错: $e');
+      return [];
     }
   }
 
@@ -56,7 +70,7 @@ class ParseFailureHelper {
       final record = GStorage.parseFailures.get(key);
       return record?.failureCount ?? 0;
     } catch (e) {
-      KazumiLogger().log(Level.error, '获取解析失败次数时出错: $e');
+      AppLog.e(LogModule.stream, '获取解析失败次数时出错: $e');
       return 0;
     }
   }
@@ -71,7 +85,7 @@ class ParseFailureHelper {
       final key = '${bangumiId}_${pluginName}_$src';
       return GStorage.parseFailures.get(key);
     } catch (e) {
-      KazumiLogger().log(Level.error, '获取解析失败记录时出错: $e');
+      AppLog.e(LogModule.stream, '获取解析失败记录时出错: $e');
       return null;
     }
   }
@@ -87,7 +101,7 @@ class ParseFailureHelper {
       }
       return total;
     } catch (e) {
-      KazumiLogger().log(Level.error, '获取插件总失败次数时出错: $e');
+      AppLog.e(LogModule.stream, '获取插件总失败次数时出错: $e');
       return 0;
     }
   }
@@ -103,7 +117,7 @@ class ParseFailureHelper {
       }
       return failures;
     } catch (e) {
-      KazumiLogger().log(Level.error, '获取番剧失败记录时出错: $e');
+      AppLog.e(LogModule.stream, '获取番剧失败记录时出错: $e');
       return {};
     }
   }
@@ -125,13 +139,13 @@ class ParseFailureHelper {
       }
 
       if (keysToDelete.isNotEmpty) {
-        KazumiLogger().log(
-          Level.info,
+        AppLog.i(
+          LogModule.stream,
           '清理了 ${keysToDelete.length} 条旧的解析失败记录',
         );
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, '清理旧解析失败记录时出错: $e');
+      AppLog.e(LogModule.stream, '清理旧解析失败记录时出错: $e');
     }
   }
 
@@ -144,9 +158,9 @@ class ParseFailureHelper {
     try {
       final key = '${bangumiId}_${pluginName}_$src';
       await GStorage.parseFailures.delete(key);
-      KazumiLogger().log(Level.info, '清除解析失败记录: $pluginName');
+      AppLog.i(LogModule.stream, '清除解析失败记录: $pluginName');
     } catch (e) {
-      KazumiLogger().log(Level.error, '清除解析失败记录时出错: $e');
+      AppLog.e(LogModule.stream, '清除解析失败记录时出错: $e');
     }
   }
 }

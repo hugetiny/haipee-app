@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/modules/staff/staff_item.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/modules/staff/staff_item.dart';
+import 'package:haipee/utils/utils.dart';
 
 class StaffCard extends StatelessWidget {
   const StaffCard({
@@ -46,7 +46,7 @@ class StaffCard extends StatelessWidget {
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: name));
             if (context.mounted) {
-              KazumiDialog.showToast(message: '已复制演职员名称', context: context);
+              HaipeeDialog.showToast(message: '已复制演职员名称', context: context);
             }
           },
         ),
@@ -59,7 +59,7 @@ class StaffCard extends StatelessWidget {
               await Clipboard.setData(
                   ClipboardData(text: staffFullItem.staff.name));
               if (context.mounted) {
-                KazumiDialog.showToast(message: '已复制原名', context: context);
+                HaipeeDialog.showToast(message: '已复制原名', context: context);
               }
             },
           ),

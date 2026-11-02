@@ -1,22 +1,22 @@
 import 'dart:io';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/bean/widget/download_context_menu.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/pages/player/local_player_page.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/download_context_menu.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/pages/player/local_player_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/pages/download/providers.dart';
-import 'package:kazumi/pages/download/download_controller.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/modules/download/download_file_utils.dart';
-import 'package:kazumi/pages/download/download_task_detail_dialog.dart';
-import 'package:kazumi/pages/download/widgets/add_download_dialog.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/layout/app_bar_config.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/pages/download/providers.dart';
+import 'package:haipee/pages/download/download_controller.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/pages/download/download_task_detail_dialog.dart';
+import 'package:haipee/pages/download/widgets/add_download_dialog.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/layout/app_bar_config.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
 
 class DownloadPage extends ConsumerStatefulWidget {
   const DownloadPage({super.key});
@@ -57,18 +57,18 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
 
   void _playTask(BuildContext context, DownloadTask task) {
     if (!task.isPlayable) {
-      KazumiDialog.showToast(message: '该文件不是音视频媒体文件，无法直接播放');
+      HaipeeDialog.showToast(message: '该文件不是音视频媒体文件，无法直接播放');
       return;
     }
     final path = task.filePath ?? task.fileName;
     if (path == null || path.isEmpty) {
-      KazumiDialog.showToast(message: '未找到视频文件路径');
+      HaipeeDialog.showToast(message: '未找到视频文件路径');
       return;
     }
 
     final file = File(path);
     if (!file.existsSync()) {
-      KazumiDialog.showToast(message: '视频文件不存在: $path');
+      HaipeeDialog.showToast(message: '视频文件不存在: $path');
       return;
     }
 
@@ -85,23 +85,23 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
 
   void _streamPlayTask(BuildContext context, DownloadTask task) {
     if (!task.isPlayable) {
-      KazumiDialog.showToast(message: '非音视频文件不支持边下边播');
+      HaipeeDialog.showToast(message: '非音视频文件不支持边下边播');
       return;
     }
     final path = task.filePath ?? task.fileName;
     if (path == null || path.isEmpty) {
-      KazumiDialog.showToast(message: '正在分配本地空间与元数据，请稍候');
+      HaipeeDialog.showToast(message: '正在分配本地空间与元数据，请稍候');
       return;
     }
 
     final file = File(path);
     if (!file.existsSync()) {
-      KazumiDialog.showToast(message: '文件正在高速缓冲首部，请稍候点击');
+      HaipeeDialog.showToast(message: '文件正在高速缓冲首部，请稍候点击');
       return;
     }
 
     if (task.completedLength < 10 * 1024 * 1024 && !task.isComplete) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
           message: '已缓冲 ${_formatFileSize(task.completedLength)}，正在加速首尾关键帧');
     }
 
@@ -129,8 +129,8 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
   }
 
   void _onBackPressed(BuildContext context) {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
       return;
     }
     ref.read(navigationProvider.notifier).updateSelectedIndex(0);
@@ -1486,7 +1486,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                         ? () async {
                             await controller.retryDownload(task);
                             if (context.mounted) {
-                              KazumiDialog.showToast(
+                              HaipeeDialog.showToast(
                                   message: t.downloads.page.toast.retrying);
                             }
                           }

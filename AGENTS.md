@@ -1,6 +1,6 @@
-# Kazumi AI Agent Engineering Guide (AGENTS.md)
+# Haipee AI Agent Engineering Guide (AGENTS.md)
 
-This document establishes the mandatory architectural standards and verification methodology for all AI agents (including DeepCoder, subagents, and automated assistants) working in the Kazumi codebase.
+This document establishes the mandatory architectural standards and verification methodology for all AI agents (including DeepCoder, subagents, and automated assistants) working in the Haipee codebase.
 
 ---
 

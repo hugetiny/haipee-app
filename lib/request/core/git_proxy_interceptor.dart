@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// 全局最底层 GitHub 加速代理重写拦截器
 ///
 /// 架构原则：
-/// 1. 最底层拦截：无论 Kazumi 视频规则（订阅/市场/更新）、Cardigann 种子规则（Prowlarr/Manifest）、
+/// 1. 最底层拦截：无论 Haipee 视频规则（订阅/市场/更新）、Cardigann 种子规则（Prowlarr/Manifest）、
 ///    BT Tracker 列表获取，还是客户端版本检测，只要命中 GitHub 域名且开启了代理，底层自动重写。
 /// 2. 动态可配置：实时读取用户在设置中自定义的代理前缀（默认为 https://ghfast.top/，支持自定义任意代理）。
 /// 3. 防重复包装：智能检测请求路径，若已包含代理前缀则跳过，杜绝二次拼接导致 404。
@@ -89,7 +89,7 @@ class GitProxyInterceptor extends Interceptor {
 
     if (isGitHubUrl(cleanUrl)) {
       final rewritten = '$proxyUrl$cleanUrl';
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[GitProxy] 成功重写 GitHub 请求: $cleanUrl -> $rewritten',
       );
@@ -110,7 +110,7 @@ class GitProxyInterceptor extends Interceptor {
         : getEffectiveProxyUrl();
 
     // 探测测试目标：轻量级稳定 GitHub raw 文件
-    const probeTarget = 'https://raw.githubusercontent.com/Predidit/Kazumi/main/README.md';
+    const probeTarget = 'https://raw.githubusercontent.com/hugetiny/haipee/main/README.md';
     final requestUrl = '$effectiveProxy$probeTarget';
 
     final stopwatch = Stopwatch()..start();
@@ -119,7 +119,7 @@ class GitProxyInterceptor extends Interceptor {
         connectTimeout: const Duration(seconds: 8),
         receiveTimeout: const Duration(seconds: 8),
         headers: {
-          'User-Agent': 'Mozilla/5.0 Kazumi/ProxyProbe',
+          'User-Agent': 'Mozilla/5.0 Haipee/ProxyProbe',
         },
       ),
     );

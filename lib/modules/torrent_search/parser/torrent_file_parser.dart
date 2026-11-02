@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
 
 /// 种子元数据解析结果
 class ParsedTorrent {

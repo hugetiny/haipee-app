@@ -1,8 +1,11 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/bean/widget/tree/tree.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/bean/widget/tree/tree.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
 
 /// 迅雷风格：三联复选框与目录树选择性下载弹窗
 class SelectiveDownloadDialog extends StatefulWidget {
@@ -67,6 +70,9 @@ class _SelectiveDownloadDialogState extends State<SelectiveDownloadDialog> {
           defaultValue: '',
         ) as String).trim();
       } catch (_) {}
+    }
+    if (savePath.isEmpty) {
+      savePath = DownloadFileUtils.getDefaultDownloadDirectorySync();
     }
     _pathController = TextEditingController(text: savePath);
   }
@@ -136,6 +142,10 @@ class _SelectiveDownloadDialogState extends State<SelectiveDownloadDialog> {
 
   /// 选择保存目录
   Future<void> _pickDirectory() async {
+    if (AppLog.isFirebaseTestLab) {
+      AppLog.d(LogModule.download, 'Firebase Test Lab 自动化测试中跳过唤起系统外部文件选择器');
+      return;
+    }
     try {
       final res = await FilePicker.platform.getDirectoryPath(
         dialogTitle: '选择下载保存目录',
@@ -146,7 +156,9 @@ class _SelectiveDownloadDialogState extends State<SelectiveDownloadDialog> {
           _pathController.text = res;
         });
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      AppLog.w(LogModule.download, '选择保存目录失败: $e', error: e, stackTrace: stack);
+    }
   }
 
   /// 扁平化展开的可见节点（支持虚拟列表滚动）

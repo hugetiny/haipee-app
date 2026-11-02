@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/roads/road_module.dart';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/roads/road_module.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// AList V3 开放网盘挂载服务
@@ -105,7 +105,7 @@ class AlistService {
         category: 'drive',
       );
     } catch (e) {
-      KazumiLogger().log(Level.warning, 'AList 搜索异常: $e');
+      HaipeeLogger().log(Level.warning, 'AList 搜索异常: $e');
       return PluginSearchResponse(pluginName: pluginName, data: const []);
     }
   }
@@ -187,7 +187,7 @@ class AlistService {
         ];
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, 'AList 选集解析异常: $e');
+      HaipeeLogger().log(Level.warning, 'AList 选集解析异常: $e');
     }
 
     // 降级：直接尝试作为文件播放

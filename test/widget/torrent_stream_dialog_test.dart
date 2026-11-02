@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
-import 'package:kazumi/modules/torrent_stream/widgets/torrent_stream_dialog.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
+import 'package:haipee/modules/torrent_stream/widgets/torrent_stream_dialog.dart';
 
 class _FakeDialogEngineAdapter implements TorrentEngineAdapter {
   bool initialized = false;

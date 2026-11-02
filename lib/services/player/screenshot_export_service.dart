@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:kazumi/services/player/screenshot_candidate.dart';
+import 'package:haipee/services/player/screenshot_candidate.dart';
 import 'package:path/path.dart' as path;
 
 class ScreenshotExportService {
@@ -37,7 +37,7 @@ class ScreenshotExportService {
       return String.fromCharCodes(safe.runes.take(24));
     }
 
-    return 'Kazumi_${clean(item.title)}_${clean(item.episode)}_'
+    return 'haipee_${clean(item.title)}_${clean(item.episode)}_'
         '${item.timeLabel.replaceAll(':', '-')}_${item.id}.png';
   }
 }

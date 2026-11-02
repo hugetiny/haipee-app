@@ -4,11 +4,11 @@ import 'dart:ui' as ui;
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/utils/api_credentials.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/utils/api_credentials.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// Represents the upstream metadata provider used for a fetch operation.
@@ -115,14 +115,14 @@ class MetadataClient {
         );
       }
     } on DioException catch (error, stackTrace) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.error,
         '[MetadataClient] ${source.name} request failed for $identifier: ${error.message}',
         error: error,
         stackTrace: stackTrace,
       );
     } catch (error, stackTrace) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.error,
         '[MetadataClient] Unexpected ${source.name} failure for $identifier: $error',
         error: error,
@@ -216,7 +216,7 @@ class MetadataClient {
   ) async {
     final int? id = int.tryParse(identifier);
     if (id == null) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[MetadataClient] Invalid Bangumi identifier: $identifier',
       );

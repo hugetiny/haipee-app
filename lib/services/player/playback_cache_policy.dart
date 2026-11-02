@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:kazumi/services/logging/logger.dart';
-import 'package:kazumi/services/network/metered_network_service.dart';
-import 'package:kazumi/services/player/low_memory_mode.dart';
-import 'package:kazumi/utils/async_serial_queue.dart';
+import 'package:haipee/services/logging/logger.dart';
+import 'package:haipee/services/network/metered_network_service.dart';
+import 'package:haipee/services/player/low_memory_mode.dart';
+import 'package:haipee/utils/async_serial_queue.dart';
 import 'package:media_kit/media_kit.dart';
 
 class PlaybackCachePolicy {
@@ -66,7 +66,7 @@ class PlaybackCachePolicy {
         await pp.setProperty('demuxer-max-back-bytes', size);
       });
     } catch (e) {
-      KazumiLogger().w(
+      HaipeeLogger().w(
         'PlaybackCachePolicy: failed to apply demuxer cache size',
         error: e,
       );

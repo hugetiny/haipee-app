@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/parser/anime_title_parser.dart';
-import 'package:kazumi/modules/torrent_search/sources/mikan_source.dart';
-import 'package:kazumi/modules/torrent_search/sources/nyaa_source.dart';
-import 'package:kazumi/modules/torrent_search/sources/torznab_source.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/parser/anime_title_parser.dart';
+import 'package:haipee/modules/torrent_search/sources/mikan_source.dart';
+import 'package:haipee/modules/torrent_search/sources/nyaa_source.dart';
+import 'package:haipee/modules/torrent_search/sources/torznab_source.dart';
 
 void main() {
   group('AnimeTitleParser Tests (化繁为简标题清洗)', () {

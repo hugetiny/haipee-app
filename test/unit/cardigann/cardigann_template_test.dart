@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/cardigann/engine/cardigann_template.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_template.dart';
 
 void main() {
   group('CardigannTemplate Tests', () {

@@ -1,9 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/bangumi/episode_item.dart';
-import 'package:kazumi/modules/comments/comment_item.dart';
-import 'package:kazumi/modules/roads/road_module.dart';
-import 'package:kazumi/plugins/plugins.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/bangumi/episode_item.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
+import 'package:haipee/modules/roads/road_module.dart';
+import 'package:haipee/plugins/plugins.dart';
 
 part 'video_state.freezed.dart';
 

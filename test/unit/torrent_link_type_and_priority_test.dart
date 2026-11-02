@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/widgets/torrent_link_badge.dart';
-import 'package:kazumi/modules/torrent_search/parser/torrent_file_parser.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_link_badge.dart';
+import 'package:haipee/modules/torrent_search/parser/torrent_file_parser.dart';
 
 void main() {
   group('TorrentItem Link Type & Priority Classification Tests', () {

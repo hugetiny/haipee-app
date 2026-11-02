@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/utils/storage.dart';
 import 'gopeed_models.dart';
 import 'libgopeed_worker.dart';
 
@@ -68,6 +69,11 @@ class GopeedService {
       dir.createSync(recursive: true);
     }
 
+    final defaultDownloadDir = DownloadFileUtils.getDefaultDownloadDirectorySync();
+    try {
+      Directory(defaultDownloadDir).createSync(recursive: true);
+    } catch (_) {}
+
     final config = {
       'network': 'tcp',
       'address': '127.0.0.1:0',
@@ -75,6 +81,9 @@ class GopeedService {
       'storage': 'bolt',
       'storageDir': '${dir.path}/storage',
       'refreshInterval': 1000,
+      'downloadConfig': {
+        'downloadDir': defaultDownloadDir,
+      },
     };
 
     await _worker.start(jsonEncode(config)).timeout(const Duration(seconds: 3));
@@ -86,16 +95,14 @@ class GopeedService {
     });
   }
 
-  /// Create a new download task via in-process FFI
-  Future<String> createTask({
+  /// Resolve a download target (HTTP, HLS, Magnet, Torrent) before creating a task
+  Future<GopeedResolveResult?> resolve({
     required String url,
-    String? name,
-    String? savePath,
     Map<String, String>? headers,
     List<String>? trackers,
   }) async {
     if (!_initialized) {
-      throw StateError('GopeedService is not initialized');
+      await initialize();
     }
     final Map<String, dynamic> extra = {};
     if (headers != null && headers.isNotEmpty) {
@@ -110,11 +117,64 @@ class GopeedService {
         'url': url,
         if (extra.isNotEmpty) 'extra': extra,
       },
-      'opts': {
-        if (name != null && name.isNotEmpty) 'name': name,
-        if (savePath != null && savePath.isNotEmpty) 'path': savePath,
-      },
     };
+
+    final res = await _worker.invoke('POST', '/api/v1/resolve', '', jsonEncode(body));
+    if (res is Map && res['code'] == 0 && res['data'] is Map) {
+      return GopeedResolveResult.fromJson((res['data'] as Map).cast<String, dynamic>());
+    }
+    return null;
+  }
+
+  /// Create a new download task via in-process FFI
+  Future<String> createTask({
+    String? url,
+    String? rid,
+    String? name,
+    String? savePath,
+    List<int>? selectFiles,
+    Map<String, String>? headers,
+    List<String>? trackers,
+  }) async {
+    if (!_initialized) {
+      await initialize();
+    }
+    String effectiveSavePath = savePath?.trim() ?? '';
+    if (effectiveSavePath.isEmpty) {
+      effectiveSavePath = DownloadFileUtils.getDefaultDownloadDirectorySync();
+    }
+    try {
+      Directory(effectiveSavePath).createSync(recursive: true);
+    } catch (_) {}
+
+    final Map<String, dynamic> extra = {};
+    if (headers != null && headers.isNotEmpty) {
+      extra['header'] = headers;
+    }
+    if (trackers != null && trackers.isNotEmpty) {
+      extra['trackers'] = trackers;
+    }
+
+    final opts = <String, dynamic>{
+      if (name != null && name.isNotEmpty) 'name': name,
+      if (effectiveSavePath.isNotEmpty) 'path': effectiveSavePath,
+      if (selectFiles != null && selectFiles.isNotEmpty) 'selectFiles': selectFiles,
+    };
+
+    final Map<String, dynamic> body = {
+      'opts': opts,
+    };
+
+    if (rid != null && rid.isNotEmpty) {
+      body['rid'] = rid;
+    } else if (url != null && url.isNotEmpty) {
+      body['req'] = {
+        'url': url,
+        if (extra.isNotEmpty) 'extra': extra,
+      };
+    } else {
+      throw ArgumentError('Either url or rid must be provided to createTask');
+    }
 
     final res = await _worker.invoke('POST', '/api/v1/tasks', '', jsonEncode(body));
     if (res is Map && res['code'] == 0) {
@@ -122,6 +182,7 @@ class GopeedService {
     }
     throw StateError('Failed to create Gopeed task: $res');
   }
+
 
   /// Fetch all tasks from in-process Gopeed engine
   Future<List<GopeedTask>> getTasks() async {

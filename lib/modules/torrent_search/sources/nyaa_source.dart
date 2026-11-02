@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/parser/anime_title_parser.dart';
-import 'package:kazumi/modules/torrent_search/sources/torrent_source.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/parser/anime_title_parser.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_source.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 import 'package:xml/xml.dart';
 
@@ -45,7 +45,7 @@ class NyaaSource implements TorrentSource {
       }
       return parseRssXml(rawXml);
     } catch (e) {
-      KazumiLogger().log(Level.warning, '[NyaaSource] 搜索失败: $e');
+      HaipeeLogger().log(Level.warning, '[NyaaSource] 搜索失败: $e');
       return [];
     }
   }
@@ -125,6 +125,7 @@ class NyaaSource implements TorrentSource {
           publishDate: _formatDate(pubDateRaw),
           rawPublishDate: pubDateRaw,
           source: TorrentSourceType.nyaa,
+          trackerType: 'public',
           seeders: seeders,
           leechers: leechers,
           cleanedTitle: parsedMeta.cleanedTitle,
@@ -138,7 +139,7 @@ class NyaaSource implements TorrentSource {
 
       return result;
     } catch (e) {
-      KazumiLogger().log(Level.warning, '[NyaaSource] XML 解析失败: $e');
+      HaipeeLogger().log(Level.warning, '[NyaaSource] XML 解析失败: $e');
       return [];
     }
   }

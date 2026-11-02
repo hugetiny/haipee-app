@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/card/bangumi_card.dart';
-import 'package:kazumi/bean/widget/collect_button.dart';
-import 'package:kazumi/modules/collect/collect_module.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/pages/my/my_controller.dart';
-import 'package:kazumi/pages/my/providers.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/bean/widget/responsive/responsive.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/card/bangumi_card.dart';
+import 'package:haipee/bean/widget/collect_button.dart';
+import 'package:haipee/modules/collect/collect_module.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/pages/my/my_controller.dart';
+import 'package:haipee/pages/my/providers.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 class FavoritesPage extends ConsumerStatefulWidget {
   const FavoritesPage({super.key});
@@ -47,8 +47,8 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
   }
 
   void _onBackPressed(BuildContext context) {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
       return;
     }
     ref.read(navigationProvider.notifier).updateSelectedIndex(0);
@@ -104,13 +104,13 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
                     defaultValue: false) as bool? ??
                 false;
             if (!webDavEnable) {
-              KazumiDialog.showToast(
+              HaipeeDialog.showToast(
                 message: favoritesTexts.sync.disabled,
               );
               return;
             }
             if (showDelete) {
-              KazumiDialog.showToast(
+              HaipeeDialog.showToast(
                 message: favoritesTexts.sync.editing,
               );
               return;

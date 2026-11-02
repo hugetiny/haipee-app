@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
-import 'package:kazumi/pages/player/player_state.dart';
-import 'package:kazumi/modules/playback/subtitle_matcher.dart';
+import 'package:haipee/pages/player/player_state.dart';
+import 'package:haipee/modules/playback/subtitle_matcher.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

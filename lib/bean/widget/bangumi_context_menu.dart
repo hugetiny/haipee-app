@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/history/history_module.dart';
-import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
-import 'package:kazumi/pages/history/providers.dart';
-import 'package:kazumi/pages/my/providers.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/history/history_module.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
+import 'package:haipee/pages/history/providers.dart';
+import 'package:haipee/pages/my/providers.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:logger/logger.dart';
 
 /// 番剧卡片右键/长按菜单通用构建器
@@ -29,7 +29,7 @@ class BangumiContextMenuHelper {
     final pluginsController = ref.read(pluginsProvider.notifier);
     final router = GoRouter.of(context);
 
-    KazumiDialog.showLoading(
+    HaipeeDialog.showLoading(
       msg: '正在解析播放路线...',
       barrierDismissible: Utils.isDesktop(),
       onDismiss: () {
@@ -46,8 +46,8 @@ class BangumiContextMenuHelper {
       }
     }
     if (!flag) {
-      KazumiDialog.dismiss();
-      KazumiDialog.showToast(message: '该视频来源规则已缺失或已卸载');
+      HaipeeDialog.dismiss();
+      HaipeeDialog.showToast(message: '该视频来源规则已缺失或已卸载');
       return;
     }
     videoPageController.bangumiItem = historyItem.bangumiItem;
@@ -60,14 +60,14 @@ class BangumiContextMenuHelper {
         historyItem.lastSrc,
         videoPageController.currentPlugin.name,
       );
-      KazumiDialog.dismiss();
+      HaipeeDialog.dismiss();
       if (!context.mounted) return;
       router.push(Routes.video);
     } catch (_) {
-      KazumiLogger().log(Level.warning, "获取视频播放列表失败");
-      KazumiDialog.dismiss();
+      HaipeeLogger().log(Level.warning, "获取视频播放列表失败");
+      HaipeeDialog.dismiss();
       if (context.mounted) {
-        KazumiDialog.showToast(message: '获取视频播放列表失败', context: context);
+        HaipeeDialog.showToast(message: '获取视频播放列表失败', context: context);
       }
     }
   }
@@ -141,7 +141,7 @@ class BangumiContextMenuHelper {
               icon: Icons.favorite_rounded,
               onSelected: () {
                 collectController.addCollect(bangumiItem, type: 1);
-                KazumiDialog.showToast(message: '已设为【在看】', context: context);
+                HaipeeDialog.showToast(message: '已设为【在看】', context: context);
               },
             ),
             AppMenuAction(
@@ -149,7 +149,7 @@ class BangumiContextMenuHelper {
               icon: Icons.star_rounded,
               onSelected: () {
                 collectController.addCollect(bangumiItem, type: 2);
-                KazumiDialog.showToast(message: '已设为【想看】', context: context);
+                HaipeeDialog.showToast(message: '已设为【想看】', context: context);
               },
             ),
             AppMenuAction(
@@ -157,7 +157,7 @@ class BangumiContextMenuHelper {
               icon: Icons.done_all_rounded,
               onSelected: () {
                 collectController.addCollect(bangumiItem, type: 4);
-                KazumiDialog.showToast(message: '已设为【看过】', context: context);
+                HaipeeDialog.showToast(message: '已设为【看过】', context: context);
               },
             ),
           ],
@@ -181,7 +181,7 @@ class BangumiContextMenuHelper {
                 icon: Icons.favorite_rounded,
                 onSelected: () {
                   collectController.addCollect(bangumiItem, type: 1);
-                  KazumiDialog.showToast(message: '已切换为【在看】', context: context);
+                  HaipeeDialog.showToast(message: '已切换为【在看】', context: context);
                 },
               ),
             if (collectType != 2)
@@ -190,7 +190,7 @@ class BangumiContextMenuHelper {
                 icon: Icons.star_rounded,
                 onSelected: () {
                   collectController.addCollect(bangumiItem, type: 2);
-                  KazumiDialog.showToast(message: '已切换为【想看】', context: context);
+                  HaipeeDialog.showToast(message: '已切换为【想看】', context: context);
                 },
               ),
             if (collectType != 4)
@@ -199,7 +199,7 @@ class BangumiContextMenuHelper {
                 icon: Icons.done_all_rounded,
                 onSelected: () {
                   collectController.addCollect(bangumiItem, type: 4);
-                  KazumiDialog.showToast(message: '已切换为【看过】', context: context);
+                  HaipeeDialog.showToast(message: '已切换为【看过】', context: context);
                 },
               ),
           ],
@@ -212,7 +212,7 @@ class BangumiContextMenuHelper {
           destructive: true,
           onSelected: () {
             collectController.deleteCollect(bangumiItem);
-            KazumiDialog.showToast(message: '已取消追番', context: context);
+            HaipeeDialog.showToast(message: '已取消追番', context: context);
           },
         ),
       );
@@ -230,7 +230,7 @@ class BangumiContextMenuHelper {
               onDeleteHistory();
             } else {
               ref.read(historyProvider.notifier).deleteHistory(matchedHistory);
-              KazumiDialog.showToast(message: '已移出观看历史', context: context);
+              HaipeeDialog.showToast(message: '已移出观看历史', context: context);
             }
           },
         ),
@@ -264,7 +264,7 @@ class BangumiContextMenuHelper {
         onSelected: () async {
           await Clipboard.setData(ClipboardData(text: title));
           if (context.mounted) {
-            KazumiDialog.showToast(message: '已复制番剧名称', context: context);
+            HaipeeDialog.showToast(message: '已复制番剧名称', context: context);
           }
         },
       ),
@@ -278,7 +278,7 @@ class BangumiContextMenuHelper {
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: bangumiItem.name));
             if (context.mounted) {
-              KazumiDialog.showToast(message: '已复制原名', context: context);
+              HaipeeDialog.showToast(message: '已复制原名', context: context);
             }
           },
         ),
@@ -292,7 +292,7 @@ class BangumiContextMenuHelper {
         onSelected: () async {
           await Clipboard.setData(ClipboardData(text: bangumiItem.id.toString()));
           if (context.mounted) {
-            KazumiDialog.showToast(message: '已复制 Bangumi ID', context: context);
+            HaipeeDialog.showToast(message: '已复制 Bangumi ID', context: context);
           }
         },
       ),
@@ -305,7 +305,7 @@ class BangumiContextMenuHelper {
         onSelected: () async {
           await Clipboard.setData(ClipboardData(text: bgmUrl));
           if (context.mounted) {
-            KazumiDialog.showToast(message: '已复制 Bangumi 链接', context: context);
+            HaipeeDialog.showToast(message: '已复制 Bangumi 链接', context: context);
           }
         },
       ),

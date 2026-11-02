@@ -1,10 +1,10 @@
 import 'package:flutter/services.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:kazumi/modules/characters/character_item.dart';
-import 'package:kazumi/pages/info/character_page.dart';
+import 'package:haipee/modules/characters/character_item.dart';
+import 'package:haipee/pages/info/character_page.dart';
 
 class CharacterCard extends StatelessWidget {
   const CharacterCard({
@@ -65,7 +65,7 @@ class CharacterCard extends StatelessWidget {
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: characterItem.name));
             if (context.mounted) {
-              KazumiDialog.showToast(message: '已复制角色名称', context: context);
+              HaipeeDialog.showToast(message: '已复制角色名称', context: context);
             }
           },
         ),
@@ -77,7 +77,7 @@ class CharacterCard extends StatelessWidget {
               await Clipboard.setData(
                   ClipboardData(text: characterItem.actorList[0].name));
               if (context.mounted) {
-                KazumiDialog.showToast(message: '已复制声优名称', context: context);
+                HaipeeDialog.showToast(message: '已复制声优名称', context: context);
               }
             },
           ),

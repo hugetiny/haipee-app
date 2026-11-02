@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
 
 /// [DEPRECATED] This class is deprecated and should not be used.
 /// Use SourceSearchController from lib/pages/info/source_search_provider.dart instead.

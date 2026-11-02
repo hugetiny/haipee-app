@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/bean/widget/tree/tree_indent.dart';
+import 'package:haipee/bean/widget/tree/tree_indent.dart';
 
 /// 统一领域语义树形瓦片组件 (TreeTile)
 ///

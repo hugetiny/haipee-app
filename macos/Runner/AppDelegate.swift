@@ -25,7 +25,7 @@ class AppDelegate: FlutterAppDelegate {
         }
         
         let controller : FlutterViewController = mainFlutterWindow?.contentViewController as! FlutterViewController
-        let channel = FlutterMethodChannel.init(name: "com.predidit.kazumi/intent", binaryMessenger: controller.engine.binaryMessenger)
+        let channel = FlutterMethodChannel.init(name: "com.hugetiny.haipee/intent", binaryMessenger: controller.engine.binaryMessenger)
         channel.setMethodCallHandler({
             (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             if call.method == "updateDockIcon" {

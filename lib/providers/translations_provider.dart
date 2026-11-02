@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/setting/providers.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/setting/providers.dart';
 
 /// Exposes the active [AppTranslations] instance for Riverpod listeners that
 /// operate outside of widget build contexts.

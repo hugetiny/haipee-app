@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/setting/providers.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
 
 /// GitHub 加速代理底层配置弹窗
 ///
@@ -88,7 +88,7 @@ class _GitProxyDialogState extends ConsumerState<GitProxyDialog> {
 
     if (mounted) {
       Navigator.of(context).pop();
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: 'GitHub 加速代理设置已更新',
         context: context,
       );
@@ -140,7 +140,7 @@ class _GitProxyDialogState extends ConsumerState<GitProxyDialog> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '底层自动重写 Kazumi 视频规则、Cardigann 规则、Tracker 与更新下载',
+                          '底层自动重写 Haipee 视频规则、Cardigann 规则、Tracker 与更新下载',
                           style: textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),

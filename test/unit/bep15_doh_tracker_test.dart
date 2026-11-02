@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_tracker_service.dart';
+import 'package:haipee/modules/torrent_stream/torrent_tracker_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

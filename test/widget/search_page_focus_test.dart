@@ -4,15 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/card/bangumi_card.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/search/search_history_module.dart';
-import 'package:kazumi/pages/search/providers.dart';
-import 'package:kazumi/pages/search/search_controller.dart';
-import 'package:kazumi/pages/search/search_page.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/card/bangumi_card.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/search/search_history_module.dart';
+import 'package:haipee/pages/search/providers.dart';
+import 'package:haipee/pages/search/search_controller.dart';
+import 'package:haipee/pages/search/search_page.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/storage.dart';
 
 class _FakeSearchPageController extends SearchPageController {
   final SearchPageState testState;
@@ -70,7 +70,7 @@ void main() {
   late Directory tempDir;
 
   setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('kazumi_search_page_test_');
+    tempDir = await Directory.systemTemp.createTemp('haipee_search_page_test_');
     Hive.init(tempDir.path);
     if (!Hive.isAdapterRegistered(6)) {
       Hive.registerAdapter(SearchHistoryAdapter());

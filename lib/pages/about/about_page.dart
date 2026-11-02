@@ -1,19 +1,19 @@
 import 'dart:io';
 
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/setting/setting_controller.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/setting/setting_controller.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/setting/providers.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/setting/providers.dart';
 
 class AboutPage extends ConsumerStatefulWidget {
   const AboutPage({super.key});
@@ -37,8 +37,8 @@ class _AboutPageState extends ConsumerState<AboutPage> {
   }
 
   void onBackPressed(BuildContext context) {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
       return;
     }
   }
@@ -89,7 +89,7 @@ class _AboutPageState extends ConsumerState<AboutPage> {
   }
 
   void _showCacheDialog() {
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (context) {
         final cacheDialog = context.t.dialogs.cache;
         return AlertDialog(
@@ -98,7 +98,7 @@ class _AboutPageState extends ConsumerState<AboutPage> {
           actions: [
             TextButton(
               onPressed: () {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               },
               child: Text(
                 context.t.app.cancel,
@@ -110,7 +110,7 @@ class _AboutPageState extends ConsumerState<AboutPage> {
                 try {
                   _clearCache();
                 } catch (_) {}
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               },
               child: Text(context.t.app.confirm),
             ),
@@ -137,9 +137,8 @@ class _AboutPageState extends ConsumerState<AboutPage> {
       onPopInvokedWithResult: (bool didPop, Object? result) async {
         onBackPressed(context);
       },
-      child: Scaffold(
-        appBar: SysAppBar(title: Text(aboutTranslations.title)),
-        // backgroundColor: Colors.transparent,
+      child: SettingsDetailScaffold(
+        title: Text(aboutTranslations.title),
         body: SettingsList(
           sections: [
             SettingsSection(

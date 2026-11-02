@@ -1,18 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-export 'package:kazumi/modules/torrent_stream/torrent_stream_models.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_stream_models.dart';
+export 'package:haipee/modules/torrent_stream/torrent_stream_models.dart';
+import 'package:haipee/modules/torrent_stream/torrent_stream_models.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
-import 'package:kazumi/modules/torrent_stream/torrserver_stream_engine.dart';
-import 'package:kazumi/modules/torrent_stream/torrserver_client.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_tracker_service.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/services/logging/app_log.dart' hide KazumiLogger;
-import 'package:kazumi/services/logging/log_module.dart';
-import 'package:kazumi/modules/debrid/debrid_service.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
+import 'package:haipee/modules/torrent_stream/torrserver_stream_engine.dart';
+import 'package:haipee/modules/torrent_stream/torrserver_client.dart';
+import 'package:haipee/modules/torrent_stream/torrent_tracker_service.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/services/logging/app_log.dart' hide HaipeeLogger;
+import 'package:haipee/services/logging/log_module.dart';
+import 'package:haipee/modules/debrid/debrid_service.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_service.dart';
 import 'package:logger/logger.dart';
 
 /// Exception thrown when a torrent streaming operation fails.
@@ -56,8 +57,6 @@ enum TorrentStreamEngine {
   auto,        // 智能双引擎互保
   debrid,      // Debrid 云端高速离线 Hub (Real-Debrid / TorBox / PikPak)
   torrserver,  // TorrServer 专精视频流式引擎 (纯内存环形缓冲，少节点网络穿透，MP4/MKV首尾索引预读)
-  @Deprecated('Aria2 engine retired; defaults to torrserver')
-  aria2,       // 兼容保留枚举，已弃用
   native,      // 原生 Libtorrent C++ 引擎 (内存滑窗分片调度)
 }
 
@@ -174,7 +173,7 @@ class DefaultTorrentEngineAdapter implements TorrentEngineAdapter {
   bool get isInitialized => _initialized;
 
   @override
-  String get libraryVersion => 'kazumi-embedded';
+  String get libraryVersion => 'haipee-embedded';
 
   @override
   Future<void> init({
@@ -366,7 +365,7 @@ class TorrentStreamService {
     } catch (_) {
       tempPath = Directory.systemTemp.path;
     }
-    final cacheDir = Directory('$tempPath/kazumi_stream_cache');
+    final cacheDir = Directory('$tempPath/haipee_stream_cache');
     if (!cacheDir.existsSync()) {
       await cacheDir.create(recursive: true);
     }
@@ -415,7 +414,7 @@ class TorrentStreamService {
       );
       _adapter.configureSession(config);
     } catch (e) {
-      KazumiLogger().log(Level.warning, '[TorrentStreamService] configureSession error: $e');
+      HaipeeLogger().log(Level.warning, '[TorrentStreamService] configureSession error: $e');
     }
   }
 
@@ -445,7 +444,7 @@ class TorrentStreamService {
           targetEpisode: (fileIndex ?? 0) + 1,
         );
         if (directUrl != null && directUrl.isNotEmpty) {
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.info,
             '[TorrentStreamService] Debrid cache HIT! Playing directly from cloud CDN: $directUrl',
           );
@@ -482,7 +481,7 @@ class TorrentStreamService {
           return session;
         }
       } catch (e) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '[TorrentStreamService] Debrid check failed, falling back to local engine: $e',
         );
@@ -528,9 +527,8 @@ class TorrentStreamService {
     }
 
     if (effectiveEngine == TorrentStreamEngine.torrserver ||
-        effectiveEngine == TorrentStreamEngine.aria2 ||
         !_nativeEngineAvailable) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[TorrentStreamService] Launching dedicated TorrServer stream: $title',
       );
@@ -585,7 +583,7 @@ class TorrentStreamService {
       if (effectiveEngine == TorrentStreamEngine.auto && _adapter is DefaultTorrentEngineAdapter) {
         final torrServerReady = await TorrServerStreamEngine.instance.isAvailable();
         if (torrServerReady) {
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.info,
             '[TorrentStreamService] Native stream unviable ($e). Seamlessly falling back to TorrServerStreamEngine...',
           );
@@ -651,7 +649,7 @@ class TorrentStreamService {
     ));
 
     final torrentId = _adapter.addMagnet(enhancedMagnet, streamOnly: true);
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[TorrentStreamService] Added stream magnet (id=$torrentId): $title',
     );
@@ -898,7 +896,7 @@ class TorrentStreamService {
       }
     }
 
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[TorrentStreamService] Native stream ready at ${session.streamUrl} (file: ${selectedFile.name}, size: ${selectedFile.size})',
     );
@@ -934,6 +932,33 @@ class TorrentStreamService {
       );
     } catch (e) {
       if (cancelToken?.isCancelled == true) rethrow;
+
+      // Fallback via Gopeed engine
+      try {
+        if (!GopeedService().isInitialized) {
+          await GopeedService().initialize();
+        }
+        onProgress?.call('正在通过 Gopeed 引擎解析种子文件列表...');
+        final gopeedRes = await GopeedService().resolve(url: magnetUri);
+        if (gopeedRes != null && gopeedRes.files.isNotEmpty) {
+          return gopeedRes.files.map((f) {
+            final segments = f.path.split('/').where((s) => s.isNotEmpty).toList();
+            final name = segments.isNotEmpty ? segments.last : '文件 ${f.id + 1}';
+            return TorrentFileEntry(
+              index: f.id + 1,
+              name: name,
+              path: f.path,
+              sizeBytes: f.size,
+              pathSegments: segments.isNotEmpty ? segments : [name],
+            );
+          }).toList();
+        }
+      } catch (ge) {
+        HaipeeLogger().log(
+          Level.warning,
+          '[TorrentStreamService] Gopeed resolve fallback failed: $ge',
+        );
+      }
 
       // Fallback via TorrServer if available
       if (_adapter is DefaultTorrentEngineAdapter) {
@@ -973,7 +998,7 @@ class TorrentStreamService {
     onProgress?.call('正在通过 DHT 与 Tracker 搜索元数据节点...');
 
     final torrentId = _adapter.addMagnet(enhancedMagnet, streamOnly: true);
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[TorrentStreamService] Resolving magnet metadata (id=$torrentId)',
     );
@@ -1068,7 +1093,7 @@ class TorrentStreamService {
     try {
       _adapter.stopStream(streamId);
     } catch (e) {
-      KazumiLogger().log(Level.warning, '[TorrentStreamService] stopStream error: $e');
+      HaipeeLogger().log(Level.warning, '[TorrentStreamService] stopStream error: $e');
     }
 
     final targetTorrentId = torrentId ?? session?.torrentId;
@@ -1076,7 +1101,7 @@ class TorrentStreamService {
       try {
         _adapter.removeTorrent(targetTorrentId, deleteFiles: deleteFiles);
       } catch (e) {
-        KazumiLogger().log(Level.warning, '[TorrentStreamService] removeTorrent error: $e');
+        HaipeeLogger().log(Level.warning, '[TorrentStreamService] removeTorrent error: $e');
       }
     }
   }

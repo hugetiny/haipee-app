@@ -4,13 +4,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
-import 'package:kazumi/pages/plugin_editor/widgets/plugin_dry_run_dialog.dart';
-import 'package:kazumi/pages/plugin_editor/widgets/plugin_subscription_dialog.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/pages/plugin_editor/widgets/plugin_dry_run_dialog.dart';
+import 'package:haipee/pages/plugin_editor/widgets/plugin_subscription_dialog.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/services/logging/app_log.dart';
 
 /// 统一的视频源插件规则导入对话框 (支持单条及批量导入)
 /// 支持多选本地文件、剪贴板粘贴多条 JSON/YAML 规则、从远程 URL / 订阅源拉取
@@ -89,13 +90,16 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = data?.text?.trim() ?? '';
     if (text.isEmpty) {
-      KazumiDialog.showToast(message: '剪贴板为空');
+      HaipeeDialog.showToast(message: '剪贴板为空');
       return;
     }
     _contentController.text = text;
   }
 
   Future<void> _pickFile() async {
+    if (AppLog.isFirebaseTestLab) {
+      return;
+    }
     try {
       setState(() {
         _isLoading = true;
@@ -135,7 +139,7 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
             }
           });
           if (mounted) {
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
                 message: '已成功从文件读取 ${pickedList.length} 条规则');
           }
         } else {
@@ -154,7 +158,7 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
   Future<void> _fetchUrl() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) {
-      KazumiDialog.showToast(message: '请输入有效的规则 URL');
+      HaipeeDialog.showToast(message: '请输入有效的规则 URL');
       return;
     }
 
@@ -170,7 +174,7 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
           receiveTimeout: const Duration(seconds: 12),
           headers: {
             'User-Agent':
-                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Kazumi/Importer',
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Haipee/Importer',
           },
         ),
       );
@@ -202,11 +206,11 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
       final p = _parsedPlugins.first;
       controller.updatePlugin(p);
       controller.togglePluginEnabled(p.name, true);
-      KazumiDialog.showToast(message: '成功导入规则: ${p.name}');
+      HaipeeDialog.showToast(message: '成功导入规则: ${p.name}');
     } else {
       final count =
           await controller.addOrUpdatePlugins(_parsedPlugins, enableAll: true);
-      KazumiDialog.showToast(message: '已成功批量导入 $count 条视频规则');
+      HaipeeDialog.showToast(message: '已成功批量导入 $count 条视频规则');
     }
 
     if (mounted) {
@@ -247,7 +251,7 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '导入 Kazumi 视频规则',
+                  '导入 Haipee 视频规则',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -357,7 +361,7 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
                     fontSize: 12,
                   ),
                   decoration: InputDecoration(
-                    hintText: '在此粘贴 Kazumi 分享口令、JSON/YAML 单条或数组规则...',
+                    hintText: '在此粘贴 Haipee 分享口令、JSON/YAML 单条或数组规则...',
                     filled: true,
                     fillColor: colorScheme.surfaceContainerHighest.withAlpha(80),
                     border: OutlineInputBorder(

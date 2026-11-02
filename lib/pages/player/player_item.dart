@@ -1,41 +1,41 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
-import 'package:kazumi/pages/player/player_item_panel.dart';
-import 'package:kazumi/pages/player/smallest_player_item_panel.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/utils/webdav.dart';
+import 'package:haipee/pages/player/player_item_panel.dart';
+import 'package:haipee/pages/player/smallest_player_item_panel.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/utils/webdav.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
-import 'package:kazumi/pages/player/player_controller.dart';
+import 'package:haipee/pages/player/player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/services/player/audio_controller.dart';
-import 'package:kazumi/pages/player/player_state.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/pages/video/providers.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/services/player/audio_controller.dart';
+import 'package:haipee/pages/player/player_state.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/pages/video/providers.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
-import 'package:kazumi/pages/history/history_controller.dart';
-import 'package:kazumi/pages/history/providers.dart';
-import 'package:kazumi/pages/my/my_controller.dart';
-import 'package:kazumi/pages/my/providers.dart';
+import 'package:haipee/pages/history/history_controller.dart';
+import 'package:haipee/pages/history/providers.dart';
+import 'package:haipee/pages/my/my_controller.dart';
+import 'package:haipee/pages/my/providers.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/request/damaku.dart';
-import 'package:kazumi/modules/danmaku/danmaku_search_response.dart';
-import 'package:kazumi/modules/danmaku/danmaku_episode_response.dart';
-import 'package:kazumi/pages/player/player_item_surface.dart';
-import 'package:kazumi/pages/setting/setting_controller.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/request/damaku.dart';
+import 'package:haipee/modules/danmaku/danmaku_search_response.dart';
+import 'package:haipee/modules/danmaku/danmaku_episode_response.dart';
+import 'package:haipee/pages/player/player_item_surface.dart';
+import 'package:haipee/pages/setting/setting_controller.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 /// Provider for super resolution warning dialog "don't ask again" checkbox state
 final _superResolutionDontAskAgainProvider =
@@ -238,7 +238,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     if (isHighMode && !alreadyShown) {
       bool confirmed = false;
 
-      await KazumiDialog.show(builder: (context) {
+      await HaipeeDialog.show(builder: (context) {
         return Consumer(builder: (context, ref, child) {
           final dontAskAgain = ref.watch(_superResolutionDontAskAgainProvider);
 
@@ -272,7 +272,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                   if (dontAskAgain) {
                     await setting.put(SettingBoxKey.superResolutionWarn, true);
                   }
-                  KazumiDialog.dismiss();
+                  HaipeeDialog.dismiss();
                 },
                 child: Text(t.app.cancel),
               ),
@@ -282,7 +282,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                   if (dontAskAgain) {
                     await setting.put(SettingBoxKey.superResolutionWarn, true);
                   }
-                  KazumiDialog.dismiss();
+                  HaipeeDialog.dismiss();
                 },
                 child: Text(t.app.confirm),
               ),
@@ -486,7 +486,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                 currentRoadData.identifier.length)
             ? currentRoadData.identifier[videoPageController.currentEpisode]
             : '${videoPageController.currentEpisode + 1}';
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: context.t.playback.toast.loadingEpisode.replaceFirst(
             '{identifier}',
             nextIdentifier,
@@ -545,7 +545,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
       );
       _syncAudioServiceState();
     } catch (e) {
-      KazumiLogger().w('AudioController: failed to bind callbacks', error: e);
+      HaipeeLogger().w('AudioController: failed to bind callbacks', error: e);
     }
   }
 
@@ -589,22 +589,22 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
         ),
       );
     } catch (e) {
-      KazumiLogger().w('AudioController: failed to sync state', error: e);
+      HaipeeLogger().w('AudioController: failed to sync state', error: e);
     }
   }
 
   void showDanmakuSearchDialog(String keyword) async {
     final t = context.t;
-    KazumiDialog.dismiss();
-    KazumiDialog.showLoading(msg: t.playback.loading.danmakuSearch);
+    HaipeeDialog.dismiss();
+    HaipeeDialog.showLoading(msg: t.playback.loading.danmakuSearch);
     DanmakuSearchResponse danmakuSearchResponse;
     DanmakuEpisodeResponse danmakuEpisodeResponse;
     try {
       danmakuSearchResponse =
           await DanmakuRequest.getDanmakuSearchResponse(keyword);
     } catch (error) {
-      KazumiDialog.dismiss();
-      KazumiDialog.showToast(
+      HaipeeDialog.dismiss();
+      HaipeeDialog.showToast(
         message: t.playback.toast.danmakuSearchError.replaceFirst(
           '{error}',
           error.toString(),
@@ -612,14 +612,14 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
       );
       return;
     }
-    KazumiDialog.dismiss();
+    HaipeeDialog.dismiss();
     if (danmakuSearchResponse.animes.isEmpty) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: t.playback.toast.danmakuSearchEmpty,
       );
       return;
     }
-    await KazumiDialog.show(builder: (dialogContext) {
+    await HaipeeDialog.show(builder: (dialogContext) {
       return Dialog(
         child: ListView(
           shrinkWrap: true,
@@ -627,16 +627,16 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
             return ListTile(
               title: Text(danmakuInfo.animeTitle),
               onTap: () async {
-                KazumiDialog.dismiss();
-                KazumiDialog.showLoading(msg: t.playback.loading.danmakuSearch);
+                HaipeeDialog.dismiss();
+                HaipeeDialog.showLoading(msg: t.playback.loading.danmakuSearch);
                 try {
                   danmakuEpisodeResponse =
                       await DanmakuRequest.getDanDanEpisodesByDanDanBangumiID(
                           danmakuInfo.animeId,
                           silent: false);
                 } catch (error) {
-                  KazumiDialog.dismiss();
-                  KazumiDialog.showToast(
+                  HaipeeDialog.dismiss();
+                  HaipeeDialog.showToast(
                     message: t.playback.toast.danmakuSearchError.replaceFirst(
                       '{error}',
                       error.toString(),
@@ -644,14 +644,14 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                   );
                   return;
                 }
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
                 if (danmakuEpisodeResponse.episodes.isEmpty) {
-                  KazumiDialog.showToast(
+                  HaipeeDialog.showToast(
                     message: t.playback.toast.danmakuSearchEmpty,
                   );
                   return;
                 }
-                KazumiDialog.show(builder: (episodesContext) {
+                HaipeeDialog.show(builder: (episodesContext) {
                   return Dialog(
                     child: ListView(
                       shrinkWrap: true,
@@ -659,8 +659,8 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                         return ListTile(
                           title: Text(episode.episodeTitle),
                           onTap: () {
-                            KazumiDialog.dismiss();
-                            KazumiDialog.showToast(
+                            HaipeeDialog.dismiss();
+                            HaipeeDialog.showToast(
                               message: t.playback.toast.danmakuSwitching,
                             );
                             playerController
@@ -683,11 +683,11 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
   void showDanmakuSwitch() {
     if (playerController.activeBiliCid != null &&
         playerController.activeBiliCid! > 0) {
-      KazumiDialog.showToast(message: '当前为哔哩哔哩原生视频，以官方 CID 弹幕为准，无需外部模糊匹配');
+      HaipeeDialog.showToast(message: '当前为哔哩哔哩原生视频，以官方 CID 弹幕为准，无需外部模糊匹配');
       return;
     }
     final t = context.t;
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (context) {
         final TextEditingController searchTextController =
             TextEditingController(text: videoPageController.title);
@@ -705,7 +705,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
           actions: [
             TextButton(
               onPressed: () {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
                 widget.keyboardFocus.requestFocus();
               },
               child: Text(
@@ -728,7 +728,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
   Widget buildVideoInfoBody(PlayerState state, PlayerController controller) {
     final t = context.t;
     void copyWithToast(String content) {
-      KazumiDialog.showToast(message: t.playback.toast.clipboardCopied);
+      HaipeeDialog.showToast(message: t.playback.toast.clipboardCopied);
       Clipboard.setData(ClipboardData(text: content));
     }
 
@@ -802,7 +802,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
           Clipboard.setData(
             ClipboardData(text: state.playerLog.join('\n')),
           );
-          KazumiDialog.showToast(
+          HaipeeDialog.showToast(
             message: context.t.playback.toast.clipboardCopied,
           );
         },
@@ -860,7 +860,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
 
   void showSyncPlayEndPointSwitchDialog() {
     if (playerController.syncplayController != null) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: context.t.playback.syncplay.switchServerBlocked,
       );
       return;
@@ -874,7 +874,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
         SettingBoxKey.syncPlayEndPoint,
         defaultValue: defaultSyncPlayEndPoint);
 
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (context) {
         return Consumer(builder: (context, ref, child) {
           // Initialize providers with current values
@@ -922,7 +922,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                             if (newValue == defaultCustomSyncPlayEndPoint) {
                               final serverTextController =
                                   TextEditingController();
-                              KazumiDialog.show(
+                              HaipeeDialog.show(
                                 builder: (context) {
                                   return AlertDialog(
                                     title: Text(t.playback.syncplay.selectServer
@@ -938,7 +938,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                                       TextButton(
                                         child: Text(t.app.cancel),
                                         onPressed: () {
-                                          KazumiDialog.dismiss();
+                                          HaipeeDialog.dismiss();
                                         },
                                       ),
                                       TextButton(
@@ -948,7 +948,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                                                   .text.isNotEmpty &&
                                               !syncPlayEndPoints.contains(
                                                   serverTextController.text)) {
-                                            KazumiDialog.dismiss();
+                                            HaipeeDialog.dismiss();
                                             ref
                                                 .read(
                                                     _syncPlayCustomServerProvider
@@ -960,7 +960,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                                                         .notifier)
                                                 .state = serverTextController.text;
                                           } else {
-                                            KazumiDialog.showToast(
+                                            HaipeeDialog.showToast(
                                               message: t
                                                   .playback
                                                   .syncplay
@@ -992,7 +992,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
               TextButton(
                 child: Text(t.app.cancel),
                 onPressed: () {
-                  KazumiDialog.dismiss();
+                  HaipeeDialog.dismiss();
                 },
               ),
               TextButton(
@@ -1002,7 +1002,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                     SettingBoxKey.syncPlayEndPoint,
                     selectedServer,
                   );
-                  KazumiDialog.dismiss();
+                  HaipeeDialog.dismiss();
                 },
               ),
             ],
@@ -1016,7 +1016,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     final formKey = GlobalKey<FormState>();
     final TextEditingController roomController = TextEditingController();
     final TextEditingController usernameController = TextEditingController();
-    KazumiDialog.show(builder: (BuildContext context) {
+    HaipeeDialog.show(builder: (BuildContext context) {
       return AlertDialog(
         title: Text(context.t.playback.syncplay.join.title),
         content: Form(
@@ -1064,14 +1064,14 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
         actions: [
           TextButton(
             onPressed: () {
-              KazumiDialog.dismiss();
+              HaipeeDialog.dismiss();
             },
             child: Text(context.t.app.cancel),
           ),
           TextButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
                 playerController.createSyncPlayRoom(roomController.text,
                     usernameController.text, widget.changeEpisode);
               }
@@ -1267,7 +1267,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                               try {
                                 playerController.playOrPause();
                               } catch (e) {
-                                KazumiLogger().log(
+                                HaipeeLogger().log(
                                     Level.error, '播放器内部错误 ${e.toString()}');
                               }
                             }
@@ -1291,7 +1291,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                                     .seek(Duration(seconds: targetPosition));
                                 playerTimer = getPlayerTimer();
                               } catch (e) {
-                                KazumiLogger().log(Level.error, e.toString());
+                                HaipeeLogger().log(Level.error, e.toString());
                               }
                             }
                             // 上方向键被按下
@@ -1356,7 +1356,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                                           10));
                                   playerTimer = getPlayerTimer();
                                 } catch (e) {
-                                  KazumiLogger().log(
+                                  HaipeeLogger().log(
                                       Level.error, '播放器内部错误 ${e.toString()}');
                                 }
                               }

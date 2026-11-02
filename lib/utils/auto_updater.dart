@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:logger/logger.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -16,12 +16,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// 安装类型枚举
 enum InstallationType {
-  windowsMsix, // Kazumi_windows_1.7.5.msix
-  windowsPortable, // Kazumi_windows_1.7.5.zip
-  linuxDeb, // Kazumi_linux_1.7.5_amd64.deb
-  linuxTar, // Kazumi_linux_1.7.5_amd64.tar.gz
-  macosDmg, // Kazumi_macos_1.7.5.dmg
-  androidApk, // Kazumi_android_1.7.5.apk
+  windowsMsix, // Haipee_windows_1.7.5.msix
+  windowsPortable, // Haipee_windows_1.7.5.zip
+  linuxDeb, // Haipee_linux_1.7.5_amd64.deb
+  linuxTar, // Haipee_linux_1.7.5_amd64.tar.gz
+  macosDmg, // Haipee_macos_1.7.5.dmg
+  androidApk, // Haipee_android_1.7.5.apk
   ios, // iOS App
   unknown,
 }
@@ -97,7 +97,7 @@ class AutoUpdater {
         availableTypes.add(InstallationType.androidApk);
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '检测安装类型失败: ${e.toString()}');
+      HaipeeLogger().log(Level.warning, '检测安装类型失败: ${e.toString()}');
     }
 
     if (availableTypes.isEmpty) {
@@ -140,7 +140,7 @@ class AutoUpdater {
 
       return null;
     } catch (e) {
-      KazumiLogger().log(Level.error, '检查更新失败: ${e.toString()}');
+      HaipeeLogger().log(Level.error, '检查更新失败: ${e.toString()}');
       rethrow;
     }
   }
@@ -158,7 +158,7 @@ class AutoUpdater {
       }
     } catch (e) {
       // 自动检查失败时不显示错误
-      KazumiLogger().log(Level.warning, '自动检查更新失败: ${e.toString()}');
+      HaipeeLogger().log(Level.warning, '自动检查更新失败: ${e.toString()}');
     }
   }
 
@@ -170,16 +170,16 @@ class AutoUpdater {
       if (updateInfo != null) {
         _showUpdateDialog(updateInfo, isAutoCheck: false);
       } else {
-        KazumiDialog.showToast(message: updateTexts.toast.alreadyLatest);
+        HaipeeDialog.showToast(message: updateTexts.toast.alreadyLatest);
       }
     } catch (e) {
-      KazumiDialog.showToast(message: updateTexts.toast.checkFailed);
+      HaipeeDialog.showToast(message: updateTexts.toast.checkFailed);
     }
   }
 
   /// 显示更新对话框
   void _showUpdateDialog(UpdateInfo updateInfo, {bool isAutoCheck = false}) {
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (context) {
         final translations = context.t;
         final updateTexts = translations.settings.update;
@@ -225,7 +225,7 @@ class AutoUpdater {
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(4),
                                 onTap: () {
-                                  KazumiDialog.dismiss();
+                                  HaipeeDialog.dismiss();
                                   _downloadUpdateWithType(updateInfo, type);
                                 },
                                 child: Container(
@@ -285,8 +285,8 @@ class AutoUpdater {
               TextButton(
                 onPressed: () {
                   setting.put(SettingBoxKey.autoUpdate, false);
-                  KazumiDialog.dismiss();
-                  KazumiDialog.showToast(
+                  HaipeeDialog.dismiss();
+                  HaipeeDialog.showToast(
                       message: updateTexts.toast.autoUpdateDisabled);
                 },
                 child: Text(
@@ -296,7 +296,7 @@ class AutoUpdater {
                 ),
               ),
             TextButton(
-              onPressed: () => KazumiDialog.dismiss(),
+              onPressed: () => HaipeeDialog.dismiss(),
               child: Text(
                 updateTexts.dialog.actions.remindLater,
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -312,7 +312,7 @@ class AutoUpdater {
               ),
             TextButton(
               onPressed: () {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
                 // 直接使用第一个可用的安装类型
                 if (updateInfo.availableInstallationTypes.isNotEmpty) {
                   _downloadUpdateWithType(
@@ -372,7 +372,7 @@ class AutoUpdater {
       final downloadUrl =
           await _getDownloadUrlForType(updateInfo.assets, selectedType);
       if (downloadUrl.isEmpty) {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
             message: updateTexts.toast.downloadLinkMissing.replaceFirst(
           '{type}',
           _getInstallationTypeDescription(translations, selectedType),
@@ -398,11 +398,11 @@ class AutoUpdater {
 
       _downloadUpdate(downloadInfo, expectedHash);
     } catch (e) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: updateTexts.toast.downloadFailed
             .replaceFirst('{error}', e.toString()),
       );
-      KazumiLogger().log(Level.error, '下载更新失败: ${e.toString()}');
+      HaipeeLogger().log(Level.error, '下载更新失败: ${e.toString()}');
     }
   }
 
@@ -412,12 +412,12 @@ class AutoUpdater {
     final translations = _translations;
     final updateTexts = translations.settings.update;
     if (updateInfo.downloadUrl.isEmpty) {
-      KazumiDialog.showToast(message: updateTexts.toast.noCompatibleLink);
+      HaipeeDialog.showToast(message: updateTexts.toast.noCompatibleLink);
       return;
     }
 
     // 显示下载进度对话框
-    KazumiDialog.show(
+    HaipeeDialog.show(
       clickMaskDismiss: false,
       builder: (context) {
         final dialogTexts = context.t.settings.update;
@@ -444,7 +444,7 @@ class AutoUpdater {
             TextButton(
               onPressed: () {
                 _cancelDownload();
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               },
               child: Text(dialogTexts.download.cancel),
             ),
@@ -460,7 +460,7 @@ class AutoUpdater {
       // 不自动关闭对话框，而是显示下载完成状态
       _showDownloadCompleteDialog(downloadPath, updateInfo);
     } catch (e) {
-      KazumiDialog.dismiss();
+      HaipeeDialog.dismiss();
 
       // 显示详细的错误信息
       String errorMessage = updateTexts.download.error.general;
@@ -475,7 +475,7 @@ class AutoUpdater {
         errorMessage = updateTexts.download.error.integrity;
       }
 
-      KazumiDialog.show(
+      HaipeeDialog.show(
         builder: (context) {
           return AlertDialog(
             title: Text(updateTexts.download.error.title),
@@ -494,12 +494,12 @@ class AutoUpdater {
             ),
             actions: [
               TextButton(
-                onPressed: () => KazumiDialog.dismiss(),
+                onPressed: () => HaipeeDialog.dismiss(),
                 child: Text(updateTexts.download.error.confirm),
               ),
               TextButton(
                 onPressed: () {
-                  KazumiDialog.dismiss();
+                  HaipeeDialog.dismiss();
                   // 重新尝试下载
                   _downloadUpdate(updateInfo, expectedHash);
                 },
@@ -510,7 +510,7 @@ class AutoUpdater {
         },
       );
 
-      KazumiLogger().log(Level.error, '下载更新失败: ${e.toString()}');
+      HaipeeLogger().log(Level.error, '下载更新失败: ${e.toString()}');
     }
   }
 
@@ -524,9 +524,9 @@ class AutoUpdater {
   /// 显示下载完成对话框
   void _showDownloadCompleteDialog(String filePath, UpdateInfo updateInfo) {
     // 替换当前的下载进度对话框内容
-    KazumiDialog.dismiss();
+    HaipeeDialog.dismiss();
 
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (context) {
         final translations = context.t;
         final updateTexts = translations.settings.update;
@@ -586,7 +586,7 @@ class AutoUpdater {
           ),
           actions: [
             TextButton(
-              onPressed: () => KazumiDialog.dismiss(),
+              onPressed: () => HaipeeDialog.dismiss(),
               child: Text(
                 updateTexts.download.complete.buttons.later,
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -601,7 +601,7 @@ class AutoUpdater {
             ),
             TextButton(
               onPressed: () {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
                 _installUpdate(
                     filePath, updateInfo.recommendedInstallationType);
               },
@@ -630,18 +630,18 @@ class AutoUpdater {
         final localHash = await Utils.calculateFileHash(file);
         if (localHash == expectedHash) {
           // 文件已存在且哈希匹配，直接返回
-          KazumiLogger().log(Level.info, '文件已存在且哈希验证通过，跳过下载: $filePath');
+          HaipeeLogger().log(Level.info, '文件已存在且哈希验证通过，跳过下载: $filePath');
           _downloadProgress.value = 1.0;
           return filePath;
         } else {
           // 文件存在但哈希不匹配，删除后重新下载
-          KazumiLogger().log(Level.info,
+          HaipeeLogger().log(Level.info,
               '检测到文件哈希不匹配 (本地: $localHash, 期望: $expectedHash)，删除后重新下载');
           await file.delete();
         }
       } catch (e) {
         // 验证过程中出错，删除文件重新下载
-        KazumiLogger().log(Level.warning, '文件验证失败，删除后重新下载: ${e.toString()}');
+        HaipeeLogger().log(Level.warning, '文件验证失败，删除后重新下载: ${e.toString()}');
         if (await file.exists()) {
           await file.delete();
         }
@@ -669,7 +669,7 @@ class AutoUpdater {
       throw Exception(
           '$_integrityErrorCode: expected=$expectedHash actual=$downloadedHash');
     }
-    KazumiLogger().log(Level.info, '文件下载完成，哈希验证通过: $filePath');
+    HaipeeLogger().log(Level.info, '文件下载完成，哈希验证通过: $filePath');
 
     return filePath;
   }
@@ -680,7 +680,7 @@ class AutoUpdater {
     final updateTexts = _translations.settings.update;
     try {
       // 显示准备退出的提示
-      KazumiDialog.showToast(message: updateTexts.toast.prepareToInstall);
+      HaipeeDialog.showToast(message: updateTexts.toast.prepareToInstall);
 
       await Future.delayed(const Duration(seconds: 2));
 
@@ -706,7 +706,7 @@ class AutoUpdater {
           final errorDetail = result.message.isNotEmpty
               ? result.message
               : updateTexts.toast.unknownReason;
-          KazumiDialog.showToast(
+          HaipeeDialog.showToast(
             message: updateTexts.toast.openInstallerFailed
                 .replaceFirst('{error}', errorDetail),
           );
@@ -716,11 +716,11 @@ class AutoUpdater {
       await Future.delayed(const Duration(seconds: 1));
       exit(0);
     } catch (e) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: updateTexts.toast.launchInstallerFailed
             .replaceFirst('{error}', e.toString()),
       );
-      KazumiLogger().log(Level.error, '启动安装程序失败: ${e.toString()}');
+      HaipeeLogger().log(Level.error, '启动安装程序失败: ${e.toString()}');
     }
   }
 
@@ -737,11 +737,11 @@ class AutoUpdater {
         final directory = Directory(filePath).parent.path;
         await Process.start('xdg-open', [directory]);
       }
-      KazumiDialog.dismiss();
+      HaipeeDialog.dismiss();
     } catch (e) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
           message: _translations.settings.update.toast.revealFailed);
-      KazumiLogger().log(Level.warning, '打开文件管理器失败: ${e.toString()}');
+      HaipeeLogger().log(Level.warning, '打开文件管理器失败: ${e.toString()}');
     }
   }
 
@@ -805,7 +805,7 @@ class AutoUpdater {
     } else if (Platform.isAndroid) {
       extension = '.apk';
     }
-    return 'Kazumi-$version$extension';
+    return 'haipee-$version$extension';
   }
 
   /// 从 assets 中获取文件的哈希值

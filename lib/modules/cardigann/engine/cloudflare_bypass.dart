@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:logger/logger.dart';
 
 /// Stored clearance cookie information for a specific host.
@@ -90,7 +90,7 @@ class CloudflareBypassHandler {
       userAgent: userAgent ?? Utils.getRandomUA(),
       obtainedAt: DateTime.now(),
     );
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[CloudflareBypass] Saved clearance for $host: ${cookies.keys.join(', ')}',
     );
@@ -98,7 +98,7 @@ class CloudflareBypassHandler {
 
   /// Attempts to bypass challenge by loading url in background webview and extracting cookies / HTML.
   Future<String?> resolveChallengeWithWebview(String targetUrl) async {
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[CloudflareBypass] Initiating headless webview challenge bypass for $targetUrl',
     );
@@ -112,7 +112,7 @@ class CloudflareBypassHandler {
       // In automated headless or unit testing environment, return null gracefully.
       return null;
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[CloudflareBypass] Webview challenge resolution error: $e',
       );

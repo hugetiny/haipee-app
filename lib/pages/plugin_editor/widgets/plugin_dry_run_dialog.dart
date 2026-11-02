@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
 
 /// 视频源规则实时试抓测试对话框 (Dry-Run Test Dialog)
 /// 对齐 Cardigann 规则设置中的 _DryRunTestDialog，支持实时请求、耗时统计与解析结果展示

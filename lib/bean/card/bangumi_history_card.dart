@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/card/network_img_layer.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/bean/widget/bangumi_context_menu.dart';
-import 'package:kazumi/bean/widget/collect_button.dart';
-import 'package:kazumi/modules/history/history_module.dart';
-import 'package:kazumi/pages/history/history_controller.dart';
-import 'package:kazumi/pages/history/providers.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/bean/card/network_img_layer.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/bangumi_context_menu.dart';
+import 'package:haipee/bean/widget/collect_button.dart';
+import 'package:haipee/modules/history/history_module.dart';
+import 'package:haipee/pages/history/history_controller.dart';
+import 'package:haipee/pages/history/providers.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 // 视频历史记录卡片 - 水平布局
 class BangumiHistoryCardV extends ConsumerStatefulWidget {
@@ -106,13 +106,13 @@ class _BangumiHistoryCardVState extends ConsumerState<BangumiHistoryCardV> {
       child: InkWell(
         onTap: () async {
           if (widget.showDelete) {
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
               message: context.t.library.common.toast.editMode,
             );
             return;
           }
           final router = GoRouter.of(context);
-          KazumiDialog.showLoading(
+          HaipeeDialog.showLoading(
             msg: context.t.app.loading,
             barrierDismissible: Utils.isDesktop(),
             onDismiss: () {
@@ -128,8 +128,8 @@ class _BangumiHistoryCardVState extends ConsumerState<BangumiHistoryCardV> {
             }
           }
           if (!flag) {
-            KazumiDialog.dismiss();
-            KazumiDialog.showToast(
+            HaipeeDialog.dismiss();
+            HaipeeDialog.showToast(
               message: context.t.library.history.toast.sourceMissing,
             );
             return;
@@ -143,14 +143,14 @@ class _BangumiHistoryCardVState extends ConsumerState<BangumiHistoryCardV> {
           try {
             await videoPageController.queryRoads(widget.historyItem.lastSrc,
                 videoPageController.currentPlugin.name);
-            KazumiDialog.dismiss();
+            HaipeeDialog.dismiss();
             if (!mounted) {
               return;
             }
             router.push('/video');
           } catch (_) {
-            KazumiLogger().log(Level.warning, "获取视频播放列表失败");
-            KazumiDialog.dismiss();
+            HaipeeLogger().log(Level.warning, "获取视频播放列表失败");
+            HaipeeDialog.dismiss();
           }
         },
         child: Row(
@@ -256,7 +256,7 @@ class _BangumiHistoryCardVState extends ConsumerState<BangumiHistoryCardV> {
         explicitHistoryItem: widget.historyItem,
         onDeleteHistory: () {
           historyController.deleteHistory(widget.historyItem);
-          KazumiDialog.showToast(message: '已移出观看历史', context: context);
+          HaipeeDialog.showToast(message: '已移出观看历史', context: context);
         },
       ),
       child: cardWidget,

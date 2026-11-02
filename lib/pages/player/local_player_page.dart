@@ -3,16 +3,16 @@ import 'dart:io';
 import 'package:canvas_danmaku/models/danmaku_content_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/playback/subtitle_matcher.dart';
-import 'package:kazumi/pages/player/player_controller.dart';
-import 'package:kazumi/pages/player/player_item.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/playback/subtitle_matcher.dart';
+import 'package:haipee/pages/player/player_controller.dart';
+import 'package:haipee/pages/player/player_item.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
 
-import 'package:kazumi/pages/player/local_video_play_args.dart';
-export 'package:kazumi/pages/player/local_video_play_args.dart';
+import 'package:haipee/pages/player/local_video_play_args.dart';
+export 'package:haipee/pages/player/local_video_play_args.dart';
 
 class LocalPlayerPage extends ConsumerStatefulWidget {
   final LocalVideoPlayArgs args;
@@ -45,7 +45,7 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
       if (!isHttp) {
         final file = File(widget.args.filePath);
         if (!file.existsSync()) {
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.warning,
             '[LocalPlayerPage] 本地视频文件不存在: ${widget.args.filePath}',
           );
@@ -130,13 +130,13 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
       final bestMatch = SubtitleMatcher().selectBestMatch(candidates);
       if (bestMatch != null && await SubtitleMatcher.validateSubtitleFile(bestMatch.url)) {
         await _playerController.loadExternalSubtitle(bestMatch.url);
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.info,
           '[LocalPlayerPage] SubtitleMatcher matched companion subtitle: ${bestMatch.url}',
         );
       }
     } catch (e) {
-      KazumiLogger().log(Level.debug, '[LocalPlayerPage] Auto match subtitle error: $e');
+      HaipeeLogger().log(Level.debug, '[LocalPlayerPage] Auto match subtitle error: $e');
     }
   }
 

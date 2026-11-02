@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/services/notification/notification_service.dart';
+import 'package:haipee/services/notification/notification_service.dart';
 
 class MockNotificationService extends NotificationService {
   final List<Map<String, dynamic>> recordedCalls = [];
@@ -41,9 +41,9 @@ void main() {
     });
 
     test('verifies default channels configuration', () {
-      expect(NotificationService.downloadChannelId, 'kazumi_downloads');
+      expect(NotificationService.downloadChannelId, 'haipee_downloads');
       expect(NotificationService.downloadChannelName, '下载通知');
-      expect(NotificationService.streamChannelId, 'kazumi_stream');
+      expect(NotificationService.streamChannelId, 'haipee_stream');
       expect(NotificationService.streamChannelName, '媒体流通知');
     });
 

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/pages/info/source_search_provider.dart';
+import 'package:haipee/pages/info/source_search_provider.dart';
 
 void main() {
   group('SourceSearchState error reason tracking', () {

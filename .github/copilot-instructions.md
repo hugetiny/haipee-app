@@ -1,4 +1,4 @@
-﻿# Kazumi Copilot Instructions
+﻿# Haipee Copilot Instructions
 
 ## Overview
 - Flutter anime client that scrapes sources with XPath plugins and layers a custom media-kit player; entrypoint is `lib/main.dart`.
@@ -17,12 +17,12 @@
 
 ## Storage & Sync
 - `lib/utils/storage.dart` centralizes Hive boxes (`collectibles`, `histories`, `collectChanges`, `shieldList`, etc.) and exposes patch/restore helpers for WebDAV.
-- WebDAV sync (`lib/utils/webdav.dart`) copies `.hive` files to `/kazumiSync` with optimistic merge rules; guard `isHistorySyncing` when scheduling background tasks.
+- WebDAV sync (`lib/utils/webdav.dart`) copies `.hive` files to `/haipeeSync` with optimistic merge rules; guard `isHistorySyncing` when scheduling background tasks.
 - Theme, display, and plugin preferences originate from the `setting` box; update via Riverpod notifiers (see `lib/pages/settings/providers.dart`) then persist.
 
 ## Networking
 - `Request` wraps a singleton `Dio` with `ApiInterceptor` that injects Bangumi, Dandan, and GitHub proxy headers using `GStorage.setting` flags.
-- Use `extra['customError']` to suppress global snackbars via `KazumiDialog.showToast`; pass `shouldRethrow: true` when upstream logic needs raw `DioException`s.
+- Use `extra['customError']` to suppress global snackbars via `HaipeeDialog.showToast`; pass `shouldRethrow: true` when upstream logic needs raw `DioException`s.
 - Plugins and search calls randomize UA / Accept-Language through `Utils` to evade anti-scraping; reuse those helpers for new scrapers.
 
 ## Playback Pipeline
@@ -31,7 +31,7 @@
 - Shaders are copied once by `ShadersController.copyShadersToExternalDirectory()` and consumed by the media-kit pipeline; add new `.glsl` files under `assets/shaders/`.
 
 ## UI & Routing
-- Navigation uses `GoRouter` with a shell scaffold (`lib/router.dart`); `KazumiDialog.observer` keeps dialog and snackbar contexts in sync with route changes.
+- Navigation uses `GoRouter` with a shell scaffold (`lib/router.dart`); `HaipeeDialog.observer` keeps dialog and snackbar contexts in sync with route changes.
 - Tabs (`popular`, `timeline`, `collect`, `my`) expose Riverpod notifiers like `PopularController` and `MyController` to manage async loading and pagination.
 - Theme selection flows through `themeNotifierProvider`; `AppWidget` applies dynamic color (Material You) when available and toggles OLED-enhanced dark palettes via `Utils.oledDarkTheme`.
 
@@ -41,7 +41,7 @@
 - Windows builds rely on `window_manager` for close prevention/tray; avoid bypassing `windowManager.close()` in desktop exit logic.
 
 ## Logging & Debugging
-- `KazumiLogger` writes error-level logs to `${ApplicationSupport}/logs/kazumi_logs.log` using a synchronized file lock; call `simpleLog` for quick breadcrumbs.
-- User-visible notifications should go through `KazumiDialog.showToast` to respect the shell scaffold; avoid `ScaffoldMessenger` directly outside that helper.
-- Player/network issues often stem from plugins; log plugin names and URLs with `KazumiLogger().log(Level.info, ...)` as done in the controllers to aid troubleshooting.
-<parameter name="filePath">d:\Users\huget\StudioProjects\Kazumi\.github\copilot-instructions.md
+- `HaipeeLogger` writes error-level logs to `${ApplicationSupport}/logs/haipee_logs.log` using a synchronized file lock; call `simpleLog` for quick breadcrumbs.
+- User-visible notifications should go through `HaipeeDialog.showToast` to respect the shell scaffold; avoid `ScaffoldMessenger` directly outside that helper.
+- Player/network issues often stem from plugins; log plugin names and URLs with `HaipeeLogger().log(Level.info, ...)` as done in the controllers to aid troubleshooting.
+<parameter name="filePath">d:\Users\huget\StudioProjects\Haipee\.github\copilot-instructions.md

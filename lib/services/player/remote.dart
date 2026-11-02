@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:dlna_dart/dlna.dart';
 import 'package:flutter/material.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/services/logging/logger.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/services/logging/logger.dart';
 
 class RemotePlay {
   Future<void> castVideo(String video, String referer) async {
     final searcher = DLNAManager();
     final dlna = await searcher.start();
     List<Widget> dlnaDevice = [];
-    await KazumiDialog.show(builder: (BuildContext context) {
+    await HaipeeDialog.show(builder: (BuildContext context) {
       return StatefulBuilder(builder: (context, setState) {
         return AlertDialog(
           title: const Text('远程投屏'),
@@ -23,7 +23,7 @@ class RemotePlay {
             const SizedBox(width: 20),
             TextButton(
               onPressed: () {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               },
               child: Text(
                 '退出',
@@ -33,14 +33,14 @@ class RemotePlay {
             TextButton(
                 onPressed: () {
                   setState(() {});
-                  KazumiDialog.showToast(
+                  HaipeeDialog.showToast(
                     message: '开始搜索',
                   );
                   dlna.devices.stream.listen((deviceList) {
                     dlnaDevice = [];
                     deviceList.forEach((key, value) async {
-                      KazumiLogger().i('RemotePlay: key: $key');
-                      KazumiLogger().i(
+                      HaipeeLogger().i('RemotePlay: key: $key');
+                      HaipeeLogger().i(
                           'RemotePlay: value: ${value.info.friendlyName} ${value.info.deviceType} ${value.info.URLBase}');
                       setState(() {
                         dlnaDevice.add(ListTile(
@@ -50,16 +50,16 @@ class RemotePlay {
                             subtitle: Text(value.info.deviceType.split(':')[3]),
                             onTap: () {
                               try {
-                                KazumiDialog.showToast(
+                                HaipeeDialog.showToast(
                                   message: '尝试投屏至 ${value.info.friendlyName}',
                                 );
                                 DLNADevice(value.info).setUrl(video);
                                 DLNADevice(value.info).play();
                               } catch (e) {
-                                KazumiLogger().e(
+                                HaipeeLogger().e(
                                     'RemotePlay: failed to cast to device',
                                     error: e);
-                                KazumiDialog.showToast(
+                                HaipeeDialog.showToast(
                                   message: 'DLNA 异常: $e \n尝试重新进入 DLNA 投屏或切换设备',
                                 );
                               }
@@ -68,7 +68,7 @@ class RemotePlay {
                     });
                   });
                   // Timer(const Duration(seconds: 30), () {
-                  //   KazumiDialog.showToast(
+                  //   HaipeeDialog.showToast(
                   //     message: '已搜索30s，若未发现设备请尝试重新进入 DLNA 投屏',
                   //   );
                   // });

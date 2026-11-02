@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:super_context_menu/super_context_menu.dart';
 
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/utils/utils.dart';
 
 /// 统一的上下文菜单条目抽象
 sealed class AppMenuItem {

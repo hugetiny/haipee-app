@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
-import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/services/network/bangumi_acceleration.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/pages/setting/providers.dart';
+import 'package:haipee/services/network/bangumi_acceleration.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 class MetadataSettingsPage extends ConsumerWidget {
   const MetadataSettingsPage({super.key});

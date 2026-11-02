@@ -1,9 +1,9 @@
 import 'dart:ui' as ui;
 
-import 'package:kazumi/modules/metadata_sync/metadata_cache_repository.dart';
-import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
-import 'package:kazumi/request/metadata_client.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/metadata_sync/metadata_cache_repository.dart';
+import 'package:haipee/modules/metadata_sync/models/metadata_record.dart';
+import 'package:haipee/request/metadata_client.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 class MetadataSyncController {
@@ -24,7 +24,7 @@ class MetadataSyncController {
   }) async {
     final String localeLabel =
         localeOverride?.toLanguageTag() ?? 'system-default';
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[MetadataSyncController] Ensuring metadata for $slug '
       '(forceRefresh: $forceRefresh, locale: $localeLabel)',
@@ -33,7 +33,7 @@ class MetadataSyncController {
     final MetadataRecord? existingRecord =
         forceRefresh ? null : _repository.getRecord(slug);
     if (existingRecord != null && !forceRefresh) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.debug,
         '[MetadataSyncController] Using cached metadata for $slug '
         '(updated ${existingRecord.updatedAt.toIso8601String()})',
@@ -59,7 +59,7 @@ class MetadataSyncController {
       forceRefresh: forceRefresh,
     );
     if (bangumi != null) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[MetadataSyncController] Merging Bangumi payload for $slug '
         '(${bangumi.locale.toLanguageTag()})',
@@ -79,7 +79,7 @@ class MetadataSyncController {
         forceRefresh: forceRefresh,
       );
       if (tmdb != null) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.info,
           '[MetadataSyncController] Merging TMDb payload for $slug '
           '(${tmdb.locale.toLanguageTag()})',
@@ -93,14 +93,14 @@ class MetadataSyncController {
     }
 
     if (updated != null) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[MetadataSyncController] Metadata sync complete for $slug '
         '(activeSource: ${updated.activeSource ?? 'unknown'}, '
         'updatedAt: ${updated.updatedAt.toIso8601String()})',
       );
     } else {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[MetadataSyncController] No metadata updates available for $slug',
       );

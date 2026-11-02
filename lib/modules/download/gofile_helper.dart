@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 class GofileResolvedInfo {
@@ -21,7 +21,7 @@ class GofileHelper {
   factory GofileHelper() => _instance;
   GofileHelper._internal();
 
-  final KazumiLogger _logger = KazumiLogger();
+  final HaipeeLogger _logger = HaipeeLogger();
   String? _cachedToken;
   DateTime? _tokenExpireTime;
 

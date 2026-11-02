@@ -8,7 +8,7 @@ useNativePlayer: true
 usePost: false
 useLegacyParser: false
 adBlocker: false
-userAgent: "Mozilla/5.0 (Kazumi/Player)"
+userAgent: "Mozilla/5.0 (Haipee/Player)"
 baseURL: "https://caiji.kuaichezy.org"
 searchURL: "https://caiji.kuaichezy.org/api.php/provide/vod/?ac=detail&at=json&wd=@keyword"
 searchPic: "$.vod_pic"

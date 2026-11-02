@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// 在线视频规则源订阅模型 (对标去中心化 IndexerRepoSubscription)
@@ -81,7 +81,7 @@ class PluginSubscription {
             receiveTimeout: const Duration(seconds: 12),
             headers: {
               'User-Agent':
-                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Kazumi/RuleSubscription',
+                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Haipee/RuleSubscription',
               'Accept': '*/*',
             },
           ),
@@ -136,7 +136,7 @@ class PluginSubscription {
         }
       } catch (_) {}
     } catch (e) {
-      KazumiLogger().log(Level.warning, '拉取在线规则订阅失败: $url, error: $e');
+      HaipeeLogger().log(Level.warning, '拉取在线规则订阅失败: $url, error: $e');
       rethrow;
     }
 

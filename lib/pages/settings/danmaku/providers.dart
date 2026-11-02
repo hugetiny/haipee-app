@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/danmaku/danmaku_ch_convert.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/modules/danmaku/danmaku_ch_convert.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/utils.dart';
 
 /// Danmaku settings state
 class DanmakuSettingsState {

@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/shaders/shaders_controller.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/shaders/shaders_controller.dart';
 import 'package:flutter/services.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/services/player/player_error_mapper.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/services/player/player_error_mapper.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

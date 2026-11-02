@@ -3,34 +3,34 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:kazumi/modules/danmaku/danmaku_module.dart';
+import 'package:haipee/modules/danmaku/danmaku_module.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
-import 'package:kazumi/request/damaku.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
+import 'package:haipee/request/damaku.dart';
+import 'package:haipee/pages/video/video_controller.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/shaders/shaders_controller.dart';
-import 'package:kazumi/utils/syncplay.dart';
-import 'package:kazumi/utils/external_player.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/shaders/shaders_controller.dart';
+import 'package:haipee/utils/syncplay.dart';
+import 'package:haipee/utils/external_player.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:kazumi/pages/player/player_state.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/shaders/providers.dart';
-import 'package:kazumi/providers/translations_provider.dart';
-import 'package:kazumi/modules/playback/aniskip_model.dart';
-import 'package:kazumi/modules/playback/aniskip_service.dart';
-import 'package:kazumi/modules/playback/media_selector.dart';
-import 'package:kazumi/pages/player/local_video_play_args.dart';
-import 'package:kazumi/services/player/player_error_mapper.dart';
-import 'package:kazumi/modules/source_quality/source_quality_tracker.dart';
-import 'package:kazumi/modules/bilibili/bilibili_service.dart';
+import 'package:haipee/pages/player/player_state.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/shaders/providers.dart';
+import 'package:haipee/providers/translations_provider.dart';
+import 'package:haipee/modules/playback/aniskip_model.dart';
+import 'package:haipee/modules/playback/aniskip_service.dart';
+import 'package:haipee/modules/playback/media_selector.dart';
+import 'package:haipee/pages/player/local_video_play_args.dart';
+import 'package:haipee/services/player/player_error_mapper.dart';
+import 'package:haipee/modules/source_quality/source_quality_tracker.dart';
+import 'package:haipee/modules/bilibili/bilibili_service.dart';
 
 class PlayerController extends Notifier<PlayerState> {
   @override
@@ -60,6 +60,9 @@ class PlayerController extends Notifier<PlayerState> {
   // 播放器实体
   Player? mediaPlayer;
   VideoController? videoController;
+
+  int _initGeneration = 0;
+  bool _isDisposed = false;
 
   Box setting = GStorage.setting;
   bool hAenable = true;
@@ -144,6 +147,8 @@ class PlayerController extends Notifier<PlayerState> {
     int? biliCid,
     String? biliBvid,
   }) async {
+    _isDisposed = false;
+    final int generation = ++_initGeneration;
     String resolvedUrl = url;
     String? resolvedAudioUrl = audioUrl;
     Map<String, String>? resolvedHeaders = httpHeaders;
@@ -178,6 +183,7 @@ class PlayerController extends Notifier<PlayerState> {
     try {
       await disposeResources(disposeSyncPlayController: false);
     } catch (_) {}
+    if (_isDisposed || generation != _initGeneration) return;
     activeBiliCid = resolvedBiliCid;
     activeBiliBvid = resolvedBiliBvid;
 
@@ -188,6 +194,7 @@ class PlayerController extends Notifier<PlayerState> {
         resolvedBiliCid > 0) {
       final streamInfo =
           await BilibiliService.getPlayUrl(resolvedBiliBvid, resolvedBiliCid);
+      if (_isDisposed || generation != _initGeneration) return;
       if (streamInfo != null && streamInfo.videoUrl.isNotEmpty) {
         videoUrl = streamInfo.videoUrl;
         activeAudioUrl = streamInfo.audioUrl;
@@ -201,6 +208,7 @@ class PlayerController extends Notifier<PlayerState> {
     // 原生官方弹幕优先直载 (B站 视频具有确定的 CID，以官方原生弹幕为准，严禁弹弹play跨站模糊盲搜)
     if (resolvedBiliCid != null && resolvedBiliCid > 0) {
       await loadBiliDanmaku(resolvedBiliCid);
+      if (_isDisposed || generation != _initGeneration) return;
     } else {
       int episodeFromTitle = 0;
       final bgmItem = videoPageController.state.bangumiItem;
@@ -224,7 +232,7 @@ class PlayerController extends Notifier<PlayerState> {
           episodeFromTitle = resolution.danmakuEpisode;
         }
       } catch (e) {
-        KazumiLogger().log(Level.error, '从标题解析集数错误 ${e.toString()}');
+        HaipeeLogger().log(Level.error, '从标题解析集数错误 ${e.toString()}');
       }
       if (episodeFromTitle <= 0) {
         episodeFromTitle = videoPageController.state.currentEpisode > 0
@@ -251,7 +259,12 @@ class PlayerController extends Notifier<PlayerState> {
         }
       }
     }
-    mediaPlayer ??= await createVideoController(offset: offset);
+    if (_isDisposed || generation != _initGeneration) return;
+    final createdPlayer = await createVideoController(offset: offset);
+    if (_isDisposed || generation != _initGeneration || createdPlayer == null) {
+      return;
+    }
+    mediaPlayer ??= createdPlayer;
     final superResolutionType = (setting.get(
             SettingBoxKey.defaultSuperResolutionType,
             defaultValue: 1) as num)
@@ -279,7 +292,7 @@ class PlayerController extends Notifier<PlayerState> {
       });
     }
     setPlaybackSpeed(state.playerSpeed);
-    KazumiLogger().log(Level.info, 'VideoURL初始化完成');
+    HaipeeLogger().log(Level.info, 'VideoURL初始化完成');
     state = state.copyWith(loading: false);
     if (syncplayController?.isConnected ?? false) {
       final bgmId = videoPageController.bangumiItem.id;
@@ -297,7 +310,7 @@ class PlayerController extends Notifier<PlayerState> {
       final newLog = [...state.playerLog, event.toString()];
       state = state.copyWith(playerLog: newLog);
       if (playerDebugMode) {
-        KazumiLogger().simpleLog(event.toString());
+        HaipeeLogger().simpleLog(event.toString());
       }
     });
     await playerWidthSubscription?.cancel();
@@ -403,7 +416,9 @@ class PlayerController extends Notifier<PlayerState> {
     await playerPositionSubscription?.cancel();
   }
 
-  Future<Player> createVideoController({int offset = 0}) async {
+  Future<Player?> createVideoController({int offset = 0}) async {
+    final int generation = _initGeneration;
+    if (_isDisposed) return null;
     String userAgent = '';
     final superResolutionType =
         setting.get(SettingBoxKey.defaultSuperResolutionType, defaultValue: 1);
@@ -488,13 +503,29 @@ class PlayerController extends Notifier<PlayerState> {
       ),
     );
     state = state.copyWith(superResolutionType: state.superResolutionType);
-    mediaPlayer!.setPlaylistMode(PlaylistMode.none);
+    try {
+      if (_isDisposed || generation != _initGeneration || mediaPlayer == null) {
+        return null;
+      }
+      if (mediaPlayer?.platform is NativePlayer &&
+          (mediaPlayer!.platform as NativePlayer).disposed) {
+        return null;
+      }
+      mediaPlayer!.setPlaylistMode(PlaylistMode.none);
+    } catch (e) {
+      if (e is AssertionError) {
+        HaipeeLogger().log(
+            Level.warning, 'Player disposed before setPlaylistMode: $e');
+        return null;
+      }
+      rethrow;
+    }
 
     // error handle
     bool showPlayerError =
         setting.get(SettingBoxKey.showPlayerError, defaultValue: false);
     mediaPlayer!.stream.error.listen((event) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
           Level.error, 'Player intent error: ${event.toString()} $videoUrl');
 
       // Ignore transient network read interruptions on segments/advertisements that mpv recovers from
@@ -507,14 +538,14 @@ class PlayerController extends Notifier<PlayerState> {
         isBuffering: playerBuffering,
       );
       if (actionableMessage != null) {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: actionableMessage,
           showActionButton: true,
         );
       } else if (showPlayerError) {
         final t = ref.read(translationsProvider);
         final details = '${event.toString()} $videoUrl';
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message:
                t.playback.toast.internalError.replaceFirst('{details}', details),
           duration: const Duration(seconds: 5),
@@ -525,21 +556,37 @@ class PlayerController extends Notifier<PlayerState> {
 
     if (state.superResolutionType != 1) {
       await setShader(state.superResolutionType);
+      if (_isDisposed || generation != _initGeneration) return null;
     }
 
-    await mediaPlayer!.open(
-      Media(videoUrl,
-          start: Duration(seconds: offset), httpHeaders: httpHeaders),
-      play: autoPlay,
-    );
+    try {
+      if (_isDisposed || generation != _initGeneration || mediaPlayer == null) {
+        return null;
+      }
+      if (mediaPlayer?.platform is NativePlayer &&
+          (mediaPlayer!.platform as NativePlayer).disposed) {
+        return null;
+      }
+      await mediaPlayer!.open(
+        Media(videoUrl,
+            start: Duration(seconds: offset), httpHeaders: httpHeaders),
+        play: autoPlay,
+      );
+    } catch (e) {
+      if (e is AssertionError) {
+        HaipeeLogger().log(Level.warning, 'Player disposed during open: $e');
+        return null;
+      }
+      rethrow;
+    }
 
     // B站 DASH 音画分离双流挂载：利用 mpv 原生双流能力挂载独立音频流，零损耗加载
     if (activeAudioUrl != null && activeAudioUrl!.isNotEmpty) {
       try {
         await pp.command(['audio-add', activeAudioUrl!, 'select']);
-        KazumiLogger().log(Level.info, '成功通过 mpv audio-add 挂载 DASH 独立音频流');
+        HaipeeLogger().log(Level.info, '成功通过 mpv audio-add 挂载 DASH 独立音频流');
       } catch (e) {
-        KazumiLogger().log(Level.warning, '挂载 DASH 独立音频流失败: $e');
+        HaipeeLogger().log(Level.warning, '挂载 DASH 独立音频流失败: $e');
       }
     }
 
@@ -552,12 +599,12 @@ class PlayerController extends Notifier<PlayerState> {
       final danmakus = await BilibiliService.getDanmaku(cid);
       if (danmakus.isNotEmpty) {
         addDanmakus(danmakus);
-        KazumiLogger().log(Level.info, '成功加载 B站 原生弹幕 ${danmakus.length} 条 (cid=$cid)');
+        HaipeeLogger().log(Level.info, '成功加载 B站 原生弹幕 ${danmakus.length} 条 (cid=$cid)');
       } else {
-        KazumiLogger().log(Level.info, 'B站 该视频无原生弹幕 (cid=$cid)');
+        HaipeeLogger().log(Level.info, 'B站 该视频无原生弹幕 (cid=$cid)');
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '加载 B站 弹幕失败 cid=$cid: $e');
+      HaipeeLogger().log(Level.warning, '加载 B站 弹幕失败 cid=$cid: $e');
     }
   }
 
@@ -594,7 +641,7 @@ class PlayerController extends Notifier<PlayerState> {
         }
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, 'Failed to apply shader type $type: $e');
+      HaipeeLogger().log(Level.warning, 'Failed to apply shader type $type: $e');
     } finally {
       shadersController.superResolutionType = type;
       await setting.put(SettingBoxKey.defaultSuperResolutionType, type);
@@ -607,7 +654,7 @@ class PlayerController extends Notifier<PlayerState> {
     try {
       mediaPlayer!.setRate(playerSpeed);
     } catch (e) {
-      KazumiLogger().log(Level.error, '设置播放速度失败 ${e.toString()}');
+      HaipeeLogger().log(Level.error, '设置播放速度失败 ${e.toString()}');
     }
   }
 
@@ -669,6 +716,8 @@ class PlayerController extends Notifier<PlayerState> {
   }
 
   Future<void> disposeResources({bool disposeSyncPlayController = true}) async {
+    _isDisposed = true;
+    _initGeneration++;
     if (disposeSyncPlayController) {
       activeBiliCid = null;
       activeBiliBvid = null;
@@ -718,7 +767,7 @@ class PlayerController extends Notifier<PlayerState> {
     if (!enableDanDan) {
       return;
     }
-    KazumiLogger().log(Level.info, '尝试获取弹幕 [BgmBangumiID] $bgmBangumiID');
+    HaipeeLogger().log(Level.info, '尝试获取弹幕 [BgmBangumiID] $bgmBangumiID');
     try {
       state = state.copyWith(danDanmakus: {});
       bangumiID =
@@ -728,7 +777,7 @@ class PlayerController extends Notifier<PlayerState> {
         addDanmakus(res);
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '获取弹幕错误 ${e.toString()}');
+      HaipeeLogger().log(Level.warning, '获取弹幕错误 ${e.toString()}');
     }
   }
 
@@ -738,7 +787,7 @@ class PlayerController extends Notifier<PlayerState> {
     if (!enableDanDan) {
       return;
     }
-    KazumiLogger().log(Level.info, '尝试根据标题获取弹幕: $title, 集数: $episode');
+    HaipeeLogger().log(Level.info, '尝试根据标题获取弹幕: $title, 集数: $episode');
     try {
       state = state.copyWith(danDanmakus: {});
       final bId = await DanmakuRequest.getBangumiIDByTitle(title, silent: true);
@@ -749,19 +798,19 @@ class PlayerController extends Notifier<PlayerState> {
         unawaited(fetchAniSkipIntervals(bId, episode));
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '根据标题获取弹幕错误: ${e.toString()}');
+      HaipeeLogger().log(Level.warning, '根据标题获取弹幕错误: ${e.toString()}');
     }
   }
 
   Future<void> getDanDanmakuByEpisodeID(int episodeID) async {
     if (episodeID <= 0) return;
-    KazumiLogger().log(Level.info, '尝试获取弹幕 $episodeID');
+    HaipeeLogger().log(Level.info, '尝试获取弹幕 $episodeID');
     try {
       state = state.copyWith(danDanmakus: {});
       var res = await DanmakuRequest.getDanDanmakuByEpisodeID(episodeID, silent: true);
       addDanmakus(res);
     } catch (e) {
-      KazumiLogger().log(Level.warning, '获取弹幕错误 ${e.toString()}');
+      HaipeeLogger().log(Level.warning, '获取弹幕错误 ${e.toString()}');
     }
   }
 
@@ -781,45 +830,45 @@ class PlayerController extends Notifier<PlayerState> {
     final t = ref.read(translationsProvider);
     if ((Platform.isAndroid || Platform.isWindows) && referer.isEmpty) {
       if (await ExternalPlayer.launchURLWithMIME(videoUrl, 'video/mp4')) {
-        KazumiDialog.dismiss();
-        KazumiDialog.showToast(
+        HaipeeDialog.dismiss();
+        HaipeeDialog.showToast(
           message: t.playback.externalPlayer.launching,
         );
       } else {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: t.playback.externalPlayer.launchFailed,
         );
       }
     } else if (Platform.isMacOS || Platform.isIOS) {
       if (await ExternalPlayer.launchURLWithReferer(videoUrl, referer)) {
-        KazumiDialog.dismiss();
-        KazumiDialog.showToast(
+        HaipeeDialog.dismiss();
+        HaipeeDialog.showToast(
           message: t.playback.externalPlayer.launching,
         );
       } else {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: t.playback.externalPlayer.launchFailed,
         );
       }
     } else if (Platform.isLinux && referer.isEmpty) {
-      KazumiDialog.dismiss();
+      HaipeeDialog.dismiss();
       if (await canLaunchUrlString(videoUrl)) {
         launchUrlString(videoUrl);
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: t.playback.externalPlayer.launching,
         );
       } else {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: t.playback.externalPlayer.unavailable,
         );
       }
     } else {
       if (referer.isEmpty) {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: t.playback.externalPlayer.unsupportedDevice,
         );
       } else {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: t.playback.externalPlayer.unsupportedPlugin,
         );
       }
@@ -847,11 +896,11 @@ class PlayerController extends Notifier<PlayerState> {
       }
     } catch (_) {}
     if (syncPlayEndPointHost == '' || syncPlayEndPointPort == 0) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: t.playback.syncplay.invalidEndpoint
             .replaceFirst('{endpoint}', syncPlayEndPoint),
       );
-      KazumiLogger().log(Level.error, 'SyncPlay: 服务器地址不合法 $syncPlayEndPoint');
+      HaipeeLogger().log(Level.error, 'SyncPlay: 服务器地址不合法 $syncPlayEndPoint');
       return;
     }
     String actorName(dynamic raw) {
@@ -865,13 +914,13 @@ class PlayerController extends Notifier<PlayerState> {
       await syncplayController!.connect(enableTLS: enableTLS);
       syncplayController!.onGeneralMessage.listen(
         (message) {
-          // KazumiLogger().log(Level.debug, 'SyncPlay: general message: ${message.toString()}');
+          // HaipeeLogger().log(Level.debug, 'SyncPlay: general message: ${message.toString()}');
         },
         onError: (error) {
-          KazumiLogger().log(Level.error, 'SyncPlay: error: ${error.message}');
+          HaipeeLogger().log(Level.error, 'SyncPlay: error: ${error.message}');
           if (error is SyncplayConnectionException) {
             exitSyncPlayRoom();
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
               message: t.playback.syncplay.disconnected
                   .replaceFirst('{reason}', error.message),
               duration: const Duration(seconds: 5),
@@ -888,24 +937,24 @@ class PlayerController extends Notifier<PlayerState> {
           if (message['type'] == 'init') {
             final rawUser = (message['username'] as String?) ?? '';
             if (rawUser.isEmpty) {
-              KazumiDialog.showToast(
+              HaipeeDialog.showToast(
                   message: t.playback.syncplay.alone,
                   duration: const Duration(seconds: 5));
               setSyncPlayPlayingBangumi();
             } else {
-              KazumiDialog.showToast(
+              HaipeeDialog.showToast(
                   message: t.playback.syncplay.followUser
                       .replaceFirst('{username}', actorName(rawUser)));
             }
           }
           if (message['type'] == 'left') {
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
                 message: t.playback.syncplay.userLeft
                     .replaceFirst('{username}', actorName(message['username'])),
                 duration: const Duration(seconds: 5));
           }
           if (message['type'] == 'joined') {
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
                 message: t.playback.syncplay.userJoined
                     .replaceFirst('{username}', actorName(message['username'])),
                 duration: const Duration(seconds: 5));
@@ -914,7 +963,7 @@ class PlayerController extends Notifier<PlayerState> {
       );
       syncplayController!.onFileChangedMessage.listen(
         (message) {
-          KazumiLogger().log(Level.info,
+          HaipeeLogger().log(Level.info,
               'SyncPlay: file changed by ${message['setBy']}: ${message['name']}');
           RegExp regExp = RegExp(r'(\d+)\[(\d+)\]');
           Match? match = regExp.firstMatch(message['name']);
@@ -924,7 +973,7 @@ class PlayerController extends Notifier<PlayerState> {
             if (bangumiID != 0 &&
                 episode != 0 &&
                 episode != videoPageController.currentEpisode) {
-              KazumiDialog.showToast(
+              HaipeeDialog.showToast(
                   message: t.playback.syncplay.switchEpisode
                       .replaceFirst('{username}', actorName(message['setBy']))
                       .replaceFirst('{episode}', episode.toString()),
@@ -938,7 +987,7 @@ class PlayerController extends Notifier<PlayerState> {
       syncplayController!.onChatMessage.listen(
         (message) {
           if (message['username'] != username) {
-            KazumiDialog.showToast(
+            HaipeeDialog.showToast(
                 message: t.playback.syncplay.chat
                     .replaceFirst('{username}', actorName(message['username']))
                     .replaceFirst(
@@ -952,12 +1001,12 @@ class PlayerController extends Notifier<PlayerState> {
           final syncplayClientRtt =
               (message['clientRtt'].toDouble() * 1000).toInt();
           state = state.copyWith(syncplayClientRtt: syncplayClientRtt);
-          KazumiLogger().log(Level.debug,
+          HaipeeLogger().log(Level.debug,
               'SyncPlay: position changed by ${message['setBy']}: [${DateTime.now().millisecondsSinceEpoch / 1000.0}] calculatedPosition ${message['calculatedPositon']} position: ${message['position']} doSeek: ${message['doSeek']} paused: ${message['paused']} clientRtt: ${message['clientRtt']} serverRtt: ${message['serverRtt']} fd: ${message['fd']}');
           if (message['paused'] != !state.playing) {
             if (message['paused']) {
               if (message['position'] != 0) {
-                KazumiDialog.showToast(
+                HaipeeDialog.showToast(
                     message: t.playback.syncplay.paused.replaceFirst(
                         '{username}', actorName(message['setBy'])),
                     duration: const Duration(seconds: 3));
@@ -965,7 +1014,7 @@ class PlayerController extends Notifier<PlayerState> {
               }
             } else {
               if (message['position'] != 0) {
-                KazumiDialog.showToast(
+                HaipeeDialog.showToast(
                     message: t.playback.syncplay.resumed.replaceFirst(
                         '{username}', actorName(message['setBy'])),
                     duration: const Duration(seconds: 3));
@@ -992,7 +1041,7 @@ class PlayerController extends Notifier<PlayerState> {
       await syncplayController!.joinRoom(room, username);
       state = state.copyWith(syncplayRoom: room);
     } catch (e) {
-      KazumiLogger().log(Level.error, 'SyncPlay: error: $e');
+      HaipeeLogger().log(Level.error, 'SyncPlay: error: $e');
     }
   }
 
@@ -1176,7 +1225,7 @@ class PlayerController extends Notifier<PlayerState> {
     try {
       await mediaPlayer?.setAudioTrack(audioTrack);
     } catch (e) {
-      KazumiLogger().log(Level.warning, '设置音频轨道失败: $e');
+      HaipeeLogger().log(Level.warning, '设置音频轨道失败: $e');
     }
   }
 
@@ -1187,7 +1236,7 @@ class PlayerController extends Notifier<PlayerState> {
     try {
       await mediaPlayer?.setSubtitleTrack(subtitleTrack);
     } catch (e) {
-      KazumiLogger().log(Level.warning, '设置字幕轨道失败: $e');
+      HaipeeLogger().log(Level.warning, '设置字幕轨道失败: $e');
     }
   }
 
@@ -1199,7 +1248,7 @@ class PlayerController extends Notifier<PlayerState> {
         await pp.setProperty("sub-delay", seconds.toString());
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '设置字幕延迟失败: $e');
+      HaipeeLogger().log(Level.warning, '设置字幕延迟失败: $e');
     }
   }
 
@@ -1208,7 +1257,7 @@ class PlayerController extends Notifier<PlayerState> {
       final track = SubtitleTrack.uri(path, title: path.split(Platform.pathSeparator).last);
       await setSubtitleTrack(track);
     } catch (e) {
-      KazumiLogger().log(Level.warning, '加载外部字幕失败: $e');
+      HaipeeLogger().log(Level.warning, '加载外部字幕失败: $e');
     }
   }
 
@@ -1225,7 +1274,7 @@ class PlayerController extends Notifier<PlayerState> {
     if (activeInterval != state.currentAniSkipInterval) {
       state = state.copyWith(currentAniSkipInterval: activeInterval);
       if (activeInterval != null && state.autoSkipOpEd) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.info,
           '[AniSkip] 自动跳过 ${activeInterval.typeLabel} -> ${activeInterval.endTime}s',
         );
@@ -1237,7 +1286,7 @@ class PlayerController extends Notifier<PlayerState> {
   Future<void> skipCurrentInterval() async {
     final interval = state.currentAniSkipInterval;
     if (interval != null) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[AniSkip] 用户点击跳过 ${interval.typeLabel} -> ${interval.endTime}s',
       );
@@ -1265,12 +1314,12 @@ class PlayerController extends Notifier<PlayerState> {
         aniSkipIntervals: intervals,
         currentAniSkipInterval: null,
       );
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[AniSkip] 已拉取条目 $bangumiId 第 $episode 集跳过区间: ${intervals.length} 个',
       );
     } catch (e) {
-      KazumiLogger().log(Level.warning, '[AniSkip] 获取跳过区间失败: $e');
+      HaipeeLogger().log(Level.warning, '[AniSkip] 获取跳过区间失败: $e');
     }
   }
 
@@ -1414,7 +1463,7 @@ class PlayerController extends Notifier<PlayerState> {
         );
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '同步视频清晰度指标出错: $e');
+      HaipeeLogger().log(Level.warning, '同步视频清晰度指标出错: $e');
     }
   }
 }

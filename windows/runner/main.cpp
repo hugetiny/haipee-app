@@ -25,7 +25,7 @@ bool isSingleInstance()
   {
     return true;
   }
-  std::wstring mutex_str = L"kazumi.win.mutex";
+  std::wstring mutex_str = L"haipee.win.mutex";
   mutex = ::CreateMutex(NULL, TRUE, mutex_str.c_str());
   if (mutex == NULL || GetLastError() == ERROR_ALREADY_EXISTS)
   {
@@ -68,7 +68,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(L"kazumi", origin, size))
+  if (!window.Create(L"haipee", origin, size))
   {
     if (mutex) {
       CloseHandle(mutex);

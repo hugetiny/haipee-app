@@ -1,1 +1,1 @@
-export 'package:kazumi/pages/setting/appearance/displaymode_settings.dart';
+export 'package:haipee/pages/setting/appearance/displaymode_settings.dart';

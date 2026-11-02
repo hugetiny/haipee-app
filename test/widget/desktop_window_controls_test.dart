@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls.dart';
+import 'package:haipee/bean/widget/desktop_window_controls.dart';
 
 void main() {
   testWidgets('DesktopWindowControls 组件安全渲染测试', (tester) async {

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/card/network_img_layer.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/bean/widget/bangumi_context_menu.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/bean/card/network_img_layer.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/bangumi_context_menu.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 // 视频卡片 - 垂直布局
 class BangumiCardV extends ConsumerWidget {
@@ -39,7 +39,7 @@ class BangumiCardV extends ConsumerWidget {
         child: InkWell(
           onTap: () {
             if (!canTap) {
-              KazumiDialog.showToast(
+              HaipeeDialog.showToast(
                 message: context.t.library.common.toast.editMode,
               );
               return;

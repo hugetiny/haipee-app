@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/roads/road_module.dart';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/roads/road_module.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// IPTV 电视频道模型
@@ -113,7 +113,7 @@ class IptvService {
         cleanUrl,
         options: Options(
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Kazumi/IPTV; Player)',
+            'User-Agent': 'Mozilla/5.0 (Haipee/IPTV; Player)',
             'Accept': '*/*',
           },
         ),
@@ -126,7 +126,7 @@ class IptvService {
       }
       return channels;
     } catch (e) {
-      KazumiLogger().log(Level.warning, '拉取 IPTV 订阅失败: $cleanUrl, error: $e');
+      HaipeeLogger().log(Level.warning, '拉取 IPTV 订阅失败: $cleanUrl, error: $e');
       if (_cache.containsKey(cleanUrl)) {
         return _cache[cleanUrl]!;
       }

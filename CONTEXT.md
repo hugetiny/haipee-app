@@ -1,6 +1,6 @@
-# Kazumi Domain
+# Haipee Domain
 
-Kazumi is a cross-platform media client for discovering, indexing, and streaming anime content across diverse third-party sources with synchronized playback and metadata tracking.
+Haipee is a cross-platform media client for discovering, indexing, and streaming anime content across diverse third-party sources with synchronized playback and metadata tracking.
 
 ## Language
 
@@ -44,16 +44,28 @@ A declarative site definition specification (aligned with Cardigann / Torznab) d
 _Avoid_: Torrent scraper, tracker script, search plugin
 
 **Plugin Repository**:
-A decentralized remote manifest hosting installable, versioned Plugins that clients can subscribe to and auto-update (hosted primarily at `https://github.com/hugetiny/Kazumi` and Git mirrors).
+A decentralized remote manifest hosting installable, versioned Plugins that clients can subscribe to and auto-update (hosted primarily at `https://github.com/hugetiny/Haipee` and Git mirrors).
 _Avoid_: Store server, central proprietary backend
 
-**Declarative Plugin YAML Specification (Kazumi 声明式插件 YAML 规范)**:
+**Declarative Plugin YAML Specification (Haipee 声明式插件 YAML 规范)**:
 The human-readable YAML/JSON schema declaring scraping selectors, search endpoints, thumbnail extraction fields (`searchPic`), and authentication descriptors (`auth`) for video streaming and metadata extractors.
 _Avoid_: Hardcoded site scrapers without schema definitions, monolithic Dart-only plugins
 
 **In-App Plugin Authentication (应用内插件授权与扫码鉴权)**:
 The native in-app authentication flow (e.g., official Bilibili QR code passport login) providing zero-leakage, interactive session (`SESSDATA`) capture directly on mobile and desktop viewports, automatically unlocking high-bitrate media streams (1080P/4K DASH) without manual browser cookie copying.
 _Avoid_: Requiring users to inspect browser DevTools to copy cookies, storing raw passwords in client
+
+**In-App Interactive Web Login (应用内交互式网页登录)**:
+The embedded WebView authentication workflow for semi-private and private Cardigann indexers where users perform standard web login, complete CAPTCHA/Turnstile challenges, and authenticate 2FA, allowing the client to automatically intercept session cookies without requiring external browser DevTools.
+_Avoid_: Manual F12 cookie extraction, blind headless Form POST login
+
+**Client Identity Camouflage (客户端身份伪装与白名单特征模拟)**:
+The configurable BitTorrent handshake persona in the built-in Gopeed engine that accurately formats HTTP User-Agent, PeerID prefixes (such as `-qB4650-` for qBittorrent 4.6.x or `-TR4050-` for Transmission 4.0.x), and announce headers to satisfy private tracker whitelist requirements and avoid account suspension.
+_Avoid_: Using unwhitelisted generic client identities on private trackers, forcing external BitTorrent client dispatch
+
+**Private Tracker Authentication (私有 PT 认证与凭据隔离)**:
+The zero-leakage security boundary that separates sensitive PT credentials (session cookies, announce passkeys, Torznab API tokens) from shareable Cardigann indexer definitions, persisting sensitive tokens exclusively in hardware-backed secure storage (KeyStore, Keychain, DPAPI, libsecret).
+_Avoid_: Saving passkeys in plaintext exportable configs, leaking personal credentials in plugin sharing
 
 **Torznab Category Mapping**:
 The canonical integer-based taxonomy standard (e.g. 2000 for Movies, 5000 for TV, 5070 for Anime, 4000 for Games) used by Indexer Plugins to correlate site-specific sections with unified filter tabs.
@@ -153,11 +165,11 @@ _Avoid_: Blind rule saving, silent parser failure
 ### Settings Information Architecture
 
 **Settings Hierarchy**:
-The canonical five-tiered taxonomy for application preferences, ordered strictly as: 1) General & Appearance, 2) Media & Playback (视听与媒体), 3) Resource Discovery & Download (资源检索与下载), 4) Data & Cloud Sync (数据与云同步), and 5) About & Support (关于与支持). Rules are strictly decoupled by business domain: online streaming rules reside under Media & Playback as `Kazumi 视频规则`, while torrent indexer rules reside under Resource Discovery & Download as `Cardigann 规则`. Composite or redundant rule management centers are strictly prohibited.
+The canonical five-tiered taxonomy for application preferences, ordered strictly as: 1) General & Appearance, 2) Media & Playback (视听与媒体), 3) Resource Discovery & Download (资源检索与下载), 4) Data & Cloud Sync (数据与云同步), and 5) About & Support (关于与支持). Rules are strictly decoupled by business domain: online streaming rules reside under Media & Playback as `Haipee 视频规则`, while torrent indexer rules reside under Resource Discovery & Download as `Cardigann 规则`. Composite or redundant rule management centers are strictly prohibited.
 _Avoid_: Flat unorganized settings list, mixed media and tracker configurations, redundant composite rule center options
 
 **Media Settings Domain**:
-The sub-hierarchy encompassing core video playback engine, hardware decoding, video upscaling (super resolution), danmaku styling/filtering, metadata providers (Bangumi/TMDB), and online video streaming rules (`Kazumi 视频规则`, including Maccms, DOM scraping, and video rule market).
+The sub-hierarchy encompassing core video playback engine, hardware decoding, video upscaling (super resolution), danmaku styling/filtering, metadata providers (Bangumi/TMDB), and online video streaming rules (`Haipee 视频规则`, including Maccms, DOM scraping, and video rule market).
 _Avoid_: Fragmented player toggles on root settings page, mixing Cardigann indexer settings into media rules
 
 **Resource Discovery & Download Domain**:
@@ -215,7 +227,7 @@ _Avoid_: Reckless unofficial forks of complex C++ plugins, ignoring upstream SPM
 ### Logging Subsystem & Developer Observability
 
 **Unified Logging Subsystem (`AppLog`)**:
-The zero-boilerplate static facade unifying application logging across 11 strongly-typed subsystems (`LogModule.stream`, `LogModule.aria2`, `LogModule.indexer`, `LogModule.player`, `LogModule.network`, `LogModule.ui`, `LogModule.download`, `LogModule.syncplay`, `LogModule.storage`, `LogModule.system`, `LogModule.plugin`) backed by `TalkerFlutter`. Provides backward-compatible shims for legacy `KazumiLogger`.
+The zero-boilerplate static facade unifying application logging across 11 strongly-typed subsystems (`LogModule.stream`, `LogModule.aria2`, `LogModule.indexer`, `LogModule.player`, `LogModule.network`, `LogModule.ui`, `LogModule.download`, `LogModule.syncplay`, `LogModule.storage`, `LogModule.system`, `LogModule.plugin`) backed by `TalkerFlutter`. Provides backward-compatible shims for legacy `HaipeeLogger`.
 _Avoid_: Scattershot `print` / `debugPrint`, unstructured string logs, unmanaged log levels
 
 **Telemetry Coexistence Topology (`AppLog` & `SentryFlutter` Coexistence)**:
@@ -223,7 +235,7 @@ The decoupled two-tier observability topology where `AppLog` acts as the authori
 _Avoid_: Direct duplicate reporting from UI/business layers, conflicting logging abstractions, hardcoded remote telemetry dependencies
 
 **Rolling File Sink**:
-The non-blocking, queued file persistence sink maintaining at most 3 fixed-size log files (`kazumi.log`, `kazumi.1.log`, `kazumi.2.log`, 5MB each) in the application support directory, persisting INFO, WARNING, ERROR, and CRITICAL logs (plus DEBUG when developer mode is active).
+The non-blocking, queued file persistence sink maintaining at most 3 fixed-size log files (`haipee.log`, `haipee.1.log`, `haipee.2.log`, 5MB each) in the application support directory, persisting INFO, WARNING, ERROR, and CRITICAL logs (plus DEBUG when developer mode is active).
 _Avoid_: Direct synchronous file writes in UI thread, unbounded single log files, loss of operational INFO context
 
 **In-App Developer HUD & Error Perception**:
@@ -247,6 +259,25 @@ _Avoid_: Taking screenshots to confirm layout, eyeballing image files, manual cl
 **VM Service Introspection CLI (`tool/inspect_app.dart`)**:
 The dedicated developer and AI automation CLI connecting directly to the running Dart VM Service WebSocket (`ws://127.0.0.1:<port>/<token>/ws`). Provides instantaneous runtime overflow scanning (`--check-overflow`), live widget finding by type/key/description (`--find`), compact widget hierarchy tree dumping (`--tree`), and RPC-driven hot reload (`--reload`).
 _Avoid_: Relying on blind GUI interaction, uninspected render overflow, guessing whether widgets exist on screen
+
+### Web Media Stream & Rule-Centric Search Architecture (视频直播与规则聚合搜索体系)
+
+**Rule-Centric Pure Tool Search (规则中心化纯工具搜索体系)**:
+The foundational architecture treating Haipee strictly as a rule execution engine and client tool rather than a proprietary content portal. In idle or unsearched state, zero hardcoded third-party recommendation streams (e.g. Bilibili popular videos) are requested or displayed; left menu filter badges never display fake fallback numbers, and the main viewport displays clean tool onboarding (search history, enabled rule statistics, and query prompts).
+_Avoid_: Hardcoding Bilibili popular feeds as default homepage, masking third-party recommendations as rule results, displaying fake 20-count badges in idle state
+
+**Dynamic Result Bucketing & Bidirectional Filter Linkage (动态搜索结果桶与双向筛选联动)**:
+The strict correlation contract between search results and the left category navigation. The left sidebar presents Content Overview (`全部`, `视频`, `直播`) alongside the 5 Audiovisual Rule Protocols (`Haipee 规则`, `MacCMS 规则`, `TVBox 规则`, `IPTV 规则`, `Piped 规则`). Badges dynamically compute and display the real-time hit counts strictly from the current search results belonging to each rule protocol and media type; categories with 0 matches suppress their badge.
+_Avoid_: Static/hardcoded category counts, conflating different rule types under generic tags, orphaned filter chips
+
+**Streamed Concurrent Search Pipeline (流式全并发搜索管道)**:
+The non-blocking search execution model dispatching concurrent queries across all enabled audiovisual rules (Haipee, MacCMS, TVBox, IPTV, Piped) with individual timeouts. As each rule responds, its extracted results are immediately streamed into the unified result collection, progressively updating UI cards and left sidebar badge counts without waiting for slower providers.
+_Avoid_: Sequential blocking iteration over rules, halting UI updates until the slowest source finishes, dropping partial results on single-rule failures
+
+**Global Search with Local View Filtering (全局全源并发检索与本地视口过滤)**:
+The search scoping contract specifying that initiating a search always queries all enabled audiovisual rules concurrently to establish comprehensive multi-rule result statistics, regardless of which left category filter is active. The user's active filter chip strictly controls client-side viewport visibility, allowing instantaneous switching between rule categories without triggering redundant network requests.
+_Avoid_: Limiting backend search queries to a single active category, invalidating global category statistics on filtered searches
+
 
 
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/utils/storage.dart';
 
 class ProwlarrConfigDialog extends ConsumerStatefulWidget {
   const ProwlarrConfigDialog({super.key});
@@ -80,7 +80,7 @@ class _ProwlarrConfigDialogState extends ConsumerState<ProwlarrConfigDialog> {
     ref.read(torrentSearchProvider.notifier).reloadProwlarrConfig();
 
     if (mounted) {
-      KazumiDialog.showToast(message: 'Prowlarr 配置已保存');
+      HaipeeDialog.showToast(message: 'Prowlarr 配置已保存');
       Navigator.of(context).pop();
     }
   }
@@ -105,7 +105,7 @@ class _ProwlarrConfigDialogState extends ConsumerState<ProwlarrConfigDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Kazumi 默认已内置 100% 声明式 Cardigann YAML 解析引擎，零外置依赖。如果您已在 NAS 或本地服务器上部署了 Prowlarr/Torznab 服务，可在此配置 API 地址对接作为额外补充。',
+                'Haipee 默认已内置 100% 声明式 Cardigann YAML 解析引擎，零外置依赖。如果您已在 NAS 或本地服务器上部署了 Prowlarr/Torznab 服务，可在此配置 API 地址对接作为额外补充。',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

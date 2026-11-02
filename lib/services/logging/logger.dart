@@ -1,1 +1,1 @@
-export 'package:kazumi/utils/logger.dart';
+export 'package:haipee/utils/logger.dart';

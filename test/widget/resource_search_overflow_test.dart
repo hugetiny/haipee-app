@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/pages/resource/resource_search_content.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/pages/resource/resource_search_content.dart';
+import 'package:haipee/utils/storage.dart';
 
-import 'package:kazumi/pages/popular/popular_controller.dart';
-import 'package:kazumi/pages/popular/providers.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/pages/popular/popular_controller.dart';
+import 'package:haipee/pages/popular/providers.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
 
 class _MockTorrentSearchNotifier extends TorrentSearchNotifier {
   final TorrentSearchState initialState;

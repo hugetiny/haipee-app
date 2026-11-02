@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,13 +8,15 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/logs/logs_page.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/services/logging/log_module.dart';
-import 'package:kazumi/services/logging/rolling_file_sink.dart';
-import 'package:kazumi/utils/storage.dart';
-export 'package:kazumi/utils/logger.dart' show KazumiLogger, getLogsPath, clearLogs;
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/logs/logs_page.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/services/logging/log_enricher.dart';
+import 'package:haipee/services/logging/log_module.dart';
+import 'package:haipee/services/logging/rolling_file_sink.dart';
+import 'package:haipee/utils/storage.dart';
+export 'package:haipee/services/logging/log_enricher.dart' show DiagnosticInfo, LogEnricher;
+export 'package:haipee/utils/logger.dart' show HaipeeLogger, getLogsPath, clearLogs;
 
 /// Module-tagged Talker log record.
 class ModuleLog extends TalkerLog {
@@ -138,6 +141,27 @@ class AppLogObserver extends TalkerObserver {
       stackTrace: stackTrace,
     );
     sink.write(entry);
+    if (!kReleaseMode || AppLog.isFirebaseTestLab) {
+      debugPrintSynchronously(entry);
+    }
+    if (level == 'ERROR' || level == 'CRITICAL' || level == 'EXCEPTION' || AppLog.isFirebaseTestLab) {
+      developer.log(
+        entry,
+        name: 'haipee',
+        level: (level == 'ERROR' || level == 'CRITICAL' || level == 'EXCEPTION') ? 1000 : 800,
+        error: error,
+        stackTrace: stackTrace,
+      );
+      AppLog.logToNativePlatform(
+        level: (level.startsWith('E') || level.startsWith('C')) ? 'E' : 'I',
+        message: entry,
+      );
+      if (kReleaseMode && (level.startsWith('E') || level.startsWith('C'))) {
+        try {
+          stderr.writeln(entry);
+        } catch (_) {}
+      }
+    }
   }
 }
 
@@ -178,7 +202,7 @@ class CompositeTalkerObserver extends TalkerObserver {
   }
 }
 
-/// Centralized, high-ergonomics application logging facade for Kazumi.
+/// Centralized, high-ergonomics application logging facade for Haipee.
 class AppLog {
   AppLog._();
 
@@ -228,19 +252,87 @@ class AppLog {
       final base = (await getApplicationSupportDirectory()).path;
       return Directory(p.join(base, 'logs'));
     },
-    baseName: 'kazumi.log',
+    baseName: 'haipee.log',
     maxFileSizeBytes: 5 * 1024 * 1024, // 5MB
-    maxBackups: 2, // kazumi.1.log, kazumi.2.log
+    maxBackups: 2, // haipee.1.log, haipee.2.log
   );
 
   static final CompositeTalkerObserver compositeObserver =
       CompositeTalkerObserver(AppLogObserver(fileSink));
 
+  static const bool _isExplicitTestLab =
+      bool.fromEnvironment('FIREBASE_TEST_LAB', defaultValue: false);
+
+  static bool _detectedNativeTestLab = false;
+  static const MethodChannel _intentChannel = MethodChannel('com.hugetiny.haipee/intent');
+
+  /// Whether current execution is detected as running within Google Cloud Firebase Test Lab
+  static bool get isFirebaseTestLab {
+    if (_isExplicitTestLab || _detectedNativeTestLab) return true;
+    try {
+      if (!kIsWeb && Platform.isAndroid) {
+        if (Platform.environment.containsKey('FIREBASE_TEST_LAB') ||
+            Platform.environment['FIREBASE_TEST_LAB'] == 'true') {
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /// Automatically queries platform settings to detect Firebase Test Lab
+  static Future<void> detectTestLab() async {
+    if (_isExplicitTestLab || _detectedNativeTestLab) return;
+    try {
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+        final isTestLab = await _intentChannel.invokeMethod<bool>('isFirebaseTestLab');
+        if (isTestLab == true) {
+          _detectedNativeTestLab = true;
+          setDebugMode(true);
+          try {
+            talker.configure(
+              settings: TalkerSettings(
+                maxHistoryItems: 1000,
+                useConsoleLogs: true,
+              ),
+            );
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Dispatches log entry directly to native Android logcat / iOS syslog / platform logger
+  static void logToNativePlatform({required String level, required String message}) {
+    if (kIsWeb) return;
+    try {
+      if (Platform.isAndroid || Platform.isIOS) {
+        _intentChannel.invokeMethod('logNative', {
+          'tag': 'haipee',
+          'level': level,
+          'message': message,
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// Records and formats a RenderFlex overflow error so it is surfaced deterministically in Test Lab logs
+  static void recordRenderFlexOverflow(FlutterErrorDetails details) {
+    recordError();
+    final message = details.exceptionAsString();
+    e(
+      LogModule.ui,
+      '[HAIPEE_OVERFLOW] RenderFlex layout overflow: $message',
+      error: details.exception,
+      stackTrace: details.stack,
+    );
+  }
+
   static final Talker talker = TalkerFlutter.init(
     observer: compositeObserver,
     settings: TalkerSettings(
       maxHistoryItems: 1000,
-      useConsoleLogs: !kReleaseMode,
+      useConsoleLogs: !kReleaseMode || isFirebaseTestLab,
     ),
   );
 
@@ -316,7 +408,24 @@ class AppLog {
     final timeStr = '$y-$m-$d $h:$min:$s.$ms';
 
     final buffer = StringBuffer();
-    buffer.write('[$timeStr] [$level] [$module] $message');
+    final sanitizedMessage = LogEnricher.sanitizeMessage(message);
+    buffer.write('[$timeStr] [$level] [$module] $sanitizedMessage');
+
+    final bool isFailureLevel = level == 'ERROR' ||
+        level == 'EXCEPTION' ||
+        level == 'WARNING' ||
+        level == 'CRITICAL' ||
+        error != null;
+
+    if (isFailureLevel) {
+      final diag = LogEnricher.analyze(message, error);
+      if (diag != null) {
+        buffer.write('\n    Diagnostic: [${diag.code}] ${diag.title}');
+        buffer.write('\n    Explanation: ${diag.explanation}');
+        buffer.write('\n    Action: ${diag.remediation}');
+      }
+    }
+
     if (error != null) {
       buffer.write('\n    Error: $error');
     }
@@ -513,7 +622,7 @@ class AppLog {
       final state = Navigator.maybeOf(context);
       if (state != null) return state;
     }
-    final observerCtx = KazumiDialog.observer.currentContext;
+    final observerCtx = HaipeeDialog.observer.currentContext;
     if (observerCtx != null && observerCtx.mounted) {
       final state = Navigator.maybeOf(observerCtx);
       if (state != null) return state;
@@ -562,7 +671,7 @@ class AppLog {
   static Future<String> exportDiagnostics() async {
     final buffer = StringBuffer();
     buffer.writeln('========================================');
-    buffer.writeln('       KAZUMI SYSTEM DIAGNOSTICS REPORT ');
+    buffer.writeln('       HAIPEE SYSTEM DIAGNOSTICS REPORT ');
     buffer.writeln('========================================');
     buffer.writeln('App Version: ${Api.version}');
     buffer.writeln('Timestamp: ${DateTime.now().toIso8601String()}');
@@ -628,6 +737,42 @@ class AppLog {
 
   /// Returns the primary active log file.
   static Future<File> getActiveLogFile() => fileSink.getPrimaryFile();
+
+  /// 供 AI Coding Agent 或自省工具直接获取结构化的近期错误列表
+  static Future<List<Map<String, dynamic>>> getRecentErrorsJson({int limit = 50}) async {
+    final file = await getActiveLogFile();
+    if (!file.existsSync()) return [];
+    final lines = await file.readAsLines();
+    final List<Map<String, dynamic>> result = [];
+    final regExp = RegExp(
+      r'^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\] \[(ERROR|EXCEPTION|WARNING)\] \[([^\]]+)\] (.*)$',
+    );
+
+    for (final line in lines.reversed) {
+      final match = regExp.firstMatch(line);
+      if (match != null) {
+        final time = match.group(1)!;
+        final level = match.group(2)!;
+        final module = match.group(3)!;
+        final msg = match.group(4)!;
+        final diag = LogEnricher.analyze(msg);
+        result.add({
+          'timestamp': time,
+          'level': level,
+          'module': module,
+          'message': msg,
+          if (diag != null) ...{
+            'diagnosticCode': diag.code,
+            'diagnosticTitle': diag.title,
+            'explanation': diag.explanation,
+            'action': diag.remediation,
+          },
+        });
+        if (result.length >= limit) break;
+      }
+    }
+    return result;
+  }
 
   /// Clears active and backup log files, and resets talker memory history.
   static Future<bool> clearLogs() async {

@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/card/bangumi_timeline_card.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/card/bangumi_timeline_card.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;

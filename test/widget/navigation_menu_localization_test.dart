@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/menu/menu.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/menu/menu.dart';
 
 void main() {
   setUp(() {

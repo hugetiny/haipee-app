@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:kazumi/modules/torrent_stream/torrserver_client.dart';
-import 'package:kazumi/modules/torrent_stream/torrserver_process_manager.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_tracker_service.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/torrent_stream/torrserver_client.dart';
+import 'package:haipee/modules/torrent_stream/torrserver_process_manager.dart';
+import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
+import 'package:haipee/modules/torrent_stream/torrent_tracker_service.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// 专为视频在线播放打造的 TorrServer 极速流式引擎。
@@ -19,7 +19,7 @@ class TorrServerStreamEngine {
   TorrServerStreamEngine._internal();
 
   final TorrServerProcessManager _processManager = TorrServerProcessManager.instance;
-  final KazumiLogger _logger = KazumiLogger();
+  final HaipeeLogger _logger = HaipeeLogger();
   String? _activeTorrentHash;
 
   /// 当前是否存在活跃的 TorrServer 会话

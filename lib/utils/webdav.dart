@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:hive_ce/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/modules/collect/collect_module.dart';
-import 'package:kazumi/modules/collect/collect_change_module.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/modules/collect/collect_module.dart';
+import 'package:haipee/modules/collect/collect_change_module.dart';
 
 class WebDav {
   late String webDavURL;
@@ -33,7 +33,7 @@ class WebDav {
     webDavPassword =
         setting.get(SettingBoxKey.webDavPassword, defaultValue: '');
     if (webDavURL.isEmpty) {
-      //KazumiLogger().log(Level.warning, 'WebDAV URL is not set');
+      //HaipeeLogger().log(Level.warning, 'WebDAV URL is not set');
       throw Exception('请先填写WebDAV URL');
     }
     client = webdav.newClient(
@@ -46,21 +46,21 @@ class WebDav {
     try {
       await client.ping();
       try {
-        // KazumiLogger().log(Level.warning, 'webDav backup directory not exists, creating');
-        await client.mkdir('/kazumiSync');
+        // HaipeeLogger().log(Level.warning, 'webDav backup directory not exists, creating');
+        await client.mkdir('/haipeeSync');
         if (!await webDavLocalTempDirectory.exists()) {
           await webDavLocalTempDirectory.create(recursive: true);
         }
         initialized = true;
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.info, 'webDav backup directory create success');
       } catch (_) {
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.error, 'webDav backup directory create failed');
         rethrow;
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, 'WebDAV ping failed: $e');
+      HaipeeLogger().log(Level.error, 'WebDAV ping failed: $e');
       rethrow;
     }
   }
@@ -69,7 +69,7 @@ class WebDav {
     var directory = await getApplicationSupportDirectory();
     final localFilePath = '${directory.path}/hive/$boxName.hive';
     final tempFilePath = '${webDavLocalTempDirectory.path}/$boxName.tmp';
-    final webDavPath = '/kazumiSync/$boxName.tmp';
+    final webDavPath = '/haipeeSync/$boxName.tmp';
     await File(localFilePath).copy(tempFilePath);
     try {
       await client.remove('$webDavPath.cache');
@@ -81,7 +81,7 @@ class WebDav {
     try {
       await client.remove(webDavPath);
     } catch (_) {
-      KazumiLogger().log(Level.warning, 'webDav former backup file not exist');
+      HaipeeLogger().log(Level.warning, 'webDav former backup file not exist');
     }
     await client.rename('$webDavPath.cache', webDavPath, true);
     try {
@@ -91,14 +91,14 @@ class WebDav {
 
   Future<void> updateHistory() async {
     if (isHistorySyncing) {
-      KazumiLogger().log(Level.warning, 'History is currently syncing');
+      HaipeeLogger().log(Level.warning, 'History is currently syncing');
       throw Exception('History is currently syncing');
     }
     isHistorySyncing = true;
     try {
       await update('histories');
     } catch (e) {
-      KazumiLogger().log(Level.error, 'webDav update history failed $e');
+      HaipeeLogger().log(Level.error, 'webDav update history failed $e');
       rethrow;
     } finally {
       isHistorySyncing = false;
@@ -115,7 +115,7 @@ class WebDav {
         await update('collectchanges');
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, 'webDav update collectibles failed $e');
+      HaipeeLogger().log(Level.error, 'webDav update collectibles failed $e');
       rethrow;
     }
   }
@@ -126,7 +126,7 @@ class WebDav {
     if (await existingFile.exists()) {
       await existingFile.delete();
     }
-    await client.read2File('/kazumiSync/$fileName', existingFile.path,
+    await client.read2File('/haipeeSync/$fileName', existingFile.path,
         onProgress: (c, t) {
       // print(c / t);
     });
@@ -134,7 +134,7 @@ class WebDav {
 
   Future<void> downloadAndPatchHistory() async {
     if (isHistorySyncing) {
-      KazumiLogger().log(Level.warning, 'History is currently syncing');
+      HaipeeLogger().log(Level.warning, 'History is currently syncing');
       throw Exception('History is currently syncing');
     }
     isHistorySyncing = true;
@@ -144,7 +144,7 @@ class WebDav {
       await download('histories');
       await GStorage.patchHistory(existingFile.path);
     } catch (e) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.error, 'webDav download and patch history failed $e');
       rethrow;
     } finally {
@@ -156,7 +156,7 @@ class WebDav {
     List<CollectedBangumi> remoteCollectibles = [];
     List<CollectedBangumiChange> remoteChanges = [];
 
-    final files = await client.readDir('/kazumiSync');
+    final files = await client.readDir('/haipeeSync');
     final collectiblesExists =
         files.any((file) => file.name == 'collectibles.tmp');
     final changesExists =
@@ -169,14 +169,14 @@ class WebDav {
     List<Future<void>> downloadFutures = [];
     if (collectiblesExists) {
       downloadFutures.add(download('collectibles').catchError((e) {
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.error, 'webDav download collectibles failed $e');
         throw Exception('webDav download collectibles failed');
       }));
     }
     if (changesExists) {
       downloadFutures.add(download('collectchanges').catchError((e) {
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.error, 'webDav download collectchanges failed $e');
         throw Exception('webDav download collectchanges failed');
       }));
@@ -194,7 +194,7 @@ class WebDav {
             '${webDavLocalTempDirectory.path}/collectchanges.tmp');
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, 'webDav get collectibles failed: $e');
+      HaipeeLogger().log(Level.error, 'webDav get collectibles failed: $e');
       throw Exception('webDav get collectibles from file failed');
     }
     if (remoteChanges.isNotEmpty || remoteCollectibles.isNotEmpty) {
@@ -207,7 +207,7 @@ class WebDav {
     try {
       await client.ping();
     } catch (e) {
-      KazumiLogger().log(Level.error, 'WebDAV ping failed: $e');
+      HaipeeLogger().log(Level.error, 'WebDAV ping failed: $e');
       rethrow;
     }
   }

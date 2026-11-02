@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
-import 'package:kazumi/pages/download/providers.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
+import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
+import 'package:haipee/pages/download/providers.dart';
 
 /// 专为 BT/磁力链在线边下边播设计的实时交互 HUD 对话框（支持原生与 TorrServer 极速互保）。
 ///
@@ -208,12 +208,12 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
       );
 
       if (mounted) {
-        KazumiDialog.showToast(message: '已添加至后台下载队列: $_displayTitle');
+        HaipeeDialog.showToast(message: '已添加至后台下载队列: $_displayTitle');
         Navigator.of(context).pop(null);
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '转入后台下载失败: $e');
+        HaipeeDialog.showToast(message: '转入后台下载失败: $e');
         _isSwitchingToDownload = false;
       }
     }

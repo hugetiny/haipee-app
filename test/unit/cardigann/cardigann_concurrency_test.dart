@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/sources/torrent_source.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_source.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 
 class MockDelayedSource implements TorrentSource {
   @override

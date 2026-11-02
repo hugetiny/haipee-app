@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
-import 'package:kazumi/modules/collect/collect_module.dart';
-import 'package:kazumi/modules/history/history_module.dart';
-import 'package:kazumi/modules/parse_failure/parse_failure_module.dart';
-import 'package:kazumi/modules/search/search_history_module.dart';
-import 'package:kazumi/modules/bilibili/widgets/bili_login_dialog.dart';
-import 'package:kazumi/pages/online/online_video_search_page.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/bangumi/bangumi_tag.dart';
+import 'package:haipee/modules/collect/collect_module.dart';
+import 'package:haipee/modules/history/history_module.dart';
+import 'package:haipee/modules/parse_failure/parse_failure_module.dart';
+import 'package:haipee/modules/search/search_history_module.dart';
+import 'package:haipee/modules/bilibili/widgets/bili_login_dialog.dart';
+import 'package:haipee/pages/online/online_video_search_page.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -91,7 +91,7 @@ void main() {
         matching: find.textContaining('视频'),
       );
       expect(videoTextFinder, findsOneWidget);
-      await tester.tap(videoTextFinder);
+      await tester.tap(videoTextFinder, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       // Verify still no checkmark icon appeared after selection

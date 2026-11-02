@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
 import 'package:webview_windows/webview_windows.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
 
 class WebviewWindowsItemControllerImpel
     extends WebviewItemController<WebviewController> {
@@ -63,6 +65,10 @@ class WebviewWindowsItemControllerImpel
       if (!isVideoSourceLoaded) {
         logEventController.add('解析视频资源超时');
         videoLoadingEventController.add(false);
+        AppLog.w(
+          LogModule.stream,
+          'Windows WebView 视频资源嗅探超时 (15s)',
+        );
       }
     });
   }

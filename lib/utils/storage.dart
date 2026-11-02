@@ -2,21 +2,21 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
-import 'package:kazumi/modules/history/history_module.dart';
-import 'package:kazumi/modules/collect/collect_module.dart';
-import 'package:kazumi/modules/collect/collect_change_module.dart';
-import 'package:kazumi/modules/search/search_history_module.dart';
-import 'package:kazumi/modules/metadata_sync/models/metadata_record.dart';
-import 'package:kazumi/modules/parse_failure/parse_failure_module.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/utils/api_credentials.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/bangumi/bangumi_tag.dart';
+import 'package:haipee/modules/history/history_module.dart';
+import 'package:haipee/modules/collect/collect_module.dart';
+import 'package:haipee/modules/collect/collect_change_module.dart';
+import 'package:haipee/modules/search/search_history_module.dart';
+import 'package:haipee/modules/metadata_sync/models/metadata_record.dart';
+import 'package:haipee/modules/parse_failure/parse_failure_module.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/utils/api_credentials.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/services/logging/app_log.dart' show AppLog;
-import 'package:kazumi/services/storage/settings_keys.dart';
-export 'package:kazumi/services/storage/settings_keys.dart';
+import 'package:haipee/services/logging/app_log.dart' show AppLog;
+import 'package:haipee/services/storage/settings_keys.dart';
+export 'package:haipee/services/storage/settings_keys.dart';
 
 class GStorage {
   /// Don't use favorites box, it's replaced by collectibles.
@@ -34,6 +34,15 @@ class GStorage {
   static late Box<dynamic> playbackProfiles;
   static late Box<dynamic> indexerPlugins;
   static late Box<dynamic> indexerRepos;
+
+  /// Safely checks whether the setting box has been initialized and is open
+  static bool get isSettingInitialized {
+    try {
+      return setting.isOpen;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static Future init() async {
     Hive.registerAdapter(BangumiItemAdapter());
@@ -72,9 +81,9 @@ class GStorage {
     final hiveBoxFile = File('${appDocumentDir.path}/hive/$boxName.hive');
     if (await hiveBoxFile.exists()) {
       await hiveBoxFile.copy(backupFilePath);
-      KazumiLogger().log(Level.info, 'Backup success: $backupFilePath');
+      HaipeeLogger().log(Level.info, 'Backup success: $backupFilePath');
     } else {
-      KazumiLogger().log(Level.warning, 'Hive box not exists');
+      HaipeeLogger().log(Level.warning, 'Hive box not exists');
     }
   }
 
@@ -267,8 +276,11 @@ class GStorage {
       await setting.put(SettingBoxKey.danDanApiKey, '');
     }
     if (!setting.containsKey(SettingBoxKey.maxConcurrentDownloads)) {
-      final legacy = setting.get(SettingBoxKey.aria2MaxConcurrentDownloads);
+      final legacy = setting.get('aria2MaxConcurrentDownloads');
       await setting.put(SettingBoxKey.maxConcurrentDownloads, legacy ?? 3);
+      if (legacy != null) {
+        await setting.delete('aria2MaxConcurrentDownloads');
+      }
     }
     if (!setting.containsKey(SettingBoxKey.torrentConsentAccepted)) {
       await setting.put(SettingBoxKey.torrentConsentAccepted, false);
@@ -446,12 +458,14 @@ class SettingBoxKey {
       webDavEnable = 'webDavEnable',
       webDavEnableHistory = 'webDavEnableHistory',
       webDavEnableCollect = 'webDavEnableCollect',
+      webDavEnableDanmakuShield = 'webDavEnableDanmakuShield',
       webDavURL = 'webDavURL',
       webDavUsername = 'webDavUsername',
       webDavPassword = 'webDavPasswd',
       lowMemoryMode = 'lowMemoryMode',
       showWindowButton = 'showWindowButton',
       useDynamicColor = 'useDynamicColor',
+      useSystemFont = 'useSystemFont',
       exitBehavior = 'exitBehavior',
       playerDebugMode = 'playerDebugMode',
       syncPlayEndPoint = 'syncPlayEndPoint',
@@ -471,7 +485,6 @@ class SettingBoxKey {
       danDanAppId = 'danDanAppId',
       danDanApiKey = 'danDanApiKey',
       maxConcurrentDownloads = 'maxConcurrentDownloads',
-      aria2MaxConcurrentDownloads = 'aria2MaxConcurrentDownloads',
       torrentConsentAccepted = 'torrentConsentAccepted',
       torrentConsentTimestamp = 'torrentConsentTimestamp',
       subtitleAutoMatchEnabled = 'subtitleAutoMatchEnabled',

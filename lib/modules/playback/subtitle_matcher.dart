@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as path;
 
@@ -33,7 +33,7 @@ class SubtitleMatcher {
   }) : _dio = httpClient ?? Dio();
 
   final Dio _dio;
-  final KazumiLogger _logger = KazumiLogger();
+  final HaipeeLogger _logger = HaipeeLogger();
 
   /// Finds the best matching subtitle from a list of candidates based on
   /// user preferences and confidence scoring.
@@ -183,7 +183,7 @@ class SubtitleMatcher {
           );
         }
       } catch (error) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '[SubtitleMatcher] Failed to parse subtitle entry: $error',
         );

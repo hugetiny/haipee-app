@@ -354,22 +354,48 @@ class LibgopeedWorker {
       candidates.addAll([
         // Inside app bundle
         '${File(Platform.resolvedExecutable).parent.parent.path}/Frameworks/libgopeed.dylib',
+        '${File(Platform.resolvedExecutable).parent.path}/libgopeed.dylib',
         // In local development / test execution directory
         '${Directory.current.path}/macos/Frameworks/libgopeed.dylib',
+        'macos/Frameworks/libgopeed.dylib',
         'libgopeed.dylib',
       ]);
+      Directory? dir = File(Platform.resolvedExecutable).parent;
+      for (int i = 0; i < 8 && dir != null; i++) {
+        candidates.add('${dir.path}/macos/Frameworks/libgopeed.dylib');
+        final nextDir = dir.parent;
+        if (nextDir.path == dir.path) break;
+        dir = nextDir;
+      }
     } else if (Platform.isWindows) {
       candidates.addAll([
         '${File(Platform.resolvedExecutable).parent.path}/libgopeed.dll',
         '${Directory.current.path}/windows/libgopeed.dll',
+        'windows/libgopeed.dll',
         'libgopeed.dll',
       ]);
+      Directory? dir = File(Platform.resolvedExecutable).parent;
+      for (int i = 0; i < 8 && dir != null; i++) {
+        candidates.add('${dir.path}/windows/libgopeed.dll');
+        final nextDir = dir.parent;
+        if (nextDir.path == dir.path) break;
+        dir = nextDir;
+      }
     } else if (Platform.isLinux) {
       candidates.addAll([
         '${File(Platform.resolvedExecutable).parent.path}/lib/libgopeed.so',
+        '${File(Platform.resolvedExecutable).parent.path}/libgopeed.so',
         '${Directory.current.path}/linux/libgopeed.so',
+        'linux/libgopeed.so',
         'libgopeed.so',
       ]);
+      Directory? dir = File(Platform.resolvedExecutable).parent;
+      for (int i = 0; i < 8 && dir != null; i++) {
+        candidates.add('${dir.path}/linux/libgopeed.so');
+        final nextDir = dir.parent;
+        if (nextDir.path == dir.path) break;
+        dir = nextDir;
+      }
     }
 
     for (final path in candidates) {
@@ -386,4 +412,5 @@ class LibgopeedWorker {
         : (Platform.isMacOS ? 'libgopeed.dylib' : 'libgopeed.so');
     return DynamicLibrary.open(fallbackName);
   }
+
 }

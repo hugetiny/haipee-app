@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:kazumi/pages/webview/webview_controller.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 
 class WebviewLinuxItemControllerImpel extends WebviewItemController<Webview> {
@@ -161,6 +161,9 @@ class WebviewLinuxItemControllerImpel extends WebviewItemController<Webview> {
   """;
 
   static const String blobScript = """
+    window.alert = function(msg) { console.warn('[Sniffer JS Alert suppressed]:', msg); };
+    window.confirm = function(msg) { console.warn('[Sniffer JS Confirm suppressed]:', msg); return true; };
+    window.prompt = function(msg, defaultText) { console.warn('[Sniffer JS Prompt suppressed]:', msg); return defaultText || ''; };
     const _r_text = window.Response.prototype.text;
     window.Response.prototype.text = function () {
         return new Promise((resolve, reject) => {

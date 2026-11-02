@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/pages/download/download_controller.dart';
-import 'package:kazumi/modules/download/download_task.dart';
+import 'package:haipee/pages/download/download_controller.dart';
+import 'package:haipee/modules/download/download_task.dart';
 
 /// 下载控制器 Provider
 final downloadControllerProvider =
@@ -15,9 +15,6 @@ final downloadEventStreamProvider = StreamProvider<DownloadEventData>((ref) {
   return controller.eventStream;
 });
 
-@Deprecated('Use downloadEventStreamProvider instead')
-final aria2EventStreamProvider = downloadEventStreamProvider;
-
 /// 下载连接状态流 Provider
 /// 实时监听下载引擎连接状态变化
 final downloadConnectionStreamProvider =
@@ -25,9 +22,6 @@ final downloadConnectionStreamProvider =
   final controller = ref.watch(downloadControllerProvider.notifier);
   return controller.connectionStateStream;
 });
-
-@Deprecated('Use downloadConnectionStreamProvider instead')
-final aria2ConnectionStreamProvider = downloadConnectionStreamProvider;
 
 /// 下载页面 UI 状态
 class DownloadPageUIState {
@@ -146,9 +140,6 @@ final downloadConnectionStateProvider =
   return downloadState.wsConnectionState;
 });
 
-@Deprecated('Use downloadConnectionStateProvider instead')
-final aria2ConnectionStateProvider = downloadConnectionStateProvider;
-
 /// 是否已连接 Provider
 final isDownloadConnectedProvider = Provider<bool>((ref) {
   final connectionState = ref.watch(downloadConnectionStateProvider);
@@ -206,9 +197,6 @@ final downloadStatsProvider = Provider<Map<String, dynamic>?>((ref) {
   final controller = ref.read(downloadControllerProvider.notifier);
   return controller.getWebSocketStats();
 });
-
-@Deprecated('Use downloadStatsProvider instead')
-final aria2StatsProvider = downloadStatsProvider;
 
 /// 过滤后的活动任务 Provider
 final filteredActiveTasksProvider = Provider<List<DownloadTask>>((ref) {

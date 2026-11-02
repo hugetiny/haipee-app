@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/bean/widget/bottom_sheet/bottom_selector.dart';
-import 'package:kazumi/pages/popular/popular_controller.dart';
-import 'package:kazumi/pages/popular/providers.dart';
-import 'package:kazumi/bean/card/bangumi_card.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/bean/widget/bottom_sheet/bottom_selector.dart';
+import 'package:haipee/pages/popular/popular_controller.dart';
+import 'package:haipee/pages/popular/providers.dart';
+import 'package:haipee/bean/card/bangumi_card.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/layout/app_bar_config.dart';
-import 'package:kazumi/bean/widget/responsive/responsive.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/layout/app_bar_config.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 class PopularPage extends ConsumerStatefulWidget {
   const PopularPage({super.key});
@@ -76,7 +76,7 @@ class _PopularPageState extends ConsumerState<PopularPage>
     if (scrollController.position.pixels >=
             scrollController.position.maxScrollExtent - 200 &&
         !state.isLoadingMore) {
-      KazumiLogger().log(Level.info, 'Popular is loading more');
+      HaipeeLogger().log(Level.info, 'Popular is loading more');
       if (state.currentTag != '') {
         popularController.queryBangumiByTag();
       } else {
@@ -92,15 +92,15 @@ class _PopularPageState extends ConsumerState<PopularPage>
 
   void onBackPressed(BuildContext context) {
     final t = context.t;
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
       return;
     }
     if (_lastPressedAt == null ||
         DateTime.now().difference(_lastPressedAt!) >
             const Duration(seconds: 2)) {
       _lastPressedAt = DateTime.now();
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: t.library.common.backHint,
         context: context,
       );

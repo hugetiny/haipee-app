@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/services/logging/log_module.dart';
+import 'package:haipee/services/logging/log_module.dart';
 
 void main() {
   group('LogModule Tests', () {
@@ -11,8 +11,8 @@ void main() {
     });
 
     test('LogModule.detect extracts module from bracketed prefix tags', () {
-      expect(LogModule.detect('[Aria2] stdout: downloading'), equals(LogModule.aria2));
-      expect(LogModule.detect('[Aria2ProcessManager] started'), equals(LogModule.aria2));
+      expect(LogModule.detect('[Gopeed] stdout: downloading'), equals(LogModule.gopeed));
+      expect(LogModule.detect('[GopeedProcessManager] started'), equals(LogModule.gopeed));
       expect(LogModule.detect('[TorrentStreamService] init'), equals(LogModule.stream));
       expect(LogModule.detect('[TorrServer] ready'), equals(LogModule.stream));
       expect(LogModule.detect('[Libtorrent] alert'), equals(LogModule.stream));
@@ -22,7 +22,7 @@ void main() {
       expect(LogModule.detect('[PlayerController] start play'), equals(LogModule.player));
       expect(LogModule.detect('[Danmaku] loaded'), equals(LogModule.player));
       expect(LogModule.detect('[DownloadTask] queued'), equals(LogModule.download));
-      expect(LogModule.detect('[GopeedService] task added'), equals(LogModule.download));
+      expect(LogModule.detect('[GopeedService] task added'), equals(LogModule.gopeed));
       expect(LogModule.detect('[SyncPlay] connected'), equals(LogModule.syncplay));
       expect(LogModule.detect('[HiveStorage] box opened'), equals(LogModule.storage));
       expect(LogModule.detect('[WebDAV] synced'), equals(LogModule.storage));

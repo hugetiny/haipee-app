@@ -1,34 +1,34 @@
-import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 import 'dart:io';
 import 'dart:ui';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/collect_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
-import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/pages/info/info_controller.dart';
-import 'package:kazumi/pages/info/providers.dart';
-import 'package:kazumi/bean/card/bangumi_info_card.dart';
-import 'package:kazumi/pages/info/source_sheet.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/bean/card/network_img_layer.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/collect_button.dart';
+import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:haipee/bean/widget/embedded_native_control_area.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/pages/info/info_controller.dart';
+import 'package:haipee/pages/info/providers.dart';
+import 'package:haipee/bean/card/bangumi_info_card.dart';
+import 'package:haipee/pages/info/source_sheet.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/bean/card/network_img_layer.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/pages/info/info_tabview.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/pages/info/info_tabview.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/bean/appbar/drag_to_move_bar.dart' as dtb;
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/bean/appbar/drag_to_move_bar.dart' as dtb;
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 class InfoPage extends ConsumerStatefulWidget {
   const InfoPage({super.key, this.bangumi});
@@ -84,7 +84,7 @@ class _InfoPageState extends ConsumerState<InfoPage>
     try {
       await infoController.queryBangumiInfoByID(id, type: type);
     } catch (e) {
-      KazumiLogger().log(Level.error, e.toString());
+      HaipeeLogger().log(Level.error, e.toString());
     }
   }
 

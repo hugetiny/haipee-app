@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/router_constants.dart';
+import 'package:haipee/router_constants.dart';
 
 class NavigationBarStateData {
   final int selectedIndex;

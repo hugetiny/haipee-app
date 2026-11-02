@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/request/damaku.dart';
+import 'package:haipee/request/damaku.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/utils/storage.dart';
 import 'dart:io';
 
 void main() {

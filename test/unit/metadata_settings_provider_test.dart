@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/setting/providers.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

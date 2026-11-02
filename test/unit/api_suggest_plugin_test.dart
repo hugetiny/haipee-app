@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins.dart';
 
 void main() {
   group('Modern API Suggest Video Plugins Tests', () {

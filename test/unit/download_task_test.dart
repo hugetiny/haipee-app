@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_models.dart';
 
 void main() {
   group('DownloadTask', () {

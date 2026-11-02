@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
 
 /// AppBar 配置模型
 class AppBarConfig {

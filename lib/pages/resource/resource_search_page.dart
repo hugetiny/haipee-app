@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/modules/search/search_history_dropdown.dart';
-import 'package:kazumi/modules/search/search_history_provider.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/pages/resource/resource_search_content.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/modules/search/search_history_dropdown.dart';
+import 'package:haipee/modules/search/search_history_provider.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/pages/resource/resource_search_content.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/utils.dart';
 
 /// 全网资源搜索一级页面（支持 Mikan、Nyaa、Torznab 聚合直搜与一键下载/播放）
 class ResourceSearchPage extends ConsumerStatefulWidget {
@@ -61,6 +61,11 @@ class _ResourceSearchPageState extends ConsumerState<ResourceSearchPage> {
         title: const Text('全网资源搜索'),
         actions: [
           IconButton(
+            tooltip: 'AList 规则',
+            icon: const Icon(Icons.cloud_outlined),
+            onPressed: () => context.push('${Routes.settingsPlugin}?type=alist'),
+          ),
+          IconButton(
             tooltip: 'Cardigann 规则',
             icon: const Icon(Icons.tune),
             onPressed: () => context.push(Routes.settingsIndexers),
@@ -101,7 +106,7 @@ class _ResourceSearchPageState extends ConsumerState<ResourceSearchPage> {
                         textInputAction: TextInputAction.search,
                         onSubmitted: _performSearch,
                         decoration: InputDecoration(
-                          hintText: '输入作品名称直接搜索全网资源（支持动漫、影视、游戏、音乐、图书）',
+                          hintText: '输入作品名称搜索资源',
                           prefixIcon: const Icon(Icons.search),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(

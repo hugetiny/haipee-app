@@ -1,7 +1,7 @@
 {
   "@@locale": "zh-CN",
   "app": {
-    "title": "Kazumi",
+    "title": "haipee",
     "loading": "加载中…",
     "retry": "重试",
     "confirm": "确认",
@@ -19,7 +19,7 @@
   },
   "downloads": {
     "sectionTitle": "下载队列",
-    "aria2Offline": "aria2 未连接",
+    "downloadOffline": "下载引擎未连接",
     "queued": "排队",
     "running": "下载中",
     "completed": "已完成",
@@ -182,7 +182,7 @@
       "languageDesc": "选择应用界面显示语言",
       "followSystem": "系统",
       "exitBehavior": "关闭时",
-      "exitApp": "退出 Kazumi",
+      "exitApp": "退出 haipee",
       "minimizeToTray": "最小化至托盘",
       "askEveryTime": "每次都询问"
     },
@@ -287,7 +287,7 @@
         "repoMissing": "规则仓库中没有当前规则",
         "alreadyLatest": "规则已是最新",
         "updateSuccess": "更新成功",
-        "updateIncompatible": "Kazumi 版本过低，此规则不兼容当前版本",
+        "updateIncompatible": "haipee 版本过低，此规则不兼容当前版本",
         "updateFailed": "更新规则失败",
         "copySuccess": "已复制到剪贴板"
       },
@@ -573,7 +573,7 @@
         },
         "complete": {
           "title": "下载完成",
-          "message": "已下载 Kazumi {version}。",
+          "message": "已下载 haipee {version}。",
           "quitNotice": "安装过程中应用将退出。",
           "fileLocation": "文件位置",
           "buttons": {
@@ -628,21 +628,21 @@
   },
   "exitDialog": {
     "title": "退出确认",
-    "message": "您想要退出 Kazumi 吗？",
+    "message": "您想要退出 haipee 吗？",
     "dontAskAgain": "下次不再询问",
-    "exit": "退出 Kazumi",
+    "exit": "退出 haipee",
     "minimize": "最小化至托盘",
     "cancel": "取消"
   },
   "tray": {
     "showWindow": "显示窗口",
-    "exit": "退出 Kazumi"
+    "exit": "退出 haipee"
   },
   "navigation": {
     "tabs": {
       "popular": "热门",
       "catalog": "资源分类",
-      "media": "在线视频",
+      "media": "视频直播",
       "resource": "全网资源",
       "timeline": "时间表",
       "my": "媒体库",

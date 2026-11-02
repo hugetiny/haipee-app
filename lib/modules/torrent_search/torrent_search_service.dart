@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/sources/mikan_source.dart';
-import 'package:kazumi/modules/torrent_search/sources/nyaa_source.dart';
-import 'package:kazumi/modules/torrent_search/sources/torrent_source.dart';
-import 'package:kazumi/modules/torrent_search/sources/torznab_source.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/search/search_history_provider.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/sources/mikan_source.dart';
+import 'package:haipee/modules/torrent_search/sources/nyaa_source.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_source.dart';
+import 'package:haipee/modules/torrent_search/sources/torznab_source.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/search/search_history_provider.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 class TorrentSearchState {
@@ -24,6 +24,8 @@ class TorrentSearchState {
   final bool hideCam;
   final String? resolutionFilter;
   final String? indexerFilter;
+  final String? ruleProtocolFilter;
+  final String? trackerTypeFilter;
 
   const TorrentSearchState({
     this.isLoading = false,
@@ -38,13 +40,25 @@ class TorrentSearchState {
     this.hideCam = false,
     this.resolutionFilter,
     this.indexerFilter,
+    this.ruleProtocolFilter,
+    this.trackerTypeFilter = 'all',
   });
 
   List<dynamic> get bangumiItems => const [];
   dynamic get activeBangumiItem => null;
 
+  static bool isAlistItem(TorrentItem item) {
+    final name = (item.indexerName ?? '').toLowerCase();
+    return name.contains('alist') || name.contains('网盘');
+  }
+
   List<TorrentItem> get filteredItems {
     var list = items;
+    if (ruleProtocolFilter == 'alist') {
+      list = list.where(isAlistItem).toList();
+    } else if (ruleProtocolFilter == 'cardigann') {
+      list = list.where((i) => !isAlistItem(i)).toList();
+    }
     if (categoryFilter != TorrentCategory.all) {
       list = list.where((i) => i.category == categoryFilter).toList();
     }
@@ -58,6 +72,14 @@ class TorrentSearchState {
           .where((i) =>
               i.resolution?.toLowerCase() == resolutionFilter!.toLowerCase())
           .toList();
+    }
+    if (trackerTypeFilter != null &&
+        trackerTypeFilter!.isNotEmpty &&
+        trackerTypeFilter != 'all') {
+      list = list.where((i) {
+        final t = (i.trackerType ?? 'public').toLowerCase();
+        return t == trackerTypeFilter!.toLowerCase();
+      }).toList();
     }
     if (indexerFilter != null &&
         indexerFilter!.isNotEmpty &&
@@ -81,6 +103,8 @@ class TorrentSearchState {
     bool? hideCam,
     String? resolutionFilter,
     String? indexerFilter,
+    String? ruleProtocolFilter,
+    String? trackerTypeFilter,
   }) {
     return TorrentSearchState(
       isLoading: isLoading ?? this.isLoading,
@@ -95,6 +119,8 @@ class TorrentSearchState {
       hideCam: hideCam ?? this.hideCam,
       resolutionFilter: resolutionFilter ?? this.resolutionFilter,
       indexerFilter: indexerFilter ?? this.indexerFilter,
+      ruleProtocolFilter: ruleProtocolFilter ?? this.ruleProtocolFilter,
+      trackerTypeFilter: trackerTypeFilter ?? this.trackerTypeFilter,
     );
   }
 }
@@ -289,7 +315,7 @@ class TorrentSearchService {
           }
         }
       } catch (e) {
-        KazumiLogger().log(Level.warning, '[TorrentSearch] 源 ${src.name} 异常: $e');
+        HaipeeLogger().log(Level.warning, '[TorrentSearch] 源 ${src.name} 异常: $e');
       }
     })).whenComplete(() {
       controller.close();
@@ -314,7 +340,7 @@ class TorrentSearchService {
       try {
         return await src.search(cleanKeyword).timeout(sourceTimeout);
       } catch (e) {
-        KazumiLogger().log(Level.warning, '[TorrentSearch] 源 ${src.name} 异常: $e');
+        HaipeeLogger().log(Level.warning, '[TorrentSearch] 源 ${src.name} 异常: $e');
         return <TorrentItem>[];
       }
     });
@@ -405,7 +431,7 @@ class TorrentSearchNotifier extends Notifier<TorrentSearchState> {
       );
     } catch (e) {
       if (currentRequestId != _searchRequestId) return;
-      KazumiLogger().log(Level.warning, '[TorrentSearchNotifier] 搜索异常: $e');
+      HaipeeLogger().log(Level.warning, '[TorrentSearchNotifier] 搜索异常: $e');
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
@@ -437,6 +463,14 @@ class TorrentSearchNotifier extends Notifier<TorrentSearchState> {
 
   void setIndexerFilter(String? idx) {
     state = state.copyWith(indexerFilter: idx);
+  }
+
+  void setTrackerTypeFilter(String? type) {
+    state = state.copyWith(trackerTypeFilter: type ?? 'all');
+  }
+
+  void setRuleProtocolFilter(String? protocol) {
+    state = state.copyWith(ruleProtocolFilter: protocol ?? 'all');
   }
 
   void reloadProwlarrConfig() {

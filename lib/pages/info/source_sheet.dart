@@ -2,25 +2,25 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/pages/my/my_controller.dart';
-import 'package:kazumi/pages/my/providers.dart';
-import 'package:kazumi/pages/info/info_controller.dart';
-import 'package:kazumi/pages/info/source_search_provider.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/parse_failure_helper.dart';
-import 'package:kazumi/modules/source_quality/source_quality_tracker.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/pages/my/my_controller.dart';
+import 'package:haipee/pages/my/providers.dart';
+import 'package:haipee/pages/info/info_controller.dart';
+import 'package:haipee/pages/info/source_search_provider.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/parse_failure_helper.dart';
+import 'package:haipee/modules/source_quality/source_quality_tracker.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:logger/logger.dart';
 
 enum SourceSortOption {
@@ -73,7 +73,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     final aliasTexts = sheetTexts.alias;
     final existingAlias = widget.infoController.bangumiItem.alias;
     if (existingAlias.isEmpty) {
-      KazumiDialog.showToast(message: sheetTexts.toast.aliasEmpty);
+      HaipeeDialog.showToast(message: sheetTexts.toast.aliasEmpty);
       return;
     }
 
@@ -81,7 +81,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
       List<String>.from(existingAlias),
     );
 
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (dialogContext) {
         return Dialog(
           clipBehavior: Clip.antiAlias,
@@ -100,7 +100,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                       trailing: IconButton(
                         tooltip: aliasTexts.deleteTooltip,
                         onPressed: () {
-                          KazumiDialog.show(
+                          HaipeeDialog.show(
                             builder: (confirmContext) {
                               final confirmTexts =
                                   confirmContext.t.library.info.sourceSheet;
@@ -110,7 +110,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                                 content: Text(confirmAlias.deleteMessage),
                                 actions: [
                                   TextButton(
-                                    onPressed: KazumiDialog.dismiss,
+                                    onPressed: HaipeeDialog.dismiss,
                                     child: Text(
                                       confirmContext.t.app.cancel,
                                       style: TextStyle(
@@ -122,7 +122,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      KazumiDialog.dismiss();
+                                      HaipeeDialog.dismiss();
                                       final updated = List<String>.from(
                                         widget.infoController.bangumiItem.alias,
                                       )..removeAt(index);
@@ -148,7 +148,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
                         icon: const Icon(Icons.delete_outline_rounded),
                       ),
                       onTap: () {
-                        KazumiDialog.dismiss();
+                        HaipeeDialog.dismiss();
                         searchController.searchWithKeyword(alias);
                       },
                     );
@@ -294,7 +294,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
     SearchItem searchItem,
   ) async {
     final sheetTexts = context.t.library.info.sourceSheet;
-    KazumiDialog.showLoading(
+    HaipeeDialog.showLoading(
       msg: context.t.app.loading,
       barrierDismissible: Utils.isDesktop(),
       onDismiss: videoPageController.cancelQueryRoads,
@@ -306,15 +306,15 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
 
     try {
       await videoPageController.queryRoads(searchItem.src, plugin.name);
-      KazumiDialog.dismiss();
+      HaipeeDialog.dismiss();
       if (!mounted) return;
       if (context.mounted) {
         context.push(Routes.video);
       }
     } catch (error) {
-      KazumiLogger().log(Level.warning, '获取视频播放列表失败: $error');
-      KazumiDialog.dismiss();
-      KazumiDialog.showToast(message: sheetTexts.toast.loadFailed);
+      HaipeeLogger().log(Level.warning, '获取视频播放列表失败: $error');
+      HaipeeDialog.dismiss();
+      HaipeeDialog.showToast(message: sheetTexts.toast.loadFailed);
     }
   }
 
@@ -910,7 +910,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
   }
 
   void _confirmRemoveSource(Plugin plugin) {
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (dialogContext) {
         final theme = Theme.of(dialogContext);
         final dialogTexts = dialogContext.t.library.info.sourceSheet.dialog;
@@ -921,7 +921,7 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
           ),
           actions: [
             TextButton(
-              onPressed: KazumiDialog.dismiss,
+              onPressed: HaipeeDialog.dismiss,
               child: Text(
                 dialogContext.t.app.cancel,
                 style: TextStyle(color: theme.colorScheme.outline),
@@ -929,10 +929,10 @@ class _SourceSheetState extends ConsumerState<SourceSheet> {
             ),
             TextButton(
               onPressed: () async {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
                 await ref.read(pluginsProvider.notifier).removePlugin(plugin);
                 if (dialogContext.mounted) {
-                  KazumiDialog.showToast(
+                  HaipeeDialog.showToast(
                     message: dialogContext
                         .t.library.info.sourceSheet.toast.removed
                         .replaceFirst('{plugin}', plugin.name),

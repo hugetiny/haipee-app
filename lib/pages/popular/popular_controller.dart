@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:kazumi/request/bangumi.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
 
 part 'popular_controller.freezed.dart';
 

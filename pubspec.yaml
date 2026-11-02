@@ -1,4 +1,4 @@
-name: kazumi
+name: haipee
 description: "A new Flutter project."
 publish_to: "none"
 
@@ -228,7 +228,7 @@ flutter_native_splash:
   image_dark_ios: assets/images/logo/logo_ios.png
 
 msix_config:
-  display_name: Kazumi
+  display_name: haipee
   publisher: CN=SignPath Foundation, O=SignPath Foundation, L=Lewes, S=Delaware, C=US
   logo_path: assets/images/logo/logo_rounded.png
   sign_msix: false

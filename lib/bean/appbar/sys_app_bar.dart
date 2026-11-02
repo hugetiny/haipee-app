@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
-import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:haipee/bean/widget/embedded_native_control_area.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:window_manager/window_manager.dart';
 
 class SysAppBar extends StatelessWidget implements PreferredSizeWidget {

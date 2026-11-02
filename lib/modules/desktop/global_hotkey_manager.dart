@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/services/logging/app_log.dart';
-import 'package:kazumi/services/logging/log_module.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// 桌面平台系统级全局快捷键服务 (Global System HotKey Manager)

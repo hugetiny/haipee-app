@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/widget/rule/unified_rule_card.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/cardigann/models/indexer_plugin.dart';
-import 'package:kazumi/pages/setting/indexer/indexer_settings_page.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/widget/rule/unified_rule_card.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
+import 'package:haipee/pages/setting/indexer/indexer_settings_page.dart';
+import 'package:haipee/utils/storage.dart';
 
 class FakeIndexerPluginsNotifier extends IndexerPluginsNotifier {
   final List<IndexerPlugin> _initialPlugins;
@@ -94,17 +94,20 @@ search:
     // 检查是否有任何 RenderFlex overflow 或其他异常
     expect(tester.takeException(), isNull);
 
-    // 宽屏下不占用左侧空间（无 NavigationRail 二级侧边栏），呈现统一顶部 TabBar 与自适应网格视图
+    // 宽屏下不占用左侧空间（无 NavigationRail 二级侧边栏，无冗余规则市场二级 Tab），呈现 L2 工具栏与自适应网格视图
     expect(find.byType(NavigationRail), findsNothing);
-    expect(find.byType(TabBar), findsOneWidget);
-    expect(find.text('全部已装'), findsOneWidget);
-    expect(find.text('动漫番剧'), findsOneWidget);
+    expect(find.byType(TabBar), findsNothing);
+    expect(find.text('规则市场 (577+)'), findsNothing);
+    expect(find.byKey(const Key('cardigann_btn_add_manual')), findsOneWidget);
+    expect(find.byKey(const Key('cardigann_btn_import')), findsOneWidget);
+    expect(find.byKey(const Key('cardigann_btn_auto_test')), findsOneWidget);
     expect(find.byType(UnifiedRuleGrid), findsOneWidget);
     expect(find.byType(UnifiedRuleCard), findsOneWidget);
     expect(find.text('Nyaa 动漫规则'), findsOneWidget);
     expect(find.text('testnyaa'), findsOneWidget);
     expect(find.text('https://nyaa.si/'), findsOneWidget);
     expect(find.text('Nyaa anime indexer definition'), findsOneWidget);
+    expect(find.text('测速'), findsOneWidget);
     expect(find.text('查看/编辑 YAML 源码'), findsOneWidget);
     expect(find.text('测试抓取 (Dry-Run)'), findsOneWidget);
     expect(find.text('站点官网'), findsOneWidget);
@@ -117,13 +120,17 @@ search:
     // 窄屏下单列平滑自适应，所有信息与按钮完整呈现，绝不截断
     expect(tester.takeException(), isNull);
     expect(find.byType(NavigationRail), findsNothing);
-    expect(find.byType(TabBar), findsOneWidget);
+    expect(find.byType(TabBar), findsNothing);
+    expect(find.byKey(const Key('cardigann_btn_add_manual')), findsOneWidget);
+    expect(find.byKey(const Key('cardigann_btn_import')), findsOneWidget);
+    expect(find.byKey(const Key('cardigann_btn_auto_test')), findsOneWidget);
     expect(find.byType(UnifiedRuleGrid), findsOneWidget);
     expect(find.byType(UnifiedRuleCard), findsOneWidget);
     expect(find.text('Nyaa 动漫规则'), findsOneWidget);
     expect(find.text('testnyaa'), findsOneWidget);
     expect(find.text('https://nyaa.si/'), findsOneWidget);
     expect(find.text('Nyaa anime indexer definition'), findsOneWidget);
+    expect(find.text('测速'), findsOneWidget);
     expect(find.text('查看/编辑 YAML 源码'), findsOneWidget);
     expect(find.text('测试抓取 (Dry-Run)'), findsOneWidget);
     expect(find.text('站点官网'), findsOneWidget);

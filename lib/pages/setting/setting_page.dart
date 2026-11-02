@@ -1,421 +1,287 @@
-import 'dart:io';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_ce/hive.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/pages/layout/app_bar_config.dart';
-import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/pages/setting/setting_controller.dart';
-import 'package:kazumi/pages/setting/widgets/git_proxy_dialog.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive_menu_scaffold.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/about/about_page.dart';
+import 'package:haipee/pages/layout/app_bar_config.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/pages/plugin_editor/plugin_view_page.dart';
+import 'package:haipee/pages/settings/danmaku/danmaku_settings.dart';
+import 'package:haipee/pages/settings/download/download_settings.dart';
+import 'package:haipee/pages/settings/interface_settings.dart';
+import 'package:haipee/pages/settings/keyboard_settings.dart';
+import 'package:haipee/pages/settings/player_settings.dart';
+import 'package:haipee/pages/settings/proxy/proxy_settings_page.dart';
+import 'package:haipee/pages/settings/storage_settings.dart';
+import 'package:haipee/pages/settings/sync/sync_settings_page.dart';
+import 'package:haipee/pages/settings/theme_settings_page.dart';
+import 'package:haipee/pages/settings/update_settings.dart';
+import 'package:haipee/router_constants.dart';
+
+const List<ResponsiveMenuGroup> _settingsGroups = [
+  ResponsiveMenuGroup(
+    title: '播放',
+    items: [
+      ResponsiveMenuItem(
+        id: Routes.settingsPlayer,
+        title: '播放设置',
+        description: '解码、渲染与播放行为',
+        icon: Icons.display_settings_rounded,
+        route: Routes.settingsPlayer,
+      ),
+      ResponsiveMenuItem(
+        id: Routes.settingsDanmaku,
+        title: '弹幕设置',
+        description: '弹幕来源与显示效果',
+        icon: Icons.subtitles_rounded,
+        route: Routes.settingsDanmaku,
+      ),
+      ResponsiveMenuItem(
+        id: Routes.settingsKeyboard,
+        title: '操作设置',
+        description: '播放器按键映射',
+        icon: Icons.keyboard_rounded,
+        route: Routes.settingsKeyboard,
+      ),
+    ],
+  ),
+  ResponsiveMenuGroup(
+    title: '资源',
+    items: [
+      ResponsiveMenuItem(
+        key: Key('setting_rule_all'),
+        id: Routes.settingsPlugin,
+        title: '规则管理',
+        description: 'Haipee、MacCMS、TVBox、IPTV、Piped、AList 与 Cardigann 7 大规则',
+        icon: Icons.extension_rounded,
+        route: Routes.settingsPlugin,
+      ),
+      ResponsiveMenuItem(
+        key: Key('setting_download_settings'),
+        id: Routes.settingsDownload,
+        title: '下载设置',
+        description: '并发数与弹幕缓存',
+        icon: Icons.downloading_rounded,
+        route: Routes.settingsDownload,
+      ),
+    ],
+  ),
+  ResponsiveMenuGroup(
+    title: '应用',
+    items: [
+      ResponsiveMenuItem(
+        id: Routes.settingsTheme,
+        title: '外观设置',
+        description: '主题、配色与字体',
+        icon: Icons.palette_rounded,
+        route: Routes.settingsTheme,
+      ),
+      ResponsiveMenuItem(
+        id: Routes.settingsInterface,
+        title: '界面设置',
+        description: '启动、窗口行为与展示信息',
+        icon: Icons.pages_rounded,
+        route: Routes.settingsInterface,
+      ),
+      ResponsiveMenuItem(
+        id: Routes.settingsSync,
+        title: '同步设置',
+        description: '追番状态与多设备同步',
+        icon: Icons.cloud_rounded,
+        route: Routes.settingsSync,
+      ),
+      ResponsiveMenuItem(
+        id: Routes.settingsProxy,
+        title: '网络设置',
+        description: '访问加速与代理',
+        icon: Icons.language_rounded,
+        route: Routes.settingsProxy,
+      ),
+    ],
+  ),
+  ResponsiveMenuGroup(
+    title: '其他',
+    items: [
+      ResponsiveMenuItem(
+        id: Routes.settingsUpdate,
+        title: '更新设置',
+        description: '应用与规则更新',
+        icon: Icons.update_rounded,
+        route: Routes.settingsUpdate,
+      ),
+      ResponsiveMenuItem(
+        id: Routes.settingsStorage,
+        title: '存储与日志',
+        description: '图片缓存与错误日志',
+        icon: Icons.storage_rounded,
+        route: Routes.settingsStorage,
+      ),
+      ResponsiveMenuItem(
+        id: Routes.settingsAbout,
+        title: '关于',
+        description: '版本与开源信息',
+        icon: Icons.info_outline_rounded,
+        route: Routes.settingsAbout,
+      ),
+    ],
+  ),
+];
+
+String _normalizePath(String? path) {
+  if (path == null || path.isEmpty) return Routes.settingsPlayer;
+  var p = path.endsWith('/') && path.length > 1
+      ? path.substring(0, path.length - 1)
+      : path;
+  if (p == '/settings' || p == '/tab/setting') {
+    return Routes.settingsPlayer;
+  }
+  if (p == '/settings/download-settings') {
+    return Routes.settingsDownload;
+  }
+  if (p == '/settings/webdav' ||
+      p.startsWith('/settings/webdav/') ||
+      p == '/settings/bangumi' ||
+      p.startsWith('/settings/bangumi/')) {
+    return Routes.settingsSync;
+  }
+  if (p == Routes.settingsLanguage ||
+      p.startsWith('${Routes.settingsLanguage}/') ||
+      p == Routes.settingsExitBehavior ||
+      p.startsWith('${Routes.settingsExitBehavior}/')) {
+    return Routes.settingsInterface;
+  }
+  if (p == Routes.settingsMetadata ||
+      p.startsWith('${Routes.settingsMetadata}/') ||
+      p == Routes.settingsMedia ||
+      p.startsWith('${Routes.settingsMedia}/')) {
+    return Routes.settingsPlayer;
+  }
+  if (p == Routes.settingsRuleCenter ||
+      p == Routes.settingsIndexers ||
+      p.startsWith('${Routes.settingsIndexers}/')) {
+    return Routes.settingsPlugin;
+  }
+  if (p == '/settings/storage/logs') {
+    return Routes.settingsStorage;
+  }
+  if (p == Routes.settingsAboutLogs ||
+      p == Routes.settingsAboutLicense ||
+      p.startsWith('${Routes.settingsAbout}/')) {
+    return Routes.settingsAbout;
+  }
+  for (final group in _settingsGroups) {
+    for (final item in group.items) {
+      if (p == item.id || p.startsWith('${item.id}/')) {
+        return item.id;
+      }
+    }
+  }
+  return Routes.settingsPlayer;
+}
 
 class SettingPage extends ConsumerStatefulWidget {
-  const SettingPage({super.key});
+  const SettingPage({super.key, this.location, this.initialPath});
+
+  final String? location;
+  final String? initialPath;
 
   @override
   ConsumerState<SettingPage> createState() => _SettingPageState();
 }
 
 class _SettingPageState extends ConsumerState<SettingPage> {
-  late final Box setting;
-  late int exitBehavior;
-  late final MyController myController;
+  late String _selectedPath;
 
   @override
   void initState() {
     super.initState();
-    setting = GStorage.setting;
-    exitBehavior =
-        setting.get(SettingBoxKey.exitBehavior, defaultValue: 2) as int;
-    myController = ref.read(myControllerProvider.notifier);
-    _getCacheSize();
+    _selectedPath = _normalizePath(widget.initialPath ?? widget.location);
   }
 
-  Future<Directory> _getCacheDir() async {
-    Directory tempDir = await getTemporaryDirectory();
-    return Directory('${tempDir.path}/libCachedImageData');
-  }
-
-  Future<void> _getCacheSize() async {
-    try {
-      Directory cacheDir = await _getCacheDir();
-
-      if (await cacheDir.exists()) {
-        int totalSizeBytes = await _getTotalSizeOfFilesInDir(cacheDir);
-        double totalSizeMB = (totalSizeBytes / (1024 * 1024));
-
-        if (mounted) {
-          ref.read(cacheSizeMBProvider.notifier).state = totalSizeMB;
-        }
-      } else {
-        if (mounted) {
-          ref.read(cacheSizeMBProvider.notifier).state = 0.0;
-        }
-      }
-    } catch (_) {
-      if (mounted) {
-        ref.read(cacheSizeMBProvider.notifier).state = 0.0;
-      }
+  @override
+  void didUpdateWidget(covariant SettingPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final target = widget.initialPath ?? widget.location;
+    final oldTarget = oldWidget.initialPath ?? oldWidget.location;
+    if (target != oldTarget && target != null) {
+      setState(() {
+        _selectedPath = _normalizePath(target);
+      });
     }
   }
 
-  Future<int> _getTotalSizeOfFilesInDir(final Directory directory) async {
-    final List<FileSystemEntity> children = directory.listSync();
-    int total = 0;
-
-    try {
-      for (final FileSystemEntity child in children) {
-        if (child is File) {
-          final int length = await child.length();
-          total += length;
-        } else if (child is Directory) {
-          total += await _getTotalSizeOfFilesInDir(child);
-        }
-      }
-    } catch (_) {}
-    return total;
-  }
-
-  Future<void> _clearCache() async {
-    try {
-      final Directory libCacheDir = await _getCacheDir();
-      if (await libCacheDir.exists()) {
-        await libCacheDir.delete(recursive: true);
-      }
-    } catch (_) {}
-    _getCacheSize();
-  }
-
-  void _showCacheDialog() {
-    KazumiDialog.show(
-      builder: (context) {
-        final cacheDialog = context.t.dialogs.cache;
-        return AlertDialog(
-          title: Text(cacheDialog.title),
-          content: Text(cacheDialog.message),
-          actions: [
-            TextButton(
-              onPressed: () {
-                KazumiDialog.dismiss();
-              },
-              child: Text(
-                context.t.app.cancel,
-                style: TextStyle(color: Theme.of(context).colorScheme.outline),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                try {
-                  await _clearCache();
-                } catch (_) {}
-                KazumiDialog.dismiss();
-              },
-              child: Text(context.t.app.confirm),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void onBackPressed(BuildContext context) {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+  void _onBackPressed() {
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
+      return;
+    }
+    if (context.canPop()) {
+      context.pop();
       return;
     }
     ref.read(navigationProvider.notifier).updateSelectedIndex(0);
-    context.go(Routes.media);
+    context.go(Routes.onlineVideo);
   }
 
-  void _updateAppBarConfig() {
+  void _updateAppBarConfig({required bool wide}) {
     if (!mounted) return;
     final t = context.t;
 
     ref.read(appBarConfigProvider.notifier).state = AppBarConfig(
-      title: t.settings.title, // 修正翻译键
+      title: t.settings.title,
+      visible: !wide,
       needTopOffset: false,
     );
   }
 
+  Widget _buildDetailWidget(String path) {
+    switch (path) {
+      case Routes.settingsPlayer:
+        return const PlayerSettingsPage();
+      case Routes.settingsDanmaku:
+        return const DanmakuSettingsPage();
+      case Routes.settingsKeyboard:
+        return const KeyboardSettingsPage();
+      case Routes.settingsPlugin:
+      case Routes.settingsRuleCenter:
+        return const PluginViewPage(isEmbedded: true);
+      case Routes.settingsDownload:
+      case '/settings/download-settings':
+        return const DownloadSettingsPage();
+      case Routes.settingsTheme:
+        return const ThemeSettingsPage();
+      case Routes.settingsInterface:
+        return const InterfaceSettingsPage();
+      case Routes.settingsSync:
+        return const SyncSettingsPage();
+      case Routes.settingsProxy:
+        return const ProxySettingsPage();
+      case Routes.settingsUpdate:
+        return const UpdateSettingsPage();
+      case Routes.settingsStorage:
+        return const StorageSettingsPage();
+      case Routes.settingsAbout:
+        return const AboutPage();
+      default:
+        return const PlayerSettingsPage();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final t = context.t; // Get translations
-    final gitProxyState = ref.watch(gitProxyProvider);
-    final metadataState = ref.watch(metadataSettingsProvider);
-    final localeState = ref.watch(localeSettingsProvider);
-
-    // 初始化时设置 AppBar
-    Future.microtask(() {
-      if (mounted) {
-        _updateAppBarConfig();
-      }
-    });
-
-    // Exit behavior options
-    final List<String> exitBehaviorTitles = [
-      t.settings.general.exitApp,
-      t.settings.general.minimizeToTray,
-      t.settings.general.askEveryTime,
-    ];
-
-    // App locale options
-    final List<_AppLocaleOption> appLocaleOptions = [
-      _AppLocaleOption(
-        label: t.settings.general.followSystem,
-        locale: null,
-      ),
-      _AppLocaleOption(
-        label: '简体中文 (zh-CN)',
-        locale: AppLocale.zhCn,
-      ),
-      _AppLocaleOption(
-        label: 'English (en-US)',
-        locale: AppLocale.enUs,
-      ),
-      _AppLocaleOption(
-        label: '日本語 (ja-JP)',
-        locale: AppLocale.jaJp,
-      ),
-      _AppLocaleOption(
-        label: '繁體中文 (zh-TW)',
-        locale: AppLocale.zhTw,
-      ),
-    ];
-
-    final String appLocaleLabel;
-    if (localeState.followSystem) {
-      appLocaleLabel = appLocaleOptions.first.label;
-    } else {
-      appLocaleLabel = appLocaleOptions
-          .firstWhere(
-            (option) => option.locale == localeState.appLocale,
-            orElse: () => _AppLocaleOption(
-              label: localeState.appLocale.flutterLocale.toLanguageTag(),
-              locale: localeState.appLocale,
-            ),
-          )
-          .label;
-    }
-
-    final cacheSizeMB = ref.watch(cacheSizeMBProvider);
-    final autoUpdate = ref.watch(autoUpdateProvider);
-    final debugLogsEnabled = ref.watch(debugLogsEnabledProvider);
-
-    final isDesktop = Utils.isDesktop();
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (bool didPop, Object? result) {
-        if (didPop) return;
-        onBackPressed(context);
+    return ResponsiveMenuScaffold(
+      groups: _settingsGroups,
+      selectedId: _selectedPath,
+      onSelected: (path) {
+        setState(() {
+          _selectedPath = path;
+        });
       },
-      child: SettingsList(
-        sections: [
-          SettingsSection(
-            title: Text(t.settings.general.title),
-            tiles: [
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsTheme);
-                },
-                title: Text(t.settings.general.appearance),
-                description: Text(t.settings.general.appearanceDesc),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsLanguage);
-                },
-                title: Text(t.settings.general.language),
-                description: Text(t.settings.general.languageDesc),
-                value: Text(appLocaleLabel),
-              ),
-              if (isDesktop)
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsExitBehavior);
-                  },
-                  title: Text(t.settings.general.exitBehavior),
-                  value: Text(exitBehaviorTitles[exitBehavior]),
-                ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  _showCacheDialog();
-                },
-                title: Text(t.settings.about.sections.cache.clearAction),
-                value: cacheSizeMB == -1
-                    ? Text(t.settings.about.sections.cache.sizePending)
-                    : Text(
-                        t.settings.about.sections.cache.sizeLabel.replaceFirst(
-                          '{size}',
-                          cacheSizeMB.toStringAsFixed(2),
-                        ),
-                      ),
-              ),
-              SettingsTile.switchTile(
-                onToggle: (value) async {
-                  final newValue = value ?? !autoUpdate;
-                  await setting.put(SettingBoxKey.autoUpdate, newValue);
-                  ref.read(autoUpdateProvider.notifier).state = newValue;
-                },
-                title: Text(t.settings.about.sections.updates.autoUpdate),
-                initialValue: autoUpdate,
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  myController.checkUpdate();
-                },
-                title: Text(t.settings.about.sections.updates.check),
-                value: Text(
-                  t.settings.about.sections.updates.currentVersion
-                      .replaceFirst('{version}', Api.version),
-                ),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsAboutLicense);
-                },
-                title: Text(t.settings.about.sections.licenses.title),
-                description: Text(t.settings.about.sections.licenses.description),
-              ),
-              SettingsTile.switchTile(
-                onToggle: (value) async {
-                  final newValue = value ?? !debugLogsEnabled;
-                  ref.read(debugLogsEnabledProvider.notifier).setEnabled(newValue);
-                },
-                title: const Text('运行日志与诊断'),
-                initialValue: debugLogsEnabled,
-              ),
-              if (debugLogsEnabled)
-                SettingsTile.navigation(
-                  onPressed: (_) {
-                    context.push(Routes.settingsAboutLogs);
-                  },
-                  title: const Text('查看运行日志与诊断面板'),
-                ),
-            ],
-          ),
-          SettingsSection(
-            title: const Text('视听与在线媒体 (点播与直播)'),
-            tiles: [
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsPlayer);
-                },
-                title: Text(t.settings.player.playerSettings),
-                description: Text(t.settings.player.playerSettingsDesc),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsDanmaku);
-                },
-                title: Text(t.settings.player.danmakuSettings),
-                description: Text(t.settings.player.danmakuSettingsDesc),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsMetadata);
-                },
-                title: const Text('媒体元数据与刮削'),
-                description: Text(
-                  'Bangumi (${metadataState.bangumiEnabled ? "已启用 · ${metadataState.bangumiAcceleration.label}" : "已禁用"}) · TMDB (${metadataState.tmdbEnabled ? "已启用" : "已禁用"})',
-                ),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push('${Routes.settingsPlugin}?category=video');
-                },
-                leading: const Icon(Icons.video_library_outlined),
-                title: const Text('在线视频规则'),
-                description: const Text('管理影视采集(MacCMS)、哔哩哔哩、动漫番剧与短视频规则'),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push('${Routes.settingsPlugin}?category=live');
-                },
-                leading: const Icon(Icons.live_tv_outlined),
-                title: const Text('电视直播规则'),
-                description: const Text('管理电视直播(IPTV)、央视卫视与二次元轮播台规则'),
-              ),
-            ],
-          ),
-          SettingsSection(
-            title: const Text('资源检索与下载 (网盘与BT)'),
-            tiles: [
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsIndexers);
-                },
-                leading: const Icon(Icons.downloading_outlined),
-                title: const Text('BT / 磁力下载规则'),
-                description: const Text('Cardigann 规则中心、种子索引与 Tracker 管理 (P2P/边下边播)'),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push('${Routes.settingsPlugin}?category=drive');
-                },
-                leading: const Icon(Icons.cloud_outlined),
-                title: const Text('网盘资源规则 (AList / WebDAV)'),
-                description: const Text('网盘资源挂载、原画直链提取与高速转存下载'),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsDownload);
-                },
-                leading: const Icon(Icons.download),
-                title: const Text('下载设置与任务中心'),
-                description: const Text('配置本地存储目录、并发任务数与已下载文件管理'),
-              ),
-            ],
-          ),
-          SettingsSection(
-            title: const Text('数据与云同步'),
-            tiles: [
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  GitProxyDialog.show(context);
-                },
-                leading: const Icon(Icons.alt_route_rounded),
-                title: Text(t.settings.source.githubProxy),
-                description: const Text('底层加速 Kazumi 视频规则、Cardigann 规则与更新'),
-                value: Text(
-                  gitProxyState.enabled
-                      ? '已启用 · ${gitProxyState.proxyUrl.replaceAll("https://", "").replaceAll("/", "")}'
-                      : '未启用',
-                  style: TextStyle(
-                    color: gitProxyState.enabled
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.outline,
-                    fontWeight:
-                        gitProxyState.enabled ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ),
-              SettingsTile.navigation(
-                onPressed: (_) {
-                  context.push(Routes.settingsWebdav);
-                },
-                leading: const Icon(Icons.cloud_sync_rounded),
-                title: Text(t.settings.webdav.title),
-                description: Text(t.settings.webdav.desc),
-              ),
-            ],
-          ),
-        ],
-      ),
+      onBackPressed: _onBackPressed,
+      onWideChanged: (wide) => _updateAppBarConfig(wide: wide),
+      detailBuilder: (context, path) => _buildDetailWidget(path),
     );
   }
-}
-
-class _AppLocaleOption {
-  const _AppLocaleOption({required this.label, required this.locale});
-
-  final String label;
-  final AppLocale? locale;
 }

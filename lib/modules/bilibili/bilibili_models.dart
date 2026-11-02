@@ -10,6 +10,7 @@ class BiliVideoItem {
   final int pubdate;
   final String description;
   final String tag;
+  final String ruleType;
 
   const BiliVideoItem({
     required this.bvid,
@@ -22,7 +23,29 @@ class BiliVideoItem {
     this.pubdate = 0,
     this.description = '',
     this.tag = '',
+    this.ruleType = '',
   });
+
+  String get resolvedRuleType {
+    if (ruleType.isNotEmpty) {
+      final clean = ruleType.trim().toLowerCase();
+      if (clean == 'tvbox' || clean == 'fongmi' || clean == 'box') return 'tvbox';
+      if (clean == 'maccms' || clean == '2' || clean == 'vod' || clean == 'applecms') return 'maccms';
+      if (clean == 'iptv' || clean == 'live' || clean == 'm3u' || clean == 'm3u8') return 'iptv';
+      if (clean == 'piped' || clean == 'youtube' || clean == 'bilibili' || clean == 'douyin') return 'piped';
+      if (clean == 'alist' || clean == 'drive' || clean == 'pan' || clean == 'webdav') return 'alist';
+      if (clean == 'cardigann' || clean == 'bt' || clean == 'torrent' || clean == 'magnet') return 'cardigann';
+      return 'haipee';
+    }
+    if (bvid.startsWith('douyin_') || tag.contains('抖音')) return 'piped';
+    if (bvid.startsWith('BV') || tag.contains('B站') || tag.contains('哔哩')) return 'piped';
+    if (tag.contains('直播') || tag.contains('IPTV')) return 'iptv';
+    if (tag.contains('TVBox') || tag.contains('tvbox') || tag.contains('盒子')) return 'tvbox';
+    if (tag.contains('苹果CMS') || tag.contains('采集') || tag.contains('MacCMS') || tag.contains('maccms')) return 'maccms';
+    if (tag.contains('网盘') || tag.contains('alist') || tag.contains('AList')) return 'alist';
+    if (tag.contains('BT') || tag.contains('磁力') || tag.contains('Cardigann')) return 'cardigann';
+    return 'haipee';
+  }
 
   factory BiliVideoItem.fromJson(Map<String, dynamic> json) {
     // 过滤标题中的 HTML 标签 (如 <em class="keyword">...</em>)

@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/services/network/bangumi_acceleration.dart';
-import 'package:kazumi/services/logging/app_log.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/services/network/bangumi_acceleration.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 class ThemeState {
   final ThemeMode themeMode;
   final bool useDynamicColor;
   final Color seedColor;
   final bool oledEnhance;
+  final bool useSystemFont;
 
   const ThemeState({
     this.themeMode = ThemeMode.system,
     this.useDynamicColor = false,
     this.seedColor = Colors.green,
     this.oledEnhance = false,
+    this.useSystemFont = false,
   });
 
   ThemeState copyWith({
@@ -25,12 +27,14 @@ class ThemeState {
     bool? useDynamicColor,
     Color? seedColor,
     bool? oledEnhance,
+    bool? useSystemFont,
   }) {
     return ThemeState(
       themeMode: themeMode ?? this.themeMode,
       useDynamicColor: useDynamicColor ?? this.useDynamicColor,
       seedColor: seedColor ?? this.seedColor,
       oledEnhance: oledEnhance ?? this.oledEnhance,
+      useSystemFont: useSystemFont ?? this.useSystemFont,
     );
   }
 }
@@ -80,11 +84,16 @@ class ThemeNotifier extends Notifier<ThemeState> {
     final bool oledEnhance =
         setting.get(SettingBoxKey.oledEnhance, defaultValue: false);
 
+    // Load useSystemFont
+    final bool useSystemFont =
+        setting.get(SettingBoxKey.useSystemFont, defaultValue: false);
+
     return ThemeState(
       themeMode: themeMode,
       useDynamicColor: useDynamicColor,
       seedColor: seedColor,
       oledEnhance: oledEnhance,
+      useSystemFont: useSystemFont,
     );
   }
 
@@ -102,6 +111,10 @@ class ThemeNotifier extends Notifier<ThemeState> {
 
   void setOledEnhance(bool value) {
     state = state.copyWith(oledEnhance: value);
+  }
+
+  void setUseSystemFont(bool value) {
+    state = state.copyWith(useSystemFont: value);
   }
 }
 

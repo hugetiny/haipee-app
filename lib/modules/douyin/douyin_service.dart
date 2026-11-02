@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/logger.dart';
 
 /// 抖音短视频原生抽取与无水印直链解析服务
 class DouyinVideoItem {
@@ -111,7 +111,7 @@ class DouyinService {
       final finalUrl = getRes.realUri.toString();
       return extractItemId(finalUrl);
     } catch (e) {
-      KazumiLogger().d('解析抖音短链接重定向失败: $e');
+      HaipeeLogger().d('解析抖音短链接重定向失败: $e');
       return null;
     }
   }
@@ -154,7 +154,7 @@ class DouyinService {
         return webItem;
       }
     } catch (e) {
-      KazumiLogger().d('抖音视频原生抽取异常: $e');
+      HaipeeLogger().d('抖音视频原生抽取异常: $e');
     }
 
     return null;
@@ -258,7 +258,7 @@ class DouyinService {
         }
       }
     } catch (e) {
-      KazumiLogger().d('Feed API 解析抖音视频异常: $e');
+      HaipeeLogger().d('Feed API 解析抖音视频异常: $e');
     }
     return null;
   }
@@ -298,7 +298,7 @@ class DouyinService {
         }
       }
     } catch (e) {
-      KazumiLogger().d('Web Detail API 解析抖音视频异常: $e');
+      HaipeeLogger().d('Web Detail API 解析抖音视频异常: $e');
     }
     return null;
   }
@@ -340,7 +340,7 @@ class DouyinService {
         }
       }
     } catch (e) {
-      KazumiLogger().d('Feed 流拉取异常: $e');
+      HaipeeLogger().d('Feed 流拉取异常: $e');
     }
     return list;
   }
@@ -359,7 +359,7 @@ class DouyinService {
   /// 架构与工程规范说明：
   /// 抖音官方 Web 端实施严格的 a_bogus 浏览器指纹校验并对搜索接口强制要求扫码登录（状态码 2483）。
   /// 任何试图在客户端逆向拼凑头条或非官方推荐接口的做法都是脆弱不可靠的非主流 hack，会导致结果为空或错误。
-  /// 因此 Kazumi 彻底放弃脆弱的假搜索逻辑，抖音仅保留粘贴链接/口令/ID 时的纯直链解析与播放。
+  /// 因此 Haipee 彻底放弃脆弱的假搜索逻辑，抖音仅保留粘贴链接/口令/ID 时的纯直链解析与播放。
   ///
   /// - 若输入包含确切短链、分享文本或纯数字 ID：直接提取并返回该视频单条结果；
   /// - 若输入仅为普通文本关键词：直接返回空列表，绝不进行假搜索或填充无关推荐。
@@ -427,7 +427,7 @@ class DouyinService {
       }
       return results;
     } catch (e) {
-      KazumiLogger().d('获取抖音搜索建议异常: $e');
+      HaipeeLogger().d('获取抖音搜索建议异常: $e');
       return const [];
     }
   }
@@ -465,7 +465,7 @@ class DouyinService {
       }
       return results;
     } catch (e) {
-      KazumiLogger().d('获取抖音热搜榜单异常: $e');
+      HaipeeLogger().d('获取抖音热搜榜单异常: $e');
       return const [];
     }
   }

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/debrid/debrid_provider.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/debrid/debrid_provider.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// PikPak 私有离线云盘高速直连提供者
@@ -75,7 +75,7 @@ class PikPakProvider implements DebridProvider {
       if (response.statusCode == 200 && response.data != null) {
         final phase = response.data?['phase'];
         if (phase == 'PHASE_TYPE_COMPLETE') {
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.info,
             '[PikPak] Hit instant cloud cache for hash $hash!',
           );
@@ -101,14 +101,14 @@ class PikPakProvider implements DebridProvider {
 
       final streamUrl = response.data?['web_content_link'] as String?;
       if (streamUrl != null && streamUrl.isNotEmpty) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.info,
           '[PikPak] Resolved direct cloud stream URL: $streamUrl',
         );
         return streamUrl;
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '[PikPak] Stream resolve failed: $e');
+      HaipeeLogger().log(Level.warning, '[PikPak] Stream resolve failed: $e');
     }
 
     return null;

@@ -1,8 +1,8 @@
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/request/bangumi.dart';
-import 'package:kazumi/utils/search_parser.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/modules/search/search_history_module.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/utils/search_parser.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/modules/search/search_history_module.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

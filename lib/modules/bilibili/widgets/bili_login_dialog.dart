@@ -7,9 +7,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_inappwebview_platform_interface/flutter_inappwebview_platform_interface.dart' as inapp;
-import 'package:kazumi/modules/bilibili/bilibili_auth_service.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
 
 /// 登录模式枚举
 enum BiliLoginTab {
@@ -152,7 +152,7 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
 
         if (result.status == BiliQrCodeStatus.success) {
           timer.cancel();
-          KazumiDialog.showToast(message: '登录成功！已解锁 1080P/4K 高清画质', context: context);
+          HaipeeDialog.showToast(message: '登录成功！已解锁 1080P/4K 高清画质', context: context);
           Future.delayed(const Duration(milliseconds: 800), () {
             if (mounted) Navigator.of(context).pop(true);
           });
@@ -280,7 +280,7 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
     );
     await _authService.fetchUserProfile();
     if (mounted) {
-      KazumiDialog.showToast(message: '哔哩哔哩登录成功！已解锁 1080P/4K 高清画质', context: context);
+      HaipeeDialog.showToast(message: '哔哩哔哩登录成功！已解锁 1080P/4K 高清画质', context: context);
       Navigator.of(context).pop(true);
     }
   }
@@ -306,7 +306,7 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
     setState(() => _cookieVerifying = false);
 
     if (success) {
-      KazumiDialog.showToast(message: message, context: context);
+      HaipeeDialog.showToast(message: message, context: context);
       Navigator.of(context).pop(true);
     } else {
       setState(() => _cookieErrorMessage = message);

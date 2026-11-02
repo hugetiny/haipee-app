@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_models.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_service.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

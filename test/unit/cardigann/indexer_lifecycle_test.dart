@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/cardigann/models/indexer_plugin.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
 
 void main() {
   group('Indexer Plugin Lifecycle, Override & Ingestion Tests', () {

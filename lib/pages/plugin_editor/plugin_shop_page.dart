@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/adaptive_data_view.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/modules/plugin/plugin_http_module.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/adaptive_data_view.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/modules/plugin/plugin_http_module.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/services.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class PluginShopPage extends ConsumerStatefulWidget {
@@ -41,18 +41,18 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
         mode: LaunchMode.externalApplication,
       );
       if (!success && mounted) {
-        KazumiDialog.showToast(message: '无法在外部浏览器中打开: $url');
+        HaipeeDialog.showToast(message: '无法在外部浏览器中打开: $url');
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '打开链接失败: $e');
+        HaipeeDialog.showToast(message: '打开链接失败: $e');
       }
     }
   }
 
   void onBackPressed(BuildContext context) {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
       return;
     }
   }
@@ -128,13 +128,13 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
       final res = await pluginsController.tryUpdatePluginByName(item.name);
       if (mounted) {
         if (res == 0) {
-          KazumiDialog.showToast(
+          HaipeeDialog.showToast(
             message: isInstall ? '规则已成功安装并启用' : '规则已更新至最新版本',
           );
         } else if (res == 1) {
-          KazumiDialog.showToast(message: '该规则版本不兼容当前应用');
+          HaipeeDialog.showToast(message: '该规则版本不兼容当前应用');
         } else {
-          KazumiDialog.showToast(message: '安装/更新规则失败');
+          HaipeeDialog.showToast(message: '安装/更新规则失败');
         }
       }
     } finally {
@@ -305,7 +305,7 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
             icon: Icons.link_rounded,
             onSelected: () async {
               await Clipboard.setData(ClipboardData(text: item.effectiveBaseUrl));
-              KazumiDialog.showToast(message: '已复制源站官网地址');
+              HaipeeDialog.showToast(message: '已复制源站官网地址');
             },
           ),
         ],
@@ -314,14 +314,14 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
           icon: Icons.copy_rounded,
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: item.name));
-            KazumiDialog.showToast(message: '已复制规则名称');
+            HaipeeDialog.showToast(message: '已复制规则名称');
           },
         ),
         AppMenuAction(
           title: '在浏览器中打开 GitHub 规则源码',
           icon: Icons.code_rounded,
           onSelected: () => _openBrowserUrl(
-            'https://github.com/hugetiny/Kazumi/blob/main/plugins/${item.name}.yaml',
+            'https://github.com/hugetiny/haipee/blob/main/plugins/${item.name}.yaml',
           ),
         ),
       ],
@@ -792,7 +792,7 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
                                     await setting.put(
                                         SettingBoxKey.enableGitProxy, newValue);
                                     enableGitProxyNotifier.value = newValue;
-                                    KazumiDialog.showToast(
+                                    HaipeeDialog.showToast(
                                       message: newValue
                                           ? shopTexts.error.mirrorEnabled
                                           : shopTexts.error.mirrorDisabled,

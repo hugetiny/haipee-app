@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/roads/road_module.dart';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/roads/road_module.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// Piped / Invidious 开放流媒体服务 (全球最大视频分享平台开源实现规范)
@@ -31,7 +31,7 @@ class PipedService {
         options: Options(
           headers: {
             'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Kazumi/Piped)',
+            'User-Agent': 'Mozilla/5.0 (Haipee/Piped)',
           },
         ),
       );
@@ -73,7 +73,7 @@ class PipedService {
 
       return PluginSearchResponse(pluginName: pluginName, data: items);
     } catch (e) {
-      KazumiLogger().log(Level.warning, 'Piped 搜索失败: $e');
+      HaipeeLogger().log(Level.warning, 'Piped 搜索失败: $e');
       return PluginSearchResponse(pluginName: pluginName, data: const []);
     }
   }
@@ -102,7 +102,7 @@ class PipedService {
         options: Options(
           headers: {
             'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Kazumi/Piped)',
+            'User-Agent': 'Mozilla/5.0 (Haipee/Piped)',
           },
         ),
       );
@@ -160,7 +160,7 @@ class PipedService {
         }
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, 'Piped 解析流媒体失败: $e');
+      HaipeeLogger().log(Level.warning, 'Piped 解析流媒体失败: $e');
     }
 
     return [];

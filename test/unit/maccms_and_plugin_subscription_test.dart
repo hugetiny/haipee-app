@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/plugin/plugin_subscription.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/request/request.dart';
+import 'package:haipee/modules/plugin/plugin_subscription.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/request/request.dart';
 
 void main() {
   group('AppleCMS / MacCMS JSON Protocol & Asset Tests', () {
@@ -241,6 +241,20 @@ baseURL: https://doc3.com
       expect(result.length, equals(1));
       expect(result.first.name, equals('Base64编码规则'));
       expect(result.first.baseUrl, equals('https://b64.example.com'));
+    });
+
+    test('parseMany parses haipee:// Base64 URI string', () {
+      final rawJson = jsonEncode({
+        'name': 'Haipee口令规则',
+        'type': 'maccms',
+        'baseURL': 'https://uri.example.com',
+      });
+      final b64 = 'haipee://${base64Encode(utf8.encode(rawJson))}';
+
+      final result = Plugin.parseMany(b64);
+      expect(result.length, equals(1));
+      expect(result.first.name, equals('Haipee口令规则'));
+      expect(result.first.baseUrl, equals('https://uri.example.com'));
     });
 
     test('parseMany parses kazumi:// Base64 URI string', () {

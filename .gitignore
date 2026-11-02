@@ -19,6 +19,8 @@ prowlarr_indexers/
 
 # Archives & credentials
 *.apk
+test_reports/
+test_lab_local.log
 *.aab
 *.ipa
 *.keystore

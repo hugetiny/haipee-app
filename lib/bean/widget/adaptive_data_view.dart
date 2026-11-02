@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/utils/constants.dart';
+import 'package:haipee/utils/constants.dart';
 
 /// 全局通用的自适应视图显示模式
 enum AdaptiveViewMode {

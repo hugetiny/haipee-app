@@ -2,14 +2,16 @@ import 'dart:io';
 
 import 'package:logger/logger.dart' show Level;
 import 'package:talker_flutter/talker_flutter.dart';
-import 'package:kazumi/services/logging/app_log.dart';
+import 'package:haipee/services/logging/app_log.dart';
 
-/// Global talker logger singleton for Kazumi, backed by modern [AppLog.talker].
-class KazumiLogger {
-  KazumiLogger._internal();
+import 'package:haipee/services/logging/log_module.dart';
 
-  static final KazumiLogger _instance = KazumiLogger._internal();
-  factory KazumiLogger() => _instance;
+/// Global talker logger singleton for Haipee, backed by modern [AppLog.talker].
+class HaipeeLogger {
+  HaipeeLogger._internal();
+
+  static final HaipeeLogger _instance = HaipeeLogger._internal();
+  factory HaipeeLogger() => _instance;
 
   Talker get talker => AppLog.talker;
 
@@ -21,63 +23,70 @@ class KazumiLogger {
     StackTrace? stackTrace,
     DateTime? time,
   }) {
+    final module = LogModule.detect(message);
     switch (level) {
       case Level.trace:
-        talker.verbose(message);
+        AppLog.t(module, message, error: error, stackTrace: stackTrace);
         break;
       case Level.debug:
-        talker.debug(message);
+        AppLog.d(module, message, error: error, stackTrace: stackTrace);
         break;
       case Level.info:
-        talker.info(message);
+        AppLog.i(module, message, error: error, stackTrace: stackTrace);
         break;
       case Level.warning:
-        talker.warning(message, error, stackTrace);
+        AppLog.w(module, message, error: error, stackTrace: stackTrace);
         break;
       case Level.error:
-        talker.error(message, error, stackTrace);
+        AppLog.e(module, message, error: error, stackTrace: stackTrace);
         break;
       case Level.fatal:
-        talker.critical(message, error, stackTrace);
+        AppLog.f(module, message, error: error, stackTrace: stackTrace);
         break;
       default:
-        talker.log(message.toString());
+        AppLog.i(module, message, error: error, stackTrace: stackTrace);
         break;
     }
   }
 
   /// Simple log (verbose trace)
   void simpleLog(dynamic message) {
-    talker.verbose(message);
+    AppLog.t(LogModule.detect(message), message);
   }
 
   /// Verbose log
   void t(dynamic message, {Object? error, StackTrace? stackTrace}) =>
-      talker.verbose(message);
+      AppLog.t(LogModule.detect(message), message,
+          error: error, stackTrace: stackTrace);
 
   /// Debug log
   void d(dynamic message, {Object? error, StackTrace? stackTrace}) =>
-      talker.debug(message);
+      AppLog.d(LogModule.detect(message), message,
+          error: error, stackTrace: stackTrace);
 
   /// Info log
   void i(dynamic message, {Object? error, StackTrace? stackTrace}) =>
-      talker.info(message);
+      AppLog.i(LogModule.detect(message), message,
+          error: error, stackTrace: stackTrace);
 
   /// Warning log
   void w(dynamic message, {Object? error, StackTrace? stackTrace}) =>
-      talker.warning(message, error, stackTrace);
+      AppLog.w(LogModule.detect(message), message,
+          error: error, stackTrace: stackTrace);
 
   /// Error log
   void e(dynamic message, {Object? error, StackTrace? stackTrace}) =>
-      talker.error(message, error, stackTrace);
+      AppLog.e(LogModule.detect(message), message,
+          error: error, stackTrace: stackTrace);
 
   /// Fatal / Critical log
   void f(dynamic message, {Object? error, StackTrace? stackTrace}) =>
-      talker.critical(message, error, stackTrace);
+      AppLog.f(LogModule.detect(message), message,
+          error: error, stackTrace: stackTrace);
 
   /// Handle exception with optional stack trace
   void handle(Object exception, [StackTrace? stackTrace, dynamic message]) =>
-      talker.handle(exception, stackTrace, message);
+      AppLog.handle(exception, stackTrace, message);
 }
 
 Future<File> getLogsPath() async {

@@ -4,8 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:kazumi/pages/download/providers.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/pages/download/providers.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 // 只在非 Windows 平台导入 super_drag_and_drop
@@ -38,7 +40,7 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
   final TextEditingController _userAgentController = TextEditingController();
   final TextEditingController _headersController = TextEditingController();
   final TextEditingController _savePathController = TextEditingController();
-  final KazumiLogger _logger = KazumiLogger();
+  final HaipeeLogger _logger = HaipeeLogger();
 
   // 使用ValueNotifier替代setState
   final ValueNotifier<File?> _torrentFileNotifier = ValueNotifier<File?>(null);
@@ -59,6 +61,19 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
     if (widget.initialFileName != null && widget.initialFileName!.isNotEmpty) {
       _fileNameController.text = widget.initialFileName!;
     }
+
+    String defaultSavePath = '';
+    try {
+      defaultSavePath = (GStorage.setting.get(
+        SettingBoxKey.downloadDirectory,
+        defaultValue: '',
+      ) as String).trim();
+    } catch (_) {}
+    if (defaultSavePath.isEmpty) {
+      defaultSavePath = DownloadFileUtils.getDefaultDownloadDirectorySync();
+    }
+    _savePathController.text = defaultSavePath;
+
     _urlController.addListener(_onUrlChanged);
     if (_urlController.text.isNotEmpty) {
       _onUrlChanged();
@@ -577,6 +592,7 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
           ),
           const SizedBox(width: 12),
           FilledButton.icon(
+            key: const Key('add_download_submit_btn'),
             onPressed: _handleSubmit,
             icon: const Icon(Icons.download),
             label: const Text('开始下载'),
@@ -587,6 +603,9 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
   }
 
   Future<void> _pickTorrentFile() async {
+    if (AppLog.isFirebaseTestLab) {
+      return;
+    }
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -606,6 +625,9 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
   }
 
   Future<void> _pickSavePath() async {
+    if (AppLog.isFirebaseTestLab) {
+      return;
+    }
     try {
       final result = await FilePicker.platform.getDirectoryPath(
         dialogTitle: '选择保存路径',

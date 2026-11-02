@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/search/search_history_module.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/search/search_history_module.dart';
+import 'package:haipee/utils/storage.dart';
 
 class SearchHistoryNotifier extends Notifier<List<SearchHistory>> {
   @override

@@ -1,15 +1,16 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
-import 'package:kazumi/providers/download_providers.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_service.dart';
+import 'package:haipee/providers/download_providers.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
 
 class DownloadSettingsPage extends ConsumerStatefulWidget {
   const DownloadSettingsPage({super.key});
@@ -21,8 +22,11 @@ class DownloadSettingsPage extends ConsumerStatefulWidget {
 class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
   final TextEditingController _maxConcurrentController = TextEditingController();
   String _downloadDirectory = '';
+  int _parallelEpisodes = 3;
+  int _parallelSegments = 3;
+  bool _downloadDanmaku = true;
 
-  final KazumiLogger _logger = KazumiLogger();
+  final HaipeeLogger _logger = HaipeeLogger();
 
   @override
   void initState() {
@@ -50,20 +54,26 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
     final setting = GStorage.setting;
     final maxConcurrent = setting.get(
       SettingBoxKey.maxConcurrentDownloads,
-      defaultValue: setting.get(
-        SettingBoxKey.aria2MaxConcurrentDownloads,
-        defaultValue: 3,
-      ),
+      defaultValue: 3,
     );
     _maxConcurrentController.text = (maxConcurrent as int).toString();
     _downloadDirectory = (setting.get(
       SettingBoxKey.downloadDirectory,
       defaultValue: '',
     ) as String);
+    _parallelEpisodes =
+        GStorage.getSetting(SettingsKeys.downloadParallelEpisodes);
+    _parallelSegments =
+        GStorage.getSetting(SettingsKeys.downloadParallelSegments);
+    _downloadDanmaku = GStorage.getSetting(SettingsKeys.downloadDanmaku);
   }
 
   /// 调起系统原生文件夹选择器让用户直接挑选下载目录
   Future<void> _pickDownloadDirectory() async {
+    if (AppLog.isFirebaseTestLab) {
+      AppLog.d(LogModule.download, 'Firebase Test Lab 自动化测试中跳过唤起系统外部文件夹选择器');
+      return;
+    }
     try {
       final selectedPath = await FilePicker.platform.getDirectoryPath(
         dialogTitle: '选择默认下载目录',
@@ -78,12 +88,12 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
         setState(() {
           _downloadDirectory = cleanPath;
         });
-        KazumiDialog.showToast(message: '默认下载目录已更新为:\n$cleanPath');
+        HaipeeDialog.showToast(message: '默认下载目录已更新为:\n$cleanPath');
       }
     } catch (e) {
       _logger.log(Level.warning, '选择下载目录失败: $e');
       if (mounted) {
-        KazumiDialog.showToast(message: '选择目录失败: $e');
+        HaipeeDialog.showToast(message: '选择目录失败: $e');
       }
     }
   }
@@ -96,10 +106,10 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
       setState(() {
         _downloadDirectory = '';
       });
-      KazumiDialog.showToast(message: '已恢复系统默认下载目录');
+      HaipeeDialog.showToast(message: '已恢复系统默认下载目录');
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '重置目录失败: $e');
+        HaipeeDialog.showToast(message: '重置目录失败: $e');
       }
     }
   }
@@ -119,7 +129,7 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
     } catch (e) {
       _logger.log(Level.warning, '无法打开目录: $e');
       if (mounted) {
-        KazumiDialog.showToast(message: '无法打开目录: $e');
+        HaipeeDialog.showToast(message: '无法打开目录: $e');
       }
     }
   }
@@ -163,7 +173,7 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
         setState(() {
           _downloadDirectory = result;
         });
-        KazumiDialog.showToast(message: '下载目录已更新');
+        HaipeeDialog.showToast(message: '下载目录已更新');
       }
     }
   }
@@ -171,14 +181,13 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
   Future<void> _saveSettings() async {
     final maxConcurrent = int.tryParse(_maxConcurrentController.text.trim());
     if (maxConcurrent == null || maxConcurrent < 1 || maxConcurrent > 16) {
-      KazumiDialog.showToast(message: '最大并发下载数必须在 1-16 之间');
+      HaipeeDialog.showToast(message: '最大并发下载数必须在 1-16 之间');
       return;
     }
 
     final setting = GStorage.setting;
     await setting.put(SettingBoxKey.maxConcurrentDownloads, maxConcurrent);
-    await setting.put(SettingBoxKey.aria2MaxConcurrentDownloads, maxConcurrent);
-    KazumiDialog.showToast(message: '下载设置已保存');
+    HaipeeDialog.showToast(message: '下载设置已保存');
   }
 
   Future<void> _restartEngine() async {
@@ -186,10 +195,10 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
     try {
       await GopeedService().initialize();
       ref.read(downloadSettingsProvider.notifier).setEngineStatus('Gopeed 2.0 运行中 (内嵌原生内核)');
-      KazumiDialog.showToast(message: 'Gopeed 下载引擎已就绪');
+      HaipeeDialog.showToast(message: 'Gopeed 下载引擎已就绪');
     } catch (e) {
       ref.read(downloadSettingsProvider.notifier).setEngineStatus('Gopeed 初始化失败: $e');
-      KazumiDialog.showToast(message: '引擎初始化异常: $e');
+      HaipeeDialog.showToast(message: '引擎初始化异常: $e');
     }
   }
 
@@ -197,17 +206,15 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
   Widget build(BuildContext context) {
     final downloadSettings = ref.watch(downloadSettingsProvider);
 
-    return Scaffold(
-      appBar: SysAppBar(
-        title: const Text('下载设置'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveSettings,
-            tooltip: '保存',
-          ),
-        ],
-      ),
+    return SettingsDetailScaffold(
+      title: const Text('下载设置'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.save),
+          onPressed: _saveSettings,
+          tooltip: '保存',
+        ),
+      ],
       body: SettingsList(
         sections: [
           SettingsSection(
@@ -260,11 +267,56 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
                   ],
                 ),
               ),
+              SettingsTile.switchTile(
+                leading: const Icon(Icons.subtitles_rounded),
+                onToggle: (value) {
+                  setState(() => _downloadDanmaku = value ?? !_downloadDanmaku);
+                  GStorage.putSetting(
+                      SettingsKeys.downloadDanmaku, _downloadDanmaku);
+                },
+                title: const Text('缓存弹幕'),
+                description: const Text('下载视频时同时缓存弹幕数据'),
+                initialValue: _downloadDanmaku,
+              ),
             ],
           ),
           SettingsSection(
             title: const Text('任务与并发'),
             tiles: [
+              SettingsSliderTile(
+                leading: const Icon(Icons.video_library_rounded),
+                title: const Text('同时下载集数'),
+                description: const Text('并行下载的剧集数量'),
+                value: _parallelEpisodes.toDouble(),
+                min: 1,
+                max: 5,
+                divisions: 4,
+                valueLabel: '$_parallelEpisodes 集',
+                onChanged: (value) {
+                  setState(() => _parallelEpisodes = value.toInt());
+                  GStorage.putSetting(
+                    SettingsKeys.downloadParallelEpisodes,
+                    _parallelEpisodes,
+                  );
+                },
+              ),
+              SettingsSliderTile(
+                leading: const Icon(Icons.call_split_rounded),
+                title: const Text('分片并发数'),
+                description: const Text('每集同时下载的分片数量'),
+                value: _parallelSegments.toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 9,
+                valueLabel: '$_parallelSegments 个',
+                onChanged: (value) {
+                  setState(() => _parallelSegments = value.toInt());
+                  GStorage.putSetting(
+                    SettingsKeys.downloadParallelSegments,
+                    _parallelSegments,
+                  );
+                },
+              ),
               SettingsTile(
                 title: const Text('最大并发下载数'),
                 description: const Text('同时进行的最大并发下载任务数 (1-16)'),
@@ -279,6 +331,21 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
                     ),
                     keyboardType: TextInputType.number,
                   ),
+                ),
+              ),
+            ],
+          ),
+          SettingsSection(
+            title: const Text('说明'),
+            tiles: [
+              SettingsTile(
+                leading: const Icon(Icons.info_outline_rounded),
+                title: const Text('关于并发设置'),
+                description: const Text(
+                  '• 集数并发：同时下载多少集视频\n'
+                  '• 分片并发：每集内同时下载多少个视频片段\n'
+                  '• 较高的并发可提升速度，但可能被服务器限制\n'
+                  '• 修改后对新开始的下载生效',
                 ),
               ),
             ],

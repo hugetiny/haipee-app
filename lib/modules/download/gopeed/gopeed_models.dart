@@ -11,6 +11,7 @@ class GopeedTask {
   final String savePath;
   final String url;
   final List<GopeedFile> files;
+  final String? error;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? doneAt;
@@ -28,6 +29,7 @@ class GopeedTask {
     this.savePath = '',
     this.url = '',
     this.files = const [],
+    this.error,
     this.createdAt,
     this.updatedAt,
     this.doneAt,
@@ -69,6 +71,7 @@ class GopeedTask {
       savePath: opts['path']?.toString() ?? '',
       url: req['url']?.toString() ?? '',
       files: files,
+      error: json['error']?.toString() ?? progress['error']?.toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
@@ -80,6 +83,7 @@ class GopeedTask {
           : null,
     );
   }
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -155,3 +159,64 @@ class GopeedTaskEvent {
     );
   }
 }
+
+class GopeedResolveResult {
+  final String id;
+  final String name;
+  final int size;
+  final bool range;
+  final String hash;
+  final List<GopeedFileInfo> files;
+
+  GopeedResolveResult({
+    required this.id,
+    required this.name,
+    required this.size,
+    this.range = false,
+    this.hash = '',
+    required this.files,
+  });
+
+  factory GopeedResolveResult.fromJson(Map<String, dynamic> json) {
+    final res = json['res'] as Map<String, dynamic>? ?? {};
+    final rawFiles = res['files'] as List<dynamic>? ?? [];
+    final files = <GopeedFileInfo>[];
+    for (int i = 0; i < rawFiles.length; i++) {
+      if (rawFiles[i] is Map) {
+        files.add(GopeedFileInfo.fromJson((rawFiles[i] as Map).cast<String, dynamic>(), i));
+      }
+    }
+    return GopeedResolveResult(
+      id: json['id']?.toString() ?? '',
+      name: res['name']?.toString() ?? '',
+      size: (res['size'] as num?)?.toInt() ?? 0,
+      range: res['range'] == true,
+      hash: res['hash']?.toString() ?? '',
+      files: files,
+    );
+  }
+}
+
+class GopeedFileInfo {
+  final int id;
+  final String name;
+  final String path;
+  final int size;
+
+  GopeedFileInfo({
+    this.id = 0,
+    required this.name,
+    required this.path,
+    required this.size,
+  });
+
+  factory GopeedFileInfo.fromJson(Map<String, dynamic> json, [int index = 0]) {
+    return GopeedFileInfo(
+      id: (json['id'] as num?)?.toInt() ?? index,
+      name: json['name']?.toString() ?? '',
+      path: json['path']?.toString() ?? '',
+      size: (json['size'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+

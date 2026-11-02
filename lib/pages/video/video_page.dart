@@ -4,40 +4,40 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/pages/player/player_controller.dart';
-import 'package:kazumi/pages/player/player_state.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/pages/webview/webview_item.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
-import 'package:kazumi/pages/history/history_controller.dart';
-import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/pages/player/player_item.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/pages/player/player_controller.dart';
+import 'package:haipee/pages/player/player_state.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/pages/webview/webview_item.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
+import 'package:haipee/pages/history/history_controller.dart';
+import 'package:haipee/pages/player/player_item.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/bean/appbar/drag_to_move_bar.dart' as dtb;
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/bean/appbar/drag_to_move_bar.dart' as dtb;
+import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
 import 'package:scrollview_observer/scrollview_observer.dart';
-import 'package:kazumi/pages/player/episode_comments_sheet.dart';
+import 'package:haipee/pages/player/episode_comments_sheet.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
-import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
-import 'package:kazumi/ui/appbar/kazumi_app_bar_actions.dart';
-import 'package:kazumi/ui/appbar/kazumi_action_item.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/pages/history/providers.dart';
-import 'package:kazumi/pages/webview/providers.dart';
-import 'package:kazumi/pages/video/video_state.dart';
-import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/utils/parse_failure_helper.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:haipee/bean/widget/embedded_native_control_area.dart';
+import 'package:haipee/ui/appbar/haipee_app_bar_actions.dart';
+import 'package:haipee/ui/appbar/haipee_action_item.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/pages/history/providers.dart';
+import 'package:haipee/pages/webview/providers.dart';
+import 'package:haipee/pages/video/video_state.dart';
+import 'package:haipee/pages/setting/providers.dart';
+import 'package:haipee/utils/parse_failure_helper.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
 
 class VideoPage extends ConsumerStatefulWidget {
   const VideoPage({super.key});
@@ -156,7 +156,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
       playerController.init(mediaUrl, offset: offset);
     });
     _logSubscription = webviewItemController.onLog.listen((event) {
-      debugPrint('[kazumi webview parser]: $event');
+      debugPrint('[haipee webview parser]: $event');
       if (event == 'clear') {
         clearWebviewLog();
         return;
@@ -180,7 +180,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
     });
   }
 
-  /// 处理视频解析失败,记录到数据库
+  /// 处理视频解析失败,记录到数据库并上报全链路日志
   void _handleParseFailure() {
     // 若视频流已成功定位或播放器已加载媒体，杜绝误报与误记失败
     if (webviewItemController.isVideoSourceLoaded ||
@@ -193,17 +193,20 @@ class _VideoPageState extends ConsumerState<VideoPage>
       final videoState = ref.read(videoProvider);
       final plugin = videoState.currentPlugin;
       final src = videoPageController.src;
+      final epTitle = videoPageController.title;
 
       if (plugin != null && src.isNotEmpty) {
         ParseFailureHelper.recordFailure(
           bangumiId: bangumiItem.id,
           pluginName: plugin.name,
           src: src,
+          bangumiTitle: bangumiItem.name,
+          episodeTitle: epTitle,
           reason: 'timeout',
         );
       }
-    } catch (e) {
-      KazumiLogger().log(Level.error, '记录解析失败时出错: $e');
+    } catch (e, stack) {
+      AppLog.e(LogModule.stream, '记录解析失败时出错: $e', error: e, stackTrace: stack);
     }
   }
 
@@ -365,8 +368,8 @@ class _VideoPageState extends ConsumerState<VideoPage>
   }
 
   void onBackPressed(BuildContext context) async {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
       return;
     }
     if (videoPageController.isPip) {
@@ -397,16 +400,16 @@ class _VideoPageState extends ConsumerState<VideoPage>
     final t = context.t;
     final playerState = ref.read(playerProvider);
     if (playerState.danDanmakus.isEmpty) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: t.playback.toast.danmakuUnsupported,
       );
       return;
     }
     if (msg.isEmpty) {
-      KazumiDialog.showToast(message: t.playback.toast.danmakuEmpty);
+      HaipeeDialog.showToast(message: t.playback.toast.danmakuEmpty);
       return;
     } else if (msg.length > 100) {
-      KazumiDialog.showToast(message: t.playback.toast.danmakuTooLong);
+      HaipeeDialog.showToast(message: t.playback.toast.danmakuTooLong);
       return;
     }
     // Todo 接口方限制
@@ -770,8 +773,8 @@ class _VideoPageState extends ConsumerState<VideoPage>
                           child: dtb.DragToMoveArea(child: SizedBox(height: 40)),
                         ),
                         Builder(builder: (context) {
-                          final items = <KazumiActionItem>[
-                            KazumiActionItem(
+                          final items = <HaipeeActionItem>[
+                            HaipeeActionItem(
                               icon: Icons.refresh_outlined,
                               tooltip: '刷新',
                               color: Colors.white,
@@ -786,7 +789,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
                           final isWide = MediaQuery.sizeOf(context).width > MediaQuery.sizeOf(context).height;
                           if (isWide) {
                             items.add(
-                              KazumiActionItem(
+                              HaipeeActionItem(
                                 icon: videoState.showTabBody ? Icons.menu_open : Icons.menu_open_outlined,
                                 tooltip: videoState.showTabBody ? '关闭侧栏' : '打开侧栏',
                                 color: Colors.white,
@@ -799,7 +802,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
                           }
                           if (debugModeEnabled) {
                             items.add(
-                              KazumiActionItem(
+                              HaipeeActionItem(
                                 icon: showDebugLog ? Icons.bug_report : Icons.bug_report_outlined,
                                 tooltip: '调试',
                                 color: Colors.white,
@@ -807,7 +810,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
                               ),
                             );
                           }
-                          return KazumiAppBarActions(items: items, iconSize: 22);
+                          return HaipeeAppBarActions(items: items, iconSize: 22);
                         }),
                       ],
                     ),
@@ -1280,7 +1283,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
     final hasPlayer = playerController.mediaPlayer != null;
 
     final buffer = StringBuffer();
-    buffer.writeln('=== Kazumi 调试信息 ===');
+    buffer.writeln('=== Haipee 调试信息 ===');
     buffer.writeln();
 
     // 播放源
@@ -1357,7 +1360,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
     }
 
     Clipboard.setData(ClipboardData(text: buffer.toString()));
-    KazumiDialog.showToast(
+    HaipeeDialog.showToast(
       message: context.t.playback.toast.clipboardCopied,
     );
   }
@@ -1481,7 +1484,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
                   if (isCurrentEpisode) {
                     return;
                   }
-                  KazumiLogger().log(Level.info, '视频链接为 $urlItem');
+                  AppLog.i(LogModule.stream, '视频链接为 $urlItem');
                   closeTabBodyAnimated();
                   changeEpisode(currentIndex, currentRoad: currentRoad);
                 },
@@ -1605,11 +1608,11 @@ class _VideoPageState extends ConsumerState<VideoPage>
                         if (playerState.danmakuOn && !videoState.loading) {
                           showMobileDanmakuInput();
                         } else if (videoState.loading) {
-                          KazumiDialog.showToast(
+                          HaipeeDialog.showToast(
                             message: t.playback.toast.waitForVideo,
                           );
                         } else {
-                          KazumiDialog.showToast(
+                          HaipeeDialog.showToast(
                             message: t.playback.toast.enableDanmakuFirst,
                           );
                         }

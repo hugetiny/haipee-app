@@ -1,0 +1,22 @@
+{
+  "api": "1",
+  "type": "tvbox",
+  "category": "video",
+  "name": "TVBox 豪华点播",
+  "version": "1.0",
+  "muliSources": true,
+  "useWebview": false,
+  "useNativePlayer": true,
+  "usePost": false,
+  "useLegacyParser": false,
+  "userAgent": "Mozilla/5.0 (Haipee/TVBox)",
+  "baseURL": "https://hhzyapi.com",
+  "searchURL": "https://hhzyapi.com/api.php/provide/vod/?ac=detail&at=json&wd=@keyword",
+  "searchList": "",
+  "searchName": "vod_name",
+  "searchPic": "vod_pic",
+  "searchResult": "vod_id",
+  "chapterRoads": "",
+  "chapterResult": "",
+  "referer": "https://hhzyapi.com/"
+}

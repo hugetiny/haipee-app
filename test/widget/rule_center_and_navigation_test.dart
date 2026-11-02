@@ -3,22 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/cardigann/models/indexer_plugin.dart';
-import 'package:kazumi/modules/parse_failure/parse_failure_module.dart';
-import 'package:kazumi/pages/menu/menu.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/pages/online/online_video_search_page.dart';
-import 'package:kazumi/pages/popular/popular_controller.dart';
-import 'package:kazumi/pages/popular/providers.dart';
-import 'package:kazumi/pages/resource/resource_search_page.dart';
-import 'package:kazumi/pages/setting/setting_page.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
+import 'package:haipee/modules/parse_failure/parse_failure_module.dart';
+import 'package:haipee/pages/menu/menu.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/pages/online/online_video_search_page.dart';
+import 'package:haipee/pages/popular/popular_controller.dart';
+import 'package:haipee/pages/popular/providers.dart';
+import 'package:haipee/pages/resource/resource_search_page.dart';
+import 'package:haipee/pages/setting/setting_page.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/utils/storage.dart';
 
 class MockPluginsControllerWithData extends PluginsController {
   final List<Plugin> initialPlugins;
@@ -98,7 +98,7 @@ void main() {
         ProviderScope(
           child: TranslationProvider(
             child: MaterialApp(
-              navigatorObservers: [KazumiDialog.observer],
+              navigatorObservers: [HaipeeDialog.observer],
               home: const SettingPage(),
             ),
           ),
@@ -109,14 +109,12 @@ void main() {
       // 1. 验证“统一规则管理中心”冗余项已被彻底移除
       expect(find.text('统一规则管理中心'), findsNothing);
 
-      // 2. 验证“视听与在线媒体 (点播与直播)”中分别包含“在线视频规则”与“电视直播规则”独立入口
-      expect(find.text('视听与在线媒体 (点播与直播)'), findsOneWidget);
-      expect(find.text('在线视频规则'), findsOneWidget);
-      expect(find.text('电视直播规则'), findsOneWidget);
-
-      // 3. 验证“资源检索与下载 (网盘与BT)”中保留“BT / 磁力下载规则”
-      expect(find.text('资源检索与下载 (网盘与BT)'), findsOneWidget);
-      expect(find.text('BT / 磁力下载规则'), findsOneWidget);
+      // 2. 验证“资源”分类严格遵循 Kazumi 原生规范：仅保留规则管理与下载设置两大顶级入口
+      expect(find.text('资源'), findsOneWidget);
+      expect(find.byKey(const Key('setting_rule_all')), findsOneWidget);
+      expect(find.text('规则管理'), findsOneWidget);
+      expect(find.byKey(const Key('setting_download_settings')), findsOneWidget);
+      expect(find.text('下载设置'), findsOneWidget);
     });
 
     testWidgets('OnlineVideoSearchPage has dedicated contextual rule button for Kazumi video rules',
@@ -140,7 +138,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byTooltip('Kazumi 视频规则'), findsOneWidget);
+      expect(find.byTooltip('Haipee 视频规则'), findsOneWidget);
       expect(find.byTooltip('规则管理中心'), findsNothing);
     });
 

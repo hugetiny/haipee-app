@@ -9,7 +9,7 @@ useWebview: false
 useNativePlayer: true
 usePost: false
 useLegacyParser: false
-userAgent: "Mozilla/5.0 (Kazumi/Piped)"
+userAgent: "Mozilla/5.0 (Haipee/Piped)"
 referer: "https://piped.video"
 searchList: ""
 searchName: ""

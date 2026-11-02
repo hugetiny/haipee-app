@@ -1,7 +1,7 @@
-/// Strongly-typed module taxonomy for all Kazumi operational logging.
+/// Strongly-typed module taxonomy for all Haipee operational logging.
 enum LogModule {
   stream('STREAM'),
-  aria2('ARIA2'),
+  gopeed('GOPEED'),
   indexer('INDEXER'),
   player('PLAYER'),
   network('NETWORK'),
@@ -23,7 +23,7 @@ enum LogModule {
       final closeIdx = str.indexOf(']');
       if (closeIdx > 1) {
         final rawTag = str.substring(1, closeIdx).toLowerCase();
-        if (rawTag.contains('aria2')) return LogModule.aria2;
+        if (rawTag.contains('gopeed')) return LogModule.gopeed;
         if (rawTag.contains('torrent') ||
             rawTag.contains('stream') ||
             rawTag.contains('torrserver') ||
@@ -67,6 +67,58 @@ enum LogModule {
         }
       }
     }
+
+    // 2. 深入消息正文特征关键词，赋能旧代码自动接入分类体系
+    final lower = str.toLowerCase();
+    if (lower.contains('player intent error') ||
+        lower.contains('media_kit') ||
+        lower.contains('dandanplay') ||
+        lower.contains('aniskip') ||
+        lower.contains('danmaku') ||
+        lower.contains('audio-add') ||
+        lower.contains('libmpv')) {
+      return LogModule.player;
+    }
+    if (lower.contains('torrserver') ||
+        lower.contains('libtorrent') ||
+        lower.contains('torrentstream') ||
+        lower.contains('hls') ||
+        lower.contains('.m3u8') ||
+        lower.contains('免嗅探直接视频流')) {
+      return LogModule.stream;
+    }
+    if (lower.contains('gopeed') ||
+        lower.contains('downloadtask') ||
+        lower.contains('aria2')) {
+      return LogModule.download;
+    }
+    if (lower.contains('cardigann') ||
+        lower.contains('torznab') ||
+        lower.contains('indexer')) {
+      return LogModule.indexer;
+    }
+    if (lower.contains('webview') ||
+        lower.contains('maccms') ||
+        lower.contains('tvbox') ||
+        lower.contains('xpath') ||
+        lower.contains('嗅探') ||
+        lower.contains('规则')) {
+      return LogModule.plugin;
+    }
+    if (lower.contains('dioexception') ||
+        lower.contains('socketexception') ||
+        lower.contains('handshake') ||
+        lower.contains('http-header') ||
+        lower.contains('bad response') ||
+        lower.contains('connection timeout')) {
+      return LogModule.network;
+    }
+    if (lower.contains('syncplay')) return LogModule.syncplay;
+    if (lower.contains('webdav') || lower.contains('hivestorage')) return LogModule.storage;
+    if (lower.contains('renderflex overflow') || lower.contains('snackbar') || lower.contains('toast message')) {
+      return LogModule.ui;
+    }
+
     return LogModule.system;
   }
 }

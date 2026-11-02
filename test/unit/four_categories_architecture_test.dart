@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/search/plugin_search_module.dart';
-import 'package:kazumi/pages/online/online_video_search_page.dart';
-import 'package:kazumi/pages/plugin_editor/plugin_view_page.dart';
-import 'package:kazumi/plugins/plugins.dart';
+import 'package:haipee/modules/search/plugin_search_module.dart';
+import 'package:haipee/pages/online/online_video_search_page.dart';
+import 'package:haipee/pages/plugin_editor/plugin_view_page.dart';
+import 'package:haipee/plugins/plugins.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

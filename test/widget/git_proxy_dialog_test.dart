@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/setting/setting_page.dart';
-import 'package:kazumi/pages/setting/widgets/git_proxy_dialog.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/setting/setting_page.dart';
+import 'package:haipee/pages/setting/widgets/git_proxy_dialog.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -46,6 +47,8 @@ void main() {
   testWidgets('设置主页展示 GitHub 代理导航项并响应点击打开弹窗', (tester) async {
     tester.view.physicalSize = const Size(1200, 2000);
     tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     // 开启代理并设置自定义地址 (必须在 runAsync 中执行 Hive 写入)
     await tester.runAsync(() async {
@@ -57,8 +60,8 @@ void main() {
       ProviderScope(
         child: TranslationProvider(
           child: MaterialApp(
-            navigatorObservers: [KazumiDialog.observer],
-            home: const SettingPage(),
+            navigatorObservers: [HaipeeDialog.observer],
+            home: const SettingPage(initialPath: Routes.settingsProxy),
           ),
         ),
       ),
@@ -75,12 +78,14 @@ void main() {
   testWidgets('GitProxyDialog 组件渲染与开关联动', (tester) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
       ProviderScope(
         child: TranslationProvider(
           child: MaterialApp(
-            navigatorObservers: [KazumiDialog.observer],
+            navigatorObservers: [HaipeeDialog.observer],
             home: Scaffold(
               body: Builder(
                 builder: (context) => ElevatedButton(
@@ -129,14 +134,19 @@ void main() {
 
     // 4. 输入自定义代理地址
     await tester.enterText(find.byType(TextField), 'https://custom-git-proxy.xyz/');
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     // 5. 点击保存并应用
     await tester.ensureVisible(find.text('保存并应用'));
     await tester.tap(find.text('保存并应用'));
-    await tester.pump();
     await tester.runAsync(() async {
-      await Future.delayed(const Duration(milliseconds: 300));
+      for (int i = 0; i < 60; i++) {
+        if (GitProxyInterceptor.getEffectiveProxyUrl() ==
+            'https://custom-git-proxy.xyz/') {
+          break;
+        }
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
     });
     await tester.pumpAndSettle();
 

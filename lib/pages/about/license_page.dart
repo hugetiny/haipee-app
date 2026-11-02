@@ -2,24 +2,24 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/request/api.dart';
-import 'package:kazumi/router_constants.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/request/api.dart';
+import 'package:haipee/router_constants.dart';
 
 /// 统一风格的开源许可证与授权协议页面
 ///
 /// 完全采用标准 [SysAppBar] 与 [AppBackButton]，在 macOS 桌面端无缝避让红黄绿窗口控制按钮，
 /// 杜绝原生 LicensePage 在 macOS 标题栏隐藏模式下与交通灯按钮重叠挤占的问题。
-class KazumiLicensePage extends StatefulWidget {
-  const KazumiLicensePage({super.key});
+class HaipeeLicensePage extends StatefulWidget {
+  const HaipeeLicensePage({super.key});
 
   @override
-  State<KazumiLicensePage> createState() => _KazumiLicensePageState();
+  State<HaipeeLicensePage> createState() => _HaipeeLicensePageState();
 }
 
-class _KazumiLicensePageState extends State<KazumiLicensePage> {
+class _HaipeeLicensePageState extends State<HaipeeLicensePage> {
   bool _loading = true;
   final Map<String, List<LicenseEntry>> _packageLicenses = {};
   List<String> _packages = [];
@@ -130,7 +130,7 @@ class _KazumiLicensePageState extends State<KazumiLicensePage> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Kazumi',
+                                  'haipee',
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleLarge

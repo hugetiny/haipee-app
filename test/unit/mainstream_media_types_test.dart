@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/alist/alist_service.dart';
-import 'package:kazumi/modules/iptv/iptv_service.dart';
-import 'package:kazumi/modules/piped/piped_service.dart';
-import 'package:kazumi/modules/tvbox/tvbox_importer.dart';
-import 'package:kazumi/plugins/plugins.dart';
+import 'package:haipee/modules/alist/alist_service.dart';
+import 'package:haipee/modules/iptv/iptv_service.dart';
+import 'package:haipee/modules/piped/piped_service.dart';
+import 'package:haipee/modules/tvbox/tvbox_importer.dart';
+import 'package:haipee/plugins/plugins.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

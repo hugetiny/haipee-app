@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/modules/bilibili/bilibili_wbi.dart';
-import 'package:kazumi/modules/bilibili/bilibili_service.dart';
-import 'package:kazumi/modules/douyin/douyin_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/bilibili/bilibili_wbi.dart';
+import 'package:haipee/modules/bilibili/bilibili_service.dart';
+import 'package:haipee/modules/douyin/douyin_service.dart';
 
 void main() {
   group('Bilibili WBI Signer Tests', () {
@@ -124,7 +124,7 @@ void main() {
         format: 'dash',
         headers: {
           'Referer': 'https://www.bilibili.com',
-          'User-Agent': 'Mozilla/5.0 KazumiClient',
+          'User-Agent': 'Mozilla/5.0 HaipeeClient',
         },
       );
 

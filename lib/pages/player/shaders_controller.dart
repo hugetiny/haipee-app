@@ -1,2 +1,2 @@
-export 'package:kazumi/shaders/shaders_controller.dart';
-export 'package:kazumi/shaders/providers.dart';
+export 'package:haipee/shaders/shaders_controller.dart';
+export 'package:haipee/shaders/providers.dart';

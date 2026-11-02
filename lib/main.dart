@@ -2,35 +2,59 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:kazumi/app_widget.dart';
+import 'package:haipee/app_widget.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
-import 'package:kazumi/request/request.dart';
+import 'package:haipee/request/request.dart';
 import 'package:flutter/services.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_service.dart';
 import 'package:logger/logger.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:kazumi/pages/error/storage_error_page.dart';
+import 'package:haipee/pages/error/storage_error_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/services/sentry/sentry_service.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/services/sentry/sentry_service.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
 
 void setupGlobalErrorHandlers() {
   // Hook Flutter and platform errors to Talker and preserve existing/Sentry hooks
   final originalFlutterOnError = FlutterError.onError;
   FlutterError.onError = (details) {
-    KazumiLogger().talker.handle(details.exception, details.stack);
+    // In release mode, FlutterError.presentError defaults to a no-op unless forceReport is true.
+    // Calling dumpErrorToConsole with forceReport: true ensures structured error boxes
+    // (RenderFlex overflow metrics, pixel counts, and widget chains) reach logcat and syslog.
+    FlutterError.dumpErrorToConsole(details, forceReport: true);
+
+    final exceptionStr = details.exceptionAsString();
+    if (exceptionStr.contains('overflowed') || exceptionStr.contains('RenderFlex')) {
+      AppLog.recordRenderFlexOverflow(details);
+    } else {
+      AppLog.e(
+        LogModule.system,
+        '[HAIPEE_ERROR] Flutter unhandled error: $exceptionStr',
+        error: details.exception,
+        stackTrace: details.stack,
+      );
+    }
+
+    HaipeeLogger().talker.handle(details.exception, details.stack);
     originalFlutterOnError?.call(details);
   };
 
   final originalPlatformOnError = PlatformDispatcher.instance.onError;
   PlatformDispatcher.instance.onError = (error, stack) {
-    KazumiLogger().talker.handle(error, stack);
+    AppLog.e(
+      LogModule.system,
+      '[HAIPEE_EXCEPTION] Unhandled platform exception: $error',
+      error: error,
+      stackTrace: stack,
+    );
+    HaipeeLogger().talker.handle(error, stack);
     return originalPlatformOnError?.call(error, stack) ?? true;
   };
 
@@ -58,6 +82,7 @@ void setupGlobalErrorHandlers() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppLog.detectTestLab();
 
   await SentryService.init(
     appRunner: () async {
@@ -110,7 +135,7 @@ void main() async {
               ? TitleBarStyle.hidden
               : TitleBarStyle.normal,
           windowButtonVisibility: showWindowButton,
-          title: 'Kazumi',
+          title: 'haipee',
         );
         windowManager.waitUntilReadyToShow(windowOptions, () async {
           await windowManager.show();
@@ -132,7 +157,7 @@ void main() async {
       // Initialize Gopeed download engine in background without blocking UI startup
       unawaited(
         GopeedService().initialize().catchError((e) {
-          KazumiLogger().log(Level.warning, '[Main] Failed to initialize Gopeed: $e');
+          HaipeeLogger().log(Level.warning, '[Main] Failed to initialize Gopeed: $e');
         }),
       );
 

@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/widget/adaptive_data_view.dart';
-import 'package:kazumi/modules/plugin/plugin_http_module.dart';
-import 'package:kazumi/pages/plugin_editor/plugin_shop_page.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/widget/adaptive_data_view.dart';
+import 'package:haipee/modules/plugin/plugin_http_module.dart';
+import 'package:haipee/pages/plugin_editor/plugin_shop_page.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/storage.dart';
 
 class MockPluginsController extends PluginsController {
   final List<PluginHTTPItem> mockItems;

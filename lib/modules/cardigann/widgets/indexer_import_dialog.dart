@@ -4,12 +4,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/cardigann/engine/cardigann_query_executor.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/services/logging/app_log.dart';
 
 /// Dialog to import Cardigann YAML definition from local file, clipboard, remote URL, or text entry,
 /// with instant dry-run testing and conflict override detection.
@@ -51,6 +52,9 @@ class _IndexerImportDialogState extends ConsumerState<IndexerImportDialog> {
   }
 
   Future<void> _pickFile() async {
+    if (AppLog.isFirebaseTestLab) {
+      return;
+    }
     try {
       setState(() {
         _isLoading = true;
@@ -137,7 +141,7 @@ class _IndexerImportDialogState extends ConsumerState<IndexerImportDialog> {
           _testResults = [];
         });
         if (mounted) {
-          KazumiDialog.showToast(message: '已成功从远程拉取规则内容', context: context);
+          HaipeeDialog.showToast(message: '已成功从远程拉取规则内容', context: context);
         }
       } else {
         setState(() {
@@ -225,7 +229,7 @@ class _IndexerImportDialogState extends ConsumerState<IndexerImportDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: '已成功导入索引器: ${plugin?.name ?? ''}',
           context: context,
         );

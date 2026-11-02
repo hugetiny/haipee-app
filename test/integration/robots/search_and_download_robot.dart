@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/modules/torrent_search/widgets/selective_download_dialog.dart';
-import 'package:kazumi/pages/download/providers.dart';
-import 'package:kazumi/pages/resource/resource_search_content.dart';
-import 'package:kazumi/pages/resource/resource_search_page.dart';
-import 'package:kazumi/router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/torrent_search/widgets/selective_download_dialog.dart';
+import 'package:haipee/pages/download/providers.dart';
+import 'package:haipee/pages/resource/resource_search_content.dart';
+import 'package:haipee/pages/resource/resource_search_page.dart';
+import 'package:haipee/router.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/storage.dart';
 import 'log_watcher_robot.dart';
 
 /// Robot that simulates typing keywords, searching resources, executing 1-click download,

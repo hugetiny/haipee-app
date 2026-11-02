@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/request/bangumi.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/request/bangumi.dart';
 
 void main() {
   group('Bangumi Error Resilience and Dummy Item Guard Tests', () {

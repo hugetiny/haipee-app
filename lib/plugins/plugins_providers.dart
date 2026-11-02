@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
 
 // ✅ 导出插件相关 UI 状态管理
-export 'package:kazumi/plugins/plugin_ui_state.dart';
+export 'package:haipee/plugins/plugin_ui_state.dart';
 
 /// 插件管理 Provider
 ///

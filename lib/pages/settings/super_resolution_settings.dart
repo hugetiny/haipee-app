@@ -1,1 +1,1 @@
-export 'package:kazumi/pages/setting/player/super_resolution_settings.dart';
+export 'package:haipee/pages/setting/player/super_resolution_settings.dart';

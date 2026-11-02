@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/modules/bilibili/bilibili_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/bilibili/bilibili_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

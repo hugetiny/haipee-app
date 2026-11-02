@@ -4,19 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/services/logging/app_log.dart';
-import 'package:kazumi/services/logging/debug_hud_overlay.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/pages/setting/indexer/indexer_settings_page.dart';
-import 'package:kazumi/pages/setting/metadata/metadata_settings_page.dart';
-import 'package:kazumi/pages/setting/media/media_settings_page.dart';
-import 'package:kazumi/pages/about/license_page.dart';
-import 'package:kazumi/pages/setting/setting_page.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/router.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/debug_hud_overlay.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/pages/setting/indexer/indexer_settings_page.dart';
+import 'package:haipee/pages/setting/metadata/metadata_settings_page.dart';
+import 'package:haipee/pages/setting/media/media_settings_page.dart';
+import 'package:haipee/pages/about/license_page.dart';
+import 'package:haipee/pages/setting/setting_page.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
 
 void main() {
   late Directory tempDir;
@@ -130,7 +130,7 @@ void main() {
       expect(find.text('视听与媒体'), findsOneWidget);
     });
 
-    testWidgets('验证 Routes.settingsAboutLicense 成功匹配 KazumiLicensePage 且使用 SysAppBar 与避让回退按钮', (tester) async {
+    testWidgets('验证 Routes.settingsAboutLicense 成功匹配 HaipeeLicensePage 且使用 SysAppBar 与避让回退按钮', (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
 
@@ -154,10 +154,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(KazumiLicensePage), findsOneWidget);
+      expect(find.byType(HaipeeLicensePage), findsOneWidget);
       expect(find.byType(SysAppBar), findsWidgets);
       final licenseBackButton = find.descendant(
-        of: find.byType(KazumiLicensePage),
+        of: find.byType(HaipeeLicensePage),
         matching: find.byType(AppBackButton),
       );
       expect(licenseBackButton, findsOneWidget);
@@ -166,7 +166,7 @@ void main() {
         expect(
           tester.getTopLeft(licenseBackButton).dx,
           equals(76.0),
-          reason: 'KazumiLicensePage 回退按钮必须精确避让 76.0px (红黄绿视窗控制区)',
+          reason: 'HaipeeLicensePage 回退按钮必须精确避让 76.0px (红黄绿视窗控制区)',
         );
       }
     });
@@ -238,14 +238,14 @@ void main() {
     testWidgets('SettingPage 中运行日志与诊断开关可动态切换并控制子入口展示', (tester) async {
       AppLog.setDebugMode(false);
 
-      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
 
       await tester.pumpWidget(
         ProviderScope(
           child: TranslationProvider(
             child: MaterialApp(
-              home: const SettingPage(),
+              home: const SettingPage(initialPath: Routes.settingsStorage),
             ),
           ),
         ),

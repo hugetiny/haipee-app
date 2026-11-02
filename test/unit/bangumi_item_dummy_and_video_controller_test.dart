@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/pages/player/local_video_play_args.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/pages/player/local_video_play_args.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

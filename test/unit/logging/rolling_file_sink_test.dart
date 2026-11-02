@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/services/logging/rolling_file_sink.dart';
+import 'package:haipee/services/logging/rolling_file_sink.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
   late Directory tempDir;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('kazumi_log_test_');
+    tempDir = await Directory.systemTemp.createTemp('haipee_log_test_');
   });
 
   tearDown(() async {
@@ -20,7 +20,7 @@ void main() {
     test('writes entries asynchronously to primary log file', () async {
       final sink = RollingFileSink(
         directoryProvider: () async => tempDir,
-        baseName: 'kazumi.log',
+        baseName: 'haipee.log',
         maxFileSizeBytes: 1024,
       );
 
@@ -42,18 +42,18 @@ void main() {
       // Threshold = 100 bytes so rotation happens after a few lines
       final sink = RollingFileSink(
         directoryProvider: () async => tempDir,
-        baseName: 'kazumi.log',
+        baseName: 'haipee.log',
         maxFileSizeBytes: 80,
         maxBackups: 2,
       );
 
       // Write enough to trigger first rotation
       sink.write('A' * 60); // 61 bytes with newline
-      sink.write('B' * 60); // exceeds 80 bytes -> rotates kazumi.log -> kazumi.1.log
+      sink.write('B' * 60); // exceeds 80 bytes -> rotates haipee.log -> haipee.1.log
       await sink.flush();
 
-      final backup1 = File(p.join(tempDir.path, 'kazumi.1.log'));
-      final primary = File(p.join(tempDir.path, 'kazumi.log'));
+      final backup1 = File(p.join(tempDir.path, 'haipee.1.log'));
+      final primary = File(p.join(tempDir.path, 'haipee.log'));
 
       expect(await backup1.exists(), isTrue);
       expect(await primary.exists(), isTrue);
@@ -62,7 +62,7 @@ void main() {
       sink.write('C' * 60); // exceeds 80 bytes -> rotates kazumi.1 -> kazumi.2, kazumi -> kazumi.1
       await sink.flush();
 
-      final backup2 = File(p.join(tempDir.path, 'kazumi.2.log'));
+      final backup2 = File(p.join(tempDir.path, 'haipee.2.log'));
       expect(await backup2.exists(), isTrue);
 
       // Total files should be at most 3 (primary + 2 backups)
@@ -73,7 +73,7 @@ void main() {
       sink.write('D' * 60);
       await sink.flush();
 
-      final backup3 = File(p.join(tempDir.path, 'kazumi.3.log'));
+      final backup3 = File(p.join(tempDir.path, 'haipee.3.log'));
       expect(await backup3.exists(), isFalse); // No .3 file created
       expect((await sink.getExistingLogFiles()).length, equals(3));
 
@@ -83,7 +83,7 @@ void main() {
     test('reads all logs chronologically from oldest backup to active log', () async {
       final sink = RollingFileSink(
         directoryProvider: () async => tempDir,
-        baseName: 'kazumi.log',
+        baseName: 'haipee.log',
         maxFileSizeBytes: 60,
         maxBackups: 2,
       );
@@ -110,7 +110,7 @@ void main() {
     test('clear removes all log files and resets state', () async {
       final sink = RollingFileSink(
         directoryProvider: () async => tempDir,
-        baseName: 'kazumi.log',
+        baseName: 'haipee.log',
         maxFileSizeBytes: 50,
         maxBackups: 2,
       );
@@ -128,7 +128,7 @@ void main() {
       expect(await primary.exists(), isTrue);
       expect((await primary.readAsString()).trim(), isEmpty);
 
-      final backup1 = File(p.join(tempDir.path, 'kazumi.1.log'));
+      final backup1 = File(p.join(tempDir.path, 'haipee.1.log'));
       expect(await backup1.exists(), isFalse);
 
       await sink.dispose();
@@ -137,7 +137,7 @@ void main() {
     test('flushes writes automatically to disk when write queue is drained', () async {
       final sink = RollingFileSink(
         directoryProvider: () async => tempDir,
-        baseName: 'kazumi.log',
+        baseName: 'haipee.log',
         maxFileSizeBytes: 1024,
       );
 
@@ -156,13 +156,13 @@ void main() {
     test('survives malformed non-UTF8 bytes in backups during chronological read', () async {
       final sink = RollingFileSink(
         directoryProvider: () async => tempDir,
-        baseName: 'kazumi.log',
+        baseName: 'haipee.log',
         maxFileSizeBytes: 500,
         maxBackups: 2,
       );
 
       // Create an existing backup file containing non-UTF-8 bytes (e.g. 0xFF, 0xFE)
-      final backup1 = File(p.join(tempDir.path, 'kazumi.1.log'));
+      final backup1 = File(p.join(tempDir.path, 'haipee.1.log'));
       await backup1.writeAsBytes([0x48, 0x65, 0x6C, 0x6C, 0x6F, 0xFF, 0xFE, 0x0A]); // "Hello\xFF\xFE\n"
 
       sink.write('Active Log Entry');
@@ -179,7 +179,7 @@ void main() {
     test('oversized single log line does not cascade-wipe existing backups', () async {
       final sink = RollingFileSink(
         directoryProvider: () async => tempDir,
-        baseName: 'kazumi.log',
+        baseName: 'haipee.log',
         maxFileSizeBytes: 100,
         maxBackups: 2,
       );
@@ -191,7 +191,7 @@ void main() {
       sink.write('A' * 90);
       await sink.flush();
 
-      final backup1 = File(p.join(tempDir.path, 'kazumi.1.log'));
+      final backup1 = File(p.join(tempDir.path, 'haipee.1.log'));
       expect(await backup1.exists(), isTrue);
 
       // Write a single entry that exceeds maxFileSizeBytes by itself on the newly opened primary file

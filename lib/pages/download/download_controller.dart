@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/modules/download/download_file_utils.dart';
-import 'package:kazumi/modules/download/gofile_helper.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_tracker_service.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/modules/download/gofile_helper.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_models.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_service.dart';
+import 'package:haipee/modules/torrent_stream/torrent_tracker_service.dart';
+import 'package:haipee/modules/torrent_search/utils/torrent_download_helper.dart';
+import 'package:haipee/utils/storage.dart';
+
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -175,7 +177,7 @@ class DownloadController extends Notifier<DownloadState> {
 
   Timer? _syncTimer;
   StreamSubscription<GopeedTaskEvent>? _eventSubscription;
-  final KazumiLogger _logger = KazumiLogger();
+  final HaipeeLogger _logger = HaipeeLogger();
 
   // Debounce refresh
   Timer? _debounceTimer;
@@ -562,21 +564,39 @@ class DownloadController extends Notifier<DownloadState> {
     final newTasks = <DownloadTask>[];
 
     try {
-      final defaultDir = GStorage.setting.get(
-        SettingBoxKey.downloadDirectory,
-        defaultValue: '',
-      ) as String;
+      final defaultDir = DownloadFileUtils.getDefaultDownloadDirectorySync();
 
       for (var url in urls) {
         try {
           String targetUrl = url;
           if (url.startsWith('magnet:?')) {
+            targetUrl = TorrentTrackerService.instance.injectTrackers(url);
+          }
+
+          final cleanLower = url.toLowerCase().split('?').first;
+          if ((url.startsWith('http://') || url.startsWith('https://')) &&
+              cleanLower.endsWith('.torrent')) {
             try {
-              targetUrl = await TorrentTrackerService.instance
-                  .rewriteMagnetWithDoh(url)
-                  .timeout(const Duration(seconds: 2));
-            } catch (_) {
-              targetUrl = TorrentTrackerService.instance.injectTrackers(url);
+              final torrentBytes = await TorrentDownloadHelper.fetchTorrentBytes(
+                url,
+                timeout: const Duration(seconds: 3),
+              );
+              if (torrentBytes != null && torrentBytes.isNotEmpty) {
+                await addTorrentBytes(
+                  torrentBytes,
+                  title: title,
+                  originalUrl: url,
+                  bangumiId: bangumiId,
+                  episodeNumber: episodeNumber,
+                  options: options,
+                );
+                continue;
+              }
+            } catch (e) {
+              _logger.log(
+                Level.warning,
+                '[DownloadController] Fetching torrent URL bytes failed, falling back to direct URI: $e',
+              );
             }
           }
 
@@ -592,7 +612,11 @@ class DownloadController extends Notifier<DownloadState> {
               }
             }
           } else if (taskOptions['header'] is Map) {
-            headers.addAll((taskOptions['header'] as Map).cast<String, String>());
+            (taskOptions['header'] as Map).forEach((k, v) {
+              if (k != null && v != null) {
+                headers[k.toString()] = v.toString();
+              }
+            });
           }
 
           if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
@@ -618,9 +642,25 @@ class DownloadController extends Notifier<DownloadState> {
             }
           }
 
-          String? saveDir = taskOptions['dir']?.toString();
-          if (saveDir == null || saveDir.isEmpty) {
-            saveDir = defaultDir.isNotEmpty ? defaultDir : null;
+          String saveDir = taskOptions['dir']?.toString() ?? '';
+          if (saveDir.isEmpty) {
+            saveDir = defaultDir;
+          }
+
+          List<int>? selectFiles;
+          if (taskOptions['selectFiles'] is List) {
+            selectFiles = (taskOptions['selectFiles'] as List)
+                .map((e) => int.tryParse(e.toString()))
+                .whereType<int>()
+                .toList();
+          } else if (taskOptions['select-file'] != null || taskOptions['select-files'] != null) {
+            final raw = (taskOptions['select-file'] ?? taskOptions['select-files']).toString();
+            selectFiles = raw
+                .split(',')
+                .map((e) => int.tryParse(e.trim()))
+                .whereType<int>()
+                .map((e) => e > 0 ? e - 1 : e)
+                .toList();
           }
 
           String? customName = taskOptions['out']?.toString();
@@ -639,6 +679,7 @@ class DownloadController extends Notifier<DownloadState> {
             url: targetUrl,
             name: customName,
             savePath: saveDir,
+            selectFiles: selectFiles,
             headers: headers.isNotEmpty ? headers : null,
           );
 
@@ -694,15 +735,28 @@ class DownloadController extends Notifier<DownloadState> {
     Map<String, dynamic>? options,
   }) async {
     try {
-      final defaultDir = GStorage.setting.get(
-        SettingBoxKey.downloadDirectory,
-        defaultValue: '',
-      ) as String;
+      final defaultDir = DownloadFileUtils.getDefaultDownloadDirectorySync();
 
       final taskOptions = Map<String, dynamic>.from(options ?? {});
-      String? saveDir = taskOptions['dir']?.toString();
-      if (saveDir == null || saveDir.isEmpty) {
-        saveDir = defaultDir.isNotEmpty ? defaultDir : null;
+      String saveDir = taskOptions['dir']?.toString() ?? '';
+      if (saveDir.isEmpty) {
+        saveDir = defaultDir;
+      }
+
+      List<int>? selectFiles;
+      if (taskOptions['selectFiles'] is List) {
+        selectFiles = (taskOptions['selectFiles'] as List)
+            .map((e) => int.tryParse(e.toString()))
+            .whereType<int>()
+            .toList();
+      } else if (taskOptions['select-file'] != null || taskOptions['select-files'] != null) {
+        final raw = (taskOptions['select-file'] ?? taskOptions['select-files']).toString();
+        selectFiles = raw
+            .split(',')
+            .map((e) => int.tryParse(e.trim()))
+            .whereType<int>()
+            .map((e) => e > 0 ? e - 1 : e)
+            .toList();
       }
 
       final fileName = torrentFile.path.split(Platform.pathSeparator).last;
@@ -716,6 +770,7 @@ class DownloadController extends Notifier<DownloadState> {
         url: fileUri,
         name: title ?? fileName,
         savePath: saveDir,
+        selectFiles: selectFiles,
       );
 
       if (gid.isNotEmpty) {
@@ -756,7 +811,7 @@ class DownloadController extends Notifier<DownloadState> {
     try {
       final tempDir = await getTemporaryDirectory();
       final tempFile = File(
-          '${tempDir.path}/kazumi_${DateTime.now().millisecondsSinceEpoch}.torrent');
+          '${tempDir.path}/haipee_${DateTime.now().millisecondsSinceEpoch}.torrent');
       await tempFile.writeAsBytes(bytes);
 
       await addTorrent(
@@ -1016,12 +1071,21 @@ class DownloadController extends Notifier<DownloadState> {
             '[DownloadController] Failed to remove before retry: $e');
       }
 
-      await addDownload(
-        task.url,
-        title: task.title,
-        bangumiId: task.bangumiId,
-        episodeNumber: task.episodeNumber,
-      );
+      if (task.url.endsWith('.torrent') && File(task.url).existsSync()) {
+        await addTorrent(
+          File(task.url),
+          title: task.title,
+          bangumiId: task.bangumiId,
+          episodeNumber: task.episodeNumber,
+        );
+      } else {
+        await addDownload(
+          task.url,
+          title: task.title,
+          bangumiId: task.bangumiId,
+          episodeNumber: task.episodeNumber,
+        );
+      }
 
       await GStorage.downloadTasks.delete(task.gid);
       _logger.log(

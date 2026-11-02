@@ -1,9 +1,9 @@
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/utils/auto_updater.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/providers/translations_provider.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/utils/auto_updater.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/providers/translations_provider.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,7 +45,7 @@ class MyController extends Notifier<MyState> {
         try {
           if (RegExp(pattern).hasMatch(danmaku)) return true;
         } catch (_) {
-          KazumiLogger().log(Level.error, '无效的弹幕屏蔽正则表达式: $pattern');
+          HaipeeLogger().log(Level.error, '无效的弹幕屏蔽正则表达式: $pattern');
         }
       } else if (danmaku.contains(item)) {
         return true;
@@ -58,15 +58,15 @@ class MyController extends Notifier<MyState> {
     final trimmed = item.trim();
     final toastTexts = ref.read(translationsProvider).settings.player.toast;
     if (trimmed.isEmpty) {
-      KazumiDialog.showToast(message: toastTexts.danmakuKeywordEmpty);
+      HaipeeDialog.showToast(message: toastTexts.danmakuKeywordEmpty);
       return;
     }
     if (trimmed.length > 64) {
-      KazumiDialog.showToast(message: toastTexts.danmakuKeywordTooLong);
+      HaipeeDialog.showToast(message: toastTexts.danmakuKeywordTooLong);
       return;
     }
     if (state.shieldList.contains(trimmed)) {
-      KazumiDialog.showToast(message: toastTexts.danmakuKeywordExists);
+      HaipeeDialog.showToast(message: toastTexts.danmakuKeywordExists);
       return;
     }
 
@@ -93,11 +93,11 @@ class MyController extends Notifier<MyState> {
       }
       return true;
     } catch (err) {
-      KazumiLogger().log(Level.error, '检查更新失败 ${err.toString()}');
+      HaipeeLogger().log(Level.error, '检查更新失败 ${err.toString()}');
       if (type == 'manual') {
         final updateToast =
             ref.read(translationsProvider).settings.update.toast;
-        KazumiDialog.showToast(message: updateToast.checkFailed);
+        HaipeeDialog.showToast(message: updateToast.checkFailed);
       }
       return false;
     }

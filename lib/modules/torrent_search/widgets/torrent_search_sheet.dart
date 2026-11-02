@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_file_entry.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/modules/torrent_search/widgets/selective_download_dialog.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
-import 'package:kazumi/pages/download/providers.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/torrent_search/widgets/selective_download_dialog.dart';
+import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
+import 'package:haipee/modules/torrent_search/parser/torrent_file_parser.dart';
+import 'package:haipee/modules/torrent_search/utils/torrent_download_helper.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:logger/logger.dart';
+import 'package:haipee/pages/download/providers.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/utils.dart';
 
 class TorrentSearchSheet extends ConsumerStatefulWidget {
   final String initialKeyword;
@@ -70,11 +74,16 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
   }
 
   Future<void> _handleDownload(TorrentItem item) async {
-    final magnet = item.magnetUrl;
-    if (magnet.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('未找到有效的下载链接')),
-      );
+    final hasTorrent = item.hasTorrent && item.effectiveTorrentUrl != null;
+    final hasMagnet = item.hasMagnet &&
+        (item.effectiveMagnetUrl != null || item.magnetUrl.isNotEmpty);
+
+    if (!hasTorrent && !hasMagnet) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('未找到有效的下载链接')),
+        );
+      }
       return;
     }
 
@@ -83,12 +92,68 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
       final downloadTitle = item.displayTitle == item.title
           ? item.title
           : '${widget.initialKeyword} - ${item.displayTitle}';
+      final episodeNumber = int.tryParse(item.episode ?? '');
+
+      // 默认优先种子：如果具备种子文件，尝试在 3 秒内极速下载并直接推送到下载服务
+      if (hasTorrent) {
+        try {
+          final torrentBytes = await TorrentDownloadHelper.fetchTorrentBytes(
+            item.effectiveTorrentUrl!,
+            timeout: const Duration(seconds: 3),
+          );
+
+          if (torrentBytes != null && torrentBytes.isNotEmpty) {
+            await downloadCtrl.addTorrentBytes(
+              torrentBytes,
+              title: downloadTitle,
+              originalUrl: item.effectiveTorrentUrl,
+              bangumiId: widget.bangumiId,
+              episodeNumber: episodeNumber,
+            );
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('已添加至下载队列 (种子优先): $downloadTitle'),
+                  action: SnackBarAction(
+                    label: '查看下载',
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push(Routes.download);
+                    },
+                  ),
+                ),
+              );
+            }
+            return;
+          }
+        } catch (e) {
+          HaipeeLogger().log(
+            Level.warning,
+            '优先下载种子文件失败，平滑降级至磁力链接添加: $e',
+          );
+        }
+      }
+
+      final fallbackMagnet = item.effectiveMagnetUrl ?? item.magnetUrl;
+      final fallbackUrl = fallbackMagnet.isNotEmpty
+          ? fallbackMagnet
+          : (item.effectiveTorrentUrl ?? item.torrentUrl ?? '');
+
+      if (fallbackUrl.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('未找到可用的下载链接')),
+          );
+        }
+        return;
+      }
 
       await downloadCtrl.addUris(
-        [magnet],
+        [fallbackUrl],
         title: downloadTitle,
         bangumiId: widget.bangumiId,
-        episodeNumber: int.tryParse(item.episode ?? ''),
+        episodeNumber: episodeNumber,
       );
 
       if (mounted) {
@@ -96,8 +161,11 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
           SnackBar(
             content: Text('已添加至下载队列: $downloadTitle'),
             action: SnackBarAction(
-              label: '知道了',
-              onPressed: () {},
+              label: '查看下载',
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.push(Routes.download);
+              },
             ),
           ),
         );
@@ -158,8 +226,11 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
   }
 
   Future<void> _handleSelectiveDownload(TorrentItem item) async {
-    final magnet = item.magnetUrl;
-    if (magnet.isEmpty) {
+    final hasTorrent = item.hasTorrent && item.effectiveTorrentUrl != null;
+    final hasMagnet = item.hasMagnet &&
+        (item.effectiveMagnetUrl != null || item.magnetUrl.isNotEmpty);
+
+    if (!hasTorrent && !hasMagnet) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('未找到有效的下载链接')),
@@ -170,43 +241,102 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
 
     final cancelToken = TorrentStreamCancelToken();
     bool isCompleted = false;
+    Uint8List? torrentBytes;
+    List<TorrentFileEntry>? entries;
 
-    KazumiDialog.showLoading(
-      msg: '正在通过 DHT 与 Tracker 解析磁力元数据...',
-      onCancel: () {
-        cancelToken.cancel();
-      },
-      onDismiss: () {
-        if (!isCompleted) {
-          cancelToken.cancel();
-        }
-      },
-    );
+    final downloadTitle = item.displayTitle == item.title
+        ? item.title
+        : '${widget.initialKeyword} - ${item.displayTitle}';
+    final episodeNumber = int.tryParse(item.episode ?? '');
 
-    List<TorrentFileEntry> entries;
-    try {
-      entries = await TorrentStreamService.instance.resolveMagnetFiles(
-        magnet,
-        cancelToken: cancelToken,
-        onProgress: (status) {
-          KazumiDialog.showLoading(msg: status);
+    // 1. 种子优先秒级解析文件树
+    if (hasTorrent) {
+      HaipeeDialog.showLoading(
+        msg: '正在极速下载种子元数据 (.torrent)...',
+        onCancel: () => cancelToken.cancel(),
+        onDismiss: () {
+          if (!isCompleted) cancelToken.cancel();
         },
       );
-    } on TorrentStreamCancelledException {
-      KazumiDialog.dismiss();
-      return;
-    } catch (e) {
-      KazumiDialog.dismiss();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('解析磁力元数据失败: $e')),
+
+      try {
+        torrentBytes = await TorrentDownloadHelper.fetchTorrentBytes(
+          item.effectiveTorrentUrl!,
+          timeout: const Duration(seconds: 4),
+          cancelToken: cancelToken,
+        );
+
+        if (cancelToken.isCancelled) {
+          HaipeeDialog.dismiss();
+          return;
+        }
+
+        if (torrentBytes != null && torrentBytes.isNotEmpty) {
+          final parsed = TorrentFileParser.parseBytes(torrentBytes);
+          if (parsed.files.isNotEmpty) {
+            entries = parsed.files;
+          }
+        }
+      } catch (e) {
+        HaipeeLogger().log(
+          Level.warning,
+          '种子秒级解析失败，准备降级为磁力 DHT 解析: $e',
         );
       }
-      return;
+    }
+
+    // 2. 磁力 DHT 解析降级兜底
+    if (entries == null || entries.isEmpty) {
+      if (cancelToken.isCancelled) {
+        HaipeeDialog.dismiss();
+        return;
+      }
+
+      final fallbackMagnet = item.effectiveMagnetUrl ?? item.magnetUrl;
+      if (fallbackMagnet.isEmpty) {
+        HaipeeDialog.dismiss();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('未能下载种子文件且无磁力链接')),
+          );
+        }
+        return;
+      }
+
+      HaipeeDialog.showLoading(
+        msg: hasTorrent
+            ? '种子拉取受阻，正在通过 DHT 解析磁力元数据...'
+            : '正在通过 DHT 与 Tracker 解析磁力元数据...',
+        onCancel: () => cancelToken.cancel(),
+        onDismiss: () {
+          if (!isCompleted) cancelToken.cancel();
+        },
+      );
+
+      try {
+        entries = await TorrentStreamService.instance.resolveMagnetFiles(
+          fallbackMagnet,
+          cancelToken: cancelToken,
+          onProgress: (status) {
+            HaipeeDialog.showLoading(msg: status);
+          },
+        );
+      } on TorrentStreamCancelledException {
+        HaipeeDialog.dismiss();
+        return;
+      } catch (e) {
+        HaipeeDialog.dismiss();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('解析磁力元数据失败: $e')),
+          );
+        }
+        return;
+      }
     }
 
     isCompleted = true;
-    KazumiDialog.dismiss();
+    HaipeeDialog.dismiss();
     if (!mounted) return;
 
     if (entries.isEmpty) {
@@ -215,10 +345,6 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
       );
       return;
     }
-
-    final downloadTitle = item.displayTitle == item.title
-        ? item.title
-        : '${widget.initialKeyword} - ${item.displayTitle}';
 
     await SelectiveDownloadDialog.show(
       context,
@@ -234,19 +360,32 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
         }
 
         final downloadCtrl = ref.read(downloadControllerProvider.notifier);
-        await downloadCtrl.addUris(
-          [magnet],
-          title: downloadTitle,
-          bangumiId: widget.bangumiId,
-          episodeNumber: int.tryParse(item.episode ?? ''),
-          options: options,
-        );
+
+        if (torrentBytes != null && torrentBytes.isNotEmpty) {
+          await downloadCtrl.addTorrentBytes(
+            torrentBytes,
+            title: downloadTitle,
+            originalUrl: item.effectiveTorrentUrl,
+            bangumiId: widget.bangumiId,
+            episodeNumber: episodeNumber,
+            options: options,
+          );
+        } else {
+          final fallbackMagnet = item.effectiveMagnetUrl ?? item.magnetUrl;
+          await downloadCtrl.addUris(
+            [fallbackMagnet],
+            title: downloadTitle,
+            bangumiId: widget.bangumiId,
+            episodeNumber: episodeNumber,
+            options: options,
+          );
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '已添加选择性下载任务 (已勾选 ${indices.length} 个文件): $downloadTitle',
+                '已添加选择性下载任务 (${torrentBytes != null ? '种子优先' : '磁力'} · 已勾选 ${indices.length} 个文件): $downloadTitle',
               ),
               action: SnackBarAction(
                 label: '查看下载',
@@ -557,6 +696,7 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                 const SizedBox(width: 6),
                 // 核心大动作：一键下载
                 FilledButton.icon(
+                  key: Key('torrent_sheet_download_btn_${item.title}'),
                   onPressed: () => _handleDownload(item),
                   icon: const Icon(Icons.download, size: 16),
                   label: const Text('下载'),

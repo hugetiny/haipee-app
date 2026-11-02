@@ -1,8 +1,8 @@
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/request/bangumi.dart';
-import 'package:kazumi/utils/anime_season.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/utils/anime_season.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/translations_provider.dart';
+import 'package:haipee/providers/translations_provider.dart';
 
 class TimelineState {
   final List<List<BangumiItem>> bangumiCalendar;

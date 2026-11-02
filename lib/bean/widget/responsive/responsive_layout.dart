@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/bean/widget/responsive/breakpoints.dart';
-import 'package:kazumi/bean/widget/responsive/responsive_builder.dart';
+import 'package:haipee/bean/widget/responsive/breakpoints.dart';
+import 'package:haipee/bean/widget/responsive/responsive_builder.dart';
 
 /// 槽位式响应式分发容器组件
 /// 提供 mobile / tablet / desktop 三种经典视口插槽，未显式提供的插槽会自动优雅降级

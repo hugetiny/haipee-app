@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/download/gofile_helper.dart';
+import 'package:haipee/modules/download/gofile_helper.dart';
 
 void main() {
   group('GofileHelper', () {

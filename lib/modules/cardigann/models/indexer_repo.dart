@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// Single indexer entry in a remote repository manifest.
@@ -148,7 +148,7 @@ class IndexerRepoSubscription {
       }
       return null;
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[IndexerRepo] Failed to fetch manifest from $manifestUrl: $e',
       );
@@ -176,7 +176,7 @@ class IndexerRepoSubscription {
       }
       return null;
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[IndexerRepo] Failed to download indexer from $downloadUrl: $e',
       );

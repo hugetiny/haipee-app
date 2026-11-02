@@ -5,7 +5,7 @@
 //
 // 使用方式:
 // ```dart
-// import 'package:kazumi/providers/providers.dart';
+// import 'package:haipee/providers/providers.dart';
 //
 // // 直接访问所有 Provider
 // ref.read(popularProvider.notifier);
@@ -13,34 +13,35 @@
 // ```
 
 // ==================== 核心功能 Providers ====================
-export 'package:kazumi/providers/riverpod_compat.dart';
-export 'package:kazumi/pages/popular/providers.dart'; // popularProvider
-export 'package:kazumi/pages/timeline/providers.dart'; // timelineProvider
-export 'package:kazumi/pages/my/providers.dart'; // collectionsProvider, favoritesShowDeleteProvider, favoritesSyncingProvider
-export 'package:kazumi/pages/history/providers.dart'; // historyProvider
-export 'package:kazumi/pages/video/providers.dart'; // videoProvider, episodeCommentsProvider, selectedEpisodeProvider, showDebugLogProvider, etc.
-export 'package:kazumi/pages/search/providers.dart'; // searchProvider
-export 'package:kazumi/pages/info/providers.dart'; // bangumiInfoProvider, bangumiCommentsProvider, bangumiCharactersProvider, bangumiStaffsProvider
+export 'package:haipee/providers/riverpod_compat.dart';
+export 'package:haipee/pages/popular/providers.dart'; // popularProvider
+export 'package:haipee/pages/timeline/providers.dart'; // timelineProvider
+export 'package:haipee/pages/my/providers.dart'; // collectionsProvider, favoritesShowDeleteProvider, favoritesSyncingProvider
+export 'package:haipee/pages/history/providers.dart'; // historyProvider
+export 'package:haipee/pages/video/providers.dart'; // videoProvider, episodeCommentsProvider, selectedEpisodeProvider, showDebugLogProvider, etc.
+export 'package:haipee/pages/search/providers.dart'; // searchProvider
+export 'package:haipee/pages/info/providers.dart'; // bangumiInfoProvider, bangumiCommentsProvider, bangumiCharactersProvider, bangumiStaffsProvider
 
 // ==================== 下载管理 Providers ====================
-export 'package:kazumi/pages/download/providers.dart'; // downloadControllerProvider, downloadPageUIProvider, gopeedStatusProvider, filteredActiveTasksProvider, etc.
+export 'package:haipee/pages/download/providers.dart'; // downloadControllerProvider, downloadPageUIProvider, gopeedStatusProvider, filteredActiveTasksProvider, etc.
 
 // ==================== 设置 Providers ====================
-export 'package:kazumi/pages/setting/providers.dart'; // themeProvider, playerSettingsProvider, metadataSettingsProvider, localeSettingsProvider, showWindowButtonProvider
-export 'package:kazumi/pages/settings/danmaku/providers.dart'; // danmakuSettingsProvider
-export 'package:kazumi/pages/webdav_editor/providers.dart'; // webDavSettingsProvider
+export 'package:haipee/pages/setting/providers.dart'; // themeProvider, playerSettingsProvider, metadataSettingsProvider, localeSettingsProvider, showWindowButtonProvider
+export 'package:haipee/pages/settings/danmaku/providers.dart'; // danmakuSettingsProvider
+export 'package:haipee/pages/webdav_editor/providers.dart'; // webDavSettingsProvider
 
 // ==================== 插件系统 Providers ====================
-export 'package:kazumi/plugins/plugins_providers.dart'; // pluginsProvider, pluginEditorUIProvider, pluginShopUIProvider, pluginSelectionProvider
+export 'package:haipee/plugins/plugins_providers.dart'; // pluginsProvider, pluginEditorUIProvider, pluginShopUIProvider, pluginSelectionProvider
+export 'package:haipee/modules/rule_speed_test/rule_speed_test_provider.dart'; // ruleSpeedTestProvider, RuleSpeedTestState
 
 // ==================== 播放器相关 Providers ====================
-export 'package:kazumi/pages/player/player_providers.dart'; // playerProvider
-export 'package:kazumi/pages/webview/providers.dart'; // webviewItemControllerProvider
+export 'package:haipee/pages/player/player_providers.dart'; // playerProvider
+export 'package:haipee/pages/webview/providers.dart'; // webviewItemControllerProvider
 
 // ==================== 工具和辅助 Providers ====================
-export 'package:kazumi/shaders/providers.dart'; // shadersControllerProvider
-export 'package:kazumi/providers/media_suite_providers.dart'; // metadataClientProvider, metadataSyncControllerProvider
-export 'package:kazumi/providers/translations_provider.dart'; // translationsProvider
+export 'package:haipee/shaders/providers.dart'; // shadersControllerProvider
+export 'package:haipee/providers/media_suite_providers.dart'; // metadataClientProvider, metadataSyncControllerProvider
+export 'package:haipee/providers/translations_provider.dart'; // translationsProvider
 
 /// ==================== Riverpod 最佳实践指南 ====================
 ///

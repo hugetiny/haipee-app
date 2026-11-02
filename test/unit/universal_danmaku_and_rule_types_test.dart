@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/request/damaku.dart';
-import 'package:kazumi/utils/api_credentials.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/request/damaku.dart';
+import 'package:haipee/utils/api_credentials.dart';
 
 void main() {
   group('Universal DanDanPlay Danmaku & Title Cleaner Tests', () {
@@ -31,15 +31,22 @@ void main() {
   });
 
   group('7 Plugin Rule Types Architecture Tests', () {
-    test('PluginRuleType enum defines all 7 distinct rule categories', () {
+    test('PluginRuleType enum defines all 7 distinct rule protocol categories', () {
       expect(PluginRuleType.values.length, equals(7));
-      expect(PluginRuleType.anime.label, equals('动漫番剧'));
-      expect(PluginRuleType.maccms.label, equals('影视采集'));
-      expect(PluginRuleType.bilibili.label, equals('哔哩哔哩'));
-      expect(PluginRuleType.douyin.label, equals('短视频'));
-      expect(PluginRuleType.live.label, equals('电视直播'));
-      expect(PluginRuleType.drive.label, equals('网盘资源'));
-      expect(PluginRuleType.bt.label, equals('BT磁力'));
+      expect(PluginRuleType.haipee.id, equals('haipee'));
+      expect(PluginRuleType.haipee.label, equals('Haipee 规则'));
+      expect(PluginRuleType.maccms.id, equals('maccms'));
+      expect(PluginRuleType.maccms.label, equals('MacCMS 规则'));
+      expect(PluginRuleType.tvbox.id, equals('tvbox'));
+      expect(PluginRuleType.tvbox.label, equals('TVBox 规则'));
+      expect(PluginRuleType.iptv.id, equals('iptv'));
+      expect(PluginRuleType.iptv.label, equals('IPTV 规则'));
+      expect(PluginRuleType.piped.id, equals('piped'));
+      expect(PluginRuleType.piped.label, equals('Piped 规则'));
+      expect(PluginRuleType.alist.id, equals('alist'));
+      expect(PluginRuleType.alist.label, equals('AList 规则'));
+      expect(PluginRuleType.cardigann.id, equals('cardigann'));
+      expect(PluginRuleType.cardigann.label, equals('Cardigann 规则'));
     });
 
     test('Plugin correctly maps type to PluginRuleType and detects Cardigann', () {
@@ -65,21 +72,31 @@ void main() {
           );
 
       final animePlugin = createPlugin('anime');
-      expect(animePlugin.ruleType, equals(PluginRuleType.anime));
+      expect(animePlugin.ruleType, equals(PluginRuleType.haipee));
       expect(animePlugin.isCardigann, isFalse);
 
       final livePlugin = createPlugin('live');
-      expect(livePlugin.ruleType, equals(PluginRuleType.live));
+      expect(livePlugin.ruleType, equals(PluginRuleType.iptv));
 
       final maccmsPlugin = createPlugin('maccms');
       expect(maccmsPlugin.ruleType, equals(PluginRuleType.maccms));
 
       final drivePlugin = createPlugin('alist');
-      expect(drivePlugin.ruleType, equals(PluginRuleType.drive));
+      expect(drivePlugin.ruleType, equals(PluginRuleType.alist));
 
       final cardigannPlugin = createPlugin('cardigann');
-      expect(cardigannPlugin.ruleType, equals(PluginRuleType.bt));
+      expect(cardigannPlugin.ruleType, equals(PluginRuleType.cardigann));
       expect(cardigannPlugin.isCardigann, isTrue);
+
+      final tvboxPlugin = createPlugin('tvbox');
+      expect(tvboxPlugin.ruleType, equals(PluginRuleType.tvbox));
+      expect(tvboxPlugin.isTvBox, isTrue);
+
+      final bilibiliPlugin = createPlugin('bilibili');
+      expect(bilibiliPlugin.ruleType, equals(PluginRuleType.piped));
+
+      final douyinPlugin = createPlugin('douyin');
+      expect(douyinPlugin.ruleType, equals(PluginRuleType.piped));
     });
   });
 }

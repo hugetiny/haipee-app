@@ -60,6 +60,12 @@ class Routes {
   /// 语言设置
   static const String settingsLanguage = '/settings/language';
 
+  /// 界面设置
+  static const String settingsInterface = '/settings/interface';
+
+  /// 操作设置（按键映射）
+  static const String settingsKeyboard = '/settings/keyboard';
+
   /// 退出行为设置
   static const String settingsExitBehavior = '/settings/exit-behavior';
 
@@ -68,6 +74,9 @@ class Routes {
 
   /// 解码器设置
   static const String settingsPlayerDecoder = '/settings/player/decoder';
+
+  /// 视频渲染器设置
+  static const String settingsPlayerRenderer = '/settings/player/renderer';
 
   /// 超分辨率设置
   static const String settingsPlayerSuper = '/settings/player/super';
@@ -101,6 +110,21 @@ class Routes {
 
   /// 下载引擎设置
   static const String settingsDownload = '/settings/download';
+
+  /// 同步设置
+  static const String settingsSync = '/settings/sync';
+
+  /// 网络设置（镜像与代理）
+  static const String settingsProxy = '/settings/proxy';
+
+  /// 代理配置编辑器
+  static const String settingsProxyEditor = '/settings/proxy/editor';
+
+  /// 更新设置
+  static const String settingsUpdate = '/settings/update';
+
+  /// 存储与日志设置
+  static const String settingsStorage = '/settings/storage';
 
   /// WebDAV 设置
   static const String settingsWebdav = '/settings/webdav';

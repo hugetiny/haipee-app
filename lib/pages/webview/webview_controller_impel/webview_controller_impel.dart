@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebviewItemControllerImpel
@@ -123,6 +125,10 @@ class WebviewItemControllerImpel
             logEventController.add('解析视频资源超时');
             logEventController.add('请切换到其他播放列表或视频源');
             logEventController.add('showDebug');
+            AppLog.w(
+              LogModule.stream,
+              'WebView 视频资源嗅探超时 (30s): 目标地址=$url',
+            );
           } else {
             if (!useLegacyParser) {
               parseVideoSource();
@@ -210,6 +216,9 @@ class WebviewItemControllerImpel
   // blob资源
   Future<void> addBlobParser() async {
     await webviewController!.runJavaScript('''
+      window.alert = function(msg) { console.warn('[Sniffer JS Alert suppressed]:', msg); };
+      window.confirm = function(msg) { console.warn('[Sniffer JS Confirm suppressed]:', msg); return true; };
+      window.prompt = function(msg, defaultText) { console.warn('[Sniffer JS Prompt suppressed]:', msg); return defaultText || ''; };
       const _r_text = window.Response.prototype.text;
       window.Response.prototype.text = function () {
           return new Promise((resolve, reject) => {

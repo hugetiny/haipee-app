@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/utils/platform_guard.dart';
+import 'package:haipee/utils/platform_guard.dart';
 
 void main() {
   group('PlatformGuard', () {

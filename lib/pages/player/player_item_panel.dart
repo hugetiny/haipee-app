@@ -4,32 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/bean/appbar/drag_to_move_bar.dart' as dtb;
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/collect_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
-import 'package:kazumi/bean/widget/embedded_native_control_area.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/player/player_controller.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/services/player/screenshot_candidate.dart';
-import 'package:kazumi/pages/player/player_state.dart';
-import 'package:kazumi/pages/settings/danmaku/danmaku_settings_sheet.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/pages/video/video_controller.dart';
-import 'package:kazumi/pages/video/video_state.dart';
-import 'package:kazumi/pages/download/providers.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/utils/remote.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/modules/bilibili/bilibili_auth_service.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/modules/bilibili/bilibili_service.dart';
-import 'package:kazumi/modules/bilibili/widgets/bili_login_dialog.dart';
-import 'package:kazumi/pages/player/tracks_settings_sheet.dart';
+import 'package:haipee/bean/appbar/drag_to_move_bar.dart' as dtb;
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/collect_button.dart';
+import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:haipee/bean/widget/embedded_native_control_area.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/player/player_controller.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/services/player/screenshot_candidate.dart';
+import 'package:haipee/pages/player/player_state.dart';
+import 'package:haipee/pages/settings/danmaku/danmaku_settings_sheet.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/pages/video/video_controller.dart';
+import 'package:haipee/pages/video/video_state.dart';
+import 'package:haipee/pages/download/providers.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/utils/remote.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/bilibili/bilibili_service.dart';
+import 'package:haipee/modules/bilibili/widgets/bili_login_dialog.dart';
+import 'package:haipee/pages/player/tracks_settings_sheet.dart';
 import 'package:saver_gallery/saver_gallery.dart';
 
 class PlayerItemPanel extends ConsumerStatefulWidget {
@@ -102,7 +102,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
   Future<void> _handleScreenshot() async {
     final t = context.t;
     final videoState = ref.read(videoProvider);
-    KazumiDialog.showToast(message: t.playback.toast.screenshotProcessing);
+    HaipeeDialog.showToast(message: t.playback.toast.screenshotProcessing);
     try {
       Uint8List? screenshot =
           await playerController.screenshot(format: 'image/png');
@@ -126,7 +126,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
         final destination = await exportService.chooseDestination();
         if (destination != null) {
           await exportService.write(candidate, destination);
-          KazumiDialog.showToast(message: t.playback.toast.screenshotSaved);
+          HaipeeDialog.showToast(message: t.playback.toast.screenshotSaved);
           return;
         } else {
           return;
@@ -135,13 +135,13 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
 
       final result = await SaverGallery.saveImage(
         screenshot,
-        fileName: 'Kazumi_${candidate.title}_${candidate.id}',
+        fileName: 'Haipee_${candidate.title}_${candidate.id}',
         skipIfExists: false,
       );
       if (result.isSuccess) {
-        KazumiDialog.showToast(message: t.playback.toast.screenshotSaved);
+        HaipeeDialog.showToast(message: t.playback.toast.screenshotSaved);
       } else {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: t.playback.toast.screenshotSaveFailed.replaceFirst(
             '{error}',
             result.errorMessage ?? '',
@@ -149,7 +149,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
         );
       }
     } catch (e) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: t.playback.toast.screenshotError.replaceFirst(
           '{error}',
           '$e',
@@ -159,11 +159,17 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
   }
 
   Future<void> _handleDownload(VideoPageState videoState) async {
-    final downloadUrl = videoState.src.isNotEmpty
-        ? videoState.src
-        : playerController.videoUrl;
+    final downloadUrl = playerController.videoUrl.isNotEmpty
+        ? playerController.videoUrl
+        : videoState.src;
     if (downloadUrl.isEmpty) {
-      KazumiDialog.showToast(message: '视频地址不可用');
+      HaipeeDialog.showToast(message: '视频地址不可用');
+      return;
+    }
+
+    if (playerController.activeLocalVideoArgs != null ||
+        downloadUrl.startsWith('file://')) {
+      HaipeeDialog.showToast(message: '当前播放为本地文件，无需下载');
       return;
     }
 
@@ -181,16 +187,19 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
           ? playerController.activeLocalVideoArgs!.episode
           : videoState.currentEpisode;
 
+      final headers = playerController.activeHttpHeaders;
+
       await downloadController.addDownload(
         downloadUrl,
         title: title.trim(),
         bangumiId: bangumiId,
         episodeNumber: episodeNumber,
+        options: headers != null && headers.isNotEmpty ? {'header': headers} : null,
       );
 
-      KazumiDialog.showToast(message: '已添加到下载列表');
+      HaipeeDialog.showToast(message: '已添加到下载列表');
     } catch (e) {
-      KazumiDialog.showToast(message: '添加下载失败：$e');
+      HaipeeDialog.showToast(message: '添加下载失败：$e');
     }
   }
 
@@ -221,7 +230,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
     if (biliCid == null || biliBvid == null || biliBvid.isEmpty) return;
 
     try {
-      KazumiDialog.showToast(message: '已成功登录！正在为您切换 1080P/4K 高清画质流...');
+      HaipeeDialog.showToast(message: '已成功登录！正在为您切换 1080P/4K 高清画质流...');
       final playUrl = await BilibiliService.getPlayUrl(biliBvid, biliCid);
       if (playUrl != null && playUrl.videoUrl.isNotEmpty) {
         final currentPos = playerController.playerPosition;
@@ -238,7 +247,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
         playerController.play();
       }
     } catch (e) {
-      KazumiLogger().log(Level.warning, '登录后切换高清流失败: $e');
+      HaipeeLogger().log(Level.warning, '登录后切换高清流失败: $e');
     }
   }
 
@@ -506,7 +515,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
   void showSetSpeedSheet() {
     final t = context.t;
     final double currentSpeed = playerController.playerSpeed;
-    KazumiDialog.show(builder: (context) {
+    HaipeeDialog.show(builder: (context) {
       return AlertDialog(
         title: Text(t.playback.controls.speed.title),
         content: Wrap(
@@ -518,7 +527,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                 FilledButton(
                   onPressed: () async {
                     await widget.setPlaybackSpeed(i);
-                    KazumiDialog.dismiss();
+                    HaipeeDialog.dismiss();
                   },
                   child: Text(i.toString()),
                 )
@@ -526,7 +535,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                 FilledButton.tonal(
                   onPressed: () async {
                     await widget.setPlaybackSpeed(i);
-                    KazumiDialog.dismiss();
+                    HaipeeDialog.dismiss();
                   },
                   child: Text(i.toString()),
                 ),
@@ -535,7 +544,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => KazumiDialog.dismiss(),
+            onPressed: () => HaipeeDialog.dismiss(),
             child: Text(
               t.app.cancel,
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -544,7 +553,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
           TextButton(
             onPressed: () async {
               await widget.setPlaybackSpeed(1.0);
-              KazumiDialog.dismiss();
+              HaipeeDialog.dismiss();
             },
             child: Text(t.playback.controls.speed.reset),
           ),
@@ -555,7 +564,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
 
   void showForwardChange() {
     final t = context.t;
-    KazumiDialog.show(builder: (context) {
+    HaipeeDialog.show(builder: (context) {
       String input = "";
       return AlertDialog(
         title: Text(t.playback.controls.skip.title),
@@ -573,7 +582,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => KazumiDialog.dismiss(),
+            onPressed: () => HaipeeDialog.dismiss(),
             child: Text(
               t.app.cancel,
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -583,9 +592,9 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
             onPressed: () async {
               if (input != "") {
                 playerController.setForwardTime(int.parse(input));
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               } else {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               }
             },
             child: Text(t.app.confirm),
@@ -1098,7 +1107,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                         if (videoState.roadList.isEmpty ||
                             videoState.currentRoad >=
                                 videoState.roadList.length) {
-                          KazumiDialog.showToast(
+                          HaipeeDialog.showToast(
                             message: t.playback.toast.playlistEmpty,
                           );
                           return;
@@ -1106,7 +1115,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                         final road =
                             videoState.roadList[videoState.currentRoad];
                         if (videoState.currentEpisode >= road.data.length) {
-                          KazumiDialog.showToast(
+                          HaipeeDialog.showToast(
                             message: t.playback.toast.episodeLatest,
                           );
                           return;
@@ -1115,7 +1124,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                             videoState.currentEpisode < road.identifier.length
                                 ? road.identifier[videoState.currentEpisode]
                                 : '${videoState.currentEpisode + 1}';
-                        KazumiDialog.showToast(
+                        HaipeeDialog.showToast(
                           message: t.playback.toast.loadingEpisode
                               .replaceFirst('{identifier}', nextIdentifier),
                         );
@@ -1543,6 +1552,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                   },
                 ),
               IconButton(
+                key: const Key('player_download_btn'),
                 color: Colors.white,
                 icon: const Icon(Icons.download_rounded),
                 tooltip: '下载',

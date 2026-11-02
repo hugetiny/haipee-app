@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/pages/media/media_page.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/bean/widget/responsive/responsive.dart';
+import 'package:haipee/pages/media/media_page.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 void main() {
   late Directory tempDir;
 
   setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('kazumi_test_setting_');
+    tempDir = await Directory.systemTemp.createTemp('haipee_test_setting_');
     Hive.init(tempDir.path);
     final box = await Hive.openBox('setting');
     await box.put(SettingBoxKey.showWindowButton, false);

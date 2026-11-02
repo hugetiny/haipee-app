@@ -8,7 +8,7 @@ useNativePlayer: true
 usePost: false
 useLegacyParser: false
 adBlocker: false
-userAgent: "Mozilla/5.0 (Kazumi/Player)"
+userAgent: "Mozilla/5.0 (Haipee/Player)"
 baseURL: "https://bfzyapi.com"
 searchURL: "https://bfzyapi.com/api.php/provide/vod/?ac=detail&at=json&wd=@keyword"
 searchPic: "$.vod_pic"

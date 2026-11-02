@@ -1,15 +1,15 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'package:kazumi/pages/webview/webview_controller_impel/webview_android_controller_impel.dart';
-import 'package:kazumi/pages/webview/webview_controller_impel/webview_controller_impel.dart';
+import 'package:haipee/pages/webview/webview_controller_impel/webview_android_controller_impel.dart';
+import 'package:haipee/pages/webview/webview_controller_impel/webview_controller_impel.dart';
 // Old webview_windows implementation (restored as speed mode)
-import 'package:kazumi/pages/webview/webview_controller_impel/webview_windows_controller_impel.dart';
+import 'package:haipee/pages/webview/webview_controller_impel/webview_windows_controller_impel.dart';
 // New flutter_inappwebview_windows implementation (deprecated due to performance issues)
-// import 'package:kazumi/pages/webview/webview_controller_impel/webview_inappwebview_windows_controller_impel.dart';
-import 'package:kazumi/pages/webview/webview_controller_impel/webview_linux_controller_impel.dart';
-import 'package:kazumi/pages/webview/webview_controller_impel/webview_apple_controller_impel.dart';
-import 'package:kazumi/utils/utils.dart';
+// import 'package:haipee/pages/webview/webview_controller_impel/webview_inappwebview_windows_controller_impel.dart';
+import 'package:haipee/pages/webview/webview_controller_impel/webview_linux_controller_impel.dart';
+import 'package:haipee/pages/webview/webview_controller_impel/webview_apple_controller_impel.dart';
+import 'package:haipee/utils/utils.dart';
 
 abstract class WebviewItemController<T> {
   // Webview controller

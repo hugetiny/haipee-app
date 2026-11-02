@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/cardigann/engine/cardigann_query_executor.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 
 void main() {
   group('CardigannQueryExecutor JSON API Tests', () {

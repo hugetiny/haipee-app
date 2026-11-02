@@ -2,9 +2,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/pages/download/download_page.dart';
-import 'package:kazumi/pages/download/providers.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/pages/download/download_page.dart';
+import 'package:haipee/pages/download/providers.dart';
 import 'log_watcher_robot.dart';
 
 /// Automated Fuzz and Invariant Hunter Robot based on modern Flutter testing paradigms:

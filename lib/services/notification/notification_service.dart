@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:logger/logger.dart';
 import 'package:window_manager/window_manager.dart';
 
-/// Unified cross-platform notification service for Kazumi.
+/// Unified cross-platform notification service for Haipee.
 ///
 /// Wraps [FlutterLocalNotificationsPlugin] with ergonomic high-level APIs
 /// for download completions, media stream readiness, and general alerts,
@@ -30,13 +30,13 @@ class NotificationService {
   bool get isInitialized => _isInitialized;
 
   /// Android notification channels
-  static const String downloadChannelId = 'kazumi_downloads';
+  static const String downloadChannelId = 'haipee_downloads';
   static const String downloadChannelName = '下载通知';
-  static const String downloadChannelDescription = 'Kazumi 资源下载与分片合成完成通知';
+  static const String downloadChannelDescription = 'Haipee 资源下载与分片合成完成通知';
 
-  static const String streamChannelId = 'kazumi_stream';
+  static const String streamChannelId = 'haipee_stream';
   static const String streamChannelName = '媒体流通知';
-  static const String streamChannelDescription = 'Kazumi 边下边播与媒体流预缓冲就绪通知';
+  static const String streamChannelDescription = 'Haipee 边下边播与媒体流预缓冲就绪通知';
 
   /// Initializes notification capabilities across all supported platforms.
   Future<void> initialize({
@@ -55,8 +55,8 @@ class NotificationService {
         defaultActionName: 'Open',
       );
       const windowsSettings = WindowsInitializationSettings(
-        appName: 'Kazumi',
-        appUserModelId: 'io.github.Predidit.Kazumi',
+        appName: 'haipee',
+        appUserModelId: 'io.github.hugetiny.haipee',
         guid: 'c7c5957b-7b56-4b47-b807-6a4a15a818c7',
       );
 
@@ -71,7 +71,7 @@ class NotificationService {
       await _plugin.initialize(
         settings: initializationSettings,
         onDidReceiveNotificationResponse: (response) async {
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.info,
             '[NotificationService] Notification tapped: id=${response.id}, payload=${response.payload}',
           );
@@ -110,9 +110,9 @@ class NotificationService {
       }
 
       _isInitialized = true;
-      KazumiLogger().log(Level.info, '[NotificationService] Initialized successfully');
+      HaipeeLogger().log(Level.info, '[NotificationService] Initialized successfully');
     } catch (e, stack) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[NotificationService] Failed to initialize notifications: $e\n$stack',
       );
@@ -150,7 +150,7 @@ class NotificationService {
       }
       return true;
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[NotificationService] Failed to request notification permission: $e',
       );
@@ -205,7 +205,7 @@ class NotificationService {
         payload: payload,
       );
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[NotificationService] Failed to post notification: $e',
       );

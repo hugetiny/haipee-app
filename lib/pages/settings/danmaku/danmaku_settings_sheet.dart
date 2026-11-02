@@ -1,11 +1,11 @@
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/pages/settings/danmaku/danmaku_shield_settings.dart';
-import 'package:kazumi/pages/settings/danmaku/providers.dart';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/pages/settings/danmaku/danmaku_shield_settings.dart';
+import 'package:haipee/pages/settings/danmaku/providers.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 
 class DanmakuSettingsSheet extends ConsumerStatefulWidget {
   final DanmakuController danmakuController;

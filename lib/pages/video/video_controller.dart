@@ -1,23 +1,24 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/bangumi/episode_item.dart';
-import 'package:kazumi/modules/comments/comment_item.dart';
-import 'package:kazumi/modules/roads/road_module.dart';
-import 'package:kazumi/plugins/plugins.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/bangumi/episode_item.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
+import 'package:haipee/modules/roads/road_module.dart';
+import 'package:haipee/plugins/plugins.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/request/bangumi.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
-import 'package:kazumi/pages/webview/providers.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
+import 'package:haipee/pages/webview/providers.dart';
 import 'package:logger/logger.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:kazumi/modules/playback/media_selector.dart';
-import 'package:kazumi/utils/parse_failure_helper.dart';
+import 'package:haipee/modules/playback/media_selector.dart';
+import 'package:haipee/utils/parse_failure_helper.dart';
 
 import 'video_state.dart';
 
@@ -149,16 +150,16 @@ class VideoPageController extends Notifier<VideoPageState> {
   Future<void> changeEpisode(int episode,
       {int currentRoad = 0, int offset = 0}) async {
     if (state.roadList.isEmpty) {
-      KazumiLogger().log(Level.warning, '尝试切换剧集时播放列表为空 episode: $episode');
+      HaipeeLogger().log(Level.warning, '尝试切换剧集时播放列表为空 episode: $episode');
       return;
     }
     if (currentRoad >= state.roadList.length) {
-      KazumiLogger()
+      HaipeeLogger()
           .log(Level.warning, '尝试切换剧集时播放列表索引越界 currentRoad: $currentRoad');
       return;
     }
     if (episode <= 0 || episode > state.roadList[currentRoad].data.length) {
-      KazumiLogger().log(Level.warning,
+      HaipeeLogger().log(Level.warning,
           '尝试切换剧集时集数越界 episode: $episode currentRoad: $currentRoad');
       return;
     }
@@ -166,7 +167,7 @@ class VideoPageController extends Notifier<VideoPageState> {
     this.currentRoad = currentRoad;
     historyOffset = offset;
     final chapterName = state.roadList[currentRoad].identifier[episode - 1];
-    KazumiLogger().log(Level.info, '跳转到$chapterName');
+    HaipeeLogger().log(Level.info, '跳转到$chapterName');
 
     if (state.bangumiItem != null && !state.bangumiItem!.isDummyItem) {
       final resolution = MediaSelector.resolve(
@@ -197,27 +198,62 @@ class VideoPageController extends Notifier<VideoPageState> {
         bvid = bvMatch?.group(0) ?? state.src;
       }
       final normalizedBiliUrl = 'bili://$bvid/${cid ?? 0}';
-      KazumiLogger().log(Level.info, 'B站原生WBI/DASH流直通播放器: $normalizedBiliUrl');
+      HaipeeLogger().log(Level.info, 'B站原生WBI/DASH流直通播放器: $normalizedBiliUrl');
       loading = false;
       webviewController.videoParserEventController.add((normalizedBiliUrl, offset));
       return;
     }
 
-    // 检查是否为直链视频（如 HLS .m3u8、.mp4 直链）或插件显式关闭了 Webview
-    final lowerUrl = urlItem.toLowerCase();
-    final isDirectStream = !plugin.useWebview ||
-        lowerUrl.endsWith('.m3u8') ||
-        lowerUrl.contains('.m3u8?') ||
-        lowerUrl.endsWith('.mp4') ||
-        lowerUrl.contains('.mp4?') ||
-        lowerUrl.endsWith('.flv') ||
-        lowerUrl.contains('.flv?');
+    // 检查是否为直链视频（如 HLS .m3u8、.mp4 等媒体格式或流媒体协议）
+    final isDirectStream = isDirectMediaUrl(urlItem);
 
     if (isDirectStream) {
-      KazumiLogger().log(Level.info, '免嗅探直接视频流，直通播放器: $urlItem');
+      HaipeeLogger().log(Level.info, '免嗅探直接视频流，直通播放器: $urlItem');
       loading = false;
       webviewController.videoParserEventController.add((urlItem, offset));
       return;
+    }
+
+    // 若非直接媒体流格式（如影视采集 CMS/解析站返回的播放页面），先尝试快速轻量提取页面内嵌入的 .m3u8 / .mp4 直链
+    if (urlItem.startsWith('http://') || urlItem.startsWith('https://')) {
+      try {
+        HaipeeLogger().log(Level.info, '检测到非直链网页播放地址，尝试快速提取内嵌直链: $urlItem');
+        final resp = await Request().get(
+          urlItem,
+          options: Options(
+            responseType: ResponseType.plain,
+            sendTimeout: const Duration(seconds: 4),
+            receiveTimeout: const Duration(seconds: 4),
+            headers: {
+              'User-Agent': plugin.userAgent.isNotEmpty
+                  ? plugin.userAgent
+                  : Utils.getRandomUA(),
+              'Referer': plugin.referer.isNotEmpty
+                  ? plugin.referer
+                  : (plugin.baseUrl.isNotEmpty ? '${plugin.baseUrl}/' : ''),
+            },
+          ),
+        );
+        if (resp.data != null) {
+          final content = resp.data.toString();
+          final matches = embeddedStreamRegex.allMatches(content);
+          for (final m in matches) {
+            final matchedUrl = m.group(0);
+            if (matchedUrl != null &&
+                !matchedUrl.contains('.js') &&
+                !matchedUrl.contains('dplayer') &&
+                !matchedUrl.contains('hls.min')) {
+              HaipeeLogger().log(Level.info, '从播放页面成功提取内嵌直链: $matchedUrl');
+              loading = false;
+              webviewController.videoParserEventController
+                  .add((matchedUrl, offset));
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        HaipeeLogger().log(Level.warning, '快速提取网页内嵌视频流异常: $e');
+      }
     }
 
     if (!urlItem.contains(plugin.baseUrl) &&
@@ -247,6 +283,53 @@ class VideoPageController extends Notifier<VideoPageState> {
     );
   }
 
+  static final RegExp embeddedStreamRegex = RegExp(
+    r'''https?://[^\s"'<>\\]+?\.(?:m3u8|mp4)[^\s"'<>\\]*''',
+    caseSensitive: false,
+  );
+
+  static bool isDirectMediaUrl(String url) {
+    if (url.startsWith('bili://') ||
+        url.startsWith('rtmp://') ||
+        url.startsWith('rtsp://')) {
+      return true;
+    }
+    final cleanUrl = url.split('#').first;
+    final uri = Uri.tryParse(cleanUrl);
+    final path = (uri != null && uri.path.isNotEmpty) ? uri.path : cleanUrl;
+    final lowerPath = path.toLowerCase();
+
+    const mediaExts = [
+      '.m3u8',
+      '.mp4',
+      '.flv',
+      '.mkv',
+      '.ts',
+      '.mpd',
+      '.webm',
+      '.m4s',
+      '.f4v',
+      '.mov',
+      '.avi',
+    ];
+    for (final ext in mediaExts) {
+      if (lowerPath.endsWith(ext) || lowerPath.contains('$ext?')) {
+        return true;
+      }
+    }
+
+    if (uri != null && uri.hasQuery) {
+      final query = uri.query.toLowerCase();
+      for (final ext in mediaExts) {
+        if (query.contains(ext)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   Future<void> queryBangumiEpisodeCommentsByID(int id, int episode) async {
     clearEpisodeComments();
     if (state.bangumiItem?.isDummyItem == true || id <= 0) {
@@ -259,7 +342,7 @@ class VideoPageController extends Notifier<VideoPageState> {
     final result =
         await BangumiHTTP.getBangumiCommentsByEpisodeID(episodeInfo.id);
     addEpisodeComments(result.commentList);
-    KazumiLogger().log(Level.info, '已加载评论列表长度 ${state.episodeComments.length}');
+    HaipeeLogger().log(Level.info, '已加载评论列表长度 ${state.episodeComments.length}');
   }
 
   Future<void> queryRoads(String url, String pluginName,
@@ -277,7 +360,7 @@ class VideoPageController extends Notifier<VideoPageState> {
     }
 
     if (matched == null) {
-      KazumiLogger().log(Level.warning, '未找到源 $pluginName');
+      HaipeeLogger().log(Level.warning, '未找到源 $pluginName');
       state = state.copyWith(
         roadList: const [],
         currentPlugin: null,
@@ -292,13 +375,13 @@ class VideoPageController extends Notifier<VideoPageState> {
         roadList: List<Road>.from(roads),
         currentPlugin: matched,
       );
-      KazumiLogger().log(Level.info, '播放列表长度 ${state.roadList.length}');
+      HaipeeLogger().log(Level.info, '播放列表长度 ${state.roadList.length}');
       if (state.roadList.isNotEmpty) {
-        KazumiLogger()
+        HaipeeLogger()
             .log(Level.info, '第一播放列表选集数 ${state.roadList.first.data.length}');
       }
     } catch (e) {
-      KazumiLogger().log(Level.error, '查询播放列表失败: $e');
+      HaipeeLogger().log(Level.error, '查询播放列表失败: $e');
 
       // 记录查询失败(非解析失败,是获取播放列表失败)
       String reason = 'network_error';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/bbcode/bbcode_widget.dart';
-import 'package:kazumi/modules/comments/comment_item.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bbcode/bbcode_widget.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
+import 'package:haipee/utils/utils.dart';
 
 class CharacterCommentsCard extends StatelessWidget {
   const CharacterCommentsCard({

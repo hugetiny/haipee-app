@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -235,27 +235,27 @@ class DownloadFileUtils {
   /// Opens a file using the system default application.
   static Future<bool> openFile(String? filePath) async {
     if (filePath == null || filePath.isEmpty) {
-      KazumiDialog.showToast(message: '文件路径为空');
+      HaipeeDialog.showToast(message: '文件路径为空');
       return false;
     }
     final file = File(filePath);
     if (!file.existsSync()) {
-      KazumiDialog.showToast(message: '文件不存在: $filePath');
+      HaipeeDialog.showToast(message: '文件不存在: $filePath');
       return false;
     }
 
     try {
       final result = await OpenFilex.open(file.absolute.path);
       if (result.type != ResultType.done) {
-        KazumiDialog.showToast(message: '无法打开文件: ${result.message}');
+        HaipeeDialog.showToast(message: '无法打开文件: ${result.message}');
         return false;
       }
       return true;
     } on PlatformException catch (e) {
-      KazumiDialog.showToast(message: '打开文件失败: ${e.message}');
+      HaipeeDialog.showToast(message: '打开文件失败: ${e.message}');
       return false;
     } catch (e) {
-      KazumiDialog.showToast(message: '打开文件时发生错误: $e');
+      HaipeeDialog.showToast(message: '打开文件时发生错误: $e');
       return false;
     }
   }
@@ -263,7 +263,7 @@ class DownloadFileUtils {
   /// Opens the containing folder and highlights/reveals the file in Finder (macOS), Explorer (Windows), or file manager (Linux).
   static Future<bool> openContainingFolder(String? filePath) async {
     if (filePath == null || filePath.isEmpty) {
-      KazumiDialog.showToast(message: '文件路径为空');
+      HaipeeDialog.showToast(message: '文件路径为空');
       return false;
     }
 
@@ -286,7 +286,7 @@ class DownloadFileUtils {
         } else if (dir.existsSync()) {
           await Process.run('open', [dir.absolute.path]);
         } else {
-          KazumiDialog.showToast(message: '文件夹不存在: ${dir.path}');
+          HaipeeDialog.showToast(message: '文件夹不存在: ${dir.path}');
           return false;
         }
         return true;
@@ -296,7 +296,7 @@ class DownloadFileUtils {
         } else if (dir.existsSync()) {
           await Process.run('explorer.exe', [dir.absolute.path]);
         } else {
-          KazumiDialog.showToast(message: '文件夹不存在: ${dir.path}');
+          HaipeeDialog.showToast(message: '文件夹不存在: ${dir.path}');
           return false;
         }
         return true;
@@ -311,13 +311,13 @@ class DownloadFileUtils {
         }
       }
     } catch (e) {
-      KazumiDialog.showToast(message: '打开所在文件夹失败: $e');
+      HaipeeDialog.showToast(message: '打开所在文件夹失败: $e');
       return false;
     }
     return false;
   }
 
-  /// Deletes downloaded file, its control file (.aria2), and any companion files.
+  /// Deletes downloaded file, temporary file, and any companion files.
   static Future<bool> deleteDownloadedFile(String? filePath) async {
     if (filePath == null || filePath.isEmpty) return false;
     bool deleted = false;
@@ -327,9 +327,9 @@ class DownloadFileUtils {
         await file.delete();
         deleted = true;
       }
-      final aria2File = File('$filePath.aria2');
-      if (aria2File.existsSync()) {
-        await aria2File.delete();
+      final tmpFile = File('$filePath.tmp');
+      if (tmpFile.existsSync()) {
+        await tmpFile.delete();
       }
       final dir = Directory(filePath);
       if (dir.existsSync()) {

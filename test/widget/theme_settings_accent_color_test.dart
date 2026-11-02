@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/card/palette_card.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/setting/appearance/theme_settings_page.dart';
-import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/card/palette_card.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/setting/appearance/theme_settings_page.dart';
+import 'package:haipee/pages/setting/providers.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -51,7 +51,7 @@ void main() {
         container: container,
         child: TranslationProvider(
           child: MaterialApp(
-            navigatorObservers: [KazumiDialog.observer],
+            navigatorObservers: [HaipeeDialog.observer],
             home: const ThemeSettingsPage(),
           ),
         ),

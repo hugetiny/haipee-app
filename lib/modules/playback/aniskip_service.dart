@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/playback/aniskip_model.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/playback/aniskip_model.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// AniSkip 智能片头片尾 (OP/ED/Recap) 跳过服务
@@ -80,7 +80,7 @@ class AniSkipService {
           try {
             await GStorage.setting.put(cacheKey, malId);
           } catch (_) {}
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.info,
             '[AniSkipService] Resolved Bangumi $bangumiId -> MAL $malId',
           );
@@ -88,7 +88,7 @@ class AniSkipService {
         }
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.debug,
         '[AniSkipService] Failed to query MALSync for Bangumi $bangumiId: $e',
       );
@@ -149,7 +149,7 @@ class AniSkipService {
           intervals.sort((a, b) => a.startTime.compareTo(b.startTime));
           _intervalsCache[cacheKey] = intervals;
 
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.info,
             '[AniSkipService] Loaded ${intervals.length} skip intervals for MAL $effectiveMalId Ep $episode: $intervals',
           );
@@ -157,7 +157,7 @@ class AniSkipService {
         }
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.debug,
         '[AniSkipService] AniSkip query failed for MAL $effectiveMalId Ep $episode: $e',
       );

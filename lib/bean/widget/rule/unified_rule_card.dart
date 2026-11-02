@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-export 'package:kazumi/bean/widget/settings/card_settings_ui.dart' show SettingsBadge;
+import 'package:haipee/bean/widget/app_context_menu.dart';
+export 'package:haipee/bean/widget/settings/card_settings_ui.dart' show SettingsBadge;
 
 /// 统一规则卡片组件 (Unified Rule Grid Card Component)
 ///
-/// 服务于 Kazumi 视频规则与 Cardigann 规则，提供高度一致的视觉质感、槽位布局与交互体系：
+/// 服务于 Haipee 视频规则与 Cardigann 规则，提供高度一致的视觉质感、槽位布局与交互体系：
 /// 1. 顶部槽位：类型/状态图标徽章（多选模式下为选择框）、规则标题、标识/版本号标签、状态开关 (Switch) 或自定义操作
 /// 2. 信息槽位：站点/主域名可点击链接、来源性质（预置/自定义/覆写）、解析协议/类型、播放特性、有效性及更新状态徽章
 /// 3. 说明槽位：多行描述文本，完整显示不截断

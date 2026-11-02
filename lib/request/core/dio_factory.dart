@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:kazumi/request/core/bangumi_transport.dart';
-import 'package:kazumi/request/core/dio_logger_interceptor.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/request/core/network_config.dart';
-import 'package:kazumi/utils/http_headers.dart';
+import 'package:haipee/request/core/bangumi_transport.dart';
+import 'package:haipee/request/core/dio_logger_interceptor.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/request/core/network_config.dart';
+import 'package:haipee/utils/http_headers.dart';
 
 class DioFactory {
   DioFactory._();

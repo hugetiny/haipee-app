@@ -4,23 +4,23 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_service.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_service.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/router.dart';
-import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/utils/tray_localization.dart';
-import 'package:kazumi/services/logging/debug_hud_overlay.dart';
-import 'package:kazumi/shaders/providers.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/router.dart';
+import 'package:haipee/pages/setting/providers.dart';
+import 'package:haipee/utils/tray_localization.dart';
+import 'package:haipee/services/logging/debug_hud_overlay.dart';
+import 'package:haipee/shaders/providers.dart';
 
 /// Provider for exit dialog "don't ask again" checkbox state
 final _exitDialogSavePreferenceProvider =
@@ -135,13 +135,13 @@ class _AppWidgetState extends ConsumerState<AppWidget>
         GopeedService().stop();
         exit(0);
       case 1:
-        KazumiDialog.dismiss();
+        HaipeeDialog.dismiss();
         windowManager.hide();
         break;
       default:
         if (showingExitDialog) return;
         showingExitDialog = true;
-        KazumiDialog.show(onDismiss: () {
+        HaipeeDialog.show(onDismiss: () {
           showingExitDialog = false;
         }, builder: (context) {
           final t = context.t;
@@ -191,12 +191,12 @@ class _AppWidgetState extends ConsumerState<AppWidget>
                       if (saveExitBehavior) {
                         await setting.put(SettingBoxKey.exitBehavior, 1);
                       }
-                      KazumiDialog.dismiss();
+                      HaipeeDialog.dismiss();
                       windowManager.hide();
                     },
                     child: Text(t.exitDialog.minimize)),
                 TextButton(
-                    onPressed: KazumiDialog.dismiss,
+                    onPressed: HaipeeDialog.dismiss,
                     child: Text(t.exitDialog.cancel)),
               ],
             );
@@ -232,7 +232,7 @@ class _AppWidgetState extends ConsumerState<AppWidget>
       //     var webDav = WebDav();
       //     webDav.downloadAndPatchHistory();
       //   } catch (e) {
-      //     KazumiLogger().log(Level.error, '同步观看记录失败 ${e.toString()}');
+      //     HaipeeLogger().log(Level.error, '同步观看记录失败 ${e.toString()}');
       //   }
       // }
     } else if (state == AppLifecycleState.inactive) {
@@ -251,12 +251,12 @@ class _AppWidgetState extends ConsumerState<AppWidget>
   }
 
   Future<void> _handleTray() async {
-    final TrayLabels labels = KazumiTrayLabels.fromRef(ref);
+    final TrayLabels labels = HaipeeTrayLabels.fromRef(ref);
     if (Platform.isWindows) {
       await trayManager.setIcon('assets/images/logo/logo_lanczos.ico');
     } else if (Platform.environment.containsKey('FLATPAK_ID') ||
         Platform.environment.containsKey('SNAP')) {
-      await trayManager.setIcon('io.github.Predidit.Kazumi');
+      await trayManager.setIcon('io.github.hugetiny.haipee');
     } else {
       await trayManager.setIcon('assets/images/logo/logo_rounded.png');
     }
@@ -448,7 +448,7 @@ class _AppWidgetState extends ConsumerState<AppWidget>
           FlutterDisplayMode.setPreferredMode(preferred);
         });
       } catch (e) {
-        KazumiLogger().log(Level.error, '高帧率设置失败 ${e.toString()}');
+        HaipeeLogger().log(Level.error, '高帧率设置失败 ${e.toString()}');
       }
     }
 

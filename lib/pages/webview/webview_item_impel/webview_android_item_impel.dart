@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/pages/webview/webview_controller_impel/webview_android_controller_impel.dart';
+import 'package:haipee/pages/webview/webview_controller_impel/webview_android_controller_impel.dart';
 
 class WebviewAndroidItemImpel extends StatefulWidget {
   const WebviewAndroidItemImpel({

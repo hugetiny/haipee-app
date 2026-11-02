@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/setting/setting_page.dart';
-import 'package:kazumi/pages/setting/media/media_settings_page.dart';
-import 'package:kazumi/pages/setting/metadata/metadata_settings_page.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/setting/setting_page.dart';
+import 'package:haipee/pages/setting/media/media_settings_page.dart';
+import 'package:haipee/pages/setting/metadata/metadata_settings_page.dart';
+import 'package:haipee/pages/settings/interface_settings.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -37,7 +39,7 @@ void main() {
     }
   });
 
-  testWidgets('验证设置中心五大顶级一级分类排序与层级结构', (tester) async {
+  testWidgets('验证设置中心四大顶级一级分类排序与层级结构', (tester) async {
     tester.view.physicalSize = const Size(1200, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -47,7 +49,7 @@ void main() {
       ProviderScope(
         child: TranslationProvider(
           child: MaterialApp(
-            navigatorObservers: [KazumiDialog.observer],
+            navigatorObservers: [HaipeeDialog.observer],
             home: const SettingPage(),
           ),
         ),
@@ -60,29 +62,32 @@ void main() {
     expect(tester.takeException(), isNull,
         reason: '设置主页面在宽屏 1200 宽度下不得存在任何 RenderFlex 像素溢出');
 
-    // 1. 验证通用在最顶部，随后是视听与在线媒体及资源检索
-    expect(find.text('通用'), findsOneWidget); // 通用在最顶部
-    expect(find.text('视听与在线媒体 (点播与直播)'), findsOneWidget); // 视听点播与直播
-    expect(find.text('资源检索与下载 (网盘与BT)'), findsOneWidget); // 资源下载类
-    expect(find.text('数据与云同步'), findsOneWidget);
-    expect(find.text('其他'), findsNothing, reason: '其他分类已移除，实用功能收敛入通用');
+    // 1. 验证四大顶级分类 (播放、资源、应用、其他)
+    expect(find.text('播放'), findsOneWidget);
+    expect(find.text('资源'), findsOneWidget);
+    expect(find.text('应用'), findsOneWidget);
+    expect(find.text('其他'), findsOneWidget);
 
-    // 2. 验证通用分类下的实用功能已成功移入
-    expect(find.text('清除缓存'), findsOneWidget);
-    expect(find.text('自动更新'), findsOneWidget);
-    expect(find.text('检查更新'), findsOneWidget);
-    expect(find.text('开源许可证'), findsOneWidget);
-    expect(find.text('运行日志与诊断'), findsOneWidget);
-
-    // 3. 验证音视频一级分类下的核心项目 (在线视频与电视直播规则已拆分为独立管理入口)
-    expect(find.text('播放设置'), findsOneWidget);
+    // 2. 验证播放分类下的核心项目 (播放设置出现在左侧导轨及默认右侧详情标题)
+    expect(find.text('播放设置'), findsNWidgets(2));
     expect(find.text('弹幕设置'), findsOneWidget);
+    expect(find.text('操作设置'), findsOneWidget);
     expect(find.text('媒体元数据与刮削'), findsOneWidget);
-    expect(find.text('在线视频规则'), findsOneWidget);
-    expect(find.text('电视直播规则'), findsOneWidget);
 
-    // 4. 验证资源检索与下载分类下的规则项
-    expect(find.text('BT / 磁力下载规则'), findsOneWidget);
+    // 3. 验证资源分类下的核心项目
+    expect(find.text('规则管理'), findsOneWidget);
+    expect(find.text('下载设置'), findsOneWidget);
+
+    // 4. 验证应用分类下的核心项目
+    expect(find.text('外观设置'), findsOneWidget);
+    expect(find.text('界面设置'), findsOneWidget);
+    expect(find.text('同步设置'), findsOneWidget);
+    expect(find.text('网络设置'), findsOneWidget);
+
+    // 5. 验证其他分类下的核心项目
+    expect(find.text('更新设置'), findsOneWidget);
+    expect(find.text('存储与日志'), findsOneWidget);
+    expect(find.text('关于'), findsOneWidget);
   });
 
   testWidgets('验证媒体元数据与刮削独立子页面 (Bangumi 与 TMDB)', (tester) async {
@@ -93,7 +98,7 @@ void main() {
       ProviderScope(
         child: TranslationProvider(
           child: MaterialApp(
-            navigatorObservers: [KazumiDialog.observer],
+            navigatorObservers: [HaipeeDialog.observer],
             home: const MetadataSettingsPage(),
           ),
         ),
@@ -119,7 +124,7 @@ void main() {
       ProviderScope(
         child: TranslationProvider(
           child: MaterialApp(
-            navigatorObservers: [KazumiDialog.observer],
+            navigatorObservers: [HaipeeDialog.observer],
             home: const MediaSettingsPage(),
           ),
         ),
@@ -136,6 +141,71 @@ void main() {
     expect(find.text('播放设置'), findsOneWidget);
     expect(find.text('弹幕设置'), findsOneWidget);
     expect(find.text('媒体元数据与刮削'), findsOneWidget);
-    expect(find.text('Kazumi 视频规则'), findsOneWidget);
+    expect(find.text('Haipee 视频规则'), findsOneWidget);
+  });
+
+  testWidgets('验证界面设置子页面包含语言设置与系统设置项', (tester) async {
+    tester.view.physicalSize = const Size(800, 600);
+    tester.view.devicePixelRatio = 1.0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: TranslationProvider(
+          child: MaterialApp(
+            navigatorObservers: [HaipeeDialog.observer],
+            home: const InterfaceSettingsPage(),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('界面设置'), findsOneWidget);
+    expect(find.text('语言设置'), findsOneWidget);
+    expect(find.text('启动界面设置'), findsOneWidget);
+    expect(find.text('显示评分'), findsOneWidget);
+  });
+
+  testWidgets('验证深层子路由映射与内嵌详情页渲染', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.devicePixelRatio = 1.0;
+
+    // 1. 验证关于页及许可证路径正确激活关于详情页
+    await tester.pumpWidget(
+      ProviderScope(
+        child: TranslationProvider(
+          child: MaterialApp(
+            navigatorObservers: [HaipeeDialog.observer],
+            home: const SettingPage(initialPath: '/settings/about/license'),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('关于'), findsWidgets);
+
+    // 2. 验证外观设置内嵌渲染正常且零溢出
+    await tester.pumpWidget(
+      ProviderScope(
+        child: TranslationProvider(
+          child: MaterialApp(
+            navigatorObservers: [HaipeeDialog.observer],
+            home: const SettingPage(initialPath: Routes.settingsTheme),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('外观设置'), findsWidgets);
+    expect(find.text('主题色'), findsOneWidget);
   });
 }

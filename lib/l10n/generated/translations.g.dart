@@ -6,7 +6,7 @@
 /// Locales: 4
 /// Strings: 2774 (693 per locale)
 ///
-/// Built on 2026-10-20 at 03:50 UTC
+/// Built on 2026-10-31 at 14:16 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -172,7 +172,7 @@ class _TranslationsAppEnUs {
 	final AppTranslations _root; // ignore: unused_field
 
 	// Translations
-	String get title => 'Kazumi';
+	String get title => 'haipee';
 	String get loading => 'Loading…';
 	String get retry => 'Retry';
 	String get confirm => 'Confirm';
@@ -201,7 +201,7 @@ class _TranslationsDownloadsEnUs {
 
 	// Translations
 	String get sectionTitle => 'Download Queue';
-	String get aria2Offline => 'aria2 not connected';
+	String get downloadOffline => 'Download engine not connected';
 	String get queued => 'Queued';
 	String get running => 'Downloading';
 	String get completed => 'Completed';
@@ -251,9 +251,9 @@ class _TranslationsExitDialogEnUs {
 
 	// Translations
 	String get title => 'Exit Confirmation';
-	String get message => 'Do you want to exit Kazumi?';
+	String get message => 'Do you want to exit haipee?';
 	String get dontAskAgain => 'Don\'t ask again';
-	String get exit => 'Exit Kazumi';
+	String get exit => 'Exit haipee';
 	String get minimize => 'Minimize to Tray';
 	String get cancel => 'Cancel';
 }
@@ -266,7 +266,7 @@ class _TranslationsTrayEnUs {
 
 	// Translations
 	String get showWindow => 'Show Window';
-	String get exit => 'Exit Kazumi';
+	String get exit => 'Exit haipee';
 }
 
 // Path: navigation
@@ -455,7 +455,7 @@ class _TranslationsSettingsGeneralEnUs {
 	String get languageDesc => 'Choose the display language for the app interface';
 	String get followSystem => 'System';
 	String get exitBehavior => 'On Close';
-	String get exitApp => 'Exit Kazumi';
+	String get exitApp => 'Exit haipee';
 	String get minimizeToTray => 'Minimize to Tray';
 	String get askEveryTime => 'Ask Every Time';
 }
@@ -774,7 +774,7 @@ class _TranslationsLibraryCommonEnUs {
 	// Translations
 	String get emptyState => 'No content found';
 	String get retry => 'Tap to retry';
-	String get backHint => 'Press again to exit Kazumi';
+	String get backHint => 'Press again to exit haipee';
 	late final _TranslationsLibraryCommonToastEnUs toast = _TranslationsLibraryCommonToastEnUs._(_root);
 }
 
@@ -1502,7 +1502,7 @@ class _TranslationsSettingsPluginsToastEnUs {
 	String get repoMissing => 'The repository does not contain this rule.';
 	String get alreadyLatest => 'Rule is already the latest.';
 	String get updateSuccess => 'Update successful.';
-	String get updateIncompatible => 'Kazumi is too old; this rule is incompatible.';
+	String get updateIncompatible => 'haipee is too old; this rule is incompatible.';
 	String get updateFailed => 'Failed to update rule.';
 	String get copySuccess => 'Copied to clipboard.';
 }
@@ -1789,7 +1789,7 @@ class _TranslationsLibraryPopularToastEnUs {
 	final AppTranslations _root; // ignore: unused_field
 
 	// Translations
-	String get backPress => 'Press again to exit Kazumi';
+	String get backPress => 'Press again to exit haipee';
 }
 
 // Path: library.timeline.weekdays
@@ -2510,7 +2510,7 @@ class _TranslationsSettingsUpdateDownloadCompleteEnUs {
 
 	// Translations
 	String get title => 'Download complete';
-	String get message => 'Kazumi {version} downloaded.';
+	String get message => 'haipee {version} downloaded.';
 	String get quitNotice => 'The app will exit during installation.';
 	String get fileLocation => 'File saved to';
 	late final _TranslationsSettingsUpdateDownloadCompleteButtonsEnUs buttons = _TranslationsSettingsUpdateDownloadCompleteButtonsEnUs._(_root);
@@ -2852,7 +2852,7 @@ class _TranslationsAppJaJp extends _TranslationsAppEnUs {
 	@override final _TranslationsJaJp _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Kazumi';
+	@override String get title => 'haipee';
 	@override String get loading => '読み込み中…';
 	@override String get retry => '再試行';
 	@override String get confirm => '確認';
@@ -2881,7 +2881,7 @@ class _TranslationsDownloadsJaJp extends _TranslationsDownloadsEnUs {
 
 	// Translations
 	@override String get sectionTitle => 'ダウンロードキュー';
-	@override String get aria2Offline => 'aria2が接続されていません';
+	@override String get downloadOffline => 'ダウンロードエンジンが接続されていません';
 	@override String get queued => 'キューに追加';
 	@override String get running => 'ダウンロード中';
 	@override String get completed => '完了';
@@ -2928,9 +2928,9 @@ class _TranslationsExitDialogJaJp extends _TranslationsExitDialogEnUs {
 
 	// Translations
 	@override String get title => '終了の確認';
-	@override String get message => 'Kazumiを終了しますか？';
+	@override String get message => 'haipeeを終了しますか？';
 	@override String get dontAskAgain => '次回から聞かない';
-	@override String get exit => 'Kazumiを終了';
+	@override String get exit => 'haipeeを終了';
 	@override String get minimize => 'トレイに最小化';
 	@override String get cancel => 'キャンセル';
 }
@@ -2943,7 +2943,7 @@ class _TranslationsTrayJaJp extends _TranslationsTrayEnUs {
 
 	// Translations
 	@override String get showWindow => 'ウィンドウを表示';
-	@override String get exit => 'Kazumiを終了';
+	@override String get exit => 'haipeeを終了';
 }
 
 // Path: navigation
@@ -3078,7 +3078,7 @@ class _TranslationsSettingsGeneralJaJp extends _TranslationsSettingsGeneralEnUs 
 	@override String get languageDesc => 'アプリインターフェースの表示言語を選択';
 	@override String get followSystem => 'システム';
 	@override String get exitBehavior => '閉じる際';
-	@override String get exitApp => 'Kazumiを終了';
+	@override String get exitApp => 'haipeeを終了';
 	@override String get minimizeToTray => 'トレイに最小化';
 	@override String get askEveryTime => '毎回確認';
 }
@@ -3391,7 +3391,7 @@ class _TranslationsLibraryCommonJaJp extends _TranslationsLibraryCommonEnUs {
 	// Translations
 	@override String get emptyState => 'コンテンツが見つかりません';
 	@override String get retry => 'タップして再試行';
-	@override String get backHint => 'Kazumiを終了するにはバックボタンを再度押してください';
+	@override String get backHint => 'haipeeを終了するにはバックボタンを再度押してください';
 	@override late final _TranslationsLibraryCommonToastJaJp toast = _TranslationsLibraryCommonToastJaJp._(_root);
 }
 
@@ -3865,7 +3865,7 @@ class _TranslationsSettingsPluginsToastJaJp extends _TranslationsSettingsPlugins
 	@override String get repoMissing => 'リポジトリにこのルールは含まれていません。';
 	@override String get alreadyLatest => 'ルールは既に最新です。';
 	@override String get updateSuccess => '更新に成功しました。';
-	@override String get updateIncompatible => 'Kazumi のバージョンが古いため、このルールは互換性がありません。';
+	@override String get updateIncompatible => 'haipee のバージョンが古いため、このルールは互換性がありません。';
 	@override String get updateFailed => 'ルールの更新に失敗しました。';
 	@override String get copySuccess => 'クリップボードにコピーしました。';
 }
@@ -4152,7 +4152,7 @@ class _TranslationsLibraryPopularToastJaJp extends _TranslationsLibraryPopularTo
 	@override final _TranslationsJaJp _root; // ignore: unused_field
 
 	// Translations
-	@override String get backPress => 'Kazumiを終了するにはバックボタンを再度押してください';
+	@override String get backPress => 'haipeeを終了するにはバックボタンを再度押してください';
 }
 
 // Path: library.timeline.weekdays
@@ -4873,7 +4873,7 @@ class _TranslationsSettingsUpdateDownloadCompleteJaJp extends _TranslationsSetti
 
 	// Translations
 	@override String get title => 'ダウンロード完了';
-	@override String get message => 'Kazumi {version} がダウンロードされました。';
+	@override String get message => 'haipee {version} がダウンロードされました。';
 	@override String get quitNotice => 'アプリのインストール中に終了します。';
 	@override String get fileLocation => 'ファイルは次に保存されました';
 	@override late final _TranslationsSettingsUpdateDownloadCompleteButtonsJaJp buttons = _TranslationsSettingsUpdateDownloadCompleteButtonsJaJp._(_root);
@@ -5215,7 +5215,7 @@ class _TranslationsAppZhCn extends _TranslationsAppEnUs {
 	@override final _TranslationsZhCn _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Kazumi';
+	@override String get title => 'haipee';
 	@override String get loading => '加载中…';
 	@override String get retry => '重试';
 	@override String get confirm => '确认';
@@ -5244,7 +5244,7 @@ class _TranslationsDownloadsZhCn extends _TranslationsDownloadsEnUs {
 
 	// Translations
 	@override String get sectionTitle => '下载队列';
-	@override String get aria2Offline => 'aria2 未连接';
+	@override String get downloadOffline => '下载引擎未连接';
 	@override String get queued => '排队';
 	@override String get running => '下载中';
 	@override String get completed => '已完成';
@@ -5294,9 +5294,9 @@ class _TranslationsExitDialogZhCn extends _TranslationsExitDialogEnUs {
 
 	// Translations
 	@override String get title => '退出确认';
-	@override String get message => '您想要退出 Kazumi 吗？';
+	@override String get message => '您想要退出 haipee 吗？';
 	@override String get dontAskAgain => '下次不再询问';
-	@override String get exit => '退出 Kazumi';
+	@override String get exit => '退出 haipee';
 	@override String get minimize => '最小化至托盘';
 	@override String get cancel => '取消';
 }
@@ -5309,7 +5309,7 @@ class _TranslationsTrayZhCn extends _TranslationsTrayEnUs {
 
 	// Translations
 	@override String get showWindow => '显示窗口';
-	@override String get exit => '退出 Kazumi';
+	@override String get exit => '退出 haipee';
 }
 
 // Path: navigation
@@ -5498,7 +5498,7 @@ class _TranslationsSettingsGeneralZhCn extends _TranslationsSettingsGeneralEnUs 
 	@override String get languageDesc => '选择应用界面显示语言';
 	@override String get followSystem => '系统';
 	@override String get exitBehavior => '关闭时';
-	@override String get exitApp => '退出 Kazumi';
+	@override String get exitApp => '退出 haipee';
 	@override String get minimizeToTray => '最小化至托盘';
 	@override String get askEveryTime => '每次都询问';
 }
@@ -5722,7 +5722,7 @@ class _TranslationsNavigationTabsZhCn extends _TranslationsNavigationTabsEnUs {
 	// Translations
 	@override String get popular => '热门';
 	@override String get catalog => '资源分类';
-	@override String get media => '在线视频';
+	@override String get media => '视频直播';
 	@override String get resource => '全网资源';
 	@override String get timeline => '时间表';
 	@override String get my => '媒体库';
@@ -6545,7 +6545,7 @@ class _TranslationsSettingsPluginsToastZhCn extends _TranslationsSettingsPlugins
 	@override String get repoMissing => '规则仓库中没有当前规则';
 	@override String get alreadyLatest => '规则已是最新';
 	@override String get updateSuccess => '更新成功';
-	@override String get updateIncompatible => 'Kazumi 版本过低，此规则不兼容当前版本';
+	@override String get updateIncompatible => 'haipee 版本过低，此规则不兼容当前版本';
 	@override String get updateFailed => '更新规则失败';
 	@override String get copySuccess => '已复制到剪贴板';
 }
@@ -7553,7 +7553,7 @@ class _TranslationsSettingsUpdateDownloadCompleteZhCn extends _TranslationsSetti
 
 	// Translations
 	@override String get title => '下载完成';
-	@override String get message => '已下载 Kazumi {version}。';
+	@override String get message => '已下载 haipee {version}。';
 	@override String get quitNotice => '安装过程中应用将退出。';
 	@override String get fileLocation => '文件位置';
 	@override late final _TranslationsSettingsUpdateDownloadCompleteButtonsZhCn buttons = _TranslationsSettingsUpdateDownloadCompleteButtonsZhCn._(_root);
@@ -7895,7 +7895,7 @@ class _TranslationsAppZhTw extends _TranslationsAppEnUs {
 	@override final _TranslationsZhTw _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Kazumi';
+	@override String get title => 'haipee';
 	@override String get loading => '載入中…';
 	@override String get retry => '重試';
 	@override String get confirm => '確認';
@@ -7924,7 +7924,7 @@ class _TranslationsDownloadsZhTw extends _TranslationsDownloadsEnUs {
 
 	// Translations
 	@override String get sectionTitle => '下載佇列';
-	@override String get aria2Offline => 'aria2 未連線';
+	@override String get downloadOffline => '下載引擎未連線';
 	@override String get queued => '排隊中';
 	@override String get running => '下載中';
 	@override String get completed => '已完成';
@@ -7971,9 +7971,9 @@ class _TranslationsExitDialogZhTw extends _TranslationsExitDialogEnUs {
 
 	// Translations
 	@override String get title => '結束確認';
-	@override String get message => '您想要結束 Kazumi 嗎？';
+	@override String get message => '您想要結束 haipee 嗎？';
 	@override String get dontAskAgain => '下次不要再詢問';
-	@override String get exit => '結束 Kazumi';
+	@override String get exit => '結束 haipee';
 	@override String get minimize => '最小化至系統匣';
 	@override String get cancel => '取消';
 }
@@ -7986,7 +7986,7 @@ class _TranslationsTrayZhTw extends _TranslationsTrayEnUs {
 
 	// Translations
 	@override String get showWindow => '顯示視窗';
-	@override String get exit => '結束 Kazumi';
+	@override String get exit => '結束 haipee';
 }
 
 // Path: navigation
@@ -8121,7 +8121,7 @@ class _TranslationsSettingsGeneralZhTw extends _TranslationsSettingsGeneralEnUs 
 	@override String get languageDesc => '選擇應用程式介面的顯示語言';
 	@override String get followSystem => '系統';
 	@override String get exitBehavior => '關閉時';
-	@override String get exitApp => '結束 Kazumi';
+	@override String get exitApp => '結束 haipee';
 	@override String get minimizeToTray => '最小化至系統匣';
 	@override String get askEveryTime => '每次詢問';
 }
@@ -8339,7 +8339,7 @@ class _TranslationsNavigationTabsZhTw extends _TranslationsNavigationTabsEnUs {
 	// Translations
 	@override String get popular => '熱門';
 	@override String get catalog => '資源分類';
-	@override String get media => '線上影片';
+	@override String get media => '視頻直播';
 	@override String get resource => '全網資源';
 	@override String get timeline => '時間表';
 	@override String get my => '媒體庫';
@@ -8434,7 +8434,7 @@ class _TranslationsLibraryCommonZhTw extends _TranslationsLibraryCommonEnUs {
 	// Translations
 	@override String get emptyState => '找不到內容';
 	@override String get retry => '點擊重試';
-	@override String get backHint => '再按一次以結束 Kazumi';
+	@override String get backHint => '再按一次以結束 haipee';
 	@override late final _TranslationsLibraryCommonToastZhTw toast = _TranslationsLibraryCommonToastZhTw._(_root);
 }
 
@@ -8908,7 +8908,7 @@ class _TranslationsSettingsPluginsToastZhTw extends _TranslationsSettingsPlugins
 	@override String get repoMissing => '儲存庫中沒有此規則。';
 	@override String get alreadyLatest => '規則已經是最新的。';
 	@override String get updateSuccess => '更新成功。';
-	@override String get updateIncompatible => 'Kazumi 版本過舊；此規則不相容。';
+	@override String get updateIncompatible => 'haipee 版本過舊；此規則不相容。';
 	@override String get updateFailed => '規則更新失敗。';
 	@override String get copySuccess => '已複製到剪貼簿。';
 }
@@ -9195,7 +9195,7 @@ class _TranslationsLibraryPopularToastZhTw extends _TranslationsLibraryPopularTo
 	@override final _TranslationsZhTw _root; // ignore: unused_field
 
 	// Translations
-	@override String get backPress => '再按一次以結束 Kazumi';
+	@override String get backPress => '再按一次以結束 haipee';
 }
 
 // Path: library.timeline.weekdays
@@ -9916,7 +9916,7 @@ class _TranslationsSettingsUpdateDownloadCompleteZhTw extends _TranslationsSetti
 
 	// Translations
 	@override String get title => '下載完成';
-	@override String get message => '已下載 Kazumi {version}。';
+	@override String get message => '已下載 haipee {version}。';
 	@override String get quitNotice => '應用程式將在安裝期間離開。';
 	@override String get fileLocation => '檔案儲存至';
 	@override late final _TranslationsSettingsUpdateDownloadCompleteButtonsZhTw buttons = _TranslationsSettingsUpdateDownloadCompleteButtonsZhTw._(_root);
@@ -10216,7 +10216,7 @@ class _TranslationsLibraryInfoSourceSheetSortOptionsZhTw extends _TranslationsLi
 extension on AppTranslations {
 	dynamic _flatMapFunction(String path) {
 		switch (path) {
-			case 'app.title': return 'Kazumi';
+			case 'app.title': return 'haipee';
 			case 'app.loading': return 'Loading…';
 			case 'app.retry': return 'Retry';
 			case 'app.confirm': return 'Confirm';
@@ -10228,7 +10228,7 @@ extension on AppTranslations {
 			case 'metadata.source.tmdb': return 'TMDb';
 			case 'metadata.lastSynced': return 'Last synced: {timestamp}';
 			case 'downloads.sectionTitle': return 'Download Queue';
-			case 'downloads.aria2Offline': return 'aria2 not connected';
+			case 'downloads.downloadOffline': return 'Download engine not connected';
 			case 'downloads.queued': return 'Queued';
 			case 'downloads.running': return 'Downloading';
 			case 'downloads.completed': return 'Completed';
@@ -10338,7 +10338,7 @@ extension on AppTranslations {
 			case 'settings.general.languageDesc': return 'Choose the display language for the app interface';
 			case 'settings.general.followSystem': return 'System';
 			case 'settings.general.exitBehavior': return 'On Close';
-			case 'settings.general.exitApp': return 'Exit Kazumi';
+			case 'settings.general.exitApp': return 'Exit haipee';
 			case 'settings.general.minimizeToTray': return 'Minimize to Tray';
 			case 'settings.general.askEveryTime': return 'Ask Every Time';
 			case 'settings.appearancePage.title': return 'Appearance';
@@ -10408,7 +10408,7 @@ extension on AppTranslations {
 			case 'settings.plugins.toast.repoMissing': return 'The repository does not contain this rule.';
 			case 'settings.plugins.toast.alreadyLatest': return 'Rule is already the latest.';
 			case 'settings.plugins.toast.updateSuccess': return 'Update successful.';
-			case 'settings.plugins.toast.updateIncompatible': return 'Kazumi is too old; this rule is incompatible.';
+			case 'settings.plugins.toast.updateIncompatible': return 'haipee is too old; this rule is incompatible.';
 			case 'settings.plugins.toast.updateFailed': return 'Failed to update rule.';
 			case 'settings.plugins.toast.copySuccess': return 'Copied to clipboard.';
 			case 'settings.plugins.editor.title': return 'Edit Rule';
@@ -10617,7 +10617,7 @@ extension on AppTranslations {
 			case 'settings.update.download.error.confirm': return 'OK';
 			case 'settings.update.download.error.retry': return 'Retry';
 			case 'settings.update.download.complete.title': return 'Download complete';
-			case 'settings.update.download.complete.message': return 'Kazumi {version} downloaded.';
+			case 'settings.update.download.complete.message': return 'haipee {version} downloaded.';
 			case 'settings.update.download.complete.quitNotice': return 'The app will exit during installation.';
 			case 'settings.update.download.complete.fileLocation': return 'File saved to';
 			case 'settings.update.download.complete.buttons.later': return 'Later';
@@ -10647,13 +10647,13 @@ extension on AppTranslations {
 			case 'settings.about.logs.toast.cleared': return 'Logs cleared.';
 			case 'settings.about.logs.toast.clearFailed': return 'Failed to clear logs.';
 			case 'exitDialog.title': return 'Exit Confirmation';
-			case 'exitDialog.message': return 'Do you want to exit Kazumi?';
+			case 'exitDialog.message': return 'Do you want to exit haipee?';
 			case 'exitDialog.dontAskAgain': return 'Don\'t ask again';
-			case 'exitDialog.exit': return 'Exit Kazumi';
+			case 'exitDialog.exit': return 'Exit haipee';
 			case 'exitDialog.minimize': return 'Minimize to Tray';
 			case 'exitDialog.cancel': return 'Cancel';
 			case 'tray.showWindow': return 'Show Window';
-			case 'tray.exit': return 'Exit Kazumi';
+			case 'tray.exit': return 'Exit haipee';
 			case 'navigation.tabs.popular': return 'Popular';
 			case 'navigation.tabs.catalog': return 'Catalog';
 			case 'navigation.tabs.media': return 'Online Video';
@@ -10680,11 +10680,11 @@ extension on AppTranslations {
 			case 'dialogs.cache.message': return 'Cached data includes poster art. Clearing it will require re-downloading assets. Do you want to continue?';
 			case 'library.common.emptyState': return 'No content found';
 			case 'library.common.retry': return 'Tap to retry';
-			case 'library.common.backHint': return 'Press again to exit Kazumi';
+			case 'library.common.backHint': return 'Press again to exit haipee';
 			case 'library.common.toast.editMode': return 'Edit mode is active.';
 			case 'library.popular.title': return 'Home';
 			case 'library.popular.allTag': return 'Home';
-			case 'library.popular.toast.backPress': return 'Press again to exit Kazumi';
+			case 'library.popular.toast.backPress': return 'Press again to exit haipee';
 			case 'library.timeline.weekdays.mon': return 'Mon';
 			case 'library.timeline.weekdays.tue': return 'Tue';
 			case 'library.timeline.weekdays.wed': return 'Wed';
@@ -10966,7 +10966,7 @@ extension on AppTranslations {
 extension on _TranslationsJaJp {
 	dynamic _flatMapFunction(String path) {
 		switch (path) {
-			case 'app.title': return 'Kazumi';
+			case 'app.title': return 'haipee';
 			case 'app.loading': return '読み込み中…';
 			case 'app.retry': return '再試行';
 			case 'app.confirm': return '確認';
@@ -10978,7 +10978,7 @@ extension on _TranslationsJaJp {
 			case 'metadata.source.tmdb': return 'TMDb';
 			case 'metadata.lastSynced': return '最後の同期：{timestamp}';
 			case 'downloads.sectionTitle': return 'ダウンロードキュー';
-			case 'downloads.aria2Offline': return 'aria2が接続されていません';
+			case 'downloads.downloadOffline': return 'ダウンロードエンジンが接続されていません';
 			case 'downloads.queued': return 'キューに追加';
 			case 'downloads.running': return 'ダウンロード中';
 			case 'downloads.completed': return '完了';
@@ -10997,7 +10997,7 @@ extension on _TranslationsJaJp {
 			case 'settings.general.languageDesc': return 'アプリインターフェースの表示言語を選択';
 			case 'settings.general.followSystem': return 'システム';
 			case 'settings.general.exitBehavior': return '閉じる際';
-			case 'settings.general.exitApp': return 'Kazumiを終了';
+			case 'settings.general.exitApp': return 'haipeeを終了';
 			case 'settings.general.minimizeToTray': return 'トレイに最小化';
 			case 'settings.general.askEveryTime': return '毎回確認';
 			case 'settings.appearancePage.title': return '外観';
@@ -11067,7 +11067,7 @@ extension on _TranslationsJaJp {
 			case 'settings.plugins.toast.repoMissing': return 'リポジトリにこのルールは含まれていません。';
 			case 'settings.plugins.toast.alreadyLatest': return 'ルールは既に最新です。';
 			case 'settings.plugins.toast.updateSuccess': return '更新に成功しました。';
-			case 'settings.plugins.toast.updateIncompatible': return 'Kazumi のバージョンが古いため、このルールは互換性がありません。';
+			case 'settings.plugins.toast.updateIncompatible': return 'haipee のバージョンが古いため、このルールは互換性がありません。';
 			case 'settings.plugins.toast.updateFailed': return 'ルールの更新に失敗しました。';
 			case 'settings.plugins.toast.copySuccess': return 'クリップボードにコピーしました。';
 			case 'settings.plugins.editor.title': return 'ルールを編集';
@@ -11270,7 +11270,7 @@ extension on _TranslationsJaJp {
 			case 'settings.update.download.error.confirm': return 'OK';
 			case 'settings.update.download.error.retry': return '再試行';
 			case 'settings.update.download.complete.title': return 'ダウンロード完了';
-			case 'settings.update.download.complete.message': return 'Kazumi {version} がダウンロードされました。';
+			case 'settings.update.download.complete.message': return 'haipee {version} がダウンロードされました。';
 			case 'settings.update.download.complete.quitNotice': return 'アプリのインストール中に終了します。';
 			case 'settings.update.download.complete.fileLocation': return 'ファイルは次に保存されました';
 			case 'settings.update.download.complete.buttons.later': return '後';
@@ -11300,13 +11300,13 @@ extension on _TranslationsJaJp {
 			case 'settings.about.logs.toast.cleared': return 'ログがクリアされました。';
 			case 'settings.about.logs.toast.clearFailed': return 'ログのクリアに失敗しました。';
 			case 'exitDialog.title': return '終了の確認';
-			case 'exitDialog.message': return 'Kazumiを終了しますか？';
+			case 'exitDialog.message': return 'haipeeを終了しますか？';
 			case 'exitDialog.dontAskAgain': return '次回から聞かない';
-			case 'exitDialog.exit': return 'Kazumiを終了';
+			case 'exitDialog.exit': return 'haipeeを終了';
 			case 'exitDialog.minimize': return 'トレイに最小化';
 			case 'exitDialog.cancel': return 'キャンセル';
 			case 'tray.showWindow': return 'ウィンドウを表示';
-			case 'tray.exit': return 'Kazumiを終了';
+			case 'tray.exit': return 'haipeeを終了';
 			case 'navigation.tabs.popular': return '人気';
 			case 'navigation.tabs.catalog': return 'カテゴリ';
 			case 'navigation.tabs.media': return 'オンライン動画';
@@ -11333,11 +11333,11 @@ extension on _TranslationsJaJp {
 			case 'dialogs.cache.message': return 'キャッシュにはアニメのカバーが含まれており、クリアすると読み込み時に再ダウンロードが必要です。キャッシュをクリアしてもよろしいですか？';
 			case 'library.common.emptyState': return 'コンテンツが見つかりません';
 			case 'library.common.retry': return 'タップして再試行';
-			case 'library.common.backHint': return 'Kazumiを終了するにはバックボタンを再度押してください';
+			case 'library.common.backHint': return 'haipeeを終了するにはバックボタンを再度押してください';
 			case 'library.common.toast.editMode': return '編集モードが有効になりました。';
 			case 'library.popular.title': return '人気';
 			case 'library.popular.allTag': return 'すべて';
-			case 'library.popular.toast.backPress': return 'Kazumiを終了するにはバックボタンを再度押してください';
+			case 'library.popular.toast.backPress': return 'haipeeを終了するにはバックボタンを再度押してください';
 			case 'library.timeline.weekdays.mon': return '月';
 			case 'library.timeline.weekdays.tue': return '火';
 			case 'library.timeline.weekdays.wed': return '水';
@@ -11619,7 +11619,7 @@ extension on _TranslationsJaJp {
 extension on _TranslationsZhCn {
 	dynamic _flatMapFunction(String path) {
 		switch (path) {
-			case 'app.title': return 'Kazumi';
+			case 'app.title': return 'haipee';
 			case 'app.loading': return '加载中…';
 			case 'app.retry': return '重试';
 			case 'app.confirm': return '确认';
@@ -11631,7 +11631,7 @@ extension on _TranslationsZhCn {
 			case 'metadata.source.tmdb': return 'TMDb';
 			case 'metadata.lastSynced': return '上次同步：{timestamp}';
 			case 'downloads.sectionTitle': return '下载队列';
-			case 'downloads.aria2Offline': return 'aria2 未连接';
+			case 'downloads.downloadOffline': return '下载引擎未连接';
 			case 'downloads.queued': return '排队';
 			case 'downloads.running': return '下载中';
 			case 'downloads.completed': return '已完成';
@@ -11741,7 +11741,7 @@ extension on _TranslationsZhCn {
 			case 'settings.general.languageDesc': return '选择应用界面显示语言';
 			case 'settings.general.followSystem': return '系统';
 			case 'settings.general.exitBehavior': return '关闭时';
-			case 'settings.general.exitApp': return '退出 Kazumi';
+			case 'settings.general.exitApp': return '退出 haipee';
 			case 'settings.general.minimizeToTray': return '最小化至托盘';
 			case 'settings.general.askEveryTime': return '每次都询问';
 			case 'settings.appearancePage.title': return '外观设置';
@@ -11811,7 +11811,7 @@ extension on _TranslationsZhCn {
 			case 'settings.plugins.toast.repoMissing': return '规则仓库中没有当前规则';
 			case 'settings.plugins.toast.alreadyLatest': return '规则已是最新';
 			case 'settings.plugins.toast.updateSuccess': return '更新成功';
-			case 'settings.plugins.toast.updateIncompatible': return 'Kazumi 版本过低，此规则不兼容当前版本';
+			case 'settings.plugins.toast.updateIncompatible': return 'haipee 版本过低，此规则不兼容当前版本';
 			case 'settings.plugins.toast.updateFailed': return '更新规则失败';
 			case 'settings.plugins.toast.copySuccess': return '已复制到剪贴板';
 			case 'settings.plugins.editor.title': return '编辑规则';
@@ -12020,7 +12020,7 @@ extension on _TranslationsZhCn {
 			case 'settings.update.download.error.confirm': return '确定';
 			case 'settings.update.download.error.retry': return '重试';
 			case 'settings.update.download.complete.title': return '下载完成';
-			case 'settings.update.download.complete.message': return '已下载 Kazumi {version}。';
+			case 'settings.update.download.complete.message': return '已下载 haipee {version}。';
 			case 'settings.update.download.complete.quitNotice': return '安装过程中应用将退出。';
 			case 'settings.update.download.complete.fileLocation': return '文件位置';
 			case 'settings.update.download.complete.buttons.later': return '稍后再说';
@@ -12050,16 +12050,16 @@ extension on _TranslationsZhCn {
 			case 'settings.about.logs.toast.cleared': return '日志已清空。';
 			case 'settings.about.logs.toast.clearFailed': return '清空日志失败。';
 			case 'exitDialog.title': return '退出确认';
-			case 'exitDialog.message': return '您想要退出 Kazumi 吗？';
+			case 'exitDialog.message': return '您想要退出 haipee 吗？';
 			case 'exitDialog.dontAskAgain': return '下次不再询问';
-			case 'exitDialog.exit': return '退出 Kazumi';
+			case 'exitDialog.exit': return '退出 haipee';
 			case 'exitDialog.minimize': return '最小化至托盘';
 			case 'exitDialog.cancel': return '取消';
 			case 'tray.showWindow': return '显示窗口';
-			case 'tray.exit': return '退出 Kazumi';
+			case 'tray.exit': return '退出 haipee';
 			case 'navigation.tabs.popular': return '热门';
 			case 'navigation.tabs.catalog': return '资源分类';
-			case 'navigation.tabs.media': return '在线视频';
+			case 'navigation.tabs.media': return '视频直播';
 			case 'navigation.tabs.resource': return '全网资源';
 			case 'navigation.tabs.timeline': return '时间表';
 			case 'navigation.tabs.my': return '媒体库';
@@ -12369,7 +12369,7 @@ extension on _TranslationsZhCn {
 extension on _TranslationsZhTw {
 	dynamic _flatMapFunction(String path) {
 		switch (path) {
-			case 'app.title': return 'Kazumi';
+			case 'app.title': return 'haipee';
 			case 'app.loading': return '載入中…';
 			case 'app.retry': return '重試';
 			case 'app.confirm': return '確認';
@@ -12381,7 +12381,7 @@ extension on _TranslationsZhTw {
 			case 'metadata.source.tmdb': return 'TMDb';
 			case 'metadata.lastSynced': return '最後同步：{timestamp}';
 			case 'downloads.sectionTitle': return '下載佇列';
-			case 'downloads.aria2Offline': return 'aria2 未連線';
+			case 'downloads.downloadOffline': return '下載引擎未連線';
 			case 'downloads.queued': return '排隊中';
 			case 'downloads.running': return '下載中';
 			case 'downloads.completed': return '已完成';
@@ -12400,7 +12400,7 @@ extension on _TranslationsZhTw {
 			case 'settings.general.languageDesc': return '選擇應用程式介面的顯示語言';
 			case 'settings.general.followSystem': return '系統';
 			case 'settings.general.exitBehavior': return '關閉時';
-			case 'settings.general.exitApp': return '結束 Kazumi';
+			case 'settings.general.exitApp': return '結束 haipee';
 			case 'settings.general.minimizeToTray': return '最小化至系統匣';
 			case 'settings.general.askEveryTime': return '每次詢問';
 			case 'settings.appearancePage.title': return '外觀';
@@ -12470,7 +12470,7 @@ extension on _TranslationsZhTw {
 			case 'settings.plugins.toast.repoMissing': return '儲存庫中沒有此規則。';
 			case 'settings.plugins.toast.alreadyLatest': return '規則已經是最新的。';
 			case 'settings.plugins.toast.updateSuccess': return '更新成功。';
-			case 'settings.plugins.toast.updateIncompatible': return 'Kazumi 版本過舊；此規則不相容。';
+			case 'settings.plugins.toast.updateIncompatible': return 'haipee 版本過舊；此規則不相容。';
 			case 'settings.plugins.toast.updateFailed': return '規則更新失敗。';
 			case 'settings.plugins.toast.copySuccess': return '已複製到剪貼簿。';
 			case 'settings.plugins.editor.title': return '編輯規則';
@@ -12673,7 +12673,7 @@ extension on _TranslationsZhTw {
 			case 'settings.update.download.error.confirm': return '確定';
 			case 'settings.update.download.error.retry': return '重試';
 			case 'settings.update.download.complete.title': return '下載完成';
-			case 'settings.update.download.complete.message': return '已下載 Kazumi {version}。';
+			case 'settings.update.download.complete.message': return '已下載 haipee {version}。';
 			case 'settings.update.download.complete.quitNotice': return '應用程式將在安裝期間離開。';
 			case 'settings.update.download.complete.fileLocation': return '檔案儲存至';
 			case 'settings.update.download.complete.buttons.later': return '稍後';
@@ -12703,16 +12703,16 @@ extension on _TranslationsZhTw {
 			case 'settings.about.logs.toast.cleared': return '日誌已清除。';
 			case 'settings.about.logs.toast.clearFailed': return '清除日誌失敗。';
 			case 'exitDialog.title': return '結束確認';
-			case 'exitDialog.message': return '您想要結束 Kazumi 嗎？';
+			case 'exitDialog.message': return '您想要結束 haipee 嗎？';
 			case 'exitDialog.dontAskAgain': return '下次不要再詢問';
-			case 'exitDialog.exit': return '結束 Kazumi';
+			case 'exitDialog.exit': return '結束 haipee';
 			case 'exitDialog.minimize': return '最小化至系統匣';
 			case 'exitDialog.cancel': return '取消';
 			case 'tray.showWindow': return '顯示視窗';
-			case 'tray.exit': return '結束 Kazumi';
+			case 'tray.exit': return '結束 haipee';
 			case 'navigation.tabs.popular': return '熱門';
 			case 'navigation.tabs.catalog': return '資源分類';
-			case 'navigation.tabs.media': return '線上影片';
+			case 'navigation.tabs.media': return '視頻直播';
 			case 'navigation.tabs.resource': return '全網資源';
 			case 'navigation.tabs.timeline': return '時間表';
 			case 'navigation.tabs.my': return '媒體庫';
@@ -12736,11 +12736,11 @@ extension on _TranslationsZhTw {
 			case 'dialogs.cache.message': return '快取包含番劇封面，清除後載入時需要重新下載，確認要清除快取嗎？';
 			case 'library.common.emptyState': return '找不到內容';
 			case 'library.common.retry': return '點擊重試';
-			case 'library.common.backHint': return '再按一次以結束 Kazumi';
+			case 'library.common.backHint': return '再按一次以結束 haipee';
 			case 'library.common.toast.editMode': return '編輯模式已啟用。';
 			case 'library.popular.title': return '熱門番組';
 			case 'library.popular.allTag': return '全部';
-			case 'library.popular.toast.backPress': return '再按一次以結束 Kazumi';
+			case 'library.popular.toast.backPress': return '再按一次以結束 haipee';
 			case 'library.timeline.weekdays.mon': return '一';
 			case 'library.timeline.weekdays.tue': return '二';
 			case 'library.timeline.weekdays.wed': return '三';

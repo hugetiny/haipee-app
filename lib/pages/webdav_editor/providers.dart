@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/webdav.dart';
-import 'package:kazumi/providers/translations_provider.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/webdav.dart';
+import 'package:haipee/providers/translations_provider.dart';
 
 class WebDavSettingsState {
   final bool enableGitProxy;
   final bool webDavEnable;
   final bool webDavEnableHistory;
+  final bool webDavEnableCollect;
+  final bool webDavEnableDanmakuShield;
   final bool initialized;
   final bool isBusy;
 
@@ -14,6 +16,8 @@ class WebDavSettingsState {
     this.enableGitProxy = false,
     this.webDavEnable = false,
     this.webDavEnableHistory = false,
+    this.webDavEnableCollect = false,
+    this.webDavEnableDanmakuShield = false,
     this.initialized = false,
     this.isBusy = false,
   });
@@ -22,6 +26,8 @@ class WebDavSettingsState {
     bool? enableGitProxy,
     bool? webDavEnable,
     bool? webDavEnableHistory,
+    bool? webDavEnableCollect,
+    bool? webDavEnableDanmakuShield,
     bool? initialized,
     bool? isBusy,
   }) {
@@ -29,6 +35,9 @@ class WebDavSettingsState {
       enableGitProxy: enableGitProxy ?? this.enableGitProxy,
       webDavEnable: webDavEnable ?? this.webDavEnable,
       webDavEnableHistory: webDavEnableHistory ?? this.webDavEnableHistory,
+      webDavEnableCollect: webDavEnableCollect ?? this.webDavEnableCollect,
+      webDavEnableDanmakuShield:
+          webDavEnableDanmakuShield ?? this.webDavEnableDanmakuShield,
       initialized: initialized ?? this.initialized,
       isBusy: isBusy ?? this.isBusy,
     );
@@ -54,11 +63,19 @@ class WebDavSettingsController extends Notifier<WebDavSettingsState> {
         setting.get(SettingBoxKey.webDavEnable, defaultValue: false) as bool;
     final webDavEnableHistory = setting.get(SettingBoxKey.webDavEnableHistory,
         defaultValue: false) as bool;
+    final webDavEnableCollect = setting.get(SettingBoxKey.webDavEnableCollect,
+        defaultValue: false) as bool;
+    final webDavEnableDanmakuShield = setting.get(
+        SettingBoxKey.webDavEnableDanmakuShield,
+        defaultValue: false) as bool;
 
     return WebDavSettingsState(
       enableGitProxy: enableGitProxy,
       webDavEnable: webDavEnable,
       webDavEnableHistory: webDavEnable ? webDavEnableHistory : false,
+      webDavEnableCollect: webDavEnable ? webDavEnableCollect : false,
+      webDavEnableDanmakuShield:
+          webDavEnable ? webDavEnableDanmakuShield : false,
       initialized: true,
     );
   }
@@ -94,12 +111,17 @@ class WebDavSettingsController extends Notifier<WebDavSettingsState> {
 
     if (!value) {
       await setting.put(SettingBoxKey.webDavEnableHistory, false);
+      await setting.put(SettingBoxKey.webDavEnableCollect, false);
+      await setting.put(SettingBoxKey.webDavEnableDanmakuShield, false);
     }
 
     await setting.put(SettingBoxKey.webDavEnable, value);
     state = state.copyWith(
       webDavEnable: value,
       webDavEnableHistory: value ? state.webDavEnableHistory : false,
+      webDavEnableCollect: value ? state.webDavEnableCollect : false,
+      webDavEnableDanmakuShield:
+          value ? state.webDavEnableDanmakuShield : false,
     );
 
     return const WebDavActionResult(success: true, message: '');
@@ -118,6 +140,40 @@ class WebDavSettingsController extends Notifier<WebDavSettingsState> {
     final setting = GStorage.setting;
     await setting.put(SettingBoxKey.webDavEnableHistory, value);
     state = state.copyWith(webDavEnableHistory: value);
+
+    return const WebDavActionResult(success: true, message: '');
+  }
+
+  Future<WebDavActionResult> toggleWebDavCollect(bool value) async {
+    final t = ref.read(translationsProvider);
+    if (!state.webDavEnable) {
+      state = state.copyWith();
+      return WebDavActionResult(
+        success: false,
+        message: t.settings.webdav.result.requireEnable,
+      );
+    }
+
+    final setting = GStorage.setting;
+    await setting.put(SettingBoxKey.webDavEnableCollect, value);
+    state = state.copyWith(webDavEnableCollect: value);
+
+    return const WebDavActionResult(success: true, message: '');
+  }
+
+  Future<WebDavActionResult> toggleWebDavDanmakuShield(bool value) async {
+    final t = ref.read(translationsProvider);
+    if (!state.webDavEnable) {
+      state = state.copyWith();
+      return WebDavActionResult(
+        success: false,
+        message: t.settings.webdav.result.requireEnable,
+      );
+    }
+
+    final setting = GStorage.setting;
+    await setting.put(SettingBoxKey.webDavEnableDanmakuShield, value);
+    state = state.copyWith(webDavEnableDanmakuShield: value);
 
     return const WebDavActionResult(success: true, message: '');
   }
@@ -196,6 +252,102 @@ class WebDavSettingsController extends Notifier<WebDavSettingsState> {
 
       try {
         await webDav.downloadAndPatchHistory();
+        return WebDavActionResult(
+          success: true,
+          message: t.settings.webdav.result.syncSuccess,
+        );
+      } catch (e) {
+        return WebDavActionResult(
+          success: false,
+          message: t.settings.webdav.result.syncFailed
+              .replaceFirst('{error}', e.toString()),
+        );
+      }
+    } catch (e) {
+      return WebDavActionResult(
+        success: false,
+        message: t.settings.webdav.result.syncFailed
+            .replaceFirst('{error}', e.toString()),
+      );
+    } finally {
+      state = state.copyWith(isBusy: false);
+    }
+  }
+
+  Future<WebDavActionResult> syncCollectibles() async {
+    final t = ref.read(translationsProvider);
+    if (!state.webDavEnable) {
+      return WebDavActionResult(
+        success: false,
+        message: t.settings.webdav.result.disabled,
+      );
+    }
+
+    state = state.copyWith(isBusy: true);
+    try {
+      final webDav = WebDav();
+      if (!webDav.initialized) {
+        await webDav.init();
+      }
+      try {
+        await webDav.ping();
+      } catch (_) {
+        return WebDavActionResult(
+          success: false,
+          message: t.settings.webdav.result.connectionFailed,
+        );
+      }
+
+      try {
+        await webDav.syncCollectibles();
+        return WebDavActionResult(
+          success: true,
+          message: t.settings.webdav.result.syncSuccess,
+        );
+      } catch (e) {
+        return WebDavActionResult(
+          success: false,
+          message: t.settings.webdav.result.syncFailed
+              .replaceFirst('{error}', e.toString()),
+        );
+      }
+    } catch (e) {
+      return WebDavActionResult(
+        success: false,
+        message: t.settings.webdav.result.syncFailed
+            .replaceFirst('{error}', e.toString()),
+      );
+    } finally {
+      state = state.copyWith(isBusy: false);
+    }
+  }
+
+  Future<WebDavActionResult> updateCollectibles() async {
+    final t = ref.read(translationsProvider);
+    if (!state.webDavEnable) {
+      return WebDavActionResult(
+        success: false,
+        message: t.settings.webdav.result.disabled,
+      );
+    }
+
+    state = state.copyWith(isBusy: true);
+    try {
+      final webDav = WebDav();
+      if (!webDav.initialized) {
+        await webDav.init();
+      }
+      try {
+        await webDav.ping();
+      } catch (_) {
+        return WebDavActionResult(
+          success: false,
+          message: t.settings.webdav.result.connectionFailed,
+        );
+      }
+
+      try {
+        await webDav.updateCollectibles();
         return WebDavActionResult(
           success: true,
           message: t.settings.webdav.result.syncSuccess,

@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/download/download_file_utils.dart';
-import 'package:kazumi/modules/download/download_task.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/modules/download/download_task.dart';
 
 /// 任务详情对话框状态 Provider (family pattern for specific task)
 final taskDetailStateProvider =
@@ -566,7 +566,7 @@ class _DownloadTaskDetailDialogState
                         icon: const Icon(Icons.copy_rounded, size: 18),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: task.url));
-                          KazumiDialog.showToast(message: '已复制链接');
+                          HaipeeDialog.showToast(message: '已复制链接');
                         },
                         tooltip: '复制链接',
                       ),
@@ -592,7 +592,7 @@ class _DownloadTaskDetailDialogState
                         icon: const Icon(Icons.copy_rounded, size: 18),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: task.gid));
-                          KazumiDialog.showToast(message: '已复制 GID');
+                          HaipeeDialog.showToast(message: '已复制 GID');
                         },
                         tooltip: '复制 GID',
                       ),
@@ -755,7 +755,7 @@ class _DownloadTaskDetailDialogState
             content: displayDir,
             onCopy: () {
               Clipboard.setData(ClipboardData(text: displayDir));
-              KazumiDialog.showToast(message: '已复制保存目录');
+              HaipeeDialog.showToast(message: '已复制保存目录');
             },
           ),
           const SizedBox(height: 8),
@@ -767,7 +767,7 @@ class _DownloadTaskDetailDialogState
             content: displayPath,
             onCopy: () {
               Clipboard.setData(ClipboardData(text: displayPath));
-              KazumiDialog.showToast(message: '已复制完整路径');
+              HaipeeDialog.showToast(message: '已复制完整路径');
             },
           ),
 
@@ -780,7 +780,7 @@ class _DownloadTaskDetailDialogState
               content: detailState.fileName,
               onCopy: () {
                 Clipboard.setData(ClipboardData(text: detailState.fileName));
-                KazumiDialog.showToast(message: '已复制文件名');
+                HaipeeDialog.showToast(message: '已复制文件名');
               },
             ),
           ],

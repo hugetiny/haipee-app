@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
 
 void main() {
   final dir = Directory('prowlarr_indexers/definitions/v11');

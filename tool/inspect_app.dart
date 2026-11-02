@@ -1,9 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:vm_service/vm_service.dart';
 import 'package:vm_service/vm_service_io.dart';
 
-/// Kazumi Flutter VM Service Introspection CLI
+/// Haipee Flutter VM Service Introspection CLI
 /// 
 /// 允许 AI 代理和开发者无需截图即可：
 /// 1. 动态自省运行中 Flutter 应用的完整 Widget 树 (`--tree`)
@@ -30,6 +31,33 @@ void main(List<String> args) async {
     } else if (args[i] == '--find' && i + 1 < args.length) {
       command = 'find';
       findQuery = args[++i];
+    } else if (args[i] == '--failures') {
+      await _dumpParseFailures();
+      return;
+    } else if (args[i] == '--errors') {
+      int limit = 50;
+      if (i + 1 < args.length && int.tryParse(args[i + 1]) != null) {
+        limit = int.parse(args[++i]);
+      }
+      await _dumpErrors(limit, asJson: false);
+      return;
+    } else if (args[i] == '--errors-json') {
+      int limit = 50;
+      if (i + 1 < args.length && int.tryParse(args[i + 1]) != null) {
+        limit = int.parse(args[++i]);
+      }
+      await _dumpErrors(limit, asJson: true);
+      return;
+    } else if (args[i] == '--clear-logs') {
+      await _clearAllLogs();
+      return;
+    } else if (args[i] == '--logs') {
+      int limit = 50;
+      if (i + 1 < args.length && int.tryParse(args[i + 1]) != null) {
+        limit = int.parse(args[++i]);
+      }
+      await _dumpRecentLogs(limit);
+      return;
     }
   }
 
@@ -154,7 +182,7 @@ Future<void> _checkOverflow(VmService client, String isolateId) async {
     final res = await client.callServiceExtension(
       'ext.flutter.inspector.getRootWidgetSummaryTree',
       isolateId: isolateId,
-      args: {'objectGroup': 'kazumi_inspector'},
+      args: {'objectGroup': 'haipee_inspector'},
     );
     final treeJson = res.json?['result'];
     if (treeJson == null) {
@@ -199,7 +227,7 @@ Future<void> _dumpSummary(VmService client, String isolateId) async {
     final res = await client.callServiceExtension(
       'ext.flutter.inspector.getRootWidgetSummaryTree',
       isolateId: isolateId,
-      args: {'objectGroup': 'kazumi_inspector', 'groupName': 'kazumi_inspector'},
+      args: {'objectGroup': 'haipee_inspector', 'groupName': 'haipee_inspector'},
     );
     stdout.writeln('Keys in res.json: ${res.json?.keys.toList()}');
     final tree = res.json?['result'];
@@ -208,7 +236,7 @@ Future<void> _dumpSummary(VmService client, String isolateId) async {
       stdout.writeln('widgetType: ${tree['widgetType']}, description: ${tree['description']}');
       final children = tree['children'];
       stdout.writeln('children count: ${children is List ? children.length : 0}');
-      _printCompactTree(tree, indent: 0, maxDepth: 6);
+      _printCompactTree(tree, indent: 0, maxDepth: 40);
     } else {
       stdout.writeln('Result is not a Map: $tree');
     }
@@ -223,11 +251,11 @@ Future<void> _dumpWidgetTree(VmService client, String isolateId) async {
     final res = await client.callServiceExtension(
       'ext.flutter.inspector.getRootWidgetTree',
       isolateId: isolateId,
-      args: {'objectGroup': 'kazumi_inspector', 'groupName': 'kazumi_inspector'},
+      args: {'objectGroup': 'haipee_inspector', 'groupName': 'haipee_inspector'},
     );
     final tree = res.json?['result'];
     if (tree != null) {
-      _printCompactTree(tree, indent: 0, maxDepth: 12);
+      _printCompactTree(tree, indent: 0, maxDepth: 40);
     }
   } catch (e) {
     stderr.writeln('获取 Widget 树失败: $e');
@@ -240,7 +268,7 @@ Future<void> _findWidget(VmService client, String isolateId, String query) async
     final res = await client.callServiceExtension(
       'ext.flutter.inspector.getRootWidgetTree',
       isolateId: isolateId,
-      args: {'objectGroup': 'kazumi_inspector', 'groupName': 'kazumi_inspector'},
+      args: {'objectGroup': 'haipee_inspector', 'groupName': 'haipee_inspector'},
     );
     final tree = res.json?['result'];
     final matches = <Map<String, dynamic>>[];
@@ -293,7 +321,7 @@ void _searchTree(dynamic node, String query, List<Map<String, dynamic>> matches)
   }
 }
 
-void _printCompactTree(dynamic node, {int indent = 0, int maxDepth = 6}) {
+void _printCompactTree(dynamic node, {int indent = 0, int maxDepth = 40}) {
   if (node is! Map || indent > maxDepth) return;
   final type = node['widgetRuntimeType']?.toString() ?? node['type']?.toString();
   final desc = node['description']?.toString() ?? '';
@@ -326,7 +354,7 @@ bool _isBoilerplateWidget(String type) {
 
 Future<String?> _autoDiscoverVmServiceUri() async {
   final regExp = RegExp(r'ws://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/ws');
-  final httpRegExp = RegExp(r'http://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/');
+  final vmNoticeRegExp = RegExp(r'Dart VM Service.*?http://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/');
 
   final brainDir = Directory('/Users/a12/.gemini/antigravity-cli/brain');
   if (await brainDir.exists()) {
@@ -343,17 +371,200 @@ Future<String?> _autoDiscoverVmServiceUri() async {
       try {
         final lines = await file.readAsLines();
         for (final line in lines.reversed) {
-          final match = regExp.firstMatch(line);
-          if (match != null) {
-            return match.group(0);
+          final vmMatch = vmNoticeRegExp.firstMatch(line);
+          if (vmMatch != null) {
+            return 'ws://127.0.0.1:${vmMatch.group(1)}/${vmMatch.group(2)}/ws';
           }
-          final httpMatch = httpRegExp.firstMatch(line);
-          if (httpMatch != null) {
-            return 'ws://127.0.0.1:${httpMatch.group(1)}/${httpMatch.group(2)}/ws';
+          final match = regExp.firstMatch(line);
+          if (match != null && !line.contains('/stream/')) {
+            return match.group(0);
           }
         }
       } catch (_) {}
     }
   }
   return null;
+}
+
+File? _findHaipeeLogFile() {
+  final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '';
+  final candidateDirs = [
+    '$home/Library/Application Support/com.example.haipee/logs',
+    '$home/Library/Application Support/haipee/logs',
+    '$home/.local/share/haipee/logs',
+    '${Platform.environment['APPDATA']}/haipee/logs',
+  ];
+  for (final dirStr in candidateDirs) {
+    final file = File('$dirStr/haipee.log');
+    if (file.existsSync()) {
+      return file;
+    }
+  }
+  return null;
+}
+
+Future<void> _dumpParseFailures() async {
+  final file = _findHaipeeLogFile();
+  if (file == null) {
+    stderr.writeln('❌ 未找到本地 haipee.log 日志文件');
+    exit(1);
+  }
+  stdout.writeln('📋 从 ${file.path} 检索解析失败相关日志:\n');
+  final lines = await file.readAsLines();
+  final failures = lines.where((l) => 
+    l.contains('解析失败') || 
+    l.contains('嗅探超时') || 
+    l.contains('解析视频资源超时') ||
+    l.contains('[STREAM] 视频资源解析失败')
+  ).toList();
+
+  if (failures.isEmpty) {
+    stdout.writeln('✨ 暂无任何解析失败记录。');
+  } else {
+    for (final f in failures.reversed.take(30).toList().reversed) {
+      stdout.writeln(f);
+    }
+    stdout.writeln('\n总计检索到 ${failures.length} 条解析失败事件。');
+  }
+}
+
+Future<void> _dumpRecentLogs(int limit) async {
+  final file = _findHaipeeLogFile();
+  if (file == null) {
+    stderr.writeln('❌ 未找到本地 haipee.log 日志文件');
+    exit(1);
+  }
+  stdout.writeln('📋 最近 $limit 条日志 (${file.path}):\n');
+  final lines = await file.readAsLines();
+  final recent = lines.length > limit ? lines.sublist(lines.length - limit) : lines;
+  for (final line in recent) {
+    stdout.writeln(line);
+  }
+}
+
+Future<void> _dumpErrors(int limit, {required bool asJson}) async {
+  final file = _findHaipeeLogFile();
+  if (file == null) {
+    if (asJson) {
+      stdout.writeln('[]');
+    } else {
+      stderr.writeln('❌ 未找到本地 haipee.log 日志文件');
+    }
+    return;
+  }
+
+  final lines = await file.readAsLines();
+  final headerRegExp = RegExp(
+    r'^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\] \[(ERROR|EXCEPTION|WARNING|CRITICAL)\] \[([^\]]+)\] (.*)$',
+  );
+
+  final List<Map<String, dynamic>> errorEntries = [];
+  Map<String, dynamic>? currentEntry;
+
+  for (final line in lines) {
+    final match = headerRegExp.firstMatch(line);
+    if (match != null) {
+      if (currentEntry != null) {
+        errorEntries.add(currentEntry);
+      }
+      final timestamp = match.group(1)!;
+      final level = match.group(2)!;
+      final module = match.group(3)!;
+      final message = match.group(4)!;
+      currentEntry = {
+        'timestamp': timestamp,
+        'level': level,
+        'module': module,
+        'message': message,
+      };
+    } else if (currentEntry != null) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('Diagnostic:')) {
+        final diagStr = trimmed.substring('Diagnostic:'.length).trim();
+        final diagCodeMatch = RegExp(r'^\[([^\]]+)\]\s*(.*)$').firstMatch(diagStr);
+        if (diagCodeMatch != null) {
+          currentEntry['diagnosticCode'] = diagCodeMatch.group(1);
+          currentEntry['diagnosticTitle'] = diagCodeMatch.group(2);
+        } else {
+          currentEntry['diagnostic'] = diagStr;
+        }
+      } else if (trimmed.startsWith('Explanation:')) {
+        currentEntry['explanation'] = trimmed.substring('Explanation:'.length).trim();
+      } else if (trimmed.startsWith('Action:')) {
+        currentEntry['action'] = trimmed.substring('Action:'.length).trim();
+      } else if (trimmed.startsWith('Error:')) {
+        currentEntry['error'] = trimmed.substring('Error:'.length).trim();
+      } else if (line.startsWith('    ') || line.startsWith('\t')) {
+        currentEntry['details'] = (currentEntry['details'] != null ? '${currentEntry['details']}\n' : '') + trimmed;
+      } else if (line.startsWith('[') && !headerRegExp.hasMatch(line)) {
+        errorEntries.add(currentEntry);
+        currentEntry = null;
+      }
+    }
+  }
+  if (currentEntry != null) {
+    errorEntries.add(currentEntry);
+  }
+
+  final recent = errorEntries.length > limit
+      ? errorEntries.sublist(errorEntries.length - limit)
+      : errorEntries;
+
+  if (asJson) {
+    stdout.writeln(const JsonEncoder.withIndent('  ').convert(recent));
+    return;
+  }
+
+  stdout.writeln('📋 Haipee 异常与错误自省诊断报告 (共 ${errorEntries.length} 条，展示最近 ${recent.length} 条):\n');
+  if (recent.isEmpty) {
+    stdout.writeln('✨ 完美！未检测到任何近期异常或错误记录。');
+    return;
+  }
+
+  for (final err in recent) {
+    final ts = err['timestamp'];
+    final lvl = err['level'];
+    final mod = err['module'];
+    final msg = err['message'];
+    stdout.writeln('🚨 [$ts] [$lvl] [$mod] $msg');
+    if (err.containsKey('diagnosticCode')) {
+      stdout.writeln('   ├─ 诊断代号: [${err['diagnosticCode']}] ${err['diagnosticTitle']}');
+    }
+    if (err.containsKey('explanation')) {
+      stdout.writeln('   ├─ 根因剖析: ${err['explanation']}');
+    }
+    if (err.containsKey('action')) {
+      stdout.writeln('   ├─ 建议操作: ${err['action']}');
+    }
+    if (err.containsKey('error')) {
+      stdout.writeln('   ├─ 底层错误: ${err['error']}');
+    }
+    stdout.writeln('   └────────────────────────────────────────');
+  }
+}
+
+Future<void> _clearAllLogs() async {
+  final file = _findHaipeeLogFile();
+  if (file == null) {
+    stderr.writeln('❌ 未找到本地 haipee.log 日志文件');
+    return;
+  }
+  final dir = file.parent;
+  int count = 0;
+  if (dir.existsSync()) {
+    for (final f in dir.listSync().whereType<File>()) {
+      if (f.path.contains('kazumi') && f.path.endsWith('.log')) {
+        try {
+          f.deleteSync();
+          count++;
+        } catch (_) {
+          try {
+            f.writeAsStringSync('');
+            count++;
+          } catch (_) {}
+        }
+      }
+    }
+  }
+  stdout.writeln('✅ 已成功清理 $count 个本地日志文件 (${dir.path})。');
 }

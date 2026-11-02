@@ -1,10 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/card/network_img_layer.dart';
-import 'package:kazumi/bean/widget/responsive/responsive.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/router_constants.dart';
+import 'package:haipee/bean/card/network_img_layer.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/router_constants.dart';
 
 /// 首页焦点推荐轮播组件 (Material 3 原生 CarouselView)
 class PopularHeroCarousel extends StatelessWidget {

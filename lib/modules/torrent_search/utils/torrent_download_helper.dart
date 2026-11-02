@@ -1,17 +1,17 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/torrent_search/parser/torrent_file_parser.dart';
-import 'package:kazumi/modules/torrent_stream/torrent_stream_service.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/modules/torrent_search/parser/torrent_file_parser.dart';
+import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// 种子文件极速网络下载与本地持久化辅助类
 class TorrentDownloadHelper {
-  static final KazumiLogger _logger = KazumiLogger();
+  static final HaipeeLogger _logger = HaipeeLogger();
 
   /// 极速下载 .torrent 种子文件字节流（默认 4 秒快速超时，若失败由上层平滑降级至磁力 DHT）
   static Future<Uint8List?> fetchTorrentBytes(

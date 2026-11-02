@@ -1,4 +1,4 @@
-import 'package:kazumi/modules/comments/comment_item.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
 
 class CommentResponse {
   List<CommentItem> commentList;

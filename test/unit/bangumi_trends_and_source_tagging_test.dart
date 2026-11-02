@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/card/bangumi_card.dart';
-import 'package:kazumi/bean/card/bangumi_info_card.dart';
-import 'package:kazumi/bean/card/bangumi_timeline_card.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/request/config/api_endpoints.dart';
-import 'package:kazumi/request/core/bangumi_transport.dart';
-import 'package:kazumi/services/network/bangumi_acceleration.dart';
-import 'package:kazumi/modules/collect/collect_module.dart';
-import 'package:kazumi/services/storage/storage.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/card/bangumi_card.dart';
+import 'package:haipee/bean/card/bangumi_info_card.dart';
+import 'package:haipee/bean/card/bangumi_timeline_card.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/request/config/api_endpoints.dart';
+import 'package:haipee/request/core/bangumi_transport.dart';
+import 'package:haipee/services/network/bangumi_acceleration.dart';
+import 'package:haipee/modules/collect/collect_module.dart';
+import 'package:haipee/services/storage/storage.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

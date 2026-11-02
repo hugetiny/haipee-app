@@ -8,7 +8,7 @@
 
 ## 多语言支持
 
-Kazumi 现已支持多语言界面！
+Haipee 现已支持多语言界面！
 
 ### 支持的语言
 - 🇨🇳 简体中文 (zh-CN) - 基础语言
@@ -20,7 +20,7 @@ Kazumi 现已支持多语言界面！
 设置 → 通用 → 应用语言
 
 ### 贡献翻译
-欢迎为 Kazumi 贡献翻译！详见 [国际化文档](docs/i18n.md)。
+欢迎为 Haipee 贡献翻译！详见 [国际化文档](docs/i18n.md)。
 
 
 ## 支持平台
@@ -50,15 +50,15 @@ Kazumi 现已支持多语言界面！
 
 ## 下载
 
-通过本页面 [releases](https://github.com/Predidit/Kazumi/releases) 选项卡下载：
+通过本页面 [releases](https://github.com/hugetiny/haipee/releases) 选项卡下载：
 
-<a href="https://github.com/Predidit/Kazumi/releases">
+<a href="https://github.com/hugetiny/haipee/releases">
   <img src="static/svg/get_it_on_github.svg" alt="Get it on Github" width="200"/>
 </a>
 
 ### Android
 
-<a href="https://f-droid.org/packages/com.predidit.kazumi">
+<a href="https://f-droid.org/packages/com.hugetiny.haipee">
   <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-en-us.svg"
   alt="Get it on F-Droid" width="200">
 </a>
@@ -66,7 +66,7 @@ Kazumi 现已支持多语言界面！
 ### GNU/Linux
 
 &nbsp;&nbsp;
-<a href="https://flathub.org/apps/io.github.Predidit.Kazumi">
+<a href="https://flathub.org/apps/io.github.hugetiny.haipee">
   <img src="https://flathub.org/api/badge?svg&locale=en" alt="Get it on Flathub" width="175"/>
 </a>
 
@@ -77,14 +77,14 @@ Kazumi 现已支持多语言界面！
 ##### AUR
 
 ```bash
-[yay/paru] -S kazumi # 从源码构建
-[yay/paru] -S kazumi-bin # 二进制包
+[yay/paru] -S haipee # 从源码构建
+[yay/paru] -S haipee-bin # 二进制包
 ```
 
 ##### archlinuxcn
 
 ```bash
-sudo pacman -S kazumi
+sudo pacman -S haipee
 ```
 
 ## 贡献
@@ -102,7 +102,7 @@ A: 本项目未插入任何广告。广告来自视频源, 请不要相信广告
 
 #### Q: 为什么我启用超分辨率功能后播放卡顿？
 
-A: 超分辨率功能对 GPU 性能要求较高, 如果没有在高性能独立显卡上运行 Kazumi, 尽量选择效率档而非质量档。对低分辨率视频源而非高分辨率视频源使用超分也可以降低性能消耗。
+A: 超分辨率功能对 GPU 性能要求较高, 如果没有在高性能独立显卡上运行 Haipee, 尽量选择效率档而非质量档。对低分辨率视频源而非高分辨率视频源使用超分也可以降低性能消耗。
 
 #### Q: 为什么播放视频时内存占用较高？
 
@@ -110,7 +110,7 @@ A: 本程序在视频播放时, 会尽可能多地缓存视频到内存, 以提�
 
 #### Q: 为什么少数番剧无法通过外部播放器观看？
 
-A: 部分视频源的番剧使用了反盗链措施, 这可以被 Kazumi 解决, 但无法被外部播放器解决。
+A: 部分视频源的番剧使用了反盗链措施, 这可以被 Haipee 解决, 但无法被外部播放器解决。
 
 #### Q: 为什么下载的 Linux 版本缺少图标和托盘功能？
 
@@ -157,7 +157,7 @@ A: 本项目编译需要良好的网络环境, 除了由 Google 托管的 Flutte
 我们不收集任何用户数据, 不使用任何遥测组件。
 
 ## 代码签名策略 (Code signing policy)
-提交者: [Contributors](https://github.com/Predidit/Kazumi/graphs/contributors)
+提交者: [Contributors](https://github.com/hugetiny/haipee/graphs/contributors)
 审阅者: [Owner](https://github.com/Predidit)
 
 ## 赞助 (Sponsors)

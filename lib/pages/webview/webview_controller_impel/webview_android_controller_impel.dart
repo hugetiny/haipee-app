@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/pages/webview/webview_controller.dart';
+import 'dart:collection';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/pages/webview/webview_controller.dart';
 import 'package:flutter_inappwebview_platform_interface/flutter_inappwebview_platform_interface.dart';
-import 'package:logger/logger.dart';
 
 class WebviewAndroidItemControllerImpel
     extends WebviewItemController<PlatformInAppWebViewController> {
@@ -21,9 +22,22 @@ class WebviewAndroidItemControllerImpel
     }
     headlessWebView ??= PlatformHeadlessInAppWebView(
       PlatformHeadlessInAppWebViewCreationParams(
+        initialUserScripts: UnmodifiableListView<UserScript>([
+          UserScript(
+            source: '''
+            (function() {
+              window.alert = function(msg) { console.warn('[Sniffer JS Alert suppressed]:', msg); };
+              window.confirm = function(msg) { console.warn('[Sniffer JS Confirm suppressed]:', msg); return true; };
+              window.prompt = function(msg, defaultText) { console.warn('[Sniffer JS Prompt suppressed]:', msg); return defaultText || ''; };
+            })();
+            ''',
+            injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+          ),
+        ]),
         initialSettings: InAppWebViewSettings(
           userAgent: Utils.getRandomUA(),
           mediaPlaybackRequiresUserGesture: true,
+          javaScriptCanOpenWindowsAutomatically: false,
           cacheEnabled: false,
           blockNetworkImage: true,
           loadsImagesAutomatically: false,
@@ -33,7 +47,7 @@ class WebviewAndroidItemControllerImpel
           geolocationEnabled: false,
         ),
         onWebViewCreated: (controller) {
-          KazumiLogger().log(Level.info, '[WebView] Created');
+          AppLog.i(LogModule.stream, '[WebView] Created');
           webviewController = controller;
           initEventController.add(true);
         },
@@ -45,6 +59,37 @@ class WebviewAndroidItemControllerImpel
         },
         onLoadStop: (controller, url) {
           logEventController.add('loading completed: $url');
+        },
+        onJsAlert: (controller, jsAlertRequest) async {
+          AppLog.w(LogModule.stream,
+              '[WebView Alert 拦截]: ${jsAlertRequest.message} (url: ${jsAlertRequest.url})');
+          return JsAlertResponse(
+            handledByClient: true,
+            action: JsAlertResponseAction.CONFIRM,
+          );
+        },
+        onJsConfirm: (controller, jsConfirmRequest) async {
+          AppLog.w(LogModule.stream,
+              '[WebView Confirm 拦截]: ${jsConfirmRequest.message} (url: ${jsConfirmRequest.url})');
+          return JsConfirmResponse(
+            handledByClient: true,
+            action: JsConfirmResponseAction.CONFIRM,
+          );
+        },
+        onJsPrompt: (controller, jsPromptRequest) async {
+          AppLog.w(LogModule.stream,
+              '[WebView Prompt 拦截]: ${jsPromptRequest.message} (url: ${jsPromptRequest.url})');
+          return JsPromptResponse(
+            handledByClient: true,
+            action: JsPromptResponseAction.CONFIRM,
+            value: '',
+          );
+        },
+        onJsBeforeUnload: (controller, jsBeforeUnloadRequest) async {
+          return JsBeforeUnloadResponse(
+            handledByClient: true,
+            action: JsBeforeUnloadResponseAction.CONFIRM,
+          );
         },
       ),
     );
@@ -92,6 +137,10 @@ class WebviewAndroidItemControllerImpel
           logEventController.add('❌ 解析视频资源超时');
           logEventController.add('💡 请切换到其他播放列表或视频源');
           logEventController.add('showDebug');
+          AppLog.w(
+            LogModule.stream,
+            'Android WebView 视频资源嗅探超时 (30s): 目标地址=$url',
+          );
         }
       }
     });
@@ -302,8 +351,8 @@ class WebviewAndroidItemControllerImpel
             medias[m].volume = 0;
           }
         } catch(e) {}
-        if (!window.__kazumi_mute_listener) {
-          window.__kazumi_mute_listener = true;
+        if (!window.__haipee_mute_listener) {
+          window.__haipee_mute_listener = true;
           document.addEventListener('play', function(e) {
             try {
               if (e.target && (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO')) {

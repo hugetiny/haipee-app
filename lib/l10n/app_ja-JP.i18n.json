@@ -1,7 +1,7 @@
 {
   "@@locale": "ja-JP",
   "app": {
-    "title": "Kazumi",
+    "title": "haipee",
     "loading": "読み込み中…",
     "retry": "再試行",
     "confirm": "確認",
@@ -19,7 +19,7 @@
   },
   "downloads": {
     "sectionTitle": "ダウンロードキュー",
-    "aria2Offline": "aria2が接続されていません",
+    "downloadOffline": "ダウンロードエンジンが接続されていません",
     "queued": "キューに追加",
     "running": "ダウンロード中",
     "completed": "完了"
@@ -47,7 +47,7 @@
       "languageDesc": "アプリインターフェースの表示言語を選択",
       "followSystem": "システム",
       "exitBehavior": "閉じる際",
-      "exitApp": "Kazumiを終了",
+      "exitApp": "haipeeを終了",
       "minimizeToTray": "トレイに最小化",
       "askEveryTime": "毎回確認"
     },
@@ -152,7 +152,7 @@
         "repoMissing": "リポジトリにこのルールは含まれていません。",
         "alreadyLatest": "ルールは既に最新です。",
         "updateSuccess": "更新に成功しました。",
-        "updateIncompatible": "Kazumi のバージョンが古いため、このルールは互換性がありません。",
+        "updateIncompatible": "haipee のバージョンが古いため、このルールは互換性がありません。",
         "updateFailed": "ルールの更新に失敗しました。",
         "copySuccess": "クリップボードにコピーしました。"
       },
@@ -432,7 +432,7 @@
         },
         "complete": {
           "title": "ダウンロード完了",
-          "message": "Kazumi {version} がダウンロードされました。",
+          "message": "haipee {version} がダウンロードされました。",
           "quitNotice": "アプリのインストール中に終了します。",
           "fileLocation": "ファイルは次に保存されました",
           "buttons": {
@@ -487,15 +487,15 @@
   },
   "exitDialog": {
     "title": "終了の確認",
-    "message": "Kazumiを終了しますか？",
+    "message": "haipeeを終了しますか？",
     "dontAskAgain": "次回から聞かない",
-    "exit": "Kazumiを終了",
+    "exit": "haipeeを終了",
     "minimize": "トレイに最小化",
     "cancel": "キャンセル"
   },
   "tray": {
     "showWindow": "ウィンドウを表示",
-    "exit": "Kazumiを終了"
+    "exit": "haipeeを終了"
   },
   "navigation": {
     "tabs": {
@@ -547,7 +547,7 @@
     "common": {
       "emptyState": "コンテンツが見つかりません",
       "retry": "タップして再試行",
-      "backHint": "Kazumiを終了するにはバックボタンを再度押してください",
+      "backHint": "haipeeを終了するにはバックボタンを再度押してください",
       "toast": {
         "editMode": "編集モードが有効になりました。"
       }
@@ -556,7 +556,7 @@
       "title": "人気",
       "allTag": "すべて",
       "toast": {
-        "backPress": "Kazumiを終了するにはバックボタンを再度押してください"
+        "backPress": "haipeeを終了するにはバックボタンを再度押してください"
       }
     },
     "timeline": {

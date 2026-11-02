@@ -4,11 +4,11 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:ech_http/ech_http.dart';
 import 'package:http/http.dart' as http;
-import 'package:kazumi/request/config/api_endpoints.dart';
-import 'package:kazumi/request/core/network_config.dart';
-import 'package:kazumi/services/logging/logger.dart';
-import 'package:kazumi/services/network/bangumi_acceleration.dart';
-import 'package:kazumi/services/network/bangumi_ech_resolver.dart';
+import 'package:haipee/request/config/api_endpoints.dart';
+import 'package:haipee/request/core/network_config.dart';
+import 'package:haipee/services/logging/logger.dart';
+import 'package:haipee/services/network/bangumi_acceleration.dart';
+import 'package:haipee/services/network/bangumi_ech_resolver.dart';
 
 const _echRequestKey = 'bangumiEch';
 
@@ -37,7 +37,7 @@ class BangumiAccelerationInterceptor extends Interceptor {
                 mirrorPath +
                 (uri.hasQuery ? '?${uri.query}' : '');
             options.queryParameters = {};
-            KazumiLogger().d('Bangumi mirror: ${options.path}');
+            HaipeeLogger().d('Bangumi mirror: ${options.path}');
           }
       }
     }

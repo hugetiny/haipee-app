@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/modules/comments/comment_item.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/modules/comments/comment_item.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 

@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:kazumi/request/core/dio_factory.dart';
-import 'package:kazumi/services/logging/logger.dart';
-import 'package:kazumi/services/network/proxy_aware_image_cache_manager.dart';
+import 'package:haipee/request/core/dio_factory.dart';
+import 'package:haipee/services/logging/logger.dart';
+import 'package:haipee/services/network/proxy_aware_image_cache_manager.dart';
 
 // WebView proxies are configured separately by their platform controllers.
 class ProxyManager {
@@ -10,13 +10,13 @@ class ProxyManager {
   static void applyProxy() {
     DioFactory.reset();
     _applyImageCacheManager();
-    KazumiLogger().i('Proxy: 网络客户端配置已刷新');
+    HaipeeLogger().i('Proxy: 网络客户端配置已刷新');
   }
 
   static void clearProxy() {
     DioFactory.reset();
     _applyImageCacheManager();
-    KazumiLogger().i('Proxy: 网络客户端代理已清除');
+    HaipeeLogger().i('Proxy: 网络客户端代理已清除');
   }
 
   static void _applyImageCacheManager() {

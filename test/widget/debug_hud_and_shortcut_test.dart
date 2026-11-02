@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/services/logging/app_log.dart';
-import 'package:kazumi/services/logging/debug_hud_overlay.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/debug_hud_overlay.dart';
 
 void main() {
   group('DebugHudOverlay & Shortcut Tests', () {
@@ -14,13 +14,13 @@ void main() {
         const MaterialApp(
           home: DebugHudOverlay(
             child: Scaffold(
-              body: Text('Hello Kazumi'),
+              body: Text('Hello Haipee'),
             ),
           ),
         ),
       );
 
-      expect(find.text('Hello Kazumi'), findsOneWidget);
+      expect(find.text('Hello Haipee'), findsOneWidget);
       expect(find.text('DevLog'), findsNothing);
     });
 
@@ -33,7 +33,7 @@ void main() {
         const MaterialApp(
           home: DebugHudOverlay(
             child: Scaffold(
-              body: Text('Hello Kazumi'),
+              body: Text('Hello Haipee'),
             ),
           ),
         ),
@@ -54,7 +54,7 @@ void main() {
         const MaterialApp(
           home: DebugHudOverlay(
             child: Scaffold(
-              body: Text('Hello Kazumi'),
+              body: Text('Hello Haipee'),
             ),
           ),
         ),
@@ -72,7 +72,7 @@ void main() {
         const MaterialApp(
           home: DebugHudOverlay(
             child: Scaffold(
-              body: Text('Hello Kazumi'),
+              body: Text('Hello Haipee'),
             ),
           ),
         ),

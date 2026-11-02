@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/danmaku/danmaku_title_cleaner.dart';
+import 'package:haipee/modules/danmaku/danmaku_title_cleaner.dart';
 
 void main() {
   group('DanmakuTitleCleaner - extractCleanTitle', () {

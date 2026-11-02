@@ -1,4 +1,4 @@
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
 
 class Api {
   /// 当前版本
@@ -8,21 +8,21 @@ class Api {
   static const int apiLevel = 10;
 
   /// 项目主页
-  static const String projectUrl = "https://kazumi.app/";
+  static const String projectUrl = "https://haipee.app/";
 
   /// Github 项目主页
-  static const String sourceUrl = "https://github.com/hugetiny/Kazumi";
+  static const String sourceUrl = "https://github.com/hugetiny/haipee";
 
   /// 图标作者
   static const String iconUrl = "https://www.pixiv.net/users/66219277";
 
   /// 规则仓库
   static const String pluginShop =
-      'https://raw.githubusercontent.com/hugetiny/Kazumi/main/plugins/';
+      'https://raw.githubusercontent.com/Predidit/KazumiRules/main/';
 
   /// 在线升级
   static const String latestApp =
-      'https://api.github.com/repos/hugetiny/Kazumi/releases/latest';
+      'https://api.github.com/repos/hugetiny/haipee/releases/latest';
 
   /// Github镜像 (动态读取用户配置的生效代理地址)
   static String get gitMirror => GitProxyInterceptor.getEffectiveProxyUrl();

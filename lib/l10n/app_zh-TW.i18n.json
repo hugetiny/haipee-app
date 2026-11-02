@@ -1,7 +1,7 @@
 {
     "@@locale": "zh-TW",
     "app": {
-        "title": "Kazumi",
+        "title": "haipee",
         "loading": "載入中…",
         "retry": "重試",
         "confirm": "確認",
@@ -19,7 +19,7 @@
     },
     "downloads": {
         "sectionTitle": "下載佇列",
-        "aria2Offline": "aria2 未連線",
+        "downloadOffline": "下載引擎未連線",
         "queued": "排隊中",
         "running": "下載中",
         "completed": "已完成"
@@ -47,7 +47,7 @@
             "languageDesc": "選擇應用程式介面的顯示語言",
             "followSystem": "系統",
             "exitBehavior": "關閉時",
-            "exitApp": "結束 Kazumi",
+            "exitApp": "結束 haipee",
             "minimizeToTray": "最小化至系統匣",
             "askEveryTime": "每次詢問"
         },
@@ -152,7 +152,7 @@
                 "repoMissing": "儲存庫中沒有此規則。",
                 "alreadyLatest": "規則已經是最新的。",
                 "updateSuccess": "更新成功。",
-                "updateIncompatible": "Kazumi 版本過舊；此規則不相容。",
+                "updateIncompatible": "haipee 版本過舊；此規則不相容。",
                 "updateFailed": "規則更新失敗。",
                 "copySuccess": "已複製到剪貼簿。"
             },
@@ -432,7 +432,7 @@
                 },
                 "complete": {
                     "title": "下載完成",
-                    "message": "已下載 Kazumi {version}。",
+                    "message": "已下載 haipee {version}。",
                     "quitNotice": "應用程式將在安裝期間離開。",
                     "fileLocation": "檔案儲存至",
                     "buttons": {
@@ -487,21 +487,21 @@
     },
     "exitDialog": {
         "title": "結束確認",
-        "message": "您想要結束 Kazumi 嗎？",
+        "message": "您想要結束 haipee 嗎？",
         "dontAskAgain": "下次不要再詢問",
-        "exit": "結束 Kazumi",
+        "exit": "結束 haipee",
         "minimize": "最小化至系統匣",
         "cancel": "取消"
     },
     "tray": {
         "showWindow": "顯示視窗",
-        "exit": "結束 Kazumi"
+        "exit": "結束 haipee"
     },
     "navigation": {
         "tabs": {
             "popular": "熱門",
             "catalog": "資源分類",
-            "media": "線上影片",
+            "media": "視頻直播",
             "resource": "全網資源",
             "timeline": "時間表",
             "my": "媒體庫",
@@ -547,7 +547,7 @@
         "common": {
             "emptyState": "找不到內容",
             "retry": "點擊重試",
-            "backHint": "再按一次以結束 Kazumi",
+            "backHint": "再按一次以結束 haipee",
             "toast": {
                 "editMode": "編輯模式已啟用。"
             }
@@ -556,7 +556,7 @@
             "title": "熱門番組",
             "allTag": "全部",
             "toast": {
-                "backPress": "再按一次以結束 Kazumi"
+                "backPress": "再按一次以結束 haipee"
             }
         },
         "timeline": {

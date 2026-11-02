@@ -1,14 +1,14 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/download/download_file_utils.dart';
-import 'package:kazumi/modules/download/download_task.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/modules/download/download_task.dart';
 
 void main() {
   group('DownloadFileUtils.validateDownloadedContent', () {
     late Directory tempDir;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('kazumi_download_test_');
+      tempDir = await Directory.systemTemp.createTemp('haipee_download_test_');
     });
 
     tearDown(() async {
@@ -211,7 +211,7 @@ void main() {
     late Directory tempDir;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('kazumi_del_test_');
+      tempDir = await Directory.systemTemp.createTemp('haipee_del_test_');
     });
 
     tearDown(() async {
@@ -220,21 +220,21 @@ void main() {
       }
     });
 
-    test('should delete both downloaded file and aria2 control file', () async {
+    test('should delete both downloaded file and temp companion file', () async {
       final targetFile = File('${tempDir.path}/download.mp4');
-      final aria2File = File('${tempDir.path}/download.mp4.aria2');
+      final tmpFile = File('${tempDir.path}/download.mp4.tmp');
 
       targetFile.writeAsStringSync('dummy content');
-      aria2File.writeAsStringSync('aria2 control file');
+      tmpFile.writeAsStringSync('temporary part file');
 
       expect(targetFile.existsSync(), isTrue);
-      expect(aria2File.existsSync(), isTrue);
+      expect(tmpFile.existsSync(), isTrue);
 
       final deleted = await DownloadFileUtils.deleteDownloadedFile(targetFile.path);
 
       expect(deleted, isTrue);
       expect(targetFile.existsSync(), isFalse);
-      expect(aria2File.existsSync(), isFalse);
+      expect(tmpFile.existsSync(), isFalse);
     });
   });
 }

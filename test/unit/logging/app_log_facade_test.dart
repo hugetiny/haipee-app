@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:logger/logger.dart' show Level;
-import 'package:kazumi/services/logging/app_log.dart';
-import 'package:kazumi/services/logging/log_module.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +44,7 @@ void main() {
       AppLog.resetErrorCount();
       expect(AppLog.errorCount, equals(0));
 
-      AppLog.i(LogModule.aria2, 'Aria2 initialized');
+      AppLog.i(LogModule.gopeed, 'Gopeed initialized');
       AppLog.d(LogModule.player, 'Player frame updated');
       AppLog.w(LogModule.indexer, 'Indexer returned empty');
 
@@ -57,9 +57,9 @@ void main() {
       expect(AppLog.errorCount, equals(2));
     });
 
-    test('KazumiLogger backward-compatible bridge works seamlessly', () {
+    test('HaipeeLogger backward-compatible bridge works seamlessly', () {
       AppLog.resetErrorCount();
-      final logger = KazumiLogger();
+      final logger = HaipeeLogger();
 
       logger.log(Level.info, '[Aria2] Task added');
       logger.log(Level.warning, '[TorrentStreamService] Torrent slow');
@@ -71,7 +71,7 @@ void main() {
     test('exportDiagnostics generates structured diagnosis report', () async {
       final report = await AppLog.exportDiagnostics();
 
-      expect(report, contains('KAZUMI SYSTEM DIAGNOSTICS REPORT'));
+      expect(report, contains('HAIPEE SYSTEM DIAGNOSTICS REPORT'));
       expect(report, contains('App Version:'));
       expect(report, contains('Timestamp:'));
       expect(report, contains('Platform:'));
@@ -137,6 +137,76 @@ void main() {
           } catch (_) {}
         }
       }
+    });
+
+    test('LogEnricher.analyze transforms cryptic error codes into structured diagnostics', () {
+      final diagExit1 = LogEnricher.analyze('Process failed with ERROR 1');
+      expect(diagExit1, isNotNull);
+      expect(diagExit1!.code, equals('ERR_SUBPROCESS_EXIT_1'));
+      expect(diagExit1.explanation, contains('代码 1'));
+      expect(diagExit1.remediation, contains('重试'));
+
+      final diagExit5 = LogEnricher.analyze('File read failed: errno = 5');
+      expect(diagExit5, isNotNull);
+      expect(diagExit5!.code, equals('ERR_IO_FAILURE_EIO'));
+      expect(diagExit5.explanation, contains('I/O'));
+
+      final diagFormat = LogEnricher.analyze('Player error: Failed to recognize file format');
+      expect(diagFormat, isNotNull);
+      expect(diagFormat!.code, equals('ERR_MEDIA_UNKNOWN_FORMAT'));
+      expect(diagFormat.remediation, contains('useWebview'));
+
+      final diag403 = LogEnricher.analyze('Network request failed: 403 Forbidden');
+      expect(diag403, isNotNull);
+      expect(diag403!.code, equals('HTTP_403_FORBIDDEN'));
+      expect(diag403.remediation, contains('Referer'));
+
+      final diagWebviewAlert = LogEnricher.analyze('Webview alert 拦截: blocked JS modal');
+      expect(diagWebviewAlert, isNotNull);
+      expect(diagWebviewAlert!.code, equals('INFO_WEBVIEW_ALERT_INTERCEPTED'));
+    });
+
+    test('LogEnricher.sanitizeMessage replaces raw numbers with helpful explanations', () {
+      expect(
+        LogEnricher.sanitizeMessage('ERROR 1'),
+        contains('代码: 1'),
+      );
+      expect(
+        LogEnricher.sanitizeMessage('error: 5'),
+        contains('代码: 5, EIO'),
+      );
+      expect(
+        LogEnricher.sanitizeMessage('[object Object]'),
+        equals('发生未知异常，请稍后重试'),
+      );
+      expect(
+        LogEnricher.sanitizeMessage('Normal user message'),
+        equals('Normal user message'),
+      );
+    });
+
+    test('AppLog.formatLogEntry automatically attaches Diagnostic, Explanation, and Action', () {
+      final now = DateTime(2026, 10, 27, 12, 0, 0);
+      final formatted = AppLog.formatLogEntry(
+        time: now,
+        level: 'ERROR',
+        module: 'PLAYER',
+        message: 'Failed to recognize file format',
+      );
+
+      expect(formatted, contains('[ERROR] [PLAYER] Failed to recognize file format'));
+      expect(formatted, contains('Diagnostic: [ERR_MEDIA_UNKNOWN_FORMAT]'));
+      expect(formatted, contains('Explanation:'));
+      expect(formatted, contains('Action:'));
+    });
+
+    test('HaipeeLogger backward-compatible bridge routes to typed LogModule', () {
+      final logger = HaipeeLogger();
+      logger.log(Level.warning, '[PLAYER] Render buffer underrun');
+      logger.log(Level.error, '[NETWORK] 403 Forbidden on chunk download');
+
+      final lastLog = AppLog.talker.history.last;
+      expect(lastLog.message, contains('403 Forbidden'));
     });
   });
 }

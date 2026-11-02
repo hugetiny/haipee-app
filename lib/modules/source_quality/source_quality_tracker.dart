@@ -1,8 +1,8 @@
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/modules/source_quality/source_quality_record.dart';
-export 'package:kazumi/modules/source_quality/source_quality_record.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/source_quality/source_quality_record.dart';
+export 'package:haipee/modules/source_quality/source_quality_record.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// 视频播放源画质追踪与持久化服务
@@ -57,12 +57,12 @@ class SourceQualityTracker {
       );
 
       await _box.put(key, record.toJson());
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '已记录视频源画质: $pluginName -> ${record.detailedLabel}',
       );
     } catch (e) {
-      KazumiLogger().log(Level.warning, '记录视频画质失败: $e');
+      HaipeeLogger().log(Level.warning, '记录视频画质失败: $e');
     }
   }
 

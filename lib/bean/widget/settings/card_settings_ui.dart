@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:kazumi/bean/widget/responsive/constrained_content.dart';
+import 'package:haipee/bean/widget/responsive/constrained_content.dart';
 
 /// 纯原生 Material 3 设置列表容器
 class SettingsList extends StatelessWidget {
-  final List<SettingsSection> sections;
+  final List<Widget> sections;
   final double? maxWidth;
   final EdgeInsetsGeometry? contentPadding;
   final ScrollPhysics? physics;
@@ -117,7 +117,7 @@ class SettingsSection extends StatelessWidget {
 
 /// 纯原生 Material 3 设置项
 class SettingsTile<T> extends StatelessWidget {
-  final Widget? leading;
+  final dynamic leading;
   final Widget title;
   final Widget? description;
   final Widget? value;
@@ -212,9 +212,13 @@ class SettingsTile<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Widget? effectiveLeading = leading is IconData
+        ? Icon(leading as IconData)
+        : (leading is Widget ? leading as Widget : null);
+
     if (switchValue != null) {
       return SwitchListTile(
-        secondary: leading,
+        secondary: effectiveLeading,
         title: title,
         subtitle: description,
         value: switchValue!,
@@ -226,7 +230,7 @@ class SettingsTile<T> extends StatelessWidget {
     if (radioValue != null) {
       // ignore: deprecated_member_use
       return RadioListTile<T>(
-        secondary: leading,
+        secondary: effectiveLeading,
         title: title,
         subtitle: description,
         value: radioValue as T,
@@ -267,7 +271,7 @@ class SettingsTile<T> extends StatelessWidget {
     }
 
     return ListTile(
-      leading: leading,
+      leading: effectiveLeading,
       title: title,
       subtitle: description,
       trailing: effectiveTrailing,
@@ -348,6 +352,266 @@ class SettingsBadge extends StatelessWidget {
     }
 
     return badge;
+  }
+}
+
+/// 纯原生 Material 3 设置滑块项
+class SettingsSliderTile extends StatelessWidget {
+  final dynamic leading;
+  final Widget title;
+  final Widget? description;
+  final double value;
+  final double min;
+  final double max;
+  final int? divisions;
+  final String? valueLabel;
+  final ValueChanged<double> onChanged;
+
+  const SettingsSliderTile({
+    super.key,
+    this.leading,
+    required this.title,
+    this.description,
+    required this.value,
+    this.min = 0,
+    this.max = 1,
+    this.divisions,
+    this.valueLabel,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget? effectiveLeading = leading is IconData
+        ? Icon(leading as IconData)
+        : (leading is Widget ? leading as Widget : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          leading: effectiveLeading,
+          title: title,
+          subtitle: description,
+          trailing: valueLabel != null
+              ? Text(
+                  valueLabel!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                )
+              : null,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+          child: Slider(
+            value: value.clamp(min, max),
+            min: min,
+            max: max,
+            divisions: divisions,
+            label: valueLabel,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 纯原生 Material 3 设置下拉选择项
+class SettingsDropdownTile<T> extends StatelessWidget {
+  final dynamic leading;
+  final Widget title;
+  final Widget? description;
+  final T value;
+  final Map<T, String> options;
+  final ValueChanged<T> onChanged;
+  final String? fallbackLabel;
+  final bool enabled;
+
+  const SettingsDropdownTile({
+    super.key,
+    this.leading,
+    required this.title,
+    this.description,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+    this.fallbackLabel,
+    this.enabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget? effectiveLeading = leading is IconData
+        ? Icon(leading as IconData)
+        : (leading is Widget ? leading as Widget : null);
+
+    return ListTile(
+      leading: effectiveLeading,
+      title: title,
+      subtitle: description,
+      enabled: enabled,
+      trailing: DropdownButton<T>(
+        value: options.containsKey(value) ? value : null,
+        hint: fallbackLabel != null ? Text(fallbackLabel!) : null,
+        underline: const SizedBox.shrink(),
+        onChanged: enabled
+            ? (v) {
+                if (v != null) onChanged(v);
+              }
+            : null,
+        items: options.entries
+            .map(
+              (e) => DropdownMenuItem<T>(
+                value: e.key,
+                child: Text(e.value),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+/// 纯原生 Material 3 单选分区容器
+class SettingsRadioSection<T> extends StatelessWidget {
+  final Widget? title;
+  final T groupValue;
+  final ValueChanged<T?> onChanged;
+  final List<Widget> tiles;
+
+  const SettingsRadioSection({
+    super.key,
+    this.title,
+    required this.groupValue,
+    required this.onChanged,
+    required this.tiles,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsSection(
+      title: title,
+      tiles: tiles,
+    );
+  }
+}
+
+/// 原生 Haipee 风格分类 Header
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({super.key, required this.title, this.description});
+
+  final Widget title;
+  final Widget? description;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          header: true,
+          child: DefaultTextStyle.merge(
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+            child: title,
+          ),
+        ),
+        if (description != null) ...[
+          const SizedBox(height: 4),
+          DefaultTextStyle.merge(
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            child: description!,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// 原生 Haipee 分类导航瓦片（用于移动端与自适应折叠布局）
+class SettingsCategoryTile extends StatelessWidget {
+  const SettingsCategoryTile({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+    this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+  final Widget? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: colorScheme.secondaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: colorScheme.onSecondaryContainer,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: textTheme.bodyLarge),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: textTheme.bodySmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (value != null) ...[
+              const SizedBox(width: 8),
+              DefaultTextStyle(
+                style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ) ??
+                    const TextStyle(),
+                child: value!,
+              ),
+            ],
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

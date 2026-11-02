@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/bean/widget/bangumi_context_menu.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/bean/card/network_img_layer.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/bangumi_context_menu.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/bean/card/network_img_layer.dart';
 
 /// 时间线番剧卡片
 class BangumiTimelineCard extends ConsumerWidget {

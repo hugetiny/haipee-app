@@ -81,7 +81,7 @@ jobs:
       - name: Upload APK Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kazumi-release-testlab-apk
+          name: haipee-release-testlab-apk
           path: build/app/outputs/flutter-apk/*.apk
           retention-days: 7
 
@@ -128,16 +128,21 @@ jobs:
           APK_FILE=$(ls build/app/outputs/flutter-apk/*.apk | head -n 1)
           echo "Target APK: $APK_FILE"
 
+          ROBO_SCRIPT_ARG=""
+          if [ -f "tool/testlab_roboscript.json" ]; then
+            ROBO_SCRIPT_ARG="--robo-script tool/testlab_roboscript.json"
+          fi
+
           echo "Launching Firebase Test Lab Robo crawl on project: $PROJECT_ID..."
           gcloud firebase test android run \
             --type robo \
             --app "$APK_FILE" \
             --project "$PROJECT_ID" \
             $DEVICE_ARGS \
+            $ROBO_SCRIPT_ARG \
             --timeout "$TIMEOUT" \
-            --client-details matrixLabel="Kazumi GitHub Actions CI" \
-            --record-video 2>&1 | tee test_lab_output.log
-
+            --client-details matrixLabel="Haipee GitHub Actions CI" \
+            --no-record-video 2>&1 | tee test_lab_output.log
 
           TEST_EXIT_CODE=${PIPESTATUS[0]}
           echo "Test Lab completed with exit code: $TEST_EXIT_CODE"
@@ -146,6 +151,15 @@ jobs:
           RESULTS_URL=$(grep -oE 'https://console.firebase.google.com/project/[^ ]*' test_lab_output.log | head -n 1 || true)
           echo "results_url=$RESULTS_URL" >> $GITHUB_OUTPUT
           
+          # Extract GCS bucket path and download raw artifacts
+          GCS_PATH=$(grep -oE 'gs://[a-zA-Z0-9_\.\-]+/[^ ]*' test_lab_output.log | head -n 1 || true)
+          if [ -n "$GCS_PATH" ]; then
+            mkdir -p test_reports/firebase_android
+            echo "Downloading artifacts from $GCS_PATH..."
+            gcloud storage cp -r "$GCS_PATH/*" test_reports/firebase_android/ || true
+            find test_reports/firebase_android -mindepth 2 -type f -exec cp -n {} test_reports/firebase_android/ \; 2>/dev/null || true
+          fi
+
           echo "### 🚀 Firebase Test Lab Robo Test Completed" >> $GITHUB_STEP_SUMMARY
           if [ -n "$RESULTS_URL" ]; then
             echo "[View Test Lab Cloud Report, Screen Recording & UI Tree]($RESULTS_URL)" >> $GITHUB_STEP_SUMMARY
@@ -153,15 +167,24 @@ jobs:
           echo "- **Exploration Duration**: $TIMEOUT" >> $GITHUB_STEP_SUMMARY
           echo "- **Telemetry**: Sentry Flutter capture active (tagged with \`runner=firebase_test_lab\`)" >> $GITHUB_STEP_SUMMARY
 
+          # Execute local deterministic Test Lab log analysis and append to Step Summary
+          if [ -f "tool/analyze_testlab_logs.dart" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📊 Firebase Test Lab 确定性日志深度分析报告" >> $GITHUB_STEP_SUMMARY
+            dart tool/analyze_testlab_logs.dart --markdown >> $GITHUB_STEP_SUMMARY || true
+          fi
+
           exit $TEST_EXIT_CODE
         shell: bash
 
-      - name: Upload Test Lab Logs
+      - name: Upload Test Lab Logs and Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-lab-logs
-          path: test_lab_output.log
+          name: test-lab-logs-and-reports
+          path: |
+            test_lab_output.log
+            test_reports/
           if-no-files-found: ignore
 
   ios-build-and-test:
@@ -187,21 +210,21 @@ jobs:
       - name: Build iOS App Bundle (Unsigned Release)
         run: |
           echo "Building iOS Release..."
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign --dart-define=FIREBASE_TEST_LAB=true
           mkdir Payload
           cp -R build/ios/iphoneos/Runner.app Payload/Runner.app
-          zip -q -r kazumi-release-unsigned.ipa Payload
+          zip -q -r haipee-release-unsigned.ipa Payload
 
       - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: kazumi-release-unsigned-ipa
-          path: kazumi-release-unsigned.ipa
+          path: haipee-release-unsigned.ipa
 
       - name: Check Apple Code Signing & Test Lab Readiness
         run: |
           echo "### 📱 iOS Firebase Test Lab Status" >> $GITHUB_STEP_SUMMARY
-          echo "- **Artifact**: kazumi-release-unsigned.ipa compiled successfully." >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: haipee-release-unsigned.ipa compiled successfully." >> $GITHUB_STEP_SUMMARY
           echo "- **Physical Device Requirement**: Firebase Test Lab tests iOS apps on real physical devices (e.g. iPhone 14 Pro, iOS 16.6). Apple's kernel enforces signature verification; unsigned IPAs are rejected during matrix creation." >> $GITHUB_STEP_SUMMARY
           echo "- **Deployment Note**: To run cloud Robo crawls on real iPhones, provide an Apple Developer Team profile / enterprise provisioning certificate in GitHub Secrets." >> $GITHUB_STEP_SUMMARY
 

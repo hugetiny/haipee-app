@@ -3,15 +3,15 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart';
-import 'package:kazumi/modules/cardigann/cardigann_torznab.dart';
-import 'package:kazumi/modules/cardigann/engine/cardigann_filter_pipeline.dart';
-import 'package:kazumi/modules/cardigann/engine/cardigann_template.dart';
-import 'package:kazumi/modules/cardigann/engine/cloudflare_bypass.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/parser/scene_release_parser.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_filter_pipeline.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_template.dart';
+import 'package:haipee/modules/cardigann/engine/cloudflare_bypass.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/parser/scene_release_parser.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/utils.dart';
 import 'package:logger/logger.dart';
 import 'package:xpath_selector_html_parser/xpath_selector_html_parser.dart';
 
@@ -50,7 +50,7 @@ class CardigannQueryExecutor {
         : definition.defaultLink.replaceAll(RegExp(r'/+$'), '');
 
     if (baseUrl.isEmpty) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[Cardigann] Indexer ${definition.name} has no valid base URL',
       );
@@ -101,6 +101,9 @@ class CardigannQueryExecutor {
       'Keywords': keyword,
       'Type': 'search',
     };
+    _renderKeyword = keyword;
+    _renderConfig = Map<String, String>.from(config);
+    _renderQuery = queryContext;
 
     // Render path template
     final renderedPath = CardigannTemplate.render(
@@ -190,13 +193,13 @@ class CardigannQueryExecutor {
       // Check Cloudflare anti-bot challenge
       if (CloudflareBypassHandler.isCloudflareChallenge(response) ||
           definition.useWebview) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '[Cardigann] Cloudflare challenge encountered for ${definition.name}',
         );
         htmlContent = await cloudflareBypass.resolveChallengeWithWebview(targetUrl);
       } else if (response.statusCode != null && response.statusCode! >= 400) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '[Cardigann] ${definition.name} returned HTTP ${response.statusCode}',
         );
@@ -213,7 +216,7 @@ class CardigannQueryExecutor {
 
       htmlContent ??= response.data?.toString();
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         throwOnError ? Level.error : Level.warning,
         '[Cardigann] Request failed for ${definition.name}: $e',
       );
@@ -269,6 +272,23 @@ class CardigannQueryExecutor {
     }
   }
 
+  // 当前查询渲染上下文（用于行字段模板 {{ .Result.x }} / {{ .Config.x }} / {{ .Keywords }} 渲染）
+  String _renderKeyword = '';
+  Map<String, String> _renderConfig = const {};
+  Map<String, String> _renderQuery = const {};
+
+  /// 渲染字段级 Go 模板：支持引用同一行中先前已解析的字段 (`.Result.<field>`)
+  String _renderFieldTemplate(String text, Map<String, String> resultContext) {
+    if (!text.contains('{{')) return text;
+    return CardigannTemplate.render(
+      text,
+      keyword: _renderKeyword,
+      config: _renderConfig,
+      query: _renderQuery,
+      result: resultContext,
+    );
+  }
+
   /// Parses HTML response body into structured TorrentItems based on Cardigann definition.
   List<TorrentItem> parseHtmlResults({
     required String htmlContent,
@@ -296,7 +316,7 @@ class CardigannQueryExecutor {
         final fieldValues = <String, String>{};
 
         fieldsDef.forEach((fieldName, field) {
-          final val = _extractField(row, field);
+          final val = _extractField(row, field, fieldValues);
           if (val != null) {
             fieldValues[fieldName] = val;
           }
@@ -307,7 +327,7 @@ class CardigannQueryExecutor {
           results.add(item);
         }
       } catch (e) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '[Cardigann] Failed to parse row in ${definition.name}: $e',
         );
@@ -327,7 +347,7 @@ class CardigannQueryExecutor {
     try {
       decoded = jsonDecode(jsonContent);
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[Cardigann] Failed to parse JSON for ${definition.name}: $e',
       );
@@ -380,7 +400,7 @@ class CardigannQueryExecutor {
           results.add(item);
         }
       } catch (e) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '[Cardigann] Failed to parse JSON row in ${definition.name}: $e',
         );
@@ -397,7 +417,7 @@ class CardigannQueryExecutor {
   ) {
     String? rawVal;
     if (field.text != null && field.text!.isNotEmpty) {
-      rawVal = field.text;
+      rawVal = _renderFieldTemplate(field.text!, currentFieldValues);
     } else if (field.selector != null && field.selector!.isNotEmpty) {
       final sel = field.selector!.trim();
       final cleanSel = sel.startsWith(r'$.')
@@ -426,7 +446,9 @@ class CardigannQueryExecutor {
       }
     }
 
-    rawVal ??= field.defaultVal;
+    if ((rawVal == null || rawVal.isEmpty) && field.defaultVal != null) {
+      rawVal = _renderFieldTemplate(field.defaultVal!, currentFieldValues);
+    }
     if (rawVal == null) return null;
 
     if (field.filters.isNotEmpty) {
@@ -544,6 +566,7 @@ class CardigannQueryExecutor {
       source: TorrentSourceType.cardigann,
       indexerName: definition.name,
       indexerId: definition.id,
+      trackerType: definition.type,
       seeders: seeders,
       leechers: leechers,
       cleanedTitle: sceneInfo.cleanTitle,
@@ -562,7 +585,11 @@ class CardigannQueryExecutor {
   }
 
   /// Extracts the string value for a single field from an HTML row element.
-  String? _extractField(Element row, CardigannField field) {
+  String? _extractField(
+    Element row,
+    CardigannField field, [
+    Map<String, String> ctx = const {},
+  ]) {
     // 1. Evaluate case conditions if present
     if (field.caseConditions != null && field.caseConditions!.isNotEmpty) {
       for (final entry in field.caseConditions!.entries) {
@@ -571,19 +598,24 @@ class CardigannQueryExecutor {
           continue; // Default fallback
         }
         if (_elementMatchesSelector(row, conditionSelector)) {
-          final res = entry.value?.toString() ?? '';
-          return CardigannFilterPipeline.apply(res, field.filters);
+          final res = _renderFieldTemplate(entry.value?.toString() ?? '', ctx);
+          return CardigannFilterPipeline.apply(res, field.filters,
+              contextVariables: ctx);
         }
       }
       if (field.caseConditions!.containsKey('*')) {
-        final fallback = field.caseConditions!['*']?.toString() ?? '';
-        return CardigannFilterPipeline.apply(fallback, field.filters);
+        final fallback =
+            _renderFieldTemplate(field.caseConditions!['*']?.toString() ?? '', ctx);
+        return CardigannFilterPipeline.apply(fallback, field.filters,
+            contextVariables: ctx);
       }
     }
 
     // 2. Static text
     if (field.text != null && field.selector == null) {
-      return CardigannFilterPipeline.apply(field.text!, field.filters);
+      return CardigannFilterPipeline.apply(
+          _renderFieldTemplate(field.text!, ctx), field.filters,
+          contextVariables: ctx);
     }
 
     // 3. Selector based extraction
@@ -599,7 +631,9 @@ class CardigannQueryExecutor {
 
     if (targetElement == null) {
       if (field.defaultVal != null) {
-        return CardigannFilterPipeline.apply(field.defaultVal!, field.filters);
+        return CardigannFilterPipeline.apply(
+            _renderFieldTemplate(field.defaultVal!, ctx), field.filters,
+            contextVariables: ctx);
       }
       return field.optional ? null : '';
     }
@@ -612,10 +646,11 @@ class CardigannQueryExecutor {
     }
 
     if (rawText.isEmpty && field.defaultVal != null) {
-      rawText = field.defaultVal!;
+      rawText = _renderFieldTemplate(field.defaultVal!, ctx);
     }
 
-    return CardigannFilterPipeline.apply(rawText, field.filters);
+    return CardigannFilterPipeline.apply(rawText, field.filters,
+        contextVariables: ctx);
   }
 
   /// Evaluates whether an element matches a selector or condition (e.g. "tr.success" or class names).
@@ -711,7 +746,7 @@ class CardigannQueryExecutor {
         final processed = _preprocessSelector(clean);
         matched = root.querySelectorAll(processed);
       } catch (e) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.warning,
           '[Cardigann] querySelectorAll error with "$clean": $e',
         );

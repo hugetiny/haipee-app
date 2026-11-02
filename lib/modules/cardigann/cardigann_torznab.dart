@@ -1,6 +1,6 @@
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 
-/// Torznab standard category numbers and bidirectional mapping with Kazumi's TorrentCategory.
+/// Torznab standard category numbers and bidirectional mapping with Haipee's TorrentCategory.
 class TorznabCategories {
   // 1000 Audio
   static const int audio = 1000;
@@ -59,7 +59,7 @@ class TorznabCategories {
   // 7000 Other
   static const int other = 7000;
 
-  /// Maps a standard Torznab category integer to Kazumi's TorrentCategory.
+  /// Maps a standard Torznab category integer to Haipee's TorrentCategory.
   static TorrentCategory toTorrentCategory(int torznabCat) => switch (torznabCat) {
     pcGames || (>= 10000 && < 11000) => TorrentCategory.game,
     >= 1000 && < 2000 => TorrentCategory.audio,
@@ -70,7 +70,7 @@ class TorznabCategories {
     _ => TorrentCategory.all,
   };
 
-  /// Maps Kazumi's TorrentCategory back to standard Torznab category integer list.
+  /// Maps Haipee's TorrentCategory back to standard Torznab category integer list.
   static List<int> fromTorrentCategory(TorrentCategory category) => switch (category) {
     TorrentCategory.all => const [],
     TorrentCategory.video => const [movies, tv, tvAnime],

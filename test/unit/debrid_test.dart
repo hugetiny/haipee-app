@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/debrid/debrid_provider.dart';
-import 'package:kazumi/modules/debrid/debrid_service.dart';
-import 'package:kazumi/modules/debrid/providers/real_debrid_provider.dart';
-import 'package:kazumi/modules/debrid/providers/torbox_provider.dart';
-import 'package:kazumi/modules/debrid/providers/pikpak_provider.dart';
+import 'package:haipee/modules/debrid/debrid_provider.dart';
+import 'package:haipee/modules/debrid/debrid_service.dart';
+import 'package:haipee/modules/debrid/providers/real_debrid_provider.dart';
+import 'package:haipee/modules/debrid/providers/torbox_provider.dart';
+import 'package:haipee/modules/debrid/providers/pikpak_provider.dart';
 
 class MockDebridProvider implements DebridProvider {
   final bool hasInstantCache;

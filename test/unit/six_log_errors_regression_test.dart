@@ -5,18 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
-import 'package:kazumi/modules/cardigann/engine/cardigann_query_executor.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/search/search_history_dropdown.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/request/core/dio_logger_interceptor.dart';
-import 'package:kazumi/services/logging/app_log.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/search/search_history_dropdown.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/request/core/dio_logger_interceptor.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/utils/storage.dart';
 
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/sources/torrent_source.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_source.dart';
 
 class _Fake521Adapter implements HttpClientAdapter {
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
 
 void main() {
   group('AppBackButton 商业级返回按钮组件测试', () {

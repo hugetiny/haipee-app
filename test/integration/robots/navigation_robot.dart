@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/services/logging/debug_hud_overlay.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/router.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/services/logging/debug_hud_overlay.dart';
 import 'log_watcher_robot.dart';
 
 /// Robot that traverses primary navigation tabs and secondary subpages,
@@ -44,7 +44,7 @@ class NavigationRobot {
         overrides: overrides,
         child: TranslationProvider(
           child: MaterialApp.router(
-            title: 'Kazumi Test',
+            title: 'haipee Test',
             routerConfig: router,
             builder: (context, child) =>
                 DebugHudOverlay(child: child ?? const SizedBox()),

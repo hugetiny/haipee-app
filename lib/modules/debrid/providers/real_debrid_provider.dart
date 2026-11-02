@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:kazumi/modules/debrid/debrid_provider.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/debrid/debrid_provider.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// Real-Debrid 云端高速离线加速中枢适配器
@@ -77,7 +77,7 @@ class RealDebridProvider implements DebridProvider {
         if (hashEntry is Map) {
           final rdList = hashEntry['rd'];
           if (rdList is List && rdList.isNotEmpty) {
-            KazumiLogger().log(
+            HaipeeLogger().log(
               Level.info,
               '[RealDebrid] Hit instant cloud cache for hash $hash!',
             );
@@ -86,7 +86,7 @@ class RealDebridProvider implements DebridProvider {
         }
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.debug,
         '[RealDebrid] Check instant availability failed for $hash: $e',
       );
@@ -147,14 +147,14 @@ class RealDebridProvider implements DebridProvider {
 
       final streamUrl = unrestrictResponse.data?['download'] as String?;
       if (streamUrl != null && streamUrl.isNotEmpty) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.info,
           '[RealDebrid] Successfully resolved CDN stream URL: $streamUrl',
         );
         return streamUrl;
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[RealDebrid] Failed to resolve stream link: $e',
       );

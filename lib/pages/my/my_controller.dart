@@ -1,15 +1,15 @@
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/collect/collect_module.dart';
-import 'package:kazumi/modules/collect/collect_change_module.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/webdav.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/collect/collect_module.dart';
+import 'package:haipee/modules/collect/collect_change_module.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/webdav.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:logger/logger.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:kazumi/providers/translations_provider.dart';
+import 'package:haipee/providers/translations_provider.dart';
 
 part 'my_controller.freezed.dart';
 
@@ -108,7 +108,7 @@ class CollectController extends Notifier<CollectState> {
     final translations = ref.read(translationsProvider);
     final webDavToast = translations.settings.webdav.toast;
     if (!WebDav().initialized) {
-      KazumiDialog.showToast(message: webDavToast.notConfigured);
+      HaipeeDialog.showToast(message: webDavToast.notConfigured);
       return;
     }
     state = state.copyWith(syncing: true);
@@ -116,8 +116,8 @@ class CollectController extends Notifier<CollectState> {
     try {
       await WebDav().ping();
     } catch (e) {
-      KazumiLogger().log(Level.error, 'WebDav连接失败: $e');
-      KazumiDialog.showToast(
+      HaipeeLogger().log(Level.error, 'WebDav连接失败: $e');
+      HaipeeDialog.showToast(
         message:
             webDavToast.connectionFailed.replaceFirst('{error}', e.toString()),
       );
@@ -127,7 +127,7 @@ class CollectController extends Notifier<CollectState> {
       try {
         await WebDav().syncCollectibles();
       } catch (e) {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: webDavToast.syncFailed.replaceFirst('{error}', e.toString()),
         );
       }
@@ -145,6 +145,6 @@ class CollectController extends Notifier<CollectState> {
     }
     await GStorage.favorites.clear();
     await GStorage.favorites.flush();
-    KazumiLogger().log(Level.debug, '检测到$count条未分类记录, 已迁移');
+    HaipeeLogger().log(Level.debug, '检测到$count条未分类记录, 已迁移');
   }
 }

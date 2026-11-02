@@ -1,10 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/card/network_img_layer.dart';
-import 'package:kazumi/bean/card/character_comments_card.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
-import 'package:kazumi/pages/info/character_providers.dart';
+import 'package:haipee/bean/card/network_img_layer.dart';
+import 'package:haipee/bean/card/character_comments_card.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
+import 'package:haipee/pages/info/character_providers.dart';
 
 class CharacterPage extends ConsumerWidget {
   const CharacterPage({super.key, required this.characterID});

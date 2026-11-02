@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/download/download_file_utils.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/pages/download/download_controller.dart';
-import 'package:kazumi/pages/download/download_task_detail_dialog.dart';
-import 'package:kazumi/pages/download/providers.dart';
-import 'package:kazumi/pages/player/local_video_play_args.dart';
-import 'package:kazumi/pages/download/widgets/add_download_dialog.dart';
-import 'package:kazumi/router_constants.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/pages/download/download_controller.dart';
+import 'package:haipee/pages/download/download_task_detail_dialog.dart';
+import 'package:haipee/pages/download/providers.dart';
+import 'package:haipee/pages/player/local_video_play_args.dart';
+import 'package:haipee/pages/download/widgets/add_download_dialog.dart';
+import 'package:haipee/router_constants.dart';
 
 /// 下载任务卡片右键/长按菜单通用构建与操作辅助类
 class DownloadContextMenuHelper {
@@ -118,7 +118,7 @@ class DownloadContextMenuHelper {
                   ? () async {
                       await controller.retryDownload(task);
                       if (context.mounted) {
-                        KazumiDialog.showToast(
+                        HaipeeDialog.showToast(
                             message: t.downloads.page.toast.retrying);
                       }
                     }
@@ -141,7 +141,7 @@ class DownloadContextMenuHelper {
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: effectivePath));
             if (context.mounted) {
-              KazumiDialog.showToast(message: '已复制文件完整路径', context: context);
+              HaipeeDialog.showToast(message: '已复制文件完整路径', context: context);
             }
           },
         ),
@@ -152,7 +152,7 @@ class DownloadContextMenuHelper {
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: task.url));
             if (context.mounted) {
-              KazumiDialog.showToast(message: '已复制下载链接', context: context);
+              HaipeeDialog.showToast(message: '已复制下载链接', context: context);
             }
           },
         ),
@@ -162,7 +162,7 @@ class DownloadContextMenuHelper {
         onSelected: () async {
           await Clipboard.setData(ClipboardData(text: task.displayTitle));
           if (context.mounted) {
-            KazumiDialog.showToast(message: '已复制任务标题', context: context);
+            HaipeeDialog.showToast(message: '已复制任务标题', context: context);
           }
         },
       ),
@@ -244,18 +244,18 @@ class DownloadContextMenuHelper {
   /// 播放已下载媒体文件
   static void playTask(BuildContext context, DownloadTask task) {
     if (!task.isPlayable) {
-      KazumiDialog.showToast(message: '该文件不是音视频媒体文件，无法直接播放');
+      HaipeeDialog.showToast(message: '该文件不是音视频媒体文件，无法直接播放');
       return;
     }
     final path = task.filePath ?? task.fileName;
     if (path == null || path.isEmpty) {
-      KazumiDialog.showToast(message: '未找到视频文件路径');
+      HaipeeDialog.showToast(message: '未找到视频文件路径');
       return;
     }
 
     final file = File(path);
     if (!file.existsSync()) {
-      KazumiDialog.showToast(message: '视频文件不存在: $path');
+      HaipeeDialog.showToast(message: '视频文件不存在: $path');
       return;
     }
 
@@ -273,23 +273,23 @@ class DownloadContextMenuHelper {
   /// 边下边播
   static void streamPlayTask(BuildContext context, DownloadTask task) {
     if (!task.isPlayable) {
-      KazumiDialog.showToast(message: '非音视频文件不支持边下边播');
+      HaipeeDialog.showToast(message: '非音视频文件不支持边下边播');
       return;
     }
     final path = task.filePath ?? task.fileName;
     if (path == null || path.isEmpty) {
-      KazumiDialog.showToast(message: '正在分配本地空间与元数据，请稍候');
+      HaipeeDialog.showToast(message: '正在分配本地空间与元数据，请稍候');
       return;
     }
 
     final file = File(path);
     if (!file.existsSync()) {
-      KazumiDialog.showToast(message: '文件正在高速缓冲首部，请稍候点击');
+      HaipeeDialog.showToast(message: '文件正在高速缓冲首部，请稍候点击');
       return;
     }
 
     if (task.completedLength < 10 * 1024 * 1024 && !task.isComplete) {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
           message: '已缓冲 ${_formatFileSize(task.completedLength)}，正在加速首尾关键帧');
     }
 

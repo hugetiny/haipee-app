@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/modules/download/gopeed/gopeed_models.dart';
-import 'package:kazumi/pages/player/local_player_page.dart';
-import 'package:kazumi/pages/player/player_item_surface.dart';
-import 'package:kazumi/plugins/plugins.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/modules/download/gopeed/gopeed_models.dart';
+import 'package:haipee/pages/player/local_player_page.dart';
+import 'package:haipee/pages/player/player_item_surface.dart';
+import 'package:haipee/plugins/plugins.dart';
 
 void main() {
   group('AppleCMS / MacCMS Plugin Tests', () {

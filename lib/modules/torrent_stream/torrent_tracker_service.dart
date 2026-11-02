@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// 管理高可用公共 BitTorrent Tracker 列表，支持多 CDN 镜像异步自动更新与 BEP 15 UDP Tracker DoH 防污染寻轨。
@@ -105,7 +105,7 @@ class TorrentTrackerService {
     }
 
     _isFetching = true;
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[TorrentTrackerService] Fetching latest trackers from mirrors...',
     );
@@ -145,7 +145,7 @@ class TorrentTrackerService {
             _trackers.addAll(newTrackers);
             _lastFetchTime = DateTime.now();
             success = true;
-            KazumiLogger().log(
+            HaipeeLogger().log(
               Level.info,
               '[TorrentTrackerService] Successfully fetched ${newTrackers.length} trackers from $mirror (total: ${_trackers.length})',
             );
@@ -159,7 +159,7 @@ class TorrentTrackerService {
           }
         }
       } catch (e) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.debug,
           '[TorrentTrackerService] Mirror failed $mirror: $e',
         );
@@ -167,7 +167,7 @@ class TorrentTrackerService {
     }
 
     if (!success) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[TorrentTrackerService] Using built-in default trackers (${_trackers.length} available)',
       );
@@ -223,7 +223,7 @@ class TorrentTrackerService {
                     data != null &&
                     RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$').hasMatch(data)) {
                   _dohCache[cleanHost] = data;
-                  KazumiLogger().log(
+                  HaipeeLogger().log(
                     Level.info,
                     '[TorrentTrackerService] DoH resolved $cleanHost -> $data via $endpoint',
                   );
@@ -234,7 +234,7 @@ class TorrentTrackerService {
           }
         }
       } catch (e) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.debug,
           '[TorrentTrackerService] DoH endpoint $endpoint failed for $cleanHost: $e',
         );

@@ -1,56 +1,30 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/bilibili/bilibili_models.dart';
-import 'package:kazumi/modules/bilibili/bilibili_service.dart';
-import 'package:kazumi/modules/douyin/douyin_service.dart';
-import 'package:kazumi/modules/search/search_history_dropdown.dart';
-import 'package:kazumi/modules/search/search_history_provider.dart';
-import 'package:kazumi/pages/player/local_video_play_args.dart';
-import 'package:kazumi/pages/video/providers.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/bilibili/bilibili_service.dart';
+import 'package:haipee/modules/douyin/douyin_service.dart';
+import 'package:haipee/modules/search/search_history_dropdown.dart';
+import 'package:haipee/modules/search/search_history_provider.dart';
+import 'package:haipee/pages/online/online_video_search_provider.dart';
+import 'package:haipee/pages/player/local_video_play_args.dart';
+import 'package:haipee/pages/video/providers.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
 import 'package:flutter/services.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/modules/torrent_search/widgets/torrent_search_sheet.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:logger/logger.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/services/logging/app_log.dart';
+import 'package:haipee/services/logging/log_module.dart';
 
-/// 在线视频搜索源枚举 (明确对应四大分类体系)
-enum OnlineSourceFilter {
-  all(
-    id: 'all',
-    label: '全部',
-    icon: Icons.all_inclusive,
-  ),
-  video(
-    id: 'video',
-    label: '视频',
-    icon: Icons.video_library_outlined,
-  ),
-  live(
-    id: 'live',
-    label: '直播',
-    icon: Icons.live_tv_outlined,
-  );
-
-  final String id;
-  final String label;
-  final IconData icon;
-
-  const OnlineSourceFilter({
-    required this.id,
-    required this.label,
-    required this.icon,
-  });
-}
+export 'package:haipee/pages/online/online_video_search_provider.dart'
+    show OnlineSourceFilter, onlineVideoSearchProvider, OnlineVideoSearchState;
 
 /// 在线视频搜索引擎一级页面 (极简工业质感，搜索历史整合至下拉浮层)
 /// 严格独立于 BT/磁力/PT 种子搜索，专精于 Web 在线流媒体直搜与流畅播放
@@ -66,46 +40,27 @@ class OnlineVideoSearchPage extends ConsumerStatefulWidget {
 class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  final CancelToken _popularCancelToken = CancelToken();
 
-  OnlineSourceFilter _selectedFilter = OnlineSourceFilter.all;
-  bool _isLoading = false;
-  String _activeKeyword = '';
-
-  List<BiliVideoItem> _biliResults = [];
   List<BiliVideoItem> _popularVideos = [];
-  bool _isLoadingPopular = false;
-
-  // 热搜/热门词推荐
-  static const List<String> _trendingTags = [
-    '孤独摇滚',
-    '间谍过家家',
-    '葬送的芙莉莲',
-    '鬼灭之刃',
-    '进击的巨人',
-    '电锯人',
-    '赛马娘',
-    '刀剑神域',
-    '新世纪福音战士',
-    '莉可丽丝',
-  ];
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchTextChanged);
 
+    final currentKeyword = ref.read(onlineVideoSearchProvider).keyword;
+    if (currentKeyword.isNotEmpty) {
+      _searchController.text = currentKeyword;
+    }
+
     if (widget.initialPopularVideos != null) {
       _popularVideos = List.from(widget.initialPopularVideos!);
-    } else {
-      _loadPopularVideos();
     }
   }
 
   @override
   void dispose() {
     _searchController.removeListener(_onSearchTextChanged);
-    _popularCancelToken.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -115,170 +70,13 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
     setState(() {});
   }
 
-  Future<void> _loadPopularVideos() async {
-    if (_isLoadingPopular) return;
-    setState(() => _isLoadingPopular = true);
-    try {
-      final list = await BilibiliService.getPopularVideos(cancelToken: _popularCancelToken);
-      if (mounted) {
-        setState(() {
-          _popularVideos = list;
-          _isLoadingPopular = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _isLoadingPopular = false);
-    }
-  }
-
-  Future<void> _performSearch(String query) async {
+  void _performSearch(String query) {
     final clean = query.trim();
     if (clean.isEmpty) return;
 
     _searchFocusNode.unfocus();
     ref.read(searchHistoryProvider.notifier).addHistory(clean);
-
-    setState(() {
-      _activeKeyword = clean;
-      _isLoading = true;
-    });
-
-    try {
-      // 1. 检查是否直接粘贴了抖音分享内容、短链接或视频ID (有确切短链才解析，绝不做非主流假搜索)
-      DouyinVideoItem? directDouyinItem;
-      if (DouyinService.hasDouyinPattern(clean)) {
-        directDouyinItem = await DouyinService.extractVideo(clean);
-      }
-
-      // 2. 检查是否直接粘贴了 Bilibili BV 号或视频链接
-      BiliVideoDetail? directBiliDetail;
-      final bvMatch = RegExp(r'BV[a-zA-Z0-9]{10}').firstMatch(clean);
-      if (bvMatch != null && (_selectedFilter == OnlineSourceFilter.all || _selectedFilter == OnlineSourceFilter.video)) {
-        directBiliDetail = await BilibiliService.getVideoDetails(bvMatch.group(0)!);
-      }
-
-      // 3. 多源并行聚合检索 (四大分类调度：在线视频、电视直播、网盘资源【下载类】、BT磁力【下载类】)
-      final List<BiliVideoItem> searchResults = [];
-      final List<Future<void>> futures = [];
-      final pluginsState = ref.read(pluginsProvider);
-
-      // 3.1 哔哩哔哩源检索 (在 all 且规则启用时执行，或在 video 在线视频分类时执行)
-      final isBiliRuleEnabled = pluginsState.isPluginEnabled('bilibili');
-      if ((_selectedFilter == OnlineSourceFilter.all && isBiliRuleEnabled) ||
-          _selectedFilter == OnlineSourceFilter.video) {
-        futures.add(() async {
-          try {
-            final biliList = await BilibiliService.searchVideos(clean);
-            searchResults.addAll(biliList);
-          } catch (e) {
-            KazumiLogger().log(Level.warning, 'B站搜索异常: $e');
-          }
-        }());
-      }
-
-      // 3.2 苹果CMS、IPTV直播、AList网盘与第三方规则源检索
-      futures.add(() async {
-        try {
-          final enabledPlugins = pluginsState.enabledPlugins.where((plugin) {
-            if (plugin.isBilibili || plugin.isDouyin) return false;
-            if (_selectedFilter == OnlineSourceFilter.all) return true;
-            if (_selectedFilter == OnlineSourceFilter.video) {
-              return plugin.resolvedCategory == PluginCategory.video;
-            }
-            if (_selectedFilter == OnlineSourceFilter.live) {
-              return plugin.resolvedCategory == PluginCategory.live;
-            }
-            return true;
-          }).toList();
-
-          final webTasks = enabledPlugins.map((plugin) async {
-            try {
-              final resp = await plugin.queryBangumi(clean).timeout(const Duration(seconds: 8));
-              final cat = plugin.resolvedCategory;
-              String tagLabel;
-              if (cat == PluginCategory.live) {
-                tagLabel = '电视直播';
-              } else if (cat == PluginCategory.drive) {
-                tagLabel = '网盘 · 资源下载';
-              } else if (cat == PluginCategory.bt) {
-                tagLabel = 'BT · 资源下载';
-              } else {
-                tagLabel = plugin.isMacCms ? '苹果CMS' : '在线视频';
-              }
-
-              for (final item in resp.data) {
-                searchResults.add(
-                  BiliVideoItem(
-                    bvid: 'web_${plugin.name}_${item.src}',
-                    title: item.name,
-                    author: plugin.name,
-                    pic: item.pic,
-                    duration: item.remarks.isNotEmpty
-                        ? item.remarks
-                        : (cat.isResource ? '资源下载类' : (cat == PluginCategory.live ? '实时直播' : '点播正片')),
-                    description: item.src,
-                    tag: tagLabel,
-                  ),
-                );
-              }
-            } catch (_) {}
-          });
-          await Future.wait(webTasks);
-        } catch (e) {
-          KazumiLogger().log(Level.warning, '多源并发检索异常: $e');
-        }
-      }());
-
-      await Future.wait(futures);
-
-      // 如果直接匹配到了抖音直链或 BV 号，将其置顶在首位
-      if (directDouyinItem != null) {
-        final directItem = BiliVideoItem(
-          bvid: 'douyin_${directDouyinItem.id}',
-          title: directDouyinItem.title,
-          author: directDouyinItem.author,
-          pic: directDouyinItem.cover,
-          duration: directDouyinItem.duration > 0
-              ? '${directDouyinItem.duration}s'
-              : '短视频',
-          description: directDouyinItem.playUrl,
-          tag: '抖音短视频',
-        );
-        searchResults.removeWhere((i) => i.bvid == directItem.bvid);
-        searchResults.insert(0, directItem);
-      }
-
-      if (directBiliDetail != null) {
-        final directItem = BiliVideoItem(
-          bvid: directBiliDetail.bvid,
-          title: directBiliDetail.title,
-          author: directBiliDetail.ownerName,
-          pic: directBiliDetail.pic,
-          play: directBiliDetail.view,
-          danmaku: directBiliDetail.danmaku,
-          duration: directBiliDetail.parts.length > 1
-              ? '${directBiliDetail.parts.length}P'
-              : (directBiliDetail.parts.isNotEmpty
-                  ? '${directBiliDetail.parts.first.duration}s'
-                  : ''),
-          description: directBiliDetail.desc,
-        );
-        searchResults.removeWhere((i) => i.bvid == directItem.bvid);
-        searchResults.insert(0, directItem);
-      }
-
-      if (mounted) {
-        setState(() {
-          _biliResults = searchResults;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        KazumiDialog.showToast(message: '搜索出错: $e');
-      }
-    }
+    ref.read(onlineVideoSearchProvider.notifier).search(clean);
   }
 
   /// 点击视频卡片处理 (自动解析分P与播放)
@@ -297,7 +95,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
               playUrl.contains('tos-cn'));
 
       if (!isDirectCdn) {
-        KazumiDialog.showToast(message: '正在解析抖音无水印直链...');
+        HaipeeDialog.showToast(message: '正在解析抖音无水印直链...');
         final extracted = await DouyinService.extractVideo(id);
         if (!mounted) return;
         if (extracted != null && extracted.playUrl.isNotEmpty) {
@@ -320,7 +118,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
           ),
         );
       } else {
-        KazumiDialog.showToast(message: '无效的抖音播放直链');
+        HaipeeDialog.showToast(message: '无效的抖音播放直链');
       }
       return;
     }
@@ -330,10 +128,10 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
       final pluginName = item.author;
       final src = item.description;
       if (src.isEmpty) {
-        KazumiDialog.showToast(message: '无效的播放地址');
+        HaipeeDialog.showToast(message: '无效的播放地址');
         return;
       }
-      KazumiDialog.showToast(message: '正在拉取 [$pluginName] 剧集与播放线路...');
+      HaipeeDialog.showToast(message: '正在拉取 [$pluginName] 剧集与播放线路...');
       final videoPageController = ref.read(videoProvider.notifier);
       videoPageController.bangumiItem = BangumiItem.dummy(
         title: item.title,
@@ -347,17 +145,17 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
           context.push(Routes.video);
         }
       } catch (e) {
-        KazumiLogger().log(Level.warning, '获取播放线路失败: $e');
-        KazumiDialog.showToast(message: '获取播放线路失败: $e');
+        AppLog.w(LogModule.plugin, '获取播放线路失败: $e');
+        HaipeeDialog.showToast(message: '获取播放线路失败: $e');
       }
       return;
     }
 
     // 3. 哔哩哔哩视频处理 (拉取分P并直接起播 / 选集)
-    KazumiDialog.showToast(message: '正在拉取视频分P信息...');
+    HaipeeDialog.showToast(message: '正在拉取视频分P信息...');
     final detail = await BilibiliService.getVideoDetails(item.bvid);
     if (detail == null || detail.parts.isEmpty) {
-      KazumiDialog.showToast(message: '无法获取该视频分P信息');
+      HaipeeDialog.showToast(message: '无法获取该视频分P信息');
       return;
     }
 
@@ -367,7 +165,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
       // 单集视频直接播放
       await _playBiliPart(detail, detail.parts.first);
     } else {
-      // 多P视频弹出集数选择器 (完全在 Kazumi 内呈现，绝不跳出原站)
+      // 多P视频弹出集数选择器 (完全在 Haipee 内呈现，绝不跳出原站)
       _showPartSelectorSheet(detail);
     }
   }
@@ -378,79 +176,76 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        final colorScheme = theme.colorScheme;
-
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.35,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (context, scrollController) {
-            return Column(
+      builder: (context) {
+        final theme = Theme.of(context);
+        return SafeArea(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 拖动把手与标题
-                Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
-                          '分P列表 (${detail.parts.length} 集) - ${detail.title}',
+                          '选择集数 (${detail.parts.length}P)',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(ctx),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
                   ),
                 ),
                 const Divider(height: 1),
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: detail.parts.length,
+                    separatorBuilder: (context, index) => const Divider(
+                      height: 1,
+                      indent: 16,
+                      endIndent: 16,
+                    ),
                     itemBuilder: (context, index) {
                       final part = detail.parts[index];
                       return ListTile(
                         leading: CircleAvatar(
                           radius: 14,
-                          backgroundColor: colorScheme.primaryContainer,
+                          backgroundColor:
+                              theme.colorScheme.primaryContainer,
                           child: Text(
                             '${part.page}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: colorScheme.onPrimaryContainer,
+                              color: theme.colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         title: Text(
-                          part.part,
-                          maxLines: 1,
+                          part.part.isNotEmpty ? part.part : 'P${part.page}',
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        trailing: const Icon(Icons.play_circle_outline, size: 22),
+                        subtitle: part.duration > 0
+                            ? Text('${part.duration} 秒')
+                            : null,
+                        trailing: const Icon(Icons.play_arrow_outlined),
                         onTap: () {
-                          Navigator.pop(ctx);
+                          Navigator.of(context).pop();
                           _playBiliPart(detail, part);
                         },
                       );
@@ -458,287 +253,474 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                   ),
                 ),
               ],
-            );
-          },
+            ),
+          ),
         );
       },
     );
   }
 
-  /// 提取流媒体并启动播放器 (DASH 双流 + 原生弹幕)
+  /// 播放 B站 某一个具体的分P
   Future<void> _playBiliPart(BiliVideoDetail detail, BiliVideoPart part) async {
-    KazumiDialog.showToast(message: '正在解析 DASH 流媒体直链...');
-    final playUrl = await BilibiliService.getPlayUrl(detail.bvid, part.cid);
-    if (playUrl == null || playUrl.videoUrl.isEmpty) {
-      KazumiDialog.showToast(message: '获取播放直链失败，请重试');
-      return;
+    HaipeeDialog.showToast(message: '正在拉取播放直链...');
+    try {
+      final playUrl = await BilibiliService.getPlayUrl(detail.bvid, part.cid);
+      if (!mounted) return;
+
+      if (playUrl == null || playUrl.videoUrl.isEmpty) {
+        HaipeeDialog.showToast(message: '获取播放直链失败');
+        return;
+      }
+
+      context.push(
+        Routes.localPlayer,
+        extra: LocalVideoPlayArgs(
+          filePath: playUrl.videoUrl,
+          title: '${detail.title} - ${part.part}',
+          audioUrl: playUrl.audioUrl,
+          httpHeaders: playUrl.headers,
+          biliCid: part.cid,
+          biliBvid: detail.bvid,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        HaipeeDialog.showToast(message: '播放失败: $e');
+      }
     }
-
-    if (!mounted) return;
-
-    final title = detail.parts.length > 1
-        ? '${detail.title} - ${part.part}'
-        : detail.title;
-
-    context.push(
-      Routes.localPlayer,
-      extra: LocalVideoPlayArgs(
-        filePath: playUrl.videoUrl,
-        title: title,
-        audioUrl: playUrl.audioUrl,
-        httpHeaders: playUrl.headers,
-        biliCid: part.cid,
-        biliBvid: detail.bvid,
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDesktopSideMenu =
+    final pluginsState = ref.watch(pluginsProvider);
+    final enabledPluginCount = pluginsState.enabledPluginCount;
+
+    final searchState = ref.watch(onlineVideoSearchProvider);
+    final searchNotifier = ref.read(onlineVideoSearchProvider.notifier);
+
+    final bool isDesktopSideMenu =
         Utils.isDesktop() && MediaQuery.of(context).orientation != Orientation.portrait;
 
-    final enabledPluginCount = ref.watch(pluginsProvider.select(
-      (s) => s.enabledPluginCount,
-    ));
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 720;
 
-    return Scaffold(
-      appBar: SysAppBar(
-        title: const Text('在线视频搜索'),
-        actions: [
-          IconButton(
-            tooltip: 'Kazumi 视频规则',
-            icon: const Icon(Icons.video_library_outlined),
-            onPressed: () => context.push(Routes.settingsPlugin),
+        return Scaffold(
+          appBar: SysAppBar(
+            title: const Text('在线视频搜索'),
+            actions: [
+              IconButton(
+                tooltip: 'BT/磁力直搜 (Mikan/Nyaa)',
+                icon: const Icon(Icons.cloud_download_outlined),
+                onPressed: () {
+                  final kw = _searchController.text.trim();
+                  TorrentSearchSheet.show(
+                    context,
+                    initialKeyword: kw,
+                  );
+                },
+              ),
+              IconButton(
+                tooltip: 'Haipee 视频规则',
+                icon: const Icon(Icons.video_library_outlined),
+                onPressed: () => context.push(Routes.settingsPlugin),
+              ),
+              IconButton(
+                tooltip: '下载管理',
+                icon: const Icon(Icons.download_outlined),
+                onPressed: () => context.push(Routes.download),
+              ),
+            ],
+            needTopOffset: !isDesktopSideMenu,
           ),
-          IconButton(
-            tooltip: '下载管理',
-            icon: const Icon(Icons.download_outlined),
-            onPressed: () => context.go(Routes.download),
+          body: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollStartNotification ||
+                  notification is ScrollUpdateNotification) {
+                if (_searchFocusNode.hasFocus) {
+                  _searchFocusNode.unfocus();
+                }
+              }
+              return false;
+            },
+            child: _buildScrollContent(
+              theme,
+              colorScheme,
+              enabledPluginCount,
+              searchState,
+              searchNotifier,
+              isWide: isWide,
+            ),
           ),
-        ],
-        needTopOffset: !isDesktopSideMenu,
-      ),
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (scrollNotification) {
-          if (scrollNotification is ScrollStartNotification ||
-              scrollNotification is ScrollUpdateNotification) {
-            if (_searchFocusNode.hasFocus) {
-              _searchFocusNode.unfocus();
-            }
-          }
-          return false;
-        },
-        child: CustomScrollView(
-          slivers: [
-            // 1. 搜索引擎顶部核心区域 (居中大搜索框 + 规则源切换 + 下拉历史集成)
+        );
+      },
+    );
+  }
+
+  Widget _buildScrollContent(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    int enabledPluginCount,
+    OnlineVideoSearchState searchState,
+    OnlineVideoSearchNotifier searchNotifier, {
+    required bool isWide,
+  }) {
+    final isSearching = searchState.isSearching;
+    final activeKeyword = searchState.keyword;
+    final completedSources = searchState.completedSources;
+    final totalSources = searchState.totalSources;
+    final allResults = searchState.allResults;
+    final currentFilteredResults = searchState.currentFilteredResults;
+    final selectedFilter = searchState.selectedFilter;
+
+    return CustomScrollView(
+      slivers: [
+        // 1. 搜索引擎顶部核心区域
+        SliverToBoxAdapter(
+          child: _buildSearchEngineHeader(
+            theme,
+            colorScheme,
+            enabledPluginCount,
+            selectedFilter,
+            activeKeyword,
+            searchNotifier,
+            isWide: isWide,
+            searchState: searchState,
+          ),
+        ),
+
+        // 2. 搜索中全屏加载态
+        if (isSearching && allResults.isEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Column(
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      '正在全网并发检索在线视频与直播流 ($completedSources/$totalSources 个源)...',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // 3. 搜索结果卡片流
+        if (activeKeyword.isNotEmpty && (allResults.isNotEmpty || !isSearching)) ...[
+          SliverToBoxAdapter(
+            child: _buildSearchResultSummary(
+              theme,
+              colorScheme,
+              currentFilteredResults,
+              selectedFilter,
+              isSearching,
+              completedSources,
+              totalSources,
+            ),
+          ),
+          if (currentFilteredResults.isEmpty && !isSearching)
             SliverToBoxAdapter(
-              child: _buildSearchEngineHeader(
+              child: _buildEmptyStateCard(
+                theme,
+                colorScheme,
+                selectedFilter,
+                allResults,
+                activeKeyword,
+                searchNotifier,
+              ),
+            )
+          else if (currentFilteredResults.isEmpty && isSearching)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Text(
+                    selectedFilter == OnlineSourceFilter.live
+                        ? '当前分类暂未检索到直播频道，其余源检索中...'
+                        : '当前分类暂未检索到视频，其余源检索中...',
+                    style: TextStyle(color: colorScheme.outline),
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              sliver: SliverLayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.crossAxisExtent;
+                  int crossAxisCount = 2;
+                  if (width >= 1200) {
+                    crossAxisCount = 5;
+                  } else if (width >= 900) {
+                    crossAxisCount = 4;
+                  } else if (width >= 600) {
+                    crossAxisCount = 3;
+                  }
+
+                  return SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.76,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final item = currentFilteredResults[index];
+                        return _buildVideoCard(item, theme, colorScheme);
+                      },
+                      childCount: currentFilteredResults.length,
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+
+        // 4. 空闲未搜索状态时：若有传入初始视频(测试场景)则呈现卡片，否则呈现纯工具引导视图
+        if (activeKeyword.isEmpty) ...[
+          if (_popularVideos.isNotEmpty)
+            Builder(
+              builder: (context) {
+                final displayedPopular =
+                    searchState.resultsForFilter(selectedFilter, _popularVideos);
+                if (displayedPopular.isEmpty) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  sliver: SliverLayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.crossAxisExtent;
+                      int crossAxisCount = 2;
+                      if (width >= 1200) {
+                        crossAxisCount = 5;
+                      } else if (width >= 900) {
+                        crossAxisCount = 4;
+                      } else if (width >= 600) {
+                        crossAxisCount = 3;
+                      }
+
+                      return SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.76,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = displayedPopular[index];
+                            return _buildVideoCard(item, theme, colorScheme);
+                          },
+                          childCount: displayedPopular.length,
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            )
+          else
+            SliverToBoxAdapter(
+              child: _buildToolGuideView(
                 theme,
                 colorScheme,
                 enabledPluginCount,
               ),
             ),
+        ],
+        const SliverToBoxAdapter(child: SizedBox(height: 32)),
+      ],
+    );
+  }
 
-            // 2. 搜索中加载状态
-            if (_isLoading)
-              const SliverToBoxAdapter(
+  /// 构建纯工具引导态 (展示规则就绪状态与搜索历史，绝不预加载第三方内容)
+  Widget _buildToolGuideView(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    int enabledPluginCount,
+  ) {
+    final pluginsState = ref.watch(pluginsProvider);
+    final enabledPlugins = pluginsState.enabledPlugins;
+
+    final haipeeCount =
+        enabledPlugins.where((p) => p.ruleType == PluginRuleType.haipee).length;
+    final maccmsCount =
+        enabledPlugins.where((p) => p.ruleType == PluginRuleType.maccms).length;
+    final tvboxCount =
+        enabledPlugins.where((p) => p.ruleType == PluginRuleType.tvbox).length;
+    final iptvCount =
+        enabledPlugins.where((p) => p.ruleType == PluginRuleType.iptv).length;
+    final pipedCount = (pluginsState.isPluginEnabled('bilibili') ? 1 : 0) +
+        (pluginsState.isPluginEnabled('douyin') ? 1 : 0) +
+        enabledPlugins
+            .where((p) =>
+                p.ruleType == PluginRuleType.piped &&
+                !p.isBilibili &&
+                !p.isDouyin)
+            .length;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. 规则就绪看板
+              Card(
+                elevation: 0,
+                color: colorScheme.surfaceContainerLow,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                  ),
+                ),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('正在检索在线视频流...'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-            // 3. 搜索结果卡片流
-            if (!_isLoading && _activeKeyword.isNotEmpty) ...[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                sliver: SliverToBoxAdapter(
-                  child: Row(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.video_library_outlined, size: 20, color: colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Text(
-                        '搜索结果 (${_biliResults.length} 个视频)',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(Icons.hub_outlined,
+                              color: colorScheme.primary, size: 22),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '已启用规则 ($enabledPluginCount 个规则)',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildRuleStatusBadge(
+                            theme,
+                            colorScheme,
+                            icon: Icons.extension_rounded,
+                            label: 'Haipee 规则',
+                            count: haipeeCount,
+                          ),
+                          _buildRuleStatusBadge(
+                            theme,
+                            colorScheme,
+                            icon: Icons.movie_outlined,
+                            label: 'MacCMS 规则',
+                            count: maccmsCount,
+                          ),
+                          _buildRuleStatusBadge(
+                            theme,
+                            colorScheme,
+                            icon: Icons.widgets_outlined,
+                            label: 'TVBox 规则',
+                            count: tvboxCount,
+                          ),
+                          _buildRuleStatusBadge(
+                            theme,
+                            colorScheme,
+                            icon: Icons.live_tv_outlined,
+                            label: 'IPTV 直播',
+                            count: iptvCount,
+                          ),
+                          _buildRuleStatusBadge(
+                            theme,
+                            colorScheme,
+                            icon: Icons.play_circle_outline_rounded,
+                            label: 'Piped 流媒体',
+                            count: pipedCount,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ),
-              if (_biliResults.isEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 500),
-                        child: Card(
-                          elevation: 0,
-                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.search_off_rounded,
-                                  size: 44,
-                                  color: colorScheme.primary,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  '未找到匹配的在线视频',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '请尝试更换关键词，或切换上方检索分类（哔哩哔哩 / Web 规则源 / 苹果CMS）；亦支持直接粘贴 B站 BV 号或抖音短视频分享链接无水印解析播放。',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: colorScheme.onSurfaceVariant,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                if (_selectedFilter != OnlineSourceFilter.all) ...[
-                                  const SizedBox(height: 16),
-                                  FilledButton.icon(
-                                    icon: const Icon(Icons.all_inclusive, size: 18),
-                                    label: Text('使用全部源检索「$_activeKeyword」'),
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedFilter = OnlineSourceFilter.all;
-                                      });
-                                      _performSearch(_activeKeyword);
-                                    },
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 360,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.80,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = _biliResults[index];
-                        return _buildVideoCard(item, theme, colorScheme);
-                      },
-                      childCount: _biliResults.length,
-                    ),
-                  ),
-                ),
             ],
-
-            // 4. 初始状态：热门推荐流 (当未主动搜索时展示)
-            if (!_isLoading && _activeKeyword.isEmpty) ...[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                sliver: SliverToBoxAdapter(
-                  child: Row(
-                    children: [
-                      const Icon(Icons.local_fire_department, size: 22, color: Colors.deepOrange),
-                      const SizedBox(width: 8),
-                      Text(
-                        '全网热门推荐流',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (_isLoadingPopular)
-                        const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      else
-                        IconButton(
-                          icon: const Icon(Icons.refresh, size: 20),
-                          tooltip: '刷新热门流',
-                          onPressed: _loadPopularVideos,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_popularVideos.isEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: Text(
-                        '暂无推荐内容，请输入关键词开始搜索',
-                        style: TextStyle(color: colorScheme.outline),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 360,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.80,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = _popularVideos[index];
-                        return _buildVideoCard(item, theme, colorScheme);
-                      },
-                      childCount: _popularVideos.length,
-                    ),
-                  ),
-                ),
-            ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  /// 构建居中搜索引擎头部 (界面极简化，搜索历史整合入下拉浮层)
+  Widget _buildRuleStatusBadge(
+    ThemeData theme,
+    ColorScheme colorScheme, {
+    required IconData icon,
+    required String label,
+    required int count,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: colorScheme.primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: BoxDecoration(
+              color: count > 0
+                  ? colorScheme.primary.withValues(alpha: 0.15)
+                  : colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: count > 0 ? colorScheme.primary : colorScheme.outline,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   Widget _buildSearchEngineHeader(
     ThemeData theme,
     ColorScheme colorScheme,
     int enabledPluginCount,
-  ) {
+    OnlineSourceFilter selectedFilter,
+    String activeKeyword,
+    OnlineVideoSearchNotifier searchNotifier, {
+    required bool isWide,
+    required OnlineVideoSearchState searchState,
+  }) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       child: Column(
@@ -759,9 +741,9 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                   _performSearch(val);
                 },
                 decoration: InputDecoration(
-                  hintText: _selectedFilter == OnlineSourceFilter.video
+                  hintText: selectedFilter == OnlineSourceFilter.video
                       ? '搜索在线视频、动漫番剧或粘贴 B站 BV 号'
-                      : (_selectedFilter == OnlineSourceFilter.live
+                      : (selectedFilter == OnlineSourceFilter.live
                           ? '搜索电视直播频道、央视、卫视或轮播台'
                           : '输入作品、频道名称或粘贴 B站 BV 号'),
                   prefixIcon: const Icon(Icons.search),
@@ -773,10 +755,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                           icon: const Icon(Icons.clear, size: 20),
                           onPressed: () {
                             _searchController.clear();
-                            setState(() {
-                              _activeKeyword = '';
-                              _biliResults = [];
-                            });
+                            searchNotifier.clear();
                           },
                         ),
                       IconButton(
@@ -799,80 +778,303 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
-
-          // 规则源切换 Chips (四大分类明确切换)
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: OnlineSourceFilter.values.map((filter) {
-              final isSelected = _selectedFilter == filter;
-              final pluginsState = ref.watch(pluginsProvider);
-              String labelText = filter.label;
-              if (filter == OnlineSourceFilter.video) {
-                final videoCount = pluginsState.enabledPlugins
-                    .where((p) => p.resolvedCategory == PluginCategory.video)
-                    .length;
-                labelText = '${filter.label} ($videoCount)';
-              } else if (filter == OnlineSourceFilter.live) {
-                final liveCount = pluginsState.enabledPlugins
-                    .where((p) => p.resolvedCategory == PluginCategory.live)
-                    .length;
-                labelText = '${filter.label} ($liveCount)';
-              }
-              return ChoiceChip(
-                showCheckmark: false,
-                avatar: Icon(
-                  filter.icon,
-                  size: 16,
-                  color: isSelected
-                      ? colorScheme.onSecondaryContainer
-                      : colorScheme.onSurfaceVariant,
-                ),
-                label: Text(
-                  labelText,
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-                selected: isSelected,
-                onSelected: (selected) {
-                  if (selected) {
-                    setState(() => _selectedFilter = filter);
-                    if (_searchController.text.trim().isNotEmpty) {
-                      _performSearch(_searchController.text);
-                    }
-                  }
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-
-          // 推荐热搜标签 (保持干净简洁，仅在初始空闲状态时呈现)
-          if (_activeKeyword.isEmpty)
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const Icon(Icons.trending_up, size: 16, color: Colors.redAccent),
-                ..._trendingTags.map((tag) {
-                  return ActionChip(
-                    label: Text(tag, style: const TextStyle(fontSize: 12)),
-                    backgroundColor: colorScheme.surfaceContainer,
-                    onPressed: () {
-                      _searchController.text = tag;
-                      _performSearch(tag);
+          const SizedBox(height: 14),
+          // 统一横向分类与规则筛选栏 (对齐下载界面规范，全屏统一呈现，包含全部/视频/直播及5大规则协议并附带动态数量Badge)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: OnlineSourceFilter.audiovisualFilters.map((filter) {
+                final isSelected = selectedFilter == filter;
+                final count = searchState.countForFilter(filter);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: ChoiceChip(
+                    key: Key('online_search_chip_${filter.id}'),
+                    showCheckmark: false,
+                    avatar: Icon(
+                      filter.icon,
+                      size: 16,
+                      color: isSelected
+                          ? colorScheme.onSecondaryContainer
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          filter.label,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                        if (searchState.allResults.isNotEmpty || count > 0) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? (count > 0
+                                      ? colorScheme.primary
+                                      : colorScheme.outline.withValues(alpha: 0.3))
+                                  : (count > 0
+                                      ? colorScheme.primary.withValues(alpha: 0.15)
+                                      : colorScheme.surfaceContainerHighest),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '$count',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected
+                                    ? (count > 0 ? colorScheme.onPrimary : colorScheme.onSurface)
+                                    : (count > 0 ? colorScheme.primary : colorScheme.outline),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        searchNotifier.setFilter(filter);
+                      }
                     },
-                  );
-                }),
-              ],
+                  ),
+                );
+              }).toList(),
             ),
+          ),
         ],
       ),
     );
+  }
+
+  /// 构建搜索结果头部信息与源检索进度指示 (例如：“找到 X 条视频”、“X 个直播频道”，或者搜索进度指示“已完成 M/N 个源”)
+  Widget _buildSearchResultSummary(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    List<BiliVideoItem> filteredResults,
+    OnlineSourceFilter selectedFilter,
+    bool isSearching,
+    int completedSources,
+    int totalSources,
+  ) {
+    String countLabel;
+    IconData headerIcon;
+    switch (selectedFilter) {
+      case OnlineSourceFilter.haipee:
+      case OnlineSourceFilter.anime:
+        countLabel = '找到 ${filteredResults.length} 部 Haipee 规则内容';
+        headerIcon = Icons.extension_rounded;
+        break;
+      case OnlineSourceFilter.maccms:
+        countLabel = '找到 ${filteredResults.length} 部 MacCMS 采集影片';
+        headerIcon = Icons.movie_outlined;
+        break;
+      case OnlineSourceFilter.tvbox:
+        countLabel = '找到 ${filteredResults.length} 部 TVBox 聚合内容';
+        headerIcon = Icons.widgets_outlined;
+        break;
+      case OnlineSourceFilter.iptv:
+        countLabel = '找到 ${filteredResults.length} 个 IPTV 直播频道';
+        headerIcon = Icons.live_tv_outlined;
+        break;
+      case OnlineSourceFilter.piped:
+      case OnlineSourceFilter.bilibili:
+      case OnlineSourceFilter.douyin:
+        countLabel = '找到 ${filteredResults.length} 条 Piped 流媒体视频';
+        headerIcon = Icons.play_circle_outline_rounded;
+        break;
+      case OnlineSourceFilter.live:
+        countLabel = '找到 ${filteredResults.length} 个直播频道';
+        headerIcon = Icons.live_tv_outlined;
+        break;
+      case OnlineSourceFilter.video:
+        countLabel = '找到 ${filteredResults.length} 条视频';
+        headerIcon = Icons.video_library_outlined;
+        break;
+      case OnlineSourceFilter.all:
+        countLabel = '找到 ${filteredResults.length} 条视听内容';
+        headerIcon = Icons.auto_awesome_motion_outlined;
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(headerIcon, size: 20, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  countLabel,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (isSearching) ...[
+                const SizedBox(
+                  width: 13,
+                  height: 13,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    '正在并发检索 ($completedSources/$totalSources 个源)...',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.primary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ] else if (totalSources > 0) ...[
+                Icon(
+                  Icons.check_circle_outline,
+                  size: 14,
+                  color: colorScheme.outline,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    '已检索全部 $totalSources 个源',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.outline,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (isSearching && totalSources > 0) ...[
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: (completedSources / totalSources).clamp(0.0, 1.0),
+                minHeight: 2,
+                backgroundColor: colorScheme.surfaceContainerHighest,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// 构建搜索无结果时的降级引导卡片
+  Widget _buildEmptyStateCard(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    OnlineSourceFilter selectedFilter,
+    List<BiliVideoItem> allResults,
+    String activeKeyword,
+    OnlineVideoSearchNotifier searchNotifier,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Card(
+            elevation: 0,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.search_off_rounded,
+                    size: 44,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    selectedFilter == OnlineSourceFilter.live
+                        ? '未找到匹配的直播频道'
+                        : (selectedFilter == OnlineSourceFilter.video
+                            ? '未找到匹配的在线视频'
+                            : '未找到匹配的视听内容'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    selectedFilter == OnlineSourceFilter.live
+                        ? '请尝试更换关键词，或切换上方分类；亦可在规则管理中检查是否启用了 IPTV 直播源。'
+                        : (selectedFilter == OnlineSourceFilter.video
+                            ? '请尝试更换关键词，或切换上方检索分类（哔哩哔哩 / Web 规则源 / 苹果CMS）；亦支持直接粘贴 B站 BV 号或抖音短视频分享链接无水印解析播放。'
+                            : '请尝试更换关键词，或在规则管理中检查是否启用了相关在线视听规则。'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                  if (selectedFilter != OnlineSourceFilter.all) ...[
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      icon: Icon(
+                        allResults.isNotEmpty
+                            ? Icons.visibility_outlined
+                            : Icons.all_inclusive,
+                      ),
+                      label: Text(
+                        allResults.isNotEmpty
+                            ? '查看全部分类检索结果 (${allResults.length})'
+                            : '使用全部源检索「$activeKeyword」',
+                      ),
+                      onPressed: () {
+                        searchNotifier.setFilter(OnlineSourceFilter.all);
+                        if (allResults.isEmpty) {
+                          _performSearch(activeKeyword);
+                        }
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getSourceLabel(BiliVideoItem item) {
+    if (item.bvid.startsWith('douyin_')) {
+      return '抖音';
+    }
+    if (item.bvid.startsWith('web_')) {
+      return item.author.isNotEmpty
+          ? item.author
+          : (item.tag.isNotEmpty ? item.tag : '网络');
+    }
+    return 'BiliBili';
   }
 
   /// 构建视频卡片 (严谨防溢出，比例协调)
@@ -911,52 +1113,62 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                       ),
                       errorWidget: (context, url, error) => Container(
                         color: colorScheme.surfaceContainerHighest,
-                        child: const Icon(Icons.video_library_outlined, size: 36),
+                        child: const Center(
+                          child: Icon(Icons.broken_image_outlined, size: 28),
+                        ),
                       ),
                     )
                   else
                     Container(
                       color: colorScheme.surfaceContainerHighest,
-                      child: const Icon(Icons.video_library_outlined, size: 36),
-                    ),
-
-                  // 播放按钮微动效层
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.1),
                       child: const Center(
-                        child: Icon(
-                          Icons.play_circle_fill,
-                          color: Colors.white70,
-                          size: 42,
-                        ),
+                        child: Icon(Icons.movie_outlined, size: 32),
                       ),
                     ),
-                  ),
-
-                  // 时长标签
+                  // 时长或分P药丸 (右下角)
                   if (item.duration.isNotEmpty)
                     Positioned(
-                      right: 8,
-                      bottom: 8,
+                      right: 6,
+                      bottom: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.black87,
+                          color: Colors.black.withValues(alpha: 0.75),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           item.duration,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ),
 
-                  // 来源标识
+                  // 规则协议标识 (右上角)
+                  Positioned(
+                    right: 6,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.65),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        item.resolvedRuleType.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 来源标识 (左上角：纯来源标签，不与右上角的类型重复)
                   Positioned(
                     left: 8,
                     top: 8,
@@ -966,22 +1178,14 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                         color: item.bvid.startsWith('douyin_')
                             ? Colors.black87
                             : (item.bvid.startsWith('web_')
-                                ? (item.tag.contains('直播')
-                                    ? Colors.orange.shade800
-                                    : (item.tag.contains('资源') || item.tag.contains('网盘') || item.tag.contains('BT')
-                                        ? Colors.blue.shade800
-                                        : (item.tag == '苹果CMS'
-                                            ? Colors.indigo.shade700
-                                            : Colors.teal.shade700)))
+                                ? Colors.teal.shade800
                                 : Colors.pinkAccent.withValues(alpha: 0.9)),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        item.bvid.startsWith('douyin_')
-                            ? '抖音'
-                            : (item.bvid.startsWith('web_')
-                                ? (item.tag.isNotEmpty ? '${item.tag} · ${item.author}' : 'Web · ${item.author}')
-                                : 'BiliBili'),
+                        _getSourceLabel(item),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -994,40 +1198,39 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
               ),
             ),
 
-            // 标题、作者与播放量 (严格防溢出布局)
+            // 标题与来源元数据
             Expanded(
-              flex: 6,
+              flex: 4,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            item.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              height: 1.25,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          // 底层技术机制标签
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        // 来源协议标签
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                             decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                              color: item.bvid.startsWith('douyin_')
+                                  ? Colors.cyan.withValues(alpha: 0.15)
+                                  : (item.tag.contains('直播')
+                                      ? Colors.orange.withValues(alpha: 0.15)
+                                      : (item.bvid.startsWith('web_')
+                                          ? Colors.teal.withValues(alpha: 0.15)
+                                          : Colors.pink.withValues(alpha: 0.15))),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-                                width: 0.5,
-                              ),
                             ),
                             child: Text(
                               item.bvid.startsWith('douyin_')
@@ -1035,57 +1238,30 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                                   : (item.bvid.startsWith('web_')
                                       ? item.tag
                                       : 'B站高清'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 10,
                                 color: colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.bold,
                               ),
+                            ),
+                          ),
+                        ),
+                        if (item.author.isNotEmpty && !item.bvid.startsWith('web_')) ...[
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              item.author,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colorScheme.outline,
+                              ),
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.person_outline, size: 14, color: colorScheme.outline),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                item.author,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colorScheme.outline,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Icon(Icons.play_arrow_outlined, size: 14, color: colorScheme.outline),
-                            const SizedBox(width: 2),
-                            Text(
-                              _formatCount(item.play),
-                              style: TextStyle(fontSize: 11, color: colorScheme.outline),
-                            ),
-                            const SizedBox(width: 10),
-                            Icon(Icons.subtitles_outlined, size: 14, color: colorScheme.outline),
-                            const SizedBox(width: 2),
-                            Text(
-                              _formatCount(item.danmaku),
-                              style: TextStyle(fontSize: 11, color: colorScheme.outline),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ],
@@ -1120,14 +1296,16 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
             );
           },
         ),
-        if (item.tag.contains('资源') || item.tag.contains('网盘') || item.tag.contains('BT')) ...[
+        if (item.tag.contains('资源') ||
+            item.tag.contains('网盘') ||
+            item.tag.contains('BT')) ...[
           AppMenuAction(
             title: '复制资源下载直链 (支持下载器/网盘转存)',
             icon: Icons.link_rounded,
             onSelected: () async {
               await Clipboard.setData(ClipboardData(text: item.description));
               if (context.mounted) {
-                KazumiDialog.showToast(message: '已复制资源下载直链', context: context);
+                HaipeeDialog.showToast(message: '已复制资源下载直链', context: context);
               }
             },
           ),
@@ -1139,7 +1317,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: item.title));
             if (context.mounted) {
-              KazumiDialog.showToast(message: '已复制视频标题', context: context);
+              HaipeeDialog.showToast(message: '已复制视频标题', context: context);
             }
           },
         ),
@@ -1150,7 +1328,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
             onSelected: () async {
               await Clipboard.setData(ClipboardData(text: item.author));
               if (context.mounted) {
-                KazumiDialog.showToast(message: '已复制作者信息', context: context);
+                HaipeeDialog.showToast(message: '已复制作者信息', context: context);
               }
             },
           ),
@@ -1161,7 +1339,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
             onSelected: () async {
               await Clipboard.setData(ClipboardData(text: pageUrl));
               if (context.mounted) {
-                KazumiDialog.showToast(message: '已复制视频链接', context: context);
+                HaipeeDialog.showToast(message: '已复制视频链接', context: context);
               }
             },
           ),
@@ -1175,11 +1353,5 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
       ],
       child: cardWidget,
     );
-  }
-
-  String _formatCount(int count) {
-    if (count <= 0) return '0';
-    if (count < 10000) return '$count';
-    return '${(count / 10000).toStringAsFixed(1)}万';
   }
 }

@@ -4,9 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/playback/subtitle_matcher.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/playback/subtitle_matcher.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/services/logging/app_log.dart';
 import 'package:path/path.dart' as p;
 
 /// 音频与字幕轨道控制及延迟微调面板
@@ -138,7 +139,7 @@ class TracksSettingsSheet extends ConsumerWidget {
                             final videoPath = playerController.activeLocalVideoArgs!.filePath;
                             final dir = File(videoPath).parent;
                             if (!dir.existsSync()) {
-                              KazumiDialog.showToast(message: '目录不存在');
+                              HaipeeDialog.showToast(message: '目录不存在');
                               return;
                             }
                             final candidates = <SubtitleMatch>[];
@@ -170,9 +171,9 @@ class TracksSettingsSheet extends ConsumerWidget {
                             final best = SubtitleMatcher().selectBestMatch(candidates);
                             if (best != null && await SubtitleMatcher.validateSubtitleFile(best.url)) {
                               await playerController.loadExternalSubtitle(best.url);
-                              KazumiDialog.showToast(message: '智能匹配并挂载: ${p.basename(best.url)}');
+                              HaipeeDialog.showToast(message: '智能匹配并挂载: ${p.basename(best.url)}');
                             } else {
-                              KazumiDialog.showToast(message: '未在同目录下找到可匹配的字幕');
+                              HaipeeDialog.showToast(message: '未在同目录下找到可匹配的字幕');
                             }
                           },
                           icon: const Icon(Icons.auto_awesome, size: 16),
@@ -180,6 +181,9 @@ class TracksSettingsSheet extends ConsumerWidget {
                         ),
                       TextButton.icon(
                         onPressed: () async {
+                          if (AppLog.isFirebaseTestLab) {
+                            return;
+                          }
                           try {
                             final result = await FilePicker.platform.pickFiles(
                               type: FileType.custom,
@@ -191,9 +195,9 @@ class TracksSettingsSheet extends ConsumerWidget {
                                 final filePath = result.files.single.path!;
                                 if (await SubtitleMatcher.validateSubtitleFile(filePath)) {
                                   await playerController.loadExternalSubtitle(filePath);
-                                  KazumiDialog.showToast(message: '已挂载外部字幕: ${p.basename(filePath)}');
+                                  HaipeeDialog.showToast(message: '已挂载外部字幕: ${p.basename(filePath)}');
                                 } else {
-                                  KazumiDialog.showToast(message: '字幕文件无效或为空');
+                                  HaipeeDialog.showToast(message: '字幕文件无效或为空');
                                 }
                               } else {
                                 final candidates = <SubtitleMatch>[];
@@ -216,12 +220,12 @@ class TracksSettingsSheet extends ConsumerWidget {
                                 final best = SubtitleMatcher().selectBestMatch(candidates);
                                 if (best != null && await SubtitleMatcher.validateSubtitleFile(best.url)) {
                                   await playerController.loadExternalSubtitle(best.url);
-                                  KazumiDialog.showToast(message: '智能优选挂载: ${p.basename(best.url)}');
+                                  HaipeeDialog.showToast(message: '智能优选挂载: ${p.basename(best.url)}');
                                 }
                               }
                             }
                           } catch (e) {
-                            KazumiDialog.showToast(message: '加载外部字幕失败: $e');
+                            HaipeeDialog.showToast(message: '加载外部字幕失败: $e');
                           }
                         },
                         icon: const Icon(Icons.file_upload_outlined, size: 18),

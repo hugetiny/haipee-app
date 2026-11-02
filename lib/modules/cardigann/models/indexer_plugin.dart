@@ -1,10 +1,10 @@
-import 'package:kazumi/modules/cardigann/engine/cardigann_query_executor.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/sources/torrent_source.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_source.dart';
 
-/// Cardigann Indexer Plugin implementing TorrentSource for Kazumi.
+/// Cardigann Indexer Plugin implementing TorrentSource for Haipee.
 class IndexerPlugin implements TorrentSource {
   final String id;
   @override

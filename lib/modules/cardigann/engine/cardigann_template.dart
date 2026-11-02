@@ -7,17 +7,19 @@ class CardigannTemplate {
     List<dynamic> categories = const [],
     Map<String, String> config = const {},
     Map<String, String> query = const {},
+    Map<String, String> result = const {},
     bool urlEncodeKeywords = false,
   }) {
     if (template.isEmpty) return '';
 
-    var result = template;
+    final resultVars = result;
+    var output = template;
 
     // 1. Evaluate range: {{ range .Categories }}{{ . }}{{ end }}
     final rangeRegex = RegExp(
       r'\{\{\s*range\s+\.Categories\s*\}\}([\s\S]*?)\{\{\s*end\s*\}\}',
     );
-    result = result.replaceAllMapped(rangeRegex, (match) {
+    output = output.replaceAllMapped(rangeRegex, (match) {
       final itemTemplate = match.group(1) ?? '';
       if (categories.isEmpty) return '';
       final sb = StringBuffer();
@@ -33,8 +35,8 @@ class CardigannTemplate {
     );
 
     int maxLoops = 20;
-    while (innermostIfRegex.hasMatch(result) && maxLoops-- > 0) {
-      result = result.replaceAllMapped(innermostIfRegex, (match) {
+    while (innermostIfRegex.hasMatch(output) && maxLoops-- > 0) {
+      output = output.replaceAllMapped(innermostIfRegex, (match) {
         final conditionVar = match.group(1)!.trim();
         final thenBlock = match.group(2) ?? '';
         final elseBlock = match.group(3) ?? '';
@@ -45,6 +47,7 @@ class CardigannTemplate {
           categories: categories,
           config: config,
           query: query,
+          result: resultVars,
         );
         return isTrue ? thenBlock : elseBlock;
       });
@@ -54,36 +57,42 @@ class CardigannTemplate {
     final kwValue = urlEncodeKeywords ? Uri.encodeComponent(keyword) : keyword;
     final catValue = categories.isNotEmpty ? categories.join(',') : '';
 
-    result = result.replaceAll(RegExp(r'\{\{\s*\.Keywords\s*\}\}'), kwValue);
-    result = result.replaceAll(RegExp(r'\{\{\s*\.Query\.Keywords\s*\}\}'), kwValue);
-    result = result.replaceAll(RegExp(r'\{\{\s*\.Categories\s*\}\}'), catValue);
+    output = output.replaceAll(RegExp(r'\{\{\s*\.Keywords\s*\}\}'), kwValue);
+    output = output.replaceAll(RegExp(r'\{\{\s*\.Query\.Keywords\s*\}\}'), kwValue);
+    output = output.replaceAll(RegExp(r'\{\{\s*\.Categories\s*\}\}'), catValue);
 
     // Query variables: {{ .Query.<field> }}
     query.forEach((k, v) {
-      result = result.replaceAll(
+      output = output.replaceAll(
           RegExp(r'\{\{\s*\.Query\.' + RegExp.escape(k) + r'\s*\}\}'), v);
     });
 
     // Date variables
     final now = DateTime.now();
-    result = result.replaceAll(
+    output = output.replaceAll(
         RegExp(r'\{\{\s*\.Today\.Year\s*\}\}'), now.year.toString());
-    result = result.replaceAll(RegExp(r'\{\{\s*\.Today\.Month\s*\}\}'),
+    output = output.replaceAll(RegExp(r'\{\{\s*\.Today\.Month\s*\}\}'),
         now.month.toString().padLeft(2, '0'));
-    result = result.replaceAll(RegExp(r'\{\{\s*\.Today\.Day\s*\}\}'),
+    output = output.replaceAll(RegExp(r'\{\{\s*\.Today\.Day\s*\}\}'),
         now.day.toString().padLeft(2, '0'));
+
+    // Result variables (row field context): {{ .Result.fieldName }}
+    final resultVarRegex = RegExp(r'\{\{\s*\.Result\.([a-zA-Z0-9_-]+)\s*\}\}');
+    output = output.replaceAllMapped(resultVarRegex, (match) {
+      return resultVars[match.group(1)!] ?? '';
+    });
 
     // Config variables: {{ .Config.settingName }}
     final configVarRegex = RegExp(r'\{\{\s*\.Config\.([a-zA-Z0-9_-]+)\s*\}\}');
-    result = result.replaceAllMapped(configVarRegex, (match) {
+    output = output.replaceAllMapped(configVarRegex, (match) {
       final key = match.group(1)!;
       return config[key] ?? '';
     });
 
     // Clean any remaining unhandled template markers
-    result = result.replaceAll(RegExp(r'\{\{[^\}]*\}\}'), '').trim();
+    output = output.replaceAll(RegExp(r'\{\{[^\}]*\}\}'), '').trim();
 
-    return result;
+    return output;
   }
 
   static bool _evalCondition(
@@ -92,8 +101,24 @@ class CardigannTemplate {
     required List<dynamic> categories,
     required Map<String, String> config,
     Map<String, String> query = const {},
+    Map<String, String> result = const {},
   }) {
     final clean = condition.trim();
+
+    // Logical operators: or/and <arg1> <arg2> ...
+    final logicMatch = RegExp(r'^(or|and)\s+(.+)$').firstMatch(clean);
+    if (logicMatch != null) {
+      final args = logicMatch.group(2)!.split(RegExp(r'\s+')).where((a) => a.isNotEmpty);
+      bool evalArg(String a) => _evalCondition(
+            a,
+            keyword: keyword,
+            categories: categories,
+            config: config,
+            query: query,
+            result: result,
+          );
+      return logicMatch.group(1) == 'or' ? args.any(evalArg) : args.every(evalArg);
+    }
 
     // Check negation e.g. "not .Keywords"
     if (clean.startsWith('not ')) {
@@ -104,6 +129,7 @@ class CardigannTemplate {
         categories: categories,
         config: config,
         query: query,
+        result: result,
       );
     }
 
@@ -113,9 +139,9 @@ class CardigannTemplate {
     if (cmpMatch != null) {
       final op = cmpMatch.group(1)!;
       final a =
-          _resolveValue(cmpMatch.group(2)!, keyword, categories, config, query);
+          _resolveValue(cmpMatch.group(2)!, keyword, categories, config, query, result);
       final b =
-          _resolveValue(cmpMatch.group(3)!, keyword, categories, config, query);
+          _resolveValue(cmpMatch.group(3)!, keyword, categories, config, query, result);
       final isEqual = a == b;
       return op == 'eq' ? isEqual : !isEqual;
     }
@@ -141,6 +167,11 @@ class CardigannTemplate {
       return val != null && val.trim().isNotEmpty;
     }
 
+    if (clean.startsWith('.Result.')) {
+      final val = result[clean.substring(8)];
+      return val != null && val.trim().isNotEmpty;
+    }
+
     // Leading dot identifier: unspecified / unpopulated context variable evaluates to false
     if (clean.startsWith('.')) {
       return false;
@@ -154,8 +185,9 @@ class CardigannTemplate {
     String keyword,
     List<dynamic> categories,
     Map<String, String> config,
-    Map<String, String> query,
-  ) {
+    Map<String, String> query, [
+    Map<String, String> result = const {},
+  ]) {
     var clean = token.trim();
     if ((clean.startsWith('"') && clean.endsWith('"')) ||
         (clean.startsWith("'") && clean.endsWith("'"))) {
@@ -169,6 +201,9 @@ class CardigannTemplate {
     }
     if (clean.startsWith('.Query.')) {
       return query[clean.substring(7)] ?? '';
+    }
+    if (clean.startsWith('.Result.')) {
+      return result[clean.substring(8)] ?? '';
     }
     return clean;
   }

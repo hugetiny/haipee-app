@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/error_widget.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/error_widget.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -12,13 +12,13 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          navigatorObservers: [KazumiDialog.observer],
+          navigatorObservers: [HaipeeDialog.observer],
           home: Scaffold(
             body: Builder(
               builder: (context) {
                 return ElevatedButton(
                   onPressed: () {
-                    KazumiDialog.showToast(
+                    HaipeeDialog.showToast(
                       context: context,
                       message: '设置下载目录失败: 权限不足',
                       error: 'PlatformException(ENTITLEMENT_NOT_FOUND)',
@@ -49,13 +49,13 @@ void main() {
       bool actionTapped = false;
       await tester.pumpWidget(
         MaterialApp(
-          navigatorObservers: [KazumiDialog.observer],
+          navigatorObservers: [HaipeeDialog.observer],
           home: Scaffold(
             body: Builder(
               builder: (context) {
                 return ElevatedButton(
                   onPressed: () {
-                    KazumiDialog.showToast(
+                    HaipeeDialog.showToast(
                       context: context,
                       message: '网络异常，请重试',
                       showActionButton: true,
@@ -98,13 +98,13 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          navigatorObservers: [KazumiDialog.observer],
+          navigatorObservers: [HaipeeDialog.observer],
           home: Scaffold(
             body: Builder(
               builder: (context) {
                 return ElevatedButton(
                   onPressed: () {
-                    KazumiDialog.showErrorDialog(
+                    HaipeeDialog.showErrorDialog(
                       context: context,
                       title: '下载错误',
                       message: '无法创建目录 /Volumes/HD/downloads',
@@ -150,7 +150,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          navigatorObservers: [KazumiDialog.observer],
+          navigatorObservers: [HaipeeDialog.observer],
           home: const Scaffold(
             body: GeneralErrorWidget(
               errMsg: '网络连接超时 (TimeoutException)',

@@ -1,18 +1,18 @@
 import 'dart:io';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/card/palette_card.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/settings/color_type.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/pages/setting/providers.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
+import 'package:haipee/bean/card/palette_card.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/settings/color_type.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/setting/providers.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/utils/utils.dart';
 
 class ThemeSettingsPage extends ConsumerStatefulWidget {
   const ThemeSettingsPage({super.key});
@@ -39,8 +39,8 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
   }
 
   void onBackPressed(BuildContext context) {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
     }
   }
 
@@ -86,6 +86,7 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
         setting.get(SettingBoxKey.themeMode, defaultValue: 'system');
     final useDynamicColor = themeState.useDynamicColor;
     final oledEnhance = themeState.oledEnhance;
+    final useSystemFont = themeState.useSystemFont;
     String colorLabel(String key) {
       final labels = t.settings.appearancePage.colorScheme.labels;
       switch (key) {
@@ -117,8 +118,8 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
       onPopInvokedWithResult: (bool didPop, Object? result) {
         onBackPressed(context);
       },
-      child: Scaffold(
-        appBar: SysAppBar(title: Text(t.settings.appearancePage.title)),
+      child: SettingsDetailScaffold(
+        title: Text(t.settings.appearancePage.title),
         body: SettingsList(
           sections: [
             SettingsSection(
@@ -240,7 +241,7 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                 ),
                 SettingsTile.navigation(
                   onPressed: (_) async {
-                    KazumiDialog.show(builder: (context) {
+                    HaipeeDialog.show(builder: (context) {
                       final colorThemes = colorThemeTypes;
                       return AlertDialog(
                         title: Text(
@@ -261,7 +262,7 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                                   ref
                                       .read(themeProvider.notifier)
                                       .setUseDynamicColor(true);
-                                  KazumiDialog.dismiss();
+                                  HaipeeDialog.dismiss();
                                 },
                                 child: Column(
                                   children: [
@@ -292,7 +293,7 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                                   } else {
                                     setTheme(theme['color']);
                                   }
-                                  KazumiDialog.dismiss();
+                                  HaipeeDialog.dismiss();
                                 },
                                 child: Column(
                                   children: [
@@ -325,6 +326,7 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
             SettingsSection(
               tiles: [
                 SettingsTile.switchTile(
+                  leading: const Icon(Icons.contrast_rounded),
                   onToggle: (value) async {
                     final newValue = value ?? !oledEnhance;
                     await setting.put(SettingBoxKey.oledEnhance, newValue);
@@ -333,6 +335,19 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                   title: Text(t.settings.appearancePage.oled.title),
                   description: Text(t.settings.appearancePage.oled.description),
                   initialValue: oledEnhance,
+                ),
+                SettingsTile.switchTile(
+                  leading: const Icon(Icons.font_download_rounded),
+                  onToggle: (value) async {
+                    final newValue = value ?? !useSystemFont;
+                    await setting.put(SettingBoxKey.useSystemFont, newValue);
+                    ref
+                        .read(themeProvider.notifier)
+                        .setUseSystemFont(newValue);
+                  },
+                  title: const Text('使用系统字体'),
+                  description: const Text('关闭后使用 MI Sans 字体'),
+                  initialValue: useSystemFont,
                 ),
               ],
             ),

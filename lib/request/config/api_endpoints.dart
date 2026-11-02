@@ -8,30 +8,30 @@ class ApiEndpoints {
   static const int apiLevel = 8;
 
   /// 项目主页
-  static const String projectUrl = "https://kazumi.app/";
+  static const String projectUrl = "https://haipee.app/";
 
   /// Github 项目主页
-  static const String sourceUrl = "https://github.com/hugetiny/Kazumi";
+  static const String sourceUrl = "https://github.com/hugetiny/haipee";
 
   /// 图标作者
   static const String iconUrl = "https://www.pixiv.net/users/66219277";
 
   /// 规则仓库
   static const String pluginShop =
-      'https://raw.githubusercontent.com/hugetiny/Kazumi/main/plugins/';
+      'https://raw.githubusercontent.com/Predidit/KazumiRules/main/';
 
   /// 规则仓库镜像
   static const String pluginShopMirror =
-      'https://raw.githubusercontent.com/hugetiny/Kazumi/main/plugins/';
+      'https://raw.githubusercontent.com/Predidit/KazumiRules/main/';
 
   /// 在线升级
   static const String latestApp =
-      'https://api.github.com/repos/hugetiny/Kazumi/releases/latest';
+      'https://api.github.com/repos/hugetiny/haipee/releases/latest';
 
   /// Bangumi 镜像测试后端
   static const String bangumiMirrorDomain = 'https://api.kazumi.fyi';
 
-  /// Kazumi 镜像后端应用更新
+  /// Haipee 镜像后端应用更新
   static const String latestAppMirror =
       '$bangumiMirrorDomain/kazumi/v1/app/latest';
 
@@ -48,7 +48,7 @@ class ApiEndpoints {
   static const String bangumiAuthAPIMirrorDomain = 'https://api.bgmapi.com';
 
   /// Telegram 群组
-  static const String telegramGroup = 'https://t.me/kazumi_app';
+  static const String telegramGroup = 'https://t.me/haipee_app';
 
   /// 番剧信息
   static const String bangumiInfoByID = '/v0/subjects/{0}';
@@ -90,11 +90,11 @@ class ApiEndpoints {
   /// 番剧趋势
   static const String bangumiTrendsNext = '/p1/trending/subjects';
 
-  /// Kazumi Bangumi 镜像缓存榜单
+  /// Haipee Bangumi 镜像缓存榜单
   static const String bangumiMirrorPopularSubjects =
       '/kazumi/v1/popular/subjects';
 
-  /// Kazumi Bangumi 镜像季节时间表
+  /// Haipee Bangumi 镜像季节时间表
   static const String bangumiMirrorSeasonCalendar =
       '/kazumi/v1/calendar/season';
 

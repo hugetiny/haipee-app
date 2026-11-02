@@ -1,1 +1,1 @@
-export 'package:kazumi/pages/setting/player/decoder_settings.dart';
+export 'package:haipee/pages/setting/player/decoder_settings.dart';

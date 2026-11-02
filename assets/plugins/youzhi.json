@@ -1,0 +1,22 @@
+{
+  "api": "1",
+  "type": "maccms",
+  "category": "video",
+  "name": "优质资源库",
+  "version": "1.2",
+  "muliSources": true,
+  "useWebview": false,
+  "useNativePlayer": true,
+  "usePost": false,
+  "useLegacyParser": false,
+  "userAgent": "Mozilla/5.0 (Haipee/Player)",
+  "baseURL": "https://api.1080zyku.com",
+  "searchURL": "https://api.1080zyku.com/inc/apijson.php?ac=detail&wd=@keyword",
+  "searchList": "",
+  "searchName": "",
+  "searchPic": "$.vod_pic",
+  "searchResult": "",
+  "chapterRoads": "",
+  "chapterResult": "",
+  "referer": "https://api.1080zyku.com/"
+}

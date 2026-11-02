@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/cardigann/engine/cardigann_query_executor.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
-import 'package:kazumi/modules/cardigann/models/indexer_plugin.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 
 /// Dialog to view, edit, test, and save Cardigann YAML definition.
 class IndexerEditorDialog extends ConsumerStatefulWidget {
@@ -17,12 +17,60 @@ class IndexerEditorDialog extends ConsumerStatefulWidget {
     required this.plugin,
   });
 
+  static const String _defaultYamlTemplate = '''id: custom_indexer
+name: 自定义种子站
+description: "自定义 Cardigann 种子磁力索引规则"
+language: zh-CN
+type: public
+encoding: UTF-8
+links:
+  - https://example.com/
+
+caps:
+  categorymappings:
+    - {id: 1, cat: TV/Anime, desc: "动画"}
+  modes:
+    search: [q]
+
+search:
+  paths:
+    - path: "search?q={{ .Keywords }}"
+  rows:
+    selector: table tbody tr
+  fields:
+    title:
+      selector: a.title
+    details:
+      selector: a.title
+      attribute: href
+    download:
+      selector: a.magnet
+      attribute: href
+    size:
+      selector: td.size
+    date:
+      selector: td.date
+    seeders:
+      selector: td.seeders
+    leechers:
+      selector: td.leechers
+''';
+
   static Future<void> show(BuildContext context, IndexerPlugin plugin) {
     return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => IndexerEditorDialog(plugin: plugin),
     );
+  }
+
+  static Future<void> showNew(BuildContext context) {
+    final plugin = IndexerPlugin.fromYaml(
+      _defaultYamlTemplate,
+      isBuiltIn: false,
+      isEnabled: true,
+    );
+    return show(context, plugin);
   }
 
   @override
@@ -130,7 +178,7 @@ class _IndexerEditorDialogState extends ConsumerState<IndexerEditorDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: '已成功保存规则: ${widget.plugin.name}',
           context: context,
         );
@@ -144,7 +192,7 @@ class _IndexerEditorDialogState extends ConsumerState<IndexerEditorDialog> {
   }
 
   Future<void> _resetToBuiltIn() async {
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (ctx) => AlertDialog(
         title: const Text('恢复官方预置规则'),
         content: Text(
@@ -173,7 +221,7 @@ class _IndexerEditorDialogState extends ConsumerState<IndexerEditorDialog> {
                 });
               }
               if (mounted) {
-                KazumiDialog.showToast(
+                HaipeeDialog.showToast(
                   message: '已恢复官方预置规则',
                   context: context,
                 );
@@ -189,7 +237,7 @@ class _IndexerEditorDialogState extends ConsumerState<IndexerEditorDialog> {
   Future<void> _copyYaml() async {
     await Clipboard.setData(ClipboardData(text: _yamlController.text));
     if (mounted) {
-      KazumiDialog.showToast(message: '已复制 YAML 至剪贴板', context: context);
+      HaipeeDialog.showToast(message: '已复制 YAML 至剪贴板', context: context);
     }
   }
 

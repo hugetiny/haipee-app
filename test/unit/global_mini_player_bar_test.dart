@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/widget/global_mini_player_bar.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/pages/player/local_video_play_args.dart';
-import 'package:kazumi/pages/player/player_providers.dart';
-import 'package:kazumi/modules/torrent_stream/torrserver_stream_engine.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/widget/global_mini_player_bar.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/pages/player/local_video_play_args.dart';
+import 'package:haipee/pages/player/player_providers.dart';
+import 'package:haipee/modules/torrent_stream/torrserver_stream_engine.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;

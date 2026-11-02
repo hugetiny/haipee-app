@@ -1,4 +1,4 @@
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
 
 /// Execution pipeline for Cardigann filters applied to extracted HTML field strings.
 class CardigannFilterPipeline {

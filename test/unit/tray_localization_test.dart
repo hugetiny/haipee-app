@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/tray_localization.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/tray_localization.dart';
 
 void main() {
   setUp(() {
@@ -10,18 +10,18 @@ void main() {
   test('returns English tray labels when locale is enUs', () {
     LocaleSettings.setLocale(AppLocale.enUs);
 
-    final labels = KazumiTrayLabels.current();
+    final labels = HaipeeTrayLabels.current();
 
     expect(labels.showWindow, 'Show Window');
-    expect(labels.exit, 'Exit Kazumi');
+    expect(labels.exit, 'Exit haipee');
   });
 
   test('returns Simplified Chinese tray labels when locale is zhCn', () {
     LocaleSettings.setLocale(AppLocale.zhCn);
 
-    final labels = KazumiTrayLabels.current();
+    final labels = HaipeeTrayLabels.current();
 
     expect(labels.showWindow, '显示窗口');
-    expect(labels.exit, '退出 Kazumi');
+    expect(labels.exit, '退出 haipee');
   });
 }

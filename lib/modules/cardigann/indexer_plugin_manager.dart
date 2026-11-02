@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
-import 'package:kazumi/modules/cardigann/models/indexer_plugin.dart';
-import 'package:kazumi/modules/cardigann/models/indexer_repo.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
+import 'package:haipee/modules/cardigann/models/indexer_repo.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 class IndexerPluginState {
@@ -40,15 +40,34 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
   static const Map<String, String> bundledAssetMap = {
     'nyaasi': 'assets/indexers/nyaasi.yml',
     'mikan': 'assets/indexers/mikan.yml',
-    'thepiratebay': 'assets/indexers/thepiratebay.yml',
-    '1337x': 'assets/indexers/1337x.yml',
     'dmhy': 'assets/indexers/dmhy.yml',
-    'torrentscsv': 'assets/indexers/torrentscsv.yml',
+    'acgrip': 'assets/indexers/acgrip.yml',
+    'anibt': 'assets/indexers/anibt.yml',
+    'bangumi-moe': 'assets/indexers/bangumi-moe.yml',
+    'animetosho-xyz': 'assets/indexers/animetosho-xyz.yml',
+    'tokyotosho': 'assets/indexers/tokyotosho.yml',
+    'anisource': 'assets/indexers/anisource.yml',
+    'nekobt': 'assets/indexers/nekobt.yml',
+    'shanaproject': 'assets/indexers/shanaproject.yml',
+    'nipponsei': 'assets/indexers/nipponsei.yml',
+    '1337x': 'assets/indexers/1337x.yml',
+    'thepiratebay': 'assets/indexers/thepiratebay.yml',
     'yts': 'assets/indexers/yts.yml',
     'eztv': 'assets/indexers/eztv.yml',
-    'acgrip': 'assets/indexers/acgrip.yml',
-    'tokyotosho': 'assets/indexers/tokyotosho.yml',
-    'animetosho-xyz': 'assets/indexers/animetosho-xyz.yml',
+    'torrentscsv': 'assets/indexers/torrentscsv.yml',
+    'limetorrents': 'assets/indexers/limetorrents.yml',
+    'kickasstorrents-to': 'assets/indexers/kickasstorrents-to.yml',
+    'kickasstorrents-ws': 'assets/indexers/kickasstorrents-ws.yml',
+    'extratorrent-st': 'assets/indexers/extratorrent-st.yml',
+    'torrentdownloads': 'assets/indexers/torrentdownloads.yml',
+    'torrentdownload': 'assets/indexers/torrentdownload.yml',
+    'torrentproject2': 'assets/indexers/torrentproject2.yml',
+    'uindex': 'assets/indexers/uindex.yml',
+    'internetarchive': 'assets/indexers/internetarchive.yml',
+    'linuxtracker': 'assets/indexers/linuxtracker.yml',
+    'ebookbay': 'assets/indexers/ebookbay.yml',
+    'blueroms': 'assets/indexers/blueroms.yml',
+    'rutor': 'assets/indexers/rutor.yml',
   };
 
   static final Map<String, String> _bundledOriginalYamls = {};
@@ -72,8 +91,14 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
     _bundledOriginalYamls[id] = yaml;
   }
 
+  bool _isDisposed = false;
+
   @override
   IndexerPluginState build() {
+    _isDisposed = false;
+    ref.onDispose(() {
+      _isDisposed = true;
+    });
     Future.microtask(init);
     return const IndexerPluginState(isLoading: true);
   }
@@ -96,7 +121,7 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
               plugins.add(p);
               existingIds.add(p.id);
             } catch (e) {
-              KazumiLogger().log(
+              HaipeeLogger().log(
                 Level.warning,
                 '[IndexerManager] Failed to load indexer from Hive key $key: $e',
               );
@@ -104,6 +129,8 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
           }
         }
       }
+
+      if (_isDisposed) return;
 
       // Ensure all bundled indexers exist (handles app first-run and upgrades with new bundled indexers)
       for (final entry in bundledAssetMap.entries) {
@@ -131,7 +158,7 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
             }
           }
         } catch (e) {
-          KazumiLogger().log(
+          HaipeeLogger().log(
             Level.warning,
             '[IndexerManager] Failed to load bundled asset $assetPath: $e',
           );
@@ -153,14 +180,17 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
         }
       }
 
+      if (_isDisposed) return;
       state = state.copyWith(
         plugins: plugins,
         subscriptions: subs,
         isLoading: false,
       );
     } catch (e) {
-      KazumiLogger().log(Level.error, '[IndexerManager] Init failed: $e');
-      state = state.copyWith(isLoading: false, error: e.toString());
+      HaipeeLogger().log(Level.error, '[IndexerManager] Init failed: $e');
+      if (!_isDisposed) {
+        state = state.copyWith(isLoading: false, error: e.toString());
+      }
     }
   }
 
@@ -204,13 +234,13 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
       }
 
       state = state.copyWith(plugins: updatedList);
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[IndexerManager] Successfully saved indexer: ${plugin.name} (${plugin.id}), isBundled=$isBundled, isOverridden=${isPluginOverridden(plugin.id, plugin.rawYaml)}',
       );
       return plugin;
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.error,
         '[IndexerManager] Failed to add or update indexer plugin: $e',
       );
@@ -246,7 +276,7 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
     final updated = List<IndexerPlugin>.from(state.plugins);
     updated[index] = target;
     state = state.copyWith(plugins: updated);
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[IndexerManager] Updated settings for indexer $id',
     );
@@ -255,7 +285,7 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
   /// Removes an indexer plugin (protected if built-in).
   Future<void> removePlugin(String id) async {
     if (isBundledId(id)) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[IndexerManager] Cannot delete built-in indexer $id. Use resetPlugin instead.',
       );
@@ -264,7 +294,7 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
     await GStorage.indexerPlugins.delete(id);
     final updated = state.plugins.where((p) => p.id != id).toList();
     state = state.copyWith(plugins: updated);
-    KazumiLogger().log(Level.info, '[IndexerManager] Removed indexer $id');
+    HaipeeLogger().log(Level.info, '[IndexerManager] Removed indexer $id');
   }
 
   /// Resets a built-in indexer to its default configuration.
@@ -280,12 +310,12 @@ class IndexerPluginsNotifier extends Notifier<IndexerPluginState> {
       final updated =
           state.plugins.map((p) => p.id == id ? plugin : p).toList();
       state = state.copyWith(plugins: updated);
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[IndexerManager] Successfully reset built-in indexer $id',
       );
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[IndexerManager] Failed to reset indexer $id: $e',
       );

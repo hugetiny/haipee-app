@@ -1,4 +1,4 @@
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 
 abstract class TorrentSource {
   String get name;

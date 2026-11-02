@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 /// Full-featured interactive log screen powered by [TalkerScreen].
@@ -29,7 +29,7 @@ class LogsPage extends StatelessWidget {
         ),
       ),
       child: TalkerScreen(
-        talker: KazumiLogger().talker,
+        talker: HaipeeLogger().talker,
         appBarTitle: title,
         appBarLeading: DesktopWindowControlsSafeArea.wrapLeading(
           AppBackButton(

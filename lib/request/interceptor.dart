@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
-import 'package:kazumi/request/api.dart';
+import 'package:haipee/request/api.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/utils/storage.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
+import 'package:haipee/utils/storage.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:kazumi/utils/utils.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/utils/utils.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart' show Level;
 
 class ApiInterceptor extends Interceptor {
@@ -49,19 +49,20 @@ class ApiInterceptor extends Interceptor {
     final bool showToast = err.requestOptions.extra['showToast'] == true;
 
     // Standardize error handling: silently record into unified logging architecture
-    KazumiLogger().log(
+    final respData = err.response?.data != null ? ' | Response: ${err.response?.data}' : '';
+    HaipeeLogger().log(
       Level.warning,
-      '网络请求失败 [${err.type}]: $url (${err.message ?? ""})',
+      '网络请求失败 [${err.type}]: $url (${err.message ?? ""})$respData',
       error: err,
     );
 
     if (!url.contains('heartBeat') && !isSilent && showToast) {
       if (customError is String && customError.isNotEmpty) {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: customError,
         );
       } else {
-        KazumiDialog.showToast(
+        HaipeeDialog.showToast(
           message: await dioError(err),
         );
       }

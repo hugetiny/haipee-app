@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kazumi/modules/cardigann/models/cardigann_definition.dart';
+import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
 
 void main() {
   group('CardigannParser Tests', () {

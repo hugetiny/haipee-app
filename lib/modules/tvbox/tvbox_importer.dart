@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/utils/logger.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// TVBox / FongMi (蜂蜜) 规范解析与一键规则转换器
@@ -26,7 +26,7 @@ class TvBoxImporter {
     return false;
   }
 
-  /// 将 TVBox 配置中的所有站点提取并转换为 Kazumi 规则列表
+  /// 将 TVBox 配置中的所有站点提取并转换为 Haipee 规则列表
   static List<Plugin> convertToPlugins(String content) {
     final clean = content.trim();
     if (clean.isEmpty) return const [];
@@ -35,7 +35,7 @@ class TvBoxImporter {
     try {
       decoded = jsonDecode(clean);
     } catch (e) {
-      KazumiLogger().log(Level.warning, 'TVBox 配置 JSON 解码失败: $e');
+      HaipeeLogger().log(Level.warning, 'TVBox 配置 JSON 解码失败: $e');
       return const [];
     }
 
@@ -86,7 +86,7 @@ class TvBoxImporter {
 
         plugin = Plugin(
           api: '1',
-          type: '2', // Kazumi MacCMS 标准协议
+          type: '2', // Haipee MacCMS 标准协议
           name: name,
           version: '1.0',
           muliSources: true,
@@ -94,7 +94,7 @@ class TvBoxImporter {
           useNativePlayer: true,
           usePost: false,
           useLegacyParser: false,
-          userAgent: 'Mozilla/5.0 (Kazumi/TVBox)',
+          userAgent: 'Mozilla/5.0 (Haipee/TVBox)',
           baseUrl: cleanApi,
           searchURL: searchUrl,
           searchList: '',
@@ -122,7 +122,7 @@ class TvBoxImporter {
           useNativePlayer: true,
           usePost: false,
           useLegacyParser: false,
-          userAgent: 'Mozilla/5.0 (Kazumi/AList)',
+          userAgent: 'Mozilla/5.0 (Haipee/AList)',
           baseUrl: cleanApi,
           searchURL: cleanApi,
           searchList: '',
@@ -139,7 +139,7 @@ class TvBoxImporter {
       }
     }
 
-    KazumiLogger().log(Level.info, '从 TVBox 配置成功解析并转换 ${plugins.length} 个规则');
+    HaipeeLogger().log(Level.info, '从 TVBox 配置成功解析并转换 ${plugins.length} 个规则');
     return plugins;
   }
 }

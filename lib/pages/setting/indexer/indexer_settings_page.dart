@@ -1,22 +1,20 @@
-import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/modules/cardigann/engine/cardigann_query_executor.dart';
-import 'package:kazumi/modules/cardigann/indexer_plugin_manager.dart';
-import 'package:kazumi/modules/cardigann/models/indexer_plugin.dart';
-import 'package:kazumi/modules/cardigann/widgets/indexer_editor_dialog.dart';
-import 'package:kazumi/modules/cardigann/widgets/indexer_import_dialog.dart';
-import 'package:kazumi/modules/cardigann/widgets/indexer_settings_dialog.dart';
-import 'package:kazumi/modules/cardigann/widgets/prowlarr_catalog_dialog.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/bean/widget/rule/unified_rule_card.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
+import 'package:haipee/modules/cardigann/widgets/indexer_editor_dialog.dart';
+import 'package:haipee/modules/cardigann/widgets/indexer_import_dialog.dart';
+import 'package:haipee/modules/cardigann/widgets/indexer_settings_dialog.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/plugins/plugin_validity_tracker.dart';
+import 'package:haipee/modules/rule_speed_test/rule_speed_test_provider.dart';
+import 'package:haipee/bean/widget/rule/unified_rule_card.dart';
 
 /// 资源搜索规则一级分类组
 enum IndexerCategoryGroup {
@@ -27,8 +25,7 @@ enum IndexerCategoryGroup {
   musicAudio(id: 'music_audio', label: '音乐有声', icon: Icons.music_note_outlined),
   booksDocs(id: 'books_docs', label: '图书文档', icon: Icons.menu_book_outlined),
   general(id: 'general', label: '综合泛用', icon: Icons.public_outlined),
-  custom(id: 'custom', label: '我的自定义', icon: Icons.extension_outlined),
-  catalog(id: 'catalog', label: '规则市场 (577+)', icon: Icons.storefront_outlined);
+  custom(id: 'custom', label: '我的自定义', icon: Icons.extension_outlined);
 
   final String id;
   final String label;
@@ -41,7 +38,7 @@ enum IndexerCategoryGroup {
   });
 }
 
-/// 规则设置页面（三级以上分类结构：L1 资源主品类 ➔ L2 站点访问性质/语言/搜索 ➔ L3 规则生命周期控制 ➔ L4 YAML源码与测试调试）
+/// 规则设置页面（L2 站点访问性质/语言/搜索 ➔ L3 规则生命周期控制与一键测速 ➔ L4 YAML源码与测试调试）
 class IndexerSettingsPage extends ConsumerStatefulWidget {
   final bool isEmbedded;
 
@@ -51,67 +48,40 @@ class IndexerSettingsPage extends ConsumerStatefulWidget {
   ConsumerState<IndexerSettingsPage> createState() => _IndexerSettingsPageState();
 }
 
-class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
-    with SingleTickerProviderStateMixin {
-  IndexerCategoryGroup _selectedGroup = IndexerCategoryGroup.all;
+class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage> {
   String _accessFilter = 'all'; // all, public, semi-private, private
+  String _statusFilter = 'all'; // all, passed, failed
   String _langFilter = 'all'; // all, zh, en, other
   final TextEditingController _searchController = TextEditingController();
-  late final TabController _categoryTabController;
 
-  // 视图显示模式（默认自动响应式：宽屏>=720为表格，窄屏<720为卡片）
+  Future<void> _runAutoBatchTest(List<IndexerPlugin> targets) async {
+    final speedTestState = ref.read(ruleSpeedTestProvider);
+    if (speedTestState.isTesting) {
+      HaipeeDialog.showToast(
+        message:
+            '已有规则测速正在后台进行中 (${speedTestState.testedCount}/${speedTestState.totalCount})',
+      );
+      return;
+    }
+    if (targets.isEmpty) {
+      HaipeeDialog.showToast(message: '当前暂无可测速的 Cardigann 规则');
+      return;
+    }
 
-  // 规则市场 577+ 缓存
-  List<ProwlarrCatalogEntry> _catalogEntries = [];
-  bool _isLoadingCatalog = false;
-  final Set<String> _installingMarketIds = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _categoryTabController = TabController(
-      length: IndexerCategoryGroup.values.length,
-      vsync: this,
+    await ref.read(ruleSpeedTestProvider.notifier).runAutoBatchTestForIndexers(
+      targets: targets,
+      categoryLabel: 'Cardigann 规则',
     );
-    _categoryTabController.addListener(() {
-      if (!_categoryTabController.indexIsChanging && mounted) {
-        setState(() {
-          _selectedGroup =
-              IndexerCategoryGroup.values[_categoryTabController.index];
-        });
-      }
-    });
-    _loadCatalogIfNeeded();
+  }
+
+  Future<void> _retestSingleIndexer(IndexerPlugin plugin) async {
+    await ref.read(ruleSpeedTestProvider.notifier).retestSingleIndexer(plugin);
   }
 
   @override
   void dispose() {
-    _categoryTabController.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadCatalogIfNeeded() async {
-    if (_catalogEntries.isNotEmpty) return;
-    setState(() => _isLoadingCatalog = true);
-    try {
-      final jsonString =
-          await rootBundle.loadString('assets/indexers/prowlarr_catalog.json');
-      final list = jsonDecode(jsonString) as List;
-      final entries = list
-          .map((e) => ProwlarrCatalogEntry.fromJson(e as Map<String, dynamic>))
-          .toList();
-      if (mounted) {
-        setState(() {
-          _catalogEntries = entries;
-          _isLoadingCatalog = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isLoadingCatalog = false);
-      }
-    }
   }
 
   Future<void> _openBrowserUrl(String url) async {
@@ -122,137 +92,13 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
         mode: LaunchMode.externalApplication,
       );
       if (!success && mounted) {
-        KazumiDialog.showToast(message: '无法在浏览器中打开链接: $url');
+        HaipeeDialog.showToast(message: '无法在浏览器中打开链接: $url');
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '打开链接失败: $e');
+        HaipeeDialog.showToast(message: '打开链接失败: $e');
       }
     }
-  }
-
-  /// 分类映射算法：根据 Caps mapping、ID 和名称智能归类
-  Set<IndexerCategoryGroup> _classifyPlugin(IndexerPlugin plugin) {
-    final groups = <IndexerCategoryGroup>{IndexerCategoryGroup.all};
-    if (plugin.isCustom || plugin.isOverridden) {
-      groups.add(IndexerCategoryGroup.custom);
-    }
-
-    final id = plugin.id.toLowerCase();
-    final name = plugin.name.toLowerCase();
-    final desc = plugin.description.toLowerCase();
-    final cats = plugin.definition.caps.categorymappings.map((m) => m.cat).toSet();
-
-    // 1. 动漫番剧
-    if (cats.contains(5070) ||
-        id.contains('anime') ||
-        id.contains('mikan') ||
-        id.contains('nyaa') ||
-        id.contains('dmhy') ||
-        id.contains('acg') ||
-        id.contains('tosho') ||
-        name.contains('动漫') ||
-        name.contains('蜜柑') ||
-        name.contains('花园') ||
-        desc.contains('anime')) {
-      groups.add(IndexerCategoryGroup.anime);
-    }
-
-    // 2. 影视剧集
-    if (cats.any((c) => (c >= 2000 && c < 3000) || (c >= 5000 && c < 6000 && c != 5070)) ||
-        id.contains('movie') ||
-        id.contains('tv') ||
-        id.contains('1337x') ||
-        id.contains('piratebay') ||
-        id.contains('yts') ||
-        id.contains('eztv') ||
-        name.contains('影视') ||
-        desc.contains('movie') ||
-        desc.contains('tv')) {
-      groups.add(IndexerCategoryGroup.moviesTv);
-    }
-
-    // 3. 游戏软件
-    if (cats.any((c) => c >= 4000 && c < 5000) ||
-        id.contains('game') ||
-        id.contains('app') ||
-        id.contains('soft') ||
-        desc.contains('game') ||
-        desc.contains('software')) {
-      groups.add(IndexerCategoryGroup.gamesApps);
-    }
-
-    // 4. 音乐有声
-    if (cats.any((c) => c >= 1000 && c < 2000) ||
-        id.contains('music') ||
-        id.contains('audio') ||
-        id.contains('flac') ||
-        desc.contains('music') ||
-        desc.contains('audio')) {
-      groups.add(IndexerCategoryGroup.musicAudio);
-    }
-
-    // 5. 图书文档
-    if (cats.any((c) => c >= 3000 && c < 4000) ||
-        id.contains('book') ||
-        id.contains('comic') ||
-        id.contains('manga') ||
-        desc.contains('book') ||
-        desc.contains('comic')) {
-      groups.add(IndexerCategoryGroup.booksDocs);
-    }
-
-    // 6. 综合泛用
-    if (cats.contains(7000) ||
-        id.contains('csv') ||
-        id.contains('dht') ||
-        id.contains('0day') ||
-        groups.length <= 1) {
-      groups.add(IndexerCategoryGroup.general);
-    }
-
-    return groups;
-  }
-
-  /// 规则市场分类映射
-  Set<IndexerCategoryGroup> _classifyCatalogEntry(ProwlarrCatalogEntry entry) {
-    final groups = <IndexerCategoryGroup>{IndexerCategoryGroup.all};
-    final id = entry.id.toLowerCase();
-    final name = entry.name.toLowerCase();
-    final desc = entry.description.toLowerCase();
-    final cats = entry.categories.toSet();
-
-    if (cats.contains(5070) ||
-        id.contains('anime') ||
-        name.contains('anime') ||
-        desc.contains('anime')) {
-      groups.add(IndexerCategoryGroup.anime);
-    }
-    if (cats.any((c) => (c >= 2000 && c < 3000) || (c >= 5000 && c < 6000 && c != 5070)) ||
-        desc.contains('movie') ||
-        desc.contains('tv')) {
-      groups.add(IndexerCategoryGroup.moviesTv);
-    }
-    if (cats.any((c) => c >= 4000 && c < 5000) ||
-        desc.contains('game') ||
-        desc.contains('software')) {
-      groups.add(IndexerCategoryGroup.gamesApps);
-    }
-    if (cats.any((c) => c >= 1000 && c < 2000) ||
-        desc.contains('music') ||
-        desc.contains('audio')) {
-      groups.add(IndexerCategoryGroup.musicAudio);
-    }
-    if (cats.any((c) => c >= 3000 && c < 4000) ||
-        desc.contains('book') ||
-        desc.contains('comic') ||
-        desc.contains('manga')) {
-      groups.add(IndexerCategoryGroup.booksDocs);
-    }
-    if (cats.contains(7000) || groups.length <= 1) {
-      groups.add(IndexerCategoryGroup.general);
-    }
-    return groups;
   }
 
   @override
@@ -296,89 +142,12 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
           const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
-          // Level 1: 顶部主品类分段/标签栏 (Material 3 TabBar 结构，全平台统一，绝不占用左侧 NavigationRail 空间)
-          _buildTopCategoryBar(theme, colorScheme, allPlugins),
-          const Divider(height: 1),
-          // Level 2 & 3: 筛选工具栏与规则数据展示 (支持自适应表格与卡片切换)
-          Expanded(
-            child: _buildContentPane(theme, colorScheme, allPlugins),
-          ),
-        ],
-      ),
+      body: _buildContentPane(theme, colorScheme, allPlugins),
     );
   }
 
   // ===========================================================================
-  // Level 1: 一级主品类导航 (顶部统一 Material 3 平滑标签栏)
-  // ===========================================================================
-
-  Widget _buildTopCategoryBar(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    List<IndexerPlugin> allPlugins,
-  ) {
-    return Container(
-      width: double.infinity,
-      color: colorScheme.surface,
-      child: TabBar(
-        controller: _categoryTabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        onTap: (index) {
-          setState(() {
-            _selectedGroup = IndexerCategoryGroup.values[index];
-          });
-        },
-        tabs: IndexerCategoryGroup.values.map((group) {
-          final isSelected = _selectedGroup == group;
-          final count = group == IndexerCategoryGroup.catalog
-              ? _catalogEntries.length
-              : allPlugins
-                  .where((p) => _classifyPlugin(p).contains(group))
-                  .length;
-
-          final activeCount = group == IndexerCategoryGroup.catalog
-              ? 0
-              : allPlugins
-                  .where(
-                      (p) => p.isEnabled && _classifyPlugin(p).contains(group))
-                  .length;
-
-          final countText = group == IndexerCategoryGroup.catalog
-              ? '$count'
-              : '$activeCount/$count';
-
-          return Tab(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(group.icon, size: 16),
-                const SizedBox(width: 6),
-                Text(group.label),
-                const SizedBox(width: 6),
-                SettingsBadge(
-                  label: countText,
-                  color: isSelected
-                      ? colorScheme.primary.withValues(alpha: 0.15)
-                      : colorScheme.surfaceContainerHighest,
-                  textColor: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.outline,
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // Level 2: 二级筛选器（性质、语言、关键字）+ Level 3: 规则卡片与生命周期控制
+  // Level 2: 二级筛选器（性质、状态、语言、关键字）+ Level 3: 规则卡片与生命周期控制
   // ===========================================================================
 
   Widget _buildContentPane(
@@ -386,26 +155,30 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
     ColorScheme colorScheme,
     List<IndexerPlugin> allPlugins,
   ) {
-    if (_selectedGroup == IndexerCategoryGroup.catalog) {
-      return _buildMarketCatalogPane(
-        theme,
-        colorScheme,
-        allPlugins,
-      );
-    }
+    final speedTestState = ref.watch(ruleSpeedTestProvider);
+    final categoryPlugins = allPlugins;
 
-    // 1. 过滤符合当前 L1 品类的规则
-    final categoryPlugins = allPlugins
-        .where((p) => _classifyPlugin(p).contains(_selectedGroup))
-        .toList();
-
-    // 2. 结合 L2 属性筛选
+    // 结合 L2 属性筛选
     final query = _searchController.text.trim().toLowerCase();
     final filtered = categoryPlugins.where((p) {
       // 访问性质过滤
       if (_accessFilter == 'public' && !p.definition.isPublic) return false;
       if (_accessFilter == 'semi-private' && !p.definition.isSemiPrivate) return false;
       if (_accessFilter == 'private' && !p.definition.isPrivate) return false;
+
+      // 启闭与测速状态过滤
+      if (_statusFilter == 'enabled' && !p.isEnabled) return false;
+      if (_statusFilter == 'disabled' && p.isEnabled) return false;
+      final currentStatus = speedTestState.statusMap[p.id];
+      if (_statusFilter == 'passed' && currentStatus != PluginHealthStatus.passed) {
+        return false;
+      }
+      if (_statusFilter == 'failed' && currentStatus != PluginHealthStatus.failed) {
+        return false;
+      }
+      if (_statusFilter == 'untested' && currentStatus != null && currentStatus != PluginHealthStatus.idle) {
+        return false;
+      }
 
       // 语言过滤
       if (_langFilter == 'zh' && !p.language.toLowerCase().startsWith('zh')) return false;
@@ -439,6 +212,7 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
           filtered.length,
           activeCount,
           categoryPlugins,
+          speedTestState,
         ),
         const Divider(height: 1),
 
@@ -465,17 +239,21 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
     int filteredCount,
     int activeCount,
     List<IndexerPlugin> categoryPlugins,
+    RuleSpeedTestState speedTestState,
   ) {
+    final totalCount = categoryPlugins.length;
+    final enabledCount = categoryPlugins.where((p) => p.isEnabled).length;
+    final disabledCount = totalCount - enabledCount;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       color: colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 第一行：搜索框与快速批量控制 + 响应式视图切换器
+          // 第一行：搜索框与快速操作（手动添加、导入、一键测速、全开、全关）
           LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 620;
+              final isCompact = constraints.maxWidth < 860;
               final searchField = SizedBox(
                 height: 38,
                 child: TextField(
@@ -505,6 +283,46 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
               );
 
               final actionButtons = [
+                FilledButton.icon(
+                  key: const Key('cardigann_btn_add_manual'),
+                  onPressed: () => IndexerEditorDialog.showNew(context),
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: const Text('手动添加规则'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.tonalIcon(
+                  key: const Key('cardigann_btn_import'),
+                  onPressed: () => IndexerImportDialog.show(context),
+                  icon: const Icon(Icons.file_upload_outlined, size: 16),
+                  label: const Text('导入规则'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.tonalIcon(
+                  key: const Key('cardigann_btn_auto_test'),
+                  onPressed: speedTestState.isTesting
+                      ? null
+                      : () => _runAutoBatchTest(categoryPlugins),
+                  icon: speedTestState.isTesting
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.speed_rounded, size: 16),
+                  label: Text(speedTestState.isTesting
+                      ? '测速中 (${speedTestState.testedCount}/${speedTestState.totalCount})'
+                      : '一键测速'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: () => _batchToggle(categoryPlugins, true),
                   icon: const Icon(Icons.check_circle_outline, size: 16),
@@ -522,7 +340,6 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
-
               ];
 
               if (isCompact) {
@@ -550,13 +367,13 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
           ),
           const SizedBox(height: 10),
 
-          // 第二行：L2 站点性质与语言选择 Chips
+          // 第二行：L2 站点性质、测速状态与语言选择 Chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 Text(
-                  '性质 (L2): ',
+                  '性质: ',
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurfaceVariant,
@@ -566,6 +383,17 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
                 _buildNatureChip('🟢 公开免登', 'public'),
                 _buildNatureChip('🟡 半私有', 'semi-private'),
                 _buildNatureChip('🔴 私有 PT', 'private'),
+                const SizedBox(width: 16),
+                Text(
+                  '状态: ',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                _buildStatusChip('全部 ($totalCount)', 'all'),
+                _buildStatusChip('已启用 ($enabledCount)', 'enabled'),
+                _buildStatusChip('已禁用 ($disabledCount)', 'disabled'),
                 const SizedBox(width: 16),
                 Text(
                   '语言: ',
@@ -589,6 +417,22 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String label, String value) {
+    final isSelected = _statusFilter == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        visualDensity: VisualDensity.compact,
+        showCheckmark: false,
+        onSelected: (_) {
+          setState(() => _statusFilter = value);
+        },
       ),
     );
   }
@@ -645,6 +489,10 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
             ? ('半私有', Colors.orange)
             : ('公开免登', Colors.green));
 
+    final speedTestState = ref.watch(ruleSpeedTestProvider);
+    final status = speedTestState.statusMap[plugin.id];
+    final latency = speedTestState.latencyMap[plugin.id];
+
     return UnifiedRuleCard(
       title: plugin.name,
       titleBadge: SettingsBadge(
@@ -670,13 +518,31 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
           ? () => _openBrowserUrl(plugin.definition.defaultLink)
           : null,
       badges: [
+        _buildBadge('CARDIGANN', Colors.deepPurple),
         _buildBadge('Torznab / Cardigann P2P 种子索引', Colors.deepPurple),
         _buildBadge(sourceLabel, sourceColor),
         _buildBadge(accessLabel, accessColor),
         _buildBadge(plugin.language, Colors.blueGrey),
+        if (status == PluginHealthStatus.testing)
+          _buildBadge('测速中...', Colors.blue)
+        else if (status == PluginHealthStatus.passed)
+          _buildBadge(
+            latency != null
+                ? '🟢 测速通过 · ${latency}ms'
+                : '🟢 测速通过',
+            Colors.green,
+          )
+        else if (status == PluginHealthStatus.failed)
+          _buildBadge('🔴 测速失败 (已禁用)', Colors.redAccent),
       ],
       description: plugin.description.isNotEmpty ? plugin.description : null,
       actions: [
+        TextButton.icon(
+          onPressed: () => _retestSingleIndexer(plugin),
+          icon: const Icon(Icons.speed_rounded, size: 16),
+          label: const Text('测速'),
+          style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+        ),
         TextButton.icon(
           onPressed: () => IndexerEditorDialog.show(context, plugin),
           icon: const Icon(Icons.code, size: 16),
@@ -756,7 +622,7 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
           icon: Icons.copy_rounded,
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: plugin.rawYaml));
-            KazumiDialog.showToast(message: '已复制 YAML 规则源码');
+            HaipeeDialog.showToast(message: '已复制 YAML 规则源码');
           },
         ),
         if (plugin.definition.defaultLink.isNotEmpty) ...[
@@ -766,7 +632,7 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
             onSelected: () async {
               await Clipboard.setData(
                   ClipboardData(text: plugin.definition.defaultLink));
-              KazumiDialog.showToast(message: '已复制站点链接');
+              HaipeeDialog.showToast(message: '已复制站点链接');
             },
           ),
           AppMenuAction(
@@ -813,279 +679,6 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
   }
 
   // ===========================================================================
-  // Level 4: 规则市场 Pane (收录 577+ 声明式 YAML 规则)
-  // ===========================================================================
-
-  Widget _buildMarketCatalogPane(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    List<IndexerPlugin> installedPlugins,
-  ) {
-    if (_isLoadingCatalog) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('正在载入 577+ 官方 Cardigann 规则市场…'),
-          ],
-        ),
-      );
-    }
-
-    final installedIds = installedPlugins.map((p) => p.id).toSet();
-    final query = _searchController.text.trim().toLowerCase();
-
-    final filteredCatalog = _catalogEntries.where((entry) {
-      if (_selectedGroup != IndexerCategoryGroup.catalog &&
-          _selectedGroup != IndexerCategoryGroup.all) {
-        if (!_classifyCatalogEntry(entry).contains(_selectedGroup)) {
-          return false;
-        }
-      }
-      if (_accessFilter == 'public' && entry.type != 'public') return false;
-      if (_accessFilter == 'semi-private' && entry.type != 'semi-private') return false;
-      if (_accessFilter == 'private' && entry.type != 'private') return false;
-
-      if (_langFilter == 'zh' && !entry.language.toLowerCase().startsWith('zh')) return false;
-      if (_langFilter == 'en' && !entry.language.toLowerCase().startsWith('en')) return false;
-      if (_langFilter == 'other' &&
-          (entry.language.toLowerCase().startsWith('zh') ||
-              entry.language.toLowerCase().startsWith('en'))) {
-        return false;
-      }
-
-      if (query.isNotEmpty) {
-        final hitName = entry.name.toLowerCase().contains(query);
-        final hitId = entry.id.toLowerCase().contains(query);
-        final hitDesc = entry.description.toLowerCase().contains(query);
-        if (!hitName && !hitId && !hitDesc) return false;
-      }
-      return true;
-    }).toList();
-
-    return Column(
-      children: [
-        // 市场过滤头
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          color: colorScheme.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 38,
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: '在 577+ 规则市场中搜索站点名称、ID 或关键字 (例如 nyaa, yts, pt...)',
-                          prefixIcon: const Icon(Icons.search, size: 18),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 16),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() {});
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: colorScheme.surfaceContainerHighest.withAlpha(120),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                        ),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                    ),
-                  ),
-
-                ],
-              ),
-              const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    Text(
-                      '市场性质: ',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    _buildNatureChip('全部', 'all'),
-                    _buildNatureChip('🟢 公开免登', 'public'),
-                    _buildNatureChip('🟡 半私有', 'semi-private'),
-                    _buildNatureChip('🔴 私有 PT', 'private'),
-                    const SizedBox(width: 16),
-                    Text(
-                      '语言: ',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    _buildLangChip('全部', 'all'),
-                    _buildLangChip('🇨🇳 中文', 'zh'),
-                    _buildLangChip('🌏 英文', 'en'),
-                    _buildLangChip('🌐 其它', 'other'),
-                    const SizedBox(width: 16),
-                    Text(
-                      '匹配规则: ${filteredCatalog.length} 个 (共收录 ${_catalogEntries.length} 个)',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Divider(height: 1),
-
-        // 市场列表 (统一网格呈现，自适应多列)
-        Expanded(
-          child: filteredCatalog.isEmpty
-              ? _buildEmptyState(theme, colorScheme)
-              : UnifiedRuleGrid(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredCatalog.length,
-                  itemBuilder: (context, index) {
-                    final entry = filteredCatalog[index];
-                    final isInstalled = installedIds.contains(entry.id);
-                    final isInstalling = _installingMarketIds.contains(entry.id);
-                    return _buildMarketCatalogCard(
-                      theme,
-                      colorScheme,
-                      entry,
-                      installedPlugins,
-                      isInstalled,
-                      isInstalling,
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMarketCatalogCard(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    ProwlarrCatalogEntry entry,
-    List<IndexerPlugin> installedPlugins,
-    bool isInstalled,
-    bool isInstalling,
-  ) {
-    return UnifiedRuleCard(
-      title: entry.name,
-      titleBadge: SettingsBadge(
-        label: entry.id,
-        color: colorScheme.surfaceContainerHighest,
-        textColor: colorScheme.outline,
-      ),
-      icon: Icon(
-        entry.type == 'private'
-            ? Icons.vpn_key_outlined
-            : Icons.public_rounded,
-        size: 20,
-        color: colorScheme.primary,
-      ),
-      iconColor: colorScheme.primary,
-      url: entry.links.isNotEmpty ? entry.links.first : null,
-      urlTooltip: entry.links.isNotEmpty ? '点击在浏览器中打开站点官网:\n${entry.links.first}' : null,
-      onUrlTap: entry.links.isNotEmpty ? () => _openBrowserUrl(entry.links.first) : null,
-      trailing: isInstalled
-          ? TextButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.check, size: 16),
-              label: const Text('已安装'),
-            )
-          : FilledButton.tonal(
-              onPressed: isInstalling ? null : () => _installMarketEntry(entry),
-              style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
-              child: isInstalling
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('安装'),
-            ),
-      badges: [
-        _buildBadge('Torznab / Cardigann P2P 种子索引', Colors.deepPurple),
-        _buildBadge(entry.type, Colors.blueGrey),
-        _buildBadge(entry.language, Colors.teal),
-      ],
-      description: entry.description.isNotEmpty ? entry.description : null,
-      actions: [
-        if (entry.links.isNotEmpty)
-          TextButton.icon(
-            onPressed: () => _openBrowserUrl(entry.links.first),
-            icon: const Icon(Icons.language_rounded, size: 16),
-            label: const Text('站点官网'),
-            style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-          ),
-        TextButton.icon(
-          onPressed: () => _openBrowserUrl(
-            'https://github.com/Prowlarr/Indexers/blob/master/definitions/v11/${entry.id}.yml',
-          ),
-          icon: const Icon(Icons.public, size: 16),
-          label: const Text('YAML 来源'),
-          style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-        ),
-      ],
-      contextMenuBuilder: (context) => [
-        AppMenuAction(
-          title: isInstalled ? '已安装此索引器' : '安装/启用此规则',
-          icon: isInstalled ? Icons.check_circle_outline : Icons.download_rounded,
-          disabled: isInstalled || isInstalling,
-          onSelected: () => _installMarketEntry(entry),
-        ),
-        AppMenuAction(
-          title: '查看 GitHub 规则定义',
-          icon: Icons.public,
-          onSelected: () => _openBrowserUrl(
-            'https://github.com/Prowlarr/Indexers/blob/master/definitions/v11/${entry.id}.yml',
-          ),
-        ),
-        if (entry.links.isNotEmpty) ...[
-          const AppMenuSeparator(),
-          AppMenuAction(
-            title: '在浏览器中打开站点官网',
-            icon: Icons.open_in_browser_rounded,
-            onSelected: () => _openBrowserUrl(entry.links.first),
-          ),
-          AppMenuAction(
-            title: '复制站点主页链接',
-            icon: Icons.link_rounded,
-            onSelected: () async {
-              await Clipboard.setData(ClipboardData(text: entry.links.first));
-              KazumiDialog.showToast(message: '已复制站点链接');
-            },
-          ),
-        ],
-        AppMenuAction(
-          title: '复制索引器 ID (${entry.id})',
-          icon: Icons.copy_rounded,
-          onSelected: () async {
-            await Clipboard.setData(ClipboardData(text: entry.id));
-            KazumiDialog.showToast(message: '已复制索引器 ID');
-          },
-        ),
-      ],
-    );
-  }
-
-  // ===========================================================================
   // 业务逻辑与操作助手方法
   // ===========================================================================
 
@@ -1102,7 +695,7 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
           ),
           const SizedBox(height: 6),
           Text(
-            '可尝试切换筛选条件，或点击右上角导入自定义 YAML',
+            '可尝试切换筛选条件，或点击上方「手动添加规则」/「导入规则」',
             style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.outline),
           ),
         ],
@@ -1118,7 +711,7 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
       }
     }
     if (mounted) {
-      KazumiDialog.showToast(message: '已${enable ? "启用" : "禁用"}本类 ${plugins.length} 个规则');
+      HaipeeDialog.showToast(message: '已${enable ? "启用" : "禁用"}本类 ${plugins.length} 个规则');
     }
   }
 
@@ -1127,46 +720,6 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
       context: context,
       builder: (ctx) => _DryRunTestDialog(plugin: plugin),
     );
-  }
-
-  Future<void> _installMarketEntry(ProwlarrCatalogEntry entry) async {
-    setState(() => _installingMarketIds.add(entry.id));
-
-    try {
-      final dio = Dio(BaseOptions(
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-      ));
-      dio.interceptors.add(GitProxyInterceptor());
-
-      String? yamlContent;
-      try {
-        final url =
-            'https://raw.githubusercontent.com/Prowlarr/Indexers/master/definitions/v11/${entry.fileName}';
-        final resp = await dio.get<String>(url);
-        yamlContent = resp.data;
-      } catch (_) {
-        final cdnUrl =
-            'https://fastly.jsdelivr.net/gh/Prowlarr/Indexers@master/definitions/v11/${entry.fileName}';
-        final resp = await dio.get<String>(cdnUrl);
-        yamlContent = resp.data;
-      }
-
-      if (yamlContent != null && yamlContent.isNotEmpty) {
-        await ref.read(indexerPluginsProvider.notifier).addOrUpdatePlugin(yamlContent);
-        if (mounted) {
-          KazumiDialog.showToast(message: '已成功安装并启用规则: ${entry.name}');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        KazumiDialog.showToast(message: '安装规则失败: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _installingMarketIds.remove(entry.id));
-      }
-    }
   }
 
   Future<void> _confirmResetSingle(IndexerPlugin plugin) async {
@@ -1185,7 +738,7 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
     if (confirmed == true) {
       await ref.read(indexerPluginsProvider.notifier).resetPlugin(plugin.id);
       if (mounted) {
-        KazumiDialog.showToast(message: '已重置【${plugin.name}】至官方预置版本');
+        HaipeeDialog.showToast(message: '已重置【${plugin.name}】至官方预置版本');
       }
     }
   }
@@ -1210,7 +763,7 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
     if (confirmed == true) {
       await ref.read(indexerPluginsProvider.notifier).removePlugin(plugin.id);
       if (mounted) {
-        KazumiDialog.showToast(message: '已删除规则【${plugin.name}】');
+        HaipeeDialog.showToast(message: '已删除规则【${plugin.name}】');
       }
     }
   }
@@ -1234,7 +787,7 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage>
         await notifier.resetPlugin(id);
       }
       if (mounted) {
-        KazumiDialog.showToast(message: '已将全部官方预置规则重置为默认');
+        HaipeeDialog.showToast(message: '已将全部官方预置规则重置为默认');
       }
     }
   }

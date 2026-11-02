@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/desktop_window_controls_safe_area.dart';
-import 'package:kazumi/ui/appbar/kazumi_app_bar.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
+import 'package:haipee/ui/appbar/haipee_app_bar.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -119,7 +119,7 @@ void main() {
       }
     });
 
-    testWidgets('KazumiAppBar 统一自动注入 AppBackButton 并在 macOS 避让', (tester) async {
+    testWidgets('HaipeeAppBar 统一自动注入 AppBackButton 并在 macOS 避让', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
@@ -128,21 +128,21 @@ void main() {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const Scaffold(
-                      appBar: KazumiAppBar(
-                        title: Text('KazumiAppBar 页面'),
+                      appBar: HaipeeAppBar(
+                        title: Text('HaipeeAppBar 页面'),
                       ),
                       body: SizedBox(),
                     ),
                   ),
                 );
               },
-              child: const Text('Go KazumiAppBar'),
+              child: const Text('Go HaipeeAppBar'),
             ),
           ),
         ),
       );
 
-      await tester.tap(find.text('Go KazumiAppBar'));
+      await tester.tap(find.text('Go HaipeeAppBar'));
       await tester.pumpAndSettle();
 
       final backButton = find.byType(AppBackButton);
@@ -153,7 +153,7 @@ void main() {
         expect(
           topLeft.dx,
           equals(DesktopWindowControlsSafeArea.kMacOsTrafficLightsWidth),
-          reason: 'KazumiAppBar 在 macOS 上的回退按钮必须避让 76.0px',
+          reason: 'HaipeeAppBar 在 macOS 上的回退按钮必须避让 76.0px',
         );
       }
     });

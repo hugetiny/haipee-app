@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/request/request.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/request/request.dart';
+import 'package:haipee/utils/storage.dart';
 
 class _MockPicInterceptor extends Interceptor {
   @override

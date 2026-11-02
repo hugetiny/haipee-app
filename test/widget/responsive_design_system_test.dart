@@ -3,17 +3,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/bean/widget/responsive/responsive.dart';
-import 'package:kazumi/bean/widget/rule/unified_rule_card.dart';
-import 'package:kazumi/bean/widget/tree/tree.dart';
-import 'package:kazumi/bean/widget/settings/card_settings_ui.dart';
-import 'package:kazumi/bean/card/bangumi_info_card.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/bangumi/bangumi_tag.dart';
-import 'package:kazumi/modules/collect/collect_module.dart';
-import 'package:kazumi/modules/history/history_module.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
+import 'package:haipee/bean/widget/rule/unified_rule_card.dart';
+import 'package:haipee/bean/widget/tree/tree.dart';
+import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
+import 'package:haipee/bean/card/bangumi_info_card.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/bangumi/bangumi_tag.dart';
+import 'package:haipee/modules/collect/collect_module.dart';
+import 'package:haipee/modules/history/history_module.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {

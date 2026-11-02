@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:kazumi/modules/debrid/debrid_provider.dart';
-import 'package:kazumi/modules/debrid/providers/pikpak_provider.dart';
-import 'package:kazumi/modules/debrid/providers/real_debrid_provider.dart';
-import 'package:kazumi/modules/debrid/providers/torbox_provider.dart';
-import 'package:kazumi/utils/logger.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/debrid/debrid_provider.dart';
+import 'package:haipee/modules/debrid/providers/pikpak_provider.dart';
+import 'package:haipee/modules/debrid/providers/real_debrid_provider.dart';
+import 'package:haipee/modules/debrid/providers/torbox_provider.dart';
+import 'package:haipee/utils/logger.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:logger/logger.dart';
 
 /// Debrid 云端高速离线加速中枢调度器
@@ -66,7 +66,7 @@ class DebridService {
     try {
       return await provider.checkInstantAvailability(magnetOrInfoHash);
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.debug,
         '[DebridService] checkInstantAvailability error: $e',
       );
@@ -82,7 +82,7 @@ class DebridService {
     final provider = activeProvider;
     if (provider == null || !provider.isConfigured) return null;
 
-    KazumiLogger().log(
+    HaipeeLogger().log(
       Level.info,
       '[DebridService] Checking ${provider.name} cloud cache for instant streaming...',
     );
@@ -90,14 +90,14 @@ class DebridService {
     try {
       final isCached = await provider.checkInstantAvailability(magnetOrInfoHash);
       if (!isCached) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.info,
           '[DebridService] Cloud cache miss on ${provider.name}. Falling back to local P2P engine.',
         );
         return null;
       }
 
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.info,
         '[DebridService] Cloud cache HIT! Resolving ultra-fast CDN stream link...',
       );
@@ -108,14 +108,14 @@ class DebridService {
       );
 
       if (streamUrl != null && streamUrl.isNotEmpty) {
-        KazumiLogger().log(
+        HaipeeLogger().log(
           Level.info,
           '[DebridService] Successfully offloaded to ${provider.name}: $streamUrl',
         );
         return streamUrl;
       }
     } catch (e) {
-      KazumiLogger().log(
+      HaipeeLogger().log(
         Level.warning,
         '[DebridService] Failed to resolve via ${provider.name}: $e',
       );

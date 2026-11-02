@@ -6,13 +6,13 @@ import 'package:path/path.dart' as p;
 /// Non-blocking, asynchronous rolling file sink with strictly bounded disk footprint.
 ///
 /// Rotation strategy:
-/// - Active file: `kazumi.log` (up to [maxFileSizeBytes], default 5MB)
-/// - Backups: `kazumi.1.log`, `kazumi.2.log` (up to [maxBackups], default 2)
+/// - Active file: `haipee.log` (up to [maxFileSizeBytes], default 5MB)
+/// - Backups: `haipee.1.log`, `haipee.2.log` (up to [maxBackups], default 2)
 /// - Maximum total footprint: (1 + maxBackups) * 5MB = 15MB max.
 class RollingFileSink {
   RollingFileSink({
     required this.directoryProvider,
-    this.baseName = 'kazumi.log',
+    this.baseName = 'haipee.log',
     this.maxFileSizeBytes = 5 * 1024 * 1024,
     this.maxBackups = 2,
   }) {
@@ -131,7 +131,7 @@ class RollingFileSink {
 
       if (_logDir == null) return;
 
-      // 1. Delete oldest backup (e.g. kazumi.2.log) if it exists
+      // 1. Delete oldest backup (e.g. haipee.2.log) if it exists
       final oldestBackup = File(p.join(_logDir!.path, _backupFileName(maxBackups)));
       if (await oldestBackup.exists()) {
         try {
@@ -139,7 +139,7 @@ class RollingFileSink {
         } catch (_) {}
       }
 
-      // 2. Cascade shift existing backups (e.g. kazumi.1.log -> kazumi.2.log)
+      // 2. Cascade shift existing backups (e.g. haipee.1.log -> haipee.2.log)
       for (int i = maxBackups - 1; i >= 1; i--) {
         final cur = File(p.join(_logDir!.path, _backupFileName(i)));
         final next = File(p.join(_logDir!.path, _backupFileName(i + 1)));
@@ -156,7 +156,7 @@ class RollingFileSink {
         }
       }
 
-      // 3. Shift active file (kazumi.log -> kazumi.1.log)
+      // 3. Shift active file (haipee.log -> haipee.1.log)
       final primary = File(p.join(_logDir!.path, _primaryFileName));
       final firstBackup = File(p.join(_logDir!.path, _backupFileName(1)));
       if (await primary.exists()) {
@@ -239,7 +239,7 @@ class RollingFileSink {
     return _activeFile ?? File(p.join((await getLogDirectory()).path, _primaryFileName));
   }
 
-  /// Returns all existing log files in newest-first order (`kazumi.log`, `kazumi.1.log`, `kazumi.2.log`).
+  /// Returns all existing log files in newest-first order (`haipee.log`, `haipee.1.log`, `haipee.2.log`).
   Future<List<File>> getExistingLogFiles() async {
     await _ensureInitialized();
     final list = <File>[];
@@ -256,7 +256,7 @@ class RollingFileSink {
   }
 
   /// Reads all log files in chronological sequence:
-  /// `kazumi.2.log` (oldest) -> `kazumi.1.log` -> `kazumi.log` (newest active).
+  /// `haipee.2.log` (oldest) -> `haipee.1.log` -> `haipee.log` (newest active).
   Future<String> readAllLogsChronological() async {
     await flush();
     final buffer = StringBuffer();

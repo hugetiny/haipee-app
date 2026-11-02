@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/card/bangumi_history_card.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/pages/history/history_controller.dart';
-import 'package:kazumi/pages/history/providers.dart';
-import 'package:kazumi/utils/constants.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/card/bangumi_history_card.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/pages/history/history_controller.dart';
+import 'package:haipee/pages/history/providers.dart';
+import 'package:haipee/utils/constants.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
@@ -31,14 +31,14 @@ class _HistoryPageState extends ConsumerState<HistoryPage>
   }
 
   void onBackPressed(BuildContext context) {
-    if (KazumiDialog.observer.hasKazumiDialog) {
-      KazumiDialog.dismiss();
+    if (HaipeeDialog.observer.hasHaipeeDialog) {
+      HaipeeDialog.dismiss();
       return;
     }
   }
 
   void showHistoryClearDialog() {
-    KazumiDialog.show(
+    HaipeeDialog.show(
       builder: (context) {
         final t = context.t;
         return AlertDialog(
@@ -47,7 +47,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage>
           actions: [
             TextButton(
               onPressed: () {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
               },
               child: Text(
                 t.library.history.manage.cancel,
@@ -56,7 +56,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage>
             ),
             TextButton(
               onPressed: () {
-                KazumiDialog.dismiss();
+                HaipeeDialog.dismiss();
                 try {
                   historyController.clearAll();
                 } catch (_) {}

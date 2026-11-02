@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/pages/my/providers.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/pages/my/providers.dart';
 
 class CollectButton extends ConsumerStatefulWidget {
   CollectButton({

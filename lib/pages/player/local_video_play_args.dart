@@ -1,4 +1,4 @@
-import 'package:kazumi/modules/danmaku/danmaku_module.dart';
+import 'package:haipee/modules/danmaku/danmaku_module.dart';
 
 class LocalVideoPlayArgs {
   final String filePath;

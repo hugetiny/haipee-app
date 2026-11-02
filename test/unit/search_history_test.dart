@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/modules/search/search_history_module.dart';
-import 'package:kazumi/modules/search/search_history_provider.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/modules/search/search_history_module.dart';
+import 'package:haipee/modules/search/search_history_provider.dart';
+import 'package:haipee/utils/storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
@@ -12,7 +12,7 @@ void main() {
   late Directory tempDir;
 
   setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('kazumi_search_history_test_');
+    tempDir = await Directory.systemTemp.createTemp('haipee_search_history_test_');
     Hive.init(tempDir.path);
     if (!Hive.isAdapterRegistered(SearchHistoryAdapter().typeId)) {
       Hive.registerAdapter(SearchHistoryAdapter());

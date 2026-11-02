@@ -2,36 +2,56 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kazumi/providers/riverpod_compat.dart';
+import 'package:haipee/providers/riverpod_compat.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:kazumi/bean/appbar/sys_app_bar.dart';
-import 'package:kazumi/bean/widget/app_back_button.dart';
-import 'package:kazumi/bean/widget/app_context_menu.dart';
-import 'package:kazumi/bean/dialog/dialog_helper.dart';
-import 'package:kazumi/bean/widget/responsive/constrained_content.dart';
-import 'package:kazumi/bean/widget/rule/unified_rule_card.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/plugin/plugin_http_module.dart';
-import 'package:kazumi/pages/plugin_editor/widgets/plugin_dry_run_dialog.dart';
-import 'package:kazumi/pages/plugin_editor/widgets/plugin_import_dialog.dart';
-import 'package:kazumi/pages/plugin_editor/widgets/plugin_subscription_dialog.dart';
-import 'package:kazumi/plugins/plugins.dart';
-import 'package:kazumi/plugins/plugin_validity_tracker.dart';
-import 'package:kazumi/plugins/plugins_controller.dart';
-import 'package:kazumi/plugins/plugins_providers.dart';
-import 'package:kazumi/request/plugin.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/parse_failure_helper.dart';
-import 'package:kazumi/utils/utils.dart';
+import 'package:haipee/bean/appbar/sys_app_bar.dart';
+import 'package:haipee/bean/widget/app_back_button.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/constrained_content.dart';
+import 'package:haipee/bean/widget/rule/unified_rule_card.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/plugin/plugin_http_module.dart';
+import 'package:haipee/pages/plugin_editor/plugin_editor_page.dart';
+import 'package:haipee/pages/plugin_editor/widgets/plugin_dry_run_dialog.dart';
+import 'package:haipee/pages/plugin_editor/widgets/plugin_import_dialog.dart';
+import 'package:haipee/pages/plugin_editor/widgets/plugin_subscription_dialog.dart';
+import 'package:haipee/plugins/plugins.dart';
+import 'package:haipee/plugins/plugin_validity_tracker.dart';
+import 'package:haipee/plugins/plugins_controller.dart';
+import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/modules/rule_speed_test/rule_speed_test_provider.dart';
+import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/cardigann/widgets/indexer_import_dialog.dart';
+import 'package:haipee/pages/setting/indexer/indexer_settings_page.dart';
+import 'package:haipee/request/plugin.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/parse_failure_helper.dart';
+import 'package:haipee/utils/utils.dart';
 
-/// Kazumi 规则管理一级分类组 (三大核心分类：视频、直播、网盘资源【网盘与BT】及规则商店)
+/// Haipee 规则管理一级分类组 (以七大规则协议类型为核心主分类，无冗余规则市场)
 enum PluginCategoryGroup {
-  all(id: 'all', label: '全部', icon: Icons.all_inclusive),
+  all(id: 'all', label: '全部', icon: Icons.all_inclusive_rounded),
+  haipee(id: 'haipee', label: 'Haipee 规则', icon: Icons.extension_rounded),
+  maccms(id: 'maccms', label: 'MacCMS 规则', icon: Icons.movie_outlined),
+  tvbox(id: 'tvbox', label: 'TVBox 规则', icon: Icons.widgets_outlined),
+  iptv(id: 'iptv', label: 'IPTV 规则', icon: Icons.live_tv_outlined),
+  piped(id: 'piped', label: 'Piped 规则', icon: Icons.play_circle_outline_rounded),
+  alist(id: 'alist', label: 'AList 规则', icon: Icons.cloud_outlined),
+  cardigann(id: 'cardigann', label: 'Cardigann 规则', icon: Icons.downloading_outlined),
+  catalog(id: 'catalog', label: '规则商店', icon: Icons.storefront_outlined),
+  // Backward-compatibility aliases for legacy architecture tests & deep links
+  anime(id: 'anime', label: 'Haipee 规则', icon: Icons.extension_rounded),
+  bilibili(id: 'bilibili', label: 'Piped 规则', icon: Icons.play_circle_outline_rounded),
+  douyin(id: 'douyin', label: 'Piped 规则', icon: Icons.play_circle_outline_rounded),
+  live(id: 'live', label: 'IPTV 规则', icon: Icons.live_tv_outlined),
+  drive(id: 'drive', label: 'AList 规则', icon: Icons.cloud_outlined),
+  bt(id: 'bt', label: 'Cardigann 规则', icon: Icons.downloading_outlined),
   video(id: 'video', label: '视频', icon: Icons.video_library_outlined),
-  live(id: 'live', label: '直播', icon: Icons.live_tv_outlined),
-  resource(id: 'resource', label: '网盘资源', icon: Icons.cloud_download_outlined),
-  catalog(id: 'catalog', label: '规则商店', icon: Icons.storefront_outlined);
+  resource(id: 'resource', label: '网盘资源', icon: Icons.cloud_outlined);
+
+  static PluginCategoryGroup get kazumi => haipee;
 
   final String id;
   final String label;
@@ -42,6 +62,32 @@ enum PluginCategoryGroup {
     required this.label,
     required this.icon,
   });
+
+  /// 呈现在顶部分类栏中的核心 8 大项 (全部 + 7大规则协议分类，化繁为简去除规则市场)
+  static const List<PluginCategoryGroup> primaryTabs = [
+    PluginCategoryGroup.all,
+    PluginCategoryGroup.haipee,
+    PluginCategoryGroup.maccms,
+    PluginCategoryGroup.tvbox,
+    PluginCategoryGroup.iptv,
+    PluginCategoryGroup.piped,
+    PluginCategoryGroup.alist,
+    PluginCategoryGroup.cardigann,
+  ];
+
+  static PluginCategoryGroup fromId(String? id) {
+    final clean = (id ?? '').trim().toLowerCase();
+    for (final group in primaryTabs) {
+      if (group.id == clean) return group;
+    }
+    if (clean == 'anime' || clean == 'video' || clean == 'kazumi') return PluginCategoryGroup.haipee;
+    if (clean == 'fongmi' || clean == 'box') return PluginCategoryGroup.tvbox;
+    if (clean == 'live' || clean == 'm3u' || clean == 'm3u8') return PluginCategoryGroup.iptv;
+    if (clean == 'bilibili' || clean == 'douyin' || clean == 'youtube') return PluginCategoryGroup.piped;
+    if (clean == 'drive' || clean == 'resource' || clean == 'webdav') return PluginCategoryGroup.alist;
+    if (clean == 'bt' || clean == 'torrent' || clean == 'magnet') return PluginCategoryGroup.cardigann;
+    return PluginCategoryGroup.all;
+  }
 }
 
 enum PluginSortOption {
@@ -56,20 +102,22 @@ final pluginSortOptionProvider = StateProvider.autoDispose<PluginSortOption>(
   (ref) => PluginSortOption.original,
 );
 
-/// Kazumi 视频规则管理页面
+/// Haipee 视频规则管理页面
 /// 深度对齐 Cardigann 规则设置 (IndexerSettingsPage) 的成熟架构与高质感设计系统：
-/// Level 1: 顶部标准 Material 3 TabBar 分段导航 (精简为「全部」与「Kazumi 规则源」2 个核心 Tab)
+/// Level 1: 顶部标准 Material 3 TabBar 分段导航 (精简为「全部」与「Haipee 规则源」2 个核心 Tab)
 /// Level 2: 搜索与快速批量控制、解析类型/播放特性/连通状态筛选器、批量并发测速与自动载入
 /// Level 3: UnifiedRuleGrid 自适应网格呈现层 (共享 UnifiedRuleCard 统一视觉与操作体验)
 /// Level 4: 规则源市场联动、实时试抓 (Dry-Run)、生命周期管理
 class PluginViewPage extends ConsumerStatefulWidget {
   final bool isEmbedded;
   final String? initialCategoryKey;
+  final String? initialRuleTypeKey;
 
   const PluginViewPage({
     super.key,
     this.isEmbedded = false,
     this.initialCategoryKey,
+    this.initialRuleTypeKey,
   });
 
   @override
@@ -82,16 +130,9 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
   late final TabController _categoryTabController;
 
   PluginCategoryGroup _selectedGroup = PluginCategoryGroup.all;
-  String _typeFilter = 'all'; // all, xpath, maccms, anime
-  String _featureFilter = 'all'; // all, native, webview, multi
-  String _statusFilter = 'all'; // all, passed, failed, valid, updatable
+  String _statusFilter = 'all'; // all, enabled, disabled, passed, failed, untested, updatable
   String _marketInstallFilter = 'all'; // all, install, installed, update
   String _marketFeatureFilter = 'all'; // all, native, webview
-
-  bool _isAutoTesting = false;
-  int _testedCount = 0;
-  int _totalTesting = 0;
-  bool _hasRunInitialTest = false;
 
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _installingMarketNames = {};
@@ -100,25 +141,22 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
   void initState() {
     super.initState();
     pluginsController = ref.read(pluginsProvider.notifier);
-    if (widget.initialCategoryKey != null) {
-      final key = widget.initialCategoryKey!.toLowerCase().trim();
-      if (key == 'video') {
-        _selectedGroup = PluginCategoryGroup.video;
-      } else if (key == 'live') {
-        _selectedGroup = PluginCategoryGroup.live;
-      } else if (key == 'drive' || key == 'resource') {
-        _selectedGroup = PluginCategoryGroup.resource;
-      }
+    if (widget.initialRuleTypeKey != null &&
+        widget.initialRuleTypeKey!.trim().isNotEmpty) {
+      _selectedGroup = PluginCategoryGroup.fromId(widget.initialRuleTypeKey);
+    } else if (widget.initialCategoryKey != null) {
+      _selectedGroup = PluginCategoryGroup.fromId(widget.initialCategoryKey);
     }
+    final initialTabIdx = PluginCategoryGroup.primaryTabs.indexOf(_selectedGroup);
     _categoryTabController = TabController(
-      length: PluginCategoryGroup.values.length,
+      length: PluginCategoryGroup.primaryTabs.length,
       vsync: this,
-      initialIndex: PluginCategoryGroup.values.indexOf(_selectedGroup),
+      initialIndex: initialTabIdx >= 0 ? initialTabIdx : 0,
     );
     _categoryTabController.addListener(() {
       if (!_categoryTabController.indexIsChanging && mounted) {
         final newGroup =
-            PluginCategoryGroup.values[_categoryTabController.index];
+            PluginCategoryGroup.primaryTabs[_categoryTabController.index];
         if (newGroup != _selectedGroup) {
           setState(() {
             _selectedGroup = newGroup;
@@ -129,15 +167,40 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
         }
       }
     });
-    // 立即启动规则市场预载与已安装规则的自动并发健康测速
+    // 静默预载规则市场
     Future.microtask(() async {
       if (!mounted) return;
       await _loadMarketIfNeeded();
-      if (mounted && pluginsController.pluginList.isNotEmpty && !_hasRunInitialTest) {
-        _hasRunInitialTest = true;
-        _runAutoBatchTest(isInitial: true);
-      }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant PluginViewPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialRuleTypeKey != oldWidget.initialRuleTypeKey) {
+      if (widget.initialRuleTypeKey != null &&
+          widget.initialRuleTypeKey!.trim().isNotEmpty) {
+        setState(() {
+          _selectedGroup = PluginCategoryGroup.fromId(widget.initialRuleTypeKey);
+          final targetIndex =
+              PluginCategoryGroup.primaryTabs.indexOf(_selectedGroup);
+          if (targetIndex >= 0 && _categoryTabController.index != targetIndex) {
+            _categoryTabController.animateTo(targetIndex);
+          }
+        });
+      }
+    } else if (widget.initialCategoryKey != oldWidget.initialCategoryKey) {
+      if (widget.initialCategoryKey != null) {
+        setState(() {
+          _selectedGroup = PluginCategoryGroup.fromId(widget.initialCategoryKey);
+          final targetIndex =
+              PluginCategoryGroup.primaryTabs.indexOf(_selectedGroup);
+          if (targetIndex >= 0 && _categoryTabController.index != targetIndex) {
+            _categoryTabController.animateTo(targetIndex);
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -182,75 +245,59 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
         mode: LaunchMode.externalApplication,
       );
       if (!success && mounted) {
-        KazumiDialog.showToast(message: '无法在浏览器中打开链接: $normalized');
+        HaipeeDialog.showToast(message: '无法在浏览器中打开链接: $normalized');
       }
     } catch (e) {
       if (mounted) {
-        KazumiDialog.showToast(message: '打开链接失败: $e');
+        HaipeeDialog.showToast(message: '打开链接失败: $e');
       }
     }
   }
 
-  Future<void> _runAutoBatchTest({bool isInitial = false}) async {
-    if (_isAutoTesting || !mounted) return;
-    final plugins = pluginsController.pluginList;
-    if (plugins.isEmpty) {
+  Future<void> _runAutoBatchTest({
+    bool isInitial = false,
+    List<Plugin>? targetPlugins,
+  }) async {
+    final speedTestState = ref.read(ruleSpeedTestProvider);
+    if (speedTestState.isTesting) {
+      if (!isInitial && mounted) {
+        HaipeeDialog.showToast(
+          message: '已有规则测速正在后台进行中 (${speedTestState.testedCount}/${speedTestState.totalCount})',
+        );
+      }
+      return;
+    }
+    List<Plugin> targets;
+    if (targetPlugins != null) {
+      targets = targetPlugins;
+    } else if (_selectedGroup == PluginCategoryGroup.all) {
+      targets = pluginsController.pluginList;
+    } else {
+      targets = pluginsController.pluginList
+          .where((p) => _matchesGroup(p, _selectedGroup))
+          .toList();
+    }
+    if (targets.isEmpty) {
       if (mounted && !isInitial) {
-        KazumiDialog.showToast(message: '未发现可用规则，请前往「Kazumi 规则源」安装');
+        HaipeeDialog.showToast(message: '当前分类暂无可测速规则，请先手动添加或导入规则');
       }
       return;
     }
 
-    setState(() {
-      _isAutoTesting = true;
-      _testedCount = 0;
-      _totalTesting = plugins.length;
-    });
-
-    try {
-      final results = await pluginsController.testAndAutoLoadPlugins(
-        targets: plugins,
-        onProgress: (name, status) {
-          if (mounted) {
-            setState(() {
-              _testedCount = plugins.where((p) {
-                final s = pluginsController.validityTracker.getStatus(p.name);
-                return s == PluginHealthStatus.passed ||
-                    s == PluginHealthStatus.failed;
-              }).length;
-            });
-          }
-        },
-      );
-
-      if (mounted) {
-        final passedCount = results.values.where((v) => v).length;
-        final failedCount = results.length - passedCount;
-        if (!isInitial) {
-          KazumiDialog.showToast(
-            message:
-                '测速完成：$passedCount 个规则可用已自动载入启用${failedCount > 0 ? "，$failedCount 个规则不可用已置为禁用" : ""}',
-          );
-        }
-      }
-    } catch (_) {
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isAutoTesting = false;
-        });
-      }
-    }
+    await ref.read(ruleSpeedTestProvider.notifier).runAutoBatchTestForPlugins(
+      targetPlugins: targets,
+      categoryLabel: _selectedGroup.label,
+    );
   }
 
   Future<void> _batchInstallAndTestMarket() async {
     final market = pluginsController.pluginHTTPList;
     if (market.isEmpty) {
-      KazumiDialog.showToast(message: '规则市场暂无可用规则');
+      HaipeeDialog.showToast(message: '规则市场暂无可用规则');
       return;
     }
-    KazumiDialog.showLoading(
-        msg: '正在从 Kazumi 规则源并发载入所有规则 (0/${market.length})...');
+    HaipeeDialog.showLoading(
+        msg: '正在从 Haipee 规则源并发载入所有规则 (0/${market.length})...');
     int successCount = 0;
     const chunkSize = 4;
     for (int i = 0; i < market.length; i += chunkSize) {
@@ -265,48 +312,28 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           if (res == 0) successCount++;
         } catch (_) {}
       }));
-      KazumiDialog.showLoading(
-        msg: '正在从 Kazumi 规则源并发载入所有规则 ($successCount/${market.length})...',
+      HaipeeDialog.showLoading(
+        msg: '正在从 Haipee 规则源并发载入所有规则 ($successCount/${market.length})...',
       );
     }
-    KazumiDialog.dismiss();
+    HaipeeDialog.dismiss();
     if (!mounted) return;
     if (successCount == 0) {
-      KazumiDialog.showToast(message: '未能成功拉取规则，请检查网络连接或镜像设置');
+      HaipeeDialog.showToast(message: '未能成功拉取规则，请检查网络连接或镜像设置');
       return;
     }
-    KazumiDialog.showToast(message: '已成功载入 $successCount 个规则，正在启动健康测速...');
+    HaipeeDialog.showToast(message: '已成功载入 $successCount 个规则，正在启动健康测速...');
     setState(() {
       _selectedGroup = PluginCategoryGroup.all;
-      _categoryTabController.animateTo(PluginCategoryGroup.all.index);
+      _categoryTabController.animateTo(
+        PluginCategoryGroup.primaryTabs.indexOf(PluginCategoryGroup.all),
+      );
     });
     await _runAutoBatchTest();
   }
 
   Future<void> _retestSinglePlugin(Plugin plugin) async {
-    KazumiDialog.showLoading(msg: '正在测试【${plugin.name}】连通性...');
-    try {
-      final results = await pluginsController.testAndAutoLoadPlugins(
-        targets: [plugin],
-      );
-      KazumiDialog.dismiss();
-      final passed = results[plugin.name] ?? false;
-      if (mounted) {
-        setState(() {});
-        if (passed) {
-          KazumiDialog.showToast(message: '【${plugin.name}】测速通过，已自动启用');
-        } else {
-          final err = pluginsController.validityTracker.getError(plugin.name);
-          KazumiDialog.showToast(
-              message: '【${plugin.name}】测速未通过: ${err ?? "不可达"}');
-        }
-      }
-    } catch (e) {
-      KazumiDialog.dismiss();
-      if (mounted) {
-        KazumiDialog.showToast(message: '测试失败: $e');
-      }
-    }
+    await ref.read(ruleSpeedTestProvider.notifier).retestSinglePlugin(plugin);
   }
 
 
@@ -335,13 +362,13 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
 
   Future<void> _handleUpdateAll() async {
     final pluginTexts = context.t.settings.plugins;
-    KazumiDialog.showLoading(msg: pluginTexts.loading.updating);
+    HaipeeDialog.showLoading(msg: pluginTexts.loading.updating);
     final count = await pluginsController.tryUpdateAllPlugin();
-    KazumiDialog.dismiss();
+    HaipeeDialog.dismiss();
     if (count == 0) {
-      KazumiDialog.showToast(message: pluginTexts.toast.allUpToDate);
+      HaipeeDialog.showToast(message: pluginTexts.toast.allUpToDate);
     } else {
-      KazumiDialog.showToast(
+      HaipeeDialog.showToast(
         message: pluginTexts.toast.updateCount
             .replaceFirst('{count}', count.toString()),
       );
@@ -352,22 +379,22 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     final pluginTexts = context.t.settings.plugins;
     final state = pluginsController.pluginUpdateStatus(plugin);
     if (state == "nonexistent") {
-      KazumiDialog.showToast(message: pluginTexts.toast.repoMissing);
+      HaipeeDialog.showToast(message: pluginTexts.toast.repoMissing);
       return;
     }
     if (state == "latest") {
-      KazumiDialog.showToast(message: pluginTexts.toast.alreadyLatest);
+      HaipeeDialog.showToast(message: pluginTexts.toast.alreadyLatest);
       return;
     }
-    KazumiDialog.showLoading(msg: pluginTexts.loading.updatingSingle);
+    HaipeeDialog.showLoading(msg: pluginTexts.loading.updatingSingle);
     final res = await pluginsController.tryUpdatePlugin(plugin);
-    KazumiDialog.dismiss();
+    HaipeeDialog.dismiss();
     if (res == 0) {
-      KazumiDialog.showToast(message: pluginTexts.toast.updateSuccess);
+      HaipeeDialog.showToast(message: pluginTexts.toast.updateSuccess);
     } else if (res == 1) {
-      KazumiDialog.showToast(message: pluginTexts.toast.updateIncompatible);
+      HaipeeDialog.showToast(message: pluginTexts.toast.updateIncompatible);
     } else if (res == 2) {
-      KazumiDialog.showToast(message: pluginTexts.toast.updateFailed);
+      HaipeeDialog.showToast(message: pluginTexts.toast.updateFailed);
     }
   }
 
@@ -400,14 +427,14 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.copy_all_rounded),
-                  title: const Text('复制 Kazumi 分享口令 (Base64)'),
+                  title: const Text('复制 Haipee 分享口令 (Base64)'),
                   subtitle: const Text('适合社区与好友之间无缝快速导入'),
                   onTap: () {
                     final base64Str =
-                        Utils.jsonToKazumiBase64(json.encode(plugin.toJson()));
+                        Utils.jsonToHaipeeBase64(json.encode(plugin.toJson()));
                     Clipboard.setData(ClipboardData(text: base64Str));
                     Navigator.pop(ctx);
-                    KazumiDialog.showToast(message: '已复制 Kazumi 规则口令到剪贴板');
+                    HaipeeDialog.showToast(message: '已复制 Haipee 规则口令到剪贴板');
                   },
                 ),
                 ListTile(
@@ -417,7 +444,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: plugin.toYamlString()));
                     Navigator.pop(ctx);
-                    KazumiDialog.showToast(message: '已复制 YAML 规则到剪贴板');
+                    HaipeeDialog.showToast(message: '已复制 YAML 规则到剪贴板');
                   },
                 ),
                 ListTile(
@@ -429,7 +456,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                         text: const JsonEncoder.withIndent('  ')
                             .convert(plugin.toJson())));
                     Navigator.pop(ctx);
-                    KazumiDialog.showToast(message: '已复制 JSON 规则到剪贴板');
+                    HaipeeDialog.showToast(message: '已复制 JSON 规则到剪贴板');
                   },
                 ),
               ],
@@ -445,7 +472,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('删除规则'),
-        content: Text('确认删除 Kazumi 视频规则【${plugin.name}】吗？删除后不可撤销。'),
+        content: Text('确认删除 Haipee 视频规则【${plugin.name}】吗？删除后不可撤销。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -463,7 +490,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     if (confirmed == true) {
       await pluginsController.removePlugin(plugin);
       if (mounted) {
-        KazumiDialog.showToast(message: '已删除规则: ${plugin.name}');
+        HaipeeDialog.showToast(message: '已删除规则: ${plugin.name}');
       }
     }
   }
@@ -527,7 +554,51 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
   }
 
   void _openEditor(Plugin plugin) {
-    context.push(Routes.settingsPluginEditor, extra: plugin);
+    try {
+      context.push(Routes.settingsPluginEditor, extra: plugin);
+    } catch (_) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PluginEditorPage(plugin: plugin),
+        ),
+      );
+    }
+  }
+
+  void _createNewPlugin() {
+    final template = Plugin.fromTemplate();
+    switch (_selectedGroup) {
+      case PluginCategoryGroup.maccms:
+        template.type = 'maccms';
+        template.category = 'video';
+        break;
+      case PluginCategoryGroup.tvbox:
+        template.type = 'tvbox';
+        template.category = 'video';
+        break;
+      case PluginCategoryGroup.iptv:
+      case PluginCategoryGroup.live:
+        template.type = 'iptv';
+        template.category = 'live';
+        break;
+      case PluginCategoryGroup.piped:
+      case PluginCategoryGroup.bilibili:
+      case PluginCategoryGroup.douyin:
+        template.type = 'piped';
+        template.category = 'video';
+        break;
+      case PluginCategoryGroup.alist:
+      case PluginCategoryGroup.drive:
+      case PluginCategoryGroup.resource:
+        template.type = 'alist';
+        template.category = 'drive';
+        break;
+      default:
+        template.type = 'xpath';
+        template.category = 'video';
+        break;
+    }
+    _openEditor(template);
   }
 
   void _batchToggle(List<Plugin> plugins, bool enable) {
@@ -535,8 +606,8 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
       plugins.map((p) => p.name),
       enable,
     );
-    KazumiDialog.showToast(
-      message: '已${enable ? "启用" : "禁用"}本组 ${plugins.length} 个 Kazumi 视频规则',
+    HaipeeDialog.showToast(
+      message: '已${enable ? "启用" : "禁用"}本组 ${plugins.length} 个 Haipee 视频规则',
     );
   }
 
@@ -549,7 +620,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
       final res = await pluginsController.tryUpdatePluginByName(item.name);
       if (mounted) {
         if (res == 0) {
-          KazumiDialog.showToast(
+          HaipeeDialog.showToast(
             message: isInstall ? '规则已成功安装，正在启动自动测速...' : '规则已更新，正在启动自动测速...',
           );
           final installed = pluginsController.pluginList
@@ -559,9 +630,9 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             await _retestSinglePlugin(installed);
           }
         } else if (res == 1) {
-          KazumiDialog.showToast(message: '该规则版本不兼容当前应用');
+          HaipeeDialog.showToast(message: '该规则版本不兼容当前应用');
         } else {
-          KazumiDialog.showToast(message: '安装/更新规则失败');
+          HaipeeDialog.showToast(message: '安装/更新规则失败');
         }
       }
     } finally {
@@ -571,18 +642,40 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     }
   }
 
+  String _resolveAppBarTitle(bool isWide) {
+    switch (_selectedGroup) {
+      case PluginCategoryGroup.all:
+        return isWide ? 'Haipee 规则管理' : '规则管理';
+      case PluginCategoryGroup.haipee:
+      case PluginCategoryGroup.anime:
+      case PluginCategoryGroup.video:
+        return 'Haipee 规则管理';
+      case PluginCategoryGroup.maccms:
+        return 'MacCMS 规则管理';
+      case PluginCategoryGroup.tvbox:
+        return 'TVBox 规则管理';
+      case PluginCategoryGroup.iptv:
+      case PluginCategoryGroup.live:
+        return 'IPTV 规则管理';
+      case PluginCategoryGroup.piped:
+      case PluginCategoryGroup.bilibili:
+      case PluginCategoryGroup.douyin:
+        return 'Piped 规则管理';
+      case PluginCategoryGroup.alist:
+      case PluginCategoryGroup.drive:
+      case PluginCategoryGroup.resource:
+        return 'AList 规则管理';
+      case PluginCategoryGroup.cardigann:
+      case PluginCategoryGroup.bt:
+        return 'Cardigann 规则管理';
+      case PluginCategoryGroup.catalog:
+        return '规则商店';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    ref.listen<List<Plugin>>(
-      pluginsProvider.select((s) => s.pluginList),
-      (previous, next) {
-        if (!_hasRunInitialTest && next.isNotEmpty) {
-          _hasRunInitialTest = true;
-          _runAutoBatchTest(isInitial: true);
-        }
-      },
-    );
-
+    final speedTestState = ref.watch(ruleSpeedTestProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final pluginsState = ref.watch(pluginsProvider);
@@ -610,16 +703,8 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             ? null
             : SysAppBar(
                 title: isMultiSelectMode
-              ? Text('已选择 ${selectedNames.length} 项')
-              : Text(
-                  _selectedGroup == PluginCategoryGroup.live
-                      ? '电视直播规则管理'
-                      : (_selectedGroup == PluginCategoryGroup.video
-                          ? '在线视频规则管理'
-                          : (_selectedGroup == PluginCategoryGroup.resource
-                              ? '网盘资源规则管理'
-                              : (isWide ? 'Kazumi 规则管理' : '规则管理'))),
-                ),
+                    ? Text('已选择 ${selectedNames.length} 项')
+                    : Text(_resolveAppBarTitle(isWide)),
           leading: isMultiSelectMode
               ? AppBackButton(
                   icon: Icons.close,
@@ -653,7 +738,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                     : () {
                         pluginsController.batchTogglePlugins(selectedNames, true);
                         ref.read(pluginSelectionProvider.notifier).disableMultiSelect();
-                        KazumiDialog.showToast(message: '已批量启用所选 ${selectedNames.length} 个规则');
+                        HaipeeDialog.showToast(message: '已批量启用所选 ${selectedNames.length} 个规则');
                       },
               ),
               IconButton(
@@ -664,7 +749,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                     : () {
                         pluginsController.batchTogglePlugins(selectedNames, false);
                         ref.read(pluginSelectionProvider.notifier).disableMultiSelect();
-                        KazumiDialog.showToast(message: '已批量禁用所选 ${selectedNames.length} 个规则');
+                        HaipeeDialog.showToast(message: '已批量禁用所选 ${selectedNames.length} 个规则');
                       },
               ),
               IconButton(
@@ -695,7 +780,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                                       .read(pluginSelectionProvider.notifier)
                                       .disableMultiSelect();
                                   Navigator.pop(context);
-                                  KazumiDialog.showToast(message: '已批量删除所选规则');
+                                  HaipeeDialog.showToast(message: '已批量删除所选规则');
                                 },
                                 style: FilledButton.styleFrom(
                                   backgroundColor: Colors.redAccent,
@@ -708,119 +793,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                       },
               ),
             ] else ...[
-              if (_selectedGroup == PluginCategoryGroup.all) ...[
-                if (isWide) ...[
-                  FilledButton.tonalIcon(
-                    onPressed: () => PluginImportDialog.show(context),
-                    icon: const Icon(Icons.file_upload_outlined, size: 16),
-                    label: const Text('导入规则'),
-                    style: FilledButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  OutlinedButton.icon(
-                    onPressed: () => PluginSubscriptionDialog.show(context),
-                    icon: const Icon(Icons.rss_feed_rounded, size: 16),
-                    label: const Text('在线规则订阅'),
-                    style: OutlinedButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    tooltip: '一键测速并自动载入',
-                    icon: const Icon(Icons.speed_rounded),
-                    onPressed: _isAutoTesting ? null : () => _runAutoBatchTest(),
-                  ),
-                  IconButton(
-                    tooltip: '一键更新全部规则',
-                    icon: const Icon(Icons.update),
-                    onPressed: _handleUpdateAll,
-                  ),
-                  IconButton(
-                    tooltip: '排序方式',
-                    icon: const Icon(Icons.sort_rounded),
-                    onPressed: _showSortDialog,
-                  ),
-                  const SizedBox(width: 8),
-                ] else ...[
-                  IconButton(
-                    tooltip: '导入规则 (支持批量 / 文件 / 剪贴板)',
-                    icon: const Icon(Icons.file_upload_outlined),
-                    onPressed: () => PluginImportDialog.show(context),
-                  ),
-                  IconButton(
-                    tooltip: '在线规则订阅',
-                    icon: const Icon(Icons.rss_feed_rounded),
-                    onPressed: () => PluginSubscriptionDialog.show(context),
-                  ),
-                  IconButton(
-                    tooltip: '一键测速并自动载入',
-                    icon: const Icon(Icons.speed_rounded),
-                    onPressed: _isAutoTesting ? null : () => _runAutoBatchTest(),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
-                    tooltip: '更多操作',
-                    onSelected: (val) {
-                      switch (val) {
-                        case 'subscriptions':
-                          PluginSubscriptionDialog.show(context);
-                          break;
-                        case 'test_all':
-                          _runAutoBatchTest();
-                          break;
-                        case 'update_all':
-                          _handleUpdateAll();
-                          break;
-                        case 'sort':
-                          _showSortDialog();
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'subscriptions',
-                        child: ListTile(
-                          leading: Icon(Icons.rss_feed_rounded),
-                          title: Text('在线规则订阅'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'test_all',
-                        child: ListTile(
-                          leading: Icon(Icons.speed_rounded),
-                          title: Text('一键测速并自动载入'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'update_all',
-                        child: ListTile(
-                          leading: Icon(Icons.update),
-                          title: Text('一键更新全部规则'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'sort',
-                        child: ListTile(
-                          leading: Icon(Icons.sort_rounded),
-                          title: Text('排序方式'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 4),
-                ],
-              ] else ...[
+              if (_selectedGroup == PluginCategoryGroup.catalog) ...[
                 if (isWide) ...[
                   FilledButton.tonalIcon(
                     onPressed: _batchInstallAndTestMarket,
@@ -847,6 +820,165 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                     tooltip: '刷新规则市场',
                     icon: const Icon(Icons.refresh_rounded),
                     onPressed: _loadMarketIfNeeded,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ] else if (_selectedGroup == PluginCategoryGroup.cardigann ||
+                  _selectedGroup == PluginCategoryGroup.bt) ...[
+                if (isWide) ...[
+                  FilledButton.tonalIcon(
+                    onPressed: () => IndexerImportDialog.show(context),
+                    icon: const Icon(Icons.file_upload_outlined, size: 16),
+                    label: const Text('导入索引器'),
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ] else ...[
+                  IconButton(
+                    tooltip: '导入索引器 (Cardigann)',
+                    icon: const Icon(Icons.file_upload_outlined),
+                    onPressed: () => IndexerImportDialog.show(context),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ] else ...[
+                // 常规规则管理操作 (全部以及 6 种规则类型)
+                if (isWide) ...[
+                  FilledButton.icon(
+                    onPressed: _createNewPlugin,
+                    icon: const Icon(Icons.add_rounded, size: 16),
+                    label: const Text('手动添加规则'),
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  FilledButton.tonalIcon(
+                    onPressed: () => PluginImportDialog.show(context),
+                    icon: const Icon(Icons.file_upload_outlined, size: 16),
+                    label: const Text('导入规则'),
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  OutlinedButton.icon(
+                    onPressed: () => PluginSubscriptionDialog.show(context),
+                    icon: const Icon(Icons.rss_feed_rounded, size: 16),
+                    label: const Text('在线规则订阅'),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: '一键测速 (自动启用/禁用)',
+                    icon: const Icon(Icons.speed_rounded),
+                    onPressed: speedTestState.isTesting ? null : () => _runAutoBatchTest(),
+                  ),
+                  IconButton(
+                    tooltip: '一键更新全部规则',
+                    icon: const Icon(Icons.update),
+                    onPressed: _handleUpdateAll,
+                  ),
+                  IconButton(
+                    tooltip: '排序方式',
+                    icon: const Icon(Icons.sort_rounded),
+                    onPressed: _showSortDialog,
+                  ),
+                  const SizedBox(width: 8),
+                ] else ...[
+                  IconButton(
+                    tooltip: '手动添加规则',
+                    icon: const Icon(Icons.add_rounded),
+                    onPressed: _createNewPlugin,
+                  ),
+                  IconButton(
+                    tooltip: '导入规则 (支持批量 / 文件 / 剪贴板)',
+                    icon: const Icon(Icons.file_upload_outlined),
+                    onPressed: () => PluginImportDialog.show(context),
+                  ),
+                  IconButton(
+                    tooltip: '在线规则订阅',
+                    icon: const Icon(Icons.rss_feed_rounded),
+                    onPressed: () => PluginSubscriptionDialog.show(context),
+                  ),
+                  IconButton(
+                    tooltip: '一键测速 (自动启用/禁用)',
+                    icon: const Icon(Icons.speed_rounded),
+                    onPressed: speedTestState.isTesting ? null : () => _runAutoBatchTest(),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    tooltip: '更多操作',
+                    onSelected: (val) {
+                      switch (val) {
+                        case 'add_manual':
+                          _createNewPlugin();
+                          break;
+                        case 'subscriptions':
+                          PluginSubscriptionDialog.show(context);
+                          break;
+                        case 'test_all':
+                          _runAutoBatchTest();
+                          break;
+                        case 'update_all':
+                          _handleUpdateAll();
+                          break;
+                        case 'sort':
+                          _showSortDialog();
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'add_manual',
+                        child: ListTile(
+                          leading: Icon(Icons.add_rounded),
+                          title: Text('手动添加规则'),
+                          contentPadding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'subscriptions',
+                        child: ListTile(
+                          leading: Icon(Icons.rss_feed_rounded),
+                          title: Text('在线规则订阅'),
+                          contentPadding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'test_all',
+                        child: ListTile(
+                          leading: Icon(Icons.speed_rounded),
+                          title: Text('一键测速 (自动启用/禁用)'),
+                          contentPadding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'update_all',
+                        child: ListTile(
+                          leading: Icon(Icons.update),
+                          title: Text('一键更新全部规则'),
+                          contentPadding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'sort',
+                        child: ListTile(
+                          leading: Icon(Icons.sort_rounded),
+                          title: Text('排序方式'),
+                          contentPadding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(width: 4),
                 ],
@@ -887,6 +1019,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     List<Plugin> allPlugins,
     List<PluginHTTPItem> marketList,
   ) {
+    final indexers = ref.watch(indexerPluginsProvider);
     return Container(
       width: double.infinity,
       color: colorScheme.surface,
@@ -897,40 +1030,49 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
         indicatorSize: TabBarIndicatorSize.tab,
         dividerColor: Colors.transparent,
         onTap: (index) {
+          final targetGroup = PluginCategoryGroup.primaryTabs[index];
           setState(() {
-            _selectedGroup = PluginCategoryGroup.values[index];
+            _selectedGroup = targetGroup;
           });
-          if (_selectedGroup == PluginCategoryGroup.catalog) {
+          if (targetGroup == PluginCategoryGroup.catalog) {
             _loadMarketIfNeeded();
           }
         },
-        tabs: PluginCategoryGroup.values.map((group) {
+        tabs: PluginCategoryGroup.primaryTabs.map((group) {
           final isSelected = _selectedGroup == group;
 
-          List<Plugin> categoryList = allPlugins;
-          if (group == PluginCategoryGroup.video) {
-            categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.video).toList();
-          } else if (group == PluginCategoryGroup.live) {
-            categoryList = allPlugins.where((p) => p.resolvedCategory == PluginCategory.live).toList();
-          } else if (group == PluginCategoryGroup.resource) {
-            categoryList = allPlugins.where((p) => p.resolvedCategory.isResource).toList();
+          int count = 0;
+          int activeCount = 0;
+
+          if (group == PluginCategoryGroup.catalog) {
+            count = marketList.length;
+            activeCount = 0;
+          } else if (group == PluginCategoryGroup.cardigann ||
+              group == PluginCategoryGroup.bt) {
+            final plugins = indexers.plugins;
+            count = plugins.length;
+            activeCount = plugins.where((idx) => idx.isEnabled).length;
+          } else if (group == PluginCategoryGroup.all) {
+            count = allPlugins.length;
+            activeCount = allPlugins
+                .where((p) => pluginsController.isPluginEnabled(p.name))
+                .length;
+          } else {
+            final categoryList = allPlugins
+                .where((p) => _matchesGroup(p, group))
+                .toList();
+            count = categoryList.length;
+            activeCount = categoryList
+                .where((p) => pluginsController.isPluginEnabled(p.name))
+                .length;
           }
-
-          final count = group == PluginCategoryGroup.catalog
-              ? marketList.length
-              : categoryList.length;
-
-          final activeCount = group == PluginCategoryGroup.catalog
-              ? 0
-              : categoryList
-                  .where((p) => pluginsController.isPluginEnabled(p.name))
-                  .length;
 
           final countText = group == PluginCategoryGroup.catalog
               ? '$count'
               : '$activeCount/$count';
 
           return Tab(
+            key: Key('plugin_tab_${group.id}'),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -959,6 +1101,48 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
   // Level 2 & 3: 二级工具栏与规则数据展现 (AdaptiveDataView)
   // ===========================================================================
 
+  bool _matchesGroup(Plugin p, PluginCategoryGroup group) {
+    if (group == PluginCategoryGroup.all) return true;
+    if (group == PluginCategoryGroup.catalog) return false;
+    if (group == PluginCategoryGroup.cardigann ||
+        group == PluginCategoryGroup.bt) {
+      return p.isCardigann || p.ruleType == PluginRuleType.cardigann;
+    }
+    if (group == PluginCategoryGroup.haipee ||
+        group == PluginCategoryGroup.anime ||
+        group == PluginCategoryGroup.video) {
+      return p.ruleType == PluginRuleType.haipee;
+    }
+    if (group == PluginCategoryGroup.maccms) {
+      return p.ruleType == PluginRuleType.maccms;
+    }
+    if (group == PluginCategoryGroup.tvbox) {
+      return p.ruleType == PluginRuleType.tvbox || p.isTvBox;
+    }
+    if (group == PluginCategoryGroup.iptv ||
+        group == PluginCategoryGroup.live) {
+      return p.ruleType == PluginRuleType.iptv ||
+          p.isIptv ||
+          p.resolvedCategory == PluginCategory.live;
+    }
+    if (group == PluginCategoryGroup.piped ||
+        group == PluginCategoryGroup.bilibili ||
+        group == PluginCategoryGroup.douyin) {
+      return p.ruleType == PluginRuleType.piped ||
+          p.isPiped ||
+          p.isBilibili ||
+          p.isDouyin;
+    }
+    if (group == PluginCategoryGroup.alist ||
+        group == PluginCategoryGroup.drive ||
+        group == PluginCategoryGroup.resource) {
+      return p.ruleType == PluginRuleType.alist ||
+          p.isAlist ||
+          p.resolvedCategory == PluginCategory.drive;
+    }
+    return p.ruleType.id == group.id;
+  }
+
   Widget _buildContentPane(
     ThemeData theme,
     ColorScheme colorScheme,
@@ -976,51 +1160,52 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
       );
     }
 
-    List<Plugin> categoryPlugins = allPlugins;
-    if (_selectedGroup == PluginCategoryGroup.video) {
-      categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.video).toList();
-    } else if (_selectedGroup == PluginCategoryGroup.live) {
-      categoryPlugins = allPlugins.where((p) => p.resolvedCategory == PluginCategory.live).toList();
-    } else if (_selectedGroup == PluginCategoryGroup.resource) {
-      categoryPlugins = allPlugins.where((p) => p.resolvedCategory.isResource).toList();
+    if (_selectedGroup == PluginCategoryGroup.cardigann ||
+        _selectedGroup == PluginCategoryGroup.bt) {
+      return const IndexerSettingsPage(isEmbedded: true);
     }
 
+    List<Plugin> categoryPlugins = allPlugins;
+    if (_selectedGroup != PluginCategoryGroup.all) {
+      categoryPlugins = allPlugins
+          .where((p) => _matchesGroup(p, _selectedGroup))
+          .toList();
+    }
+
+    final speedTestState = ref.watch(ruleSpeedTestProvider);
     // 结合 L2 属性筛选与关键字过滤
     final query = _searchController.text.trim().toLowerCase();
     final filtered = categoryPlugins.where((p) {
       // 业务大类与七大规则类型过滤
-      if (_typeFilter != 'all') {
-        if (_typeFilter == 'video') {
-          if (p.resolvedCategory != PluginCategory.video) return false;
-        } else if (_typeFilter == 'live') {
-          if (p.resolvedCategory != PluginCategory.live) return false;
-        } else if (_typeFilter == 'drive') {
-          if (p.resolvedCategory != PluginCategory.drive) return false;
-        } else if (_typeFilter == 'bt') {
-          if (p.resolvedCategory != PluginCategory.bt) return false;
-        } else if (_typeFilter == 'resource') {
-          if (!p.isResource) return false;
-        } else if (p.ruleType.id != _typeFilter) {
-          return false;
-        }
+      if (!_matchesGroup(p, _selectedGroup)) {
+        return false;
       }
 
-      // 播放特性过滤
-      if (_featureFilter == 'native' && !p.useNativePlayer) return false;
-      if (_featureFilter == 'webview' && !p.useWebview) return false;
-      if (_featureFilter == 'multi' && !p.muliSources) return false;
-
-      // 规则连通与健康状态过滤
+      // 启闭与测速健康状态过滤
+      if (_statusFilter == 'enabled' && !pluginsController.isPluginEnabled(p.name)) {
+        return false;
+      }
+      if (_statusFilter == 'disabled' && pluginsController.isPluginEnabled(p.name)) {
+        return false;
+      }
       if (_statusFilter == 'valid' || _statusFilter == 'passed') {
-        final status = pluginsController.validityTracker.getStatus(p.name);
-        if (status != PluginHealthStatus.passed &&
-            !pluginsController.validityTracker.isSearchValid(p.name)) {
+        final status = speedTestState.statusMap[p.name] ??
+            pluginsController.validityTracker.getStatus(p.name);
+        if (status != PluginHealthStatus.passed) {
           return false;
         }
       }
       if (_statusFilter == 'failed') {
-        final status = pluginsController.validityTracker.getStatus(p.name);
+        final status = speedTestState.statusMap[p.name] ??
+            pluginsController.validityTracker.getStatus(p.name);
         if (status != PluginHealthStatus.failed) {
+          return false;
+        }
+      }
+      if (_statusFilter == 'untested') {
+        final status = speedTestState.statusMap[p.name] ??
+            pluginsController.validityTracker.getStatus(p.name);
+        if (status != PluginHealthStatus.idle) {
           return false;
         }
       }
@@ -1052,12 +1237,6 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
 
     return Column(
       children: [
-        if (_isAutoTesting) ...[
-          LinearProgressIndicator(
-            value: _totalTesting > 0 ? _testedCount / _totalTesting : null,
-            minHeight: 2.5,
-          ),
-        ],
         // Level 2: 筛选控制工具栏
         _buildL2FilterHeader(
           theme,
@@ -1065,6 +1244,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           sortedFiltered.length,
           activeCount,
           categoryPlugins,
+          speedTestState,
         ),
         const Divider(height: 1),
 
@@ -1097,7 +1277,14 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     int filteredCount,
     int activeCount,
     List<Plugin> categoryPlugins,
+    RuleSpeedTestState speedTestState,
   ) {
+    final totalCount = categoryPlugins.length;
+    final enabledCount = categoryPlugins
+        .where((p) => pluginsController.isPluginEnabled(p.name))
+        .length;
+    final disabledCount = totalCount - enabledCount;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       color: colorScheme.surface,
@@ -1106,7 +1293,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
         children: [
           LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 620;
+              final isCompact = constraints.maxWidth < 860;
               final searchField = SizedBox(
                 height: 38,
                 child: TextField(
@@ -1137,18 +1324,41 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
               );
 
               final actionButtons = [
+                FilledButton.icon(
+                  key: const Key('plugin_btn_add_manual'),
+                  onPressed: _createNewPlugin,
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: const Text('手动添加规则'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 FilledButton.tonalIcon(
-                  onPressed: _isAutoTesting ? null : () => _runAutoBatchTest(),
-                  icon: _isAutoTesting
+                  key: const Key('plugin_btn_import'),
+                  onPressed: () => PluginImportDialog.show(context),
+                  icon: const Icon(Icons.file_upload_outlined, size: 16),
+                  label: const Text('导入规则'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.tonalIcon(
+                  key: const Key('plugin_btn_auto_test'),
+                  onPressed: speedTestState.isTesting
+                      ? null
+                      : () => _runAutoBatchTest(targetPlugins: categoryPlugins),
+                  icon: speedTestState.isTesting
                       ? const SizedBox(
                           width: 14,
                           height: 14,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.speed_rounded, size: 16),
-                  label: Text(_isAutoTesting
-                      ? '测速中 ($_testedCount/$_totalTesting)'
-                      : '一键测速并自动载入'),
+                  label: Text(speedTestState.isTesting
+                      ? '测速中 (${speedTestState.testedCount}/${speedTestState.totalCount})'
+                      : '一键测速'),
                   style: FilledButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                   ),
@@ -1198,40 +1408,11 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           ),
           const SizedBox(height: 10),
 
-          // 第二行：L2 类型与特性筛选 Chips
+          // 第二行：规则启闭与测速状态筛选 Chips (去除无关的播放特性，化繁为简并标明数量)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                Text(
-                  '七大类型: ',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                _buildFilterChip('全部', 'all', _typeFilter,
-                    (val) => setState(() => _typeFilter = val)),
-                for (final rType in PluginRuleType.values)
-                  _buildFilterChip(rType.label, rType.id, _typeFilter,
-                      (val) => setState(() => _typeFilter = val)),
-                const SizedBox(width: 16),
-                Text(
-                  '播放特性: ',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                _buildFilterChip('全部', 'all', _featureFilter,
-                    (val) => setState(() => _featureFilter = val)),
-                _buildFilterChip('原生播放', 'native', _featureFilter,
-                    (val) => setState(() => _featureFilter = val)),
-                _buildFilterChip('WebView', 'webview', _featureFilter,
-                    (val) => setState(() => _featureFilter = val)),
-                _buildFilterChip('多线路', 'multi', _featureFilter,
-                    (val) => setState(() => _featureFilter = val)),
-                const SizedBox(width: 16),
                 Text(
                   '状态: ',
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -1239,17 +1420,15 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                _buildFilterChip('全部', 'all', _statusFilter,
+                _buildFilterChip('全部 ($totalCount)', 'all', _statusFilter,
                     (val) => setState(() => _statusFilter = val)),
-                _buildFilterChip('🟢 测试通过', 'passed', _statusFilter,
+                _buildFilterChip('已启用 ($enabledCount)', 'enabled', _statusFilter,
                     (val) => setState(() => _statusFilter = val)),
-                _buildFilterChip('🔴 异常/失败', 'failed', _statusFilter,
+                _buildFilterChip('已禁用 ($disabledCount)', 'disabled', _statusFilter,
                     (val) => setState(() => _statusFilter = val)),
-                _buildFilterChip('⚡ 可更新', 'updatable', _statusFilter,
-                    (val) => setState(() => _statusFilter = val)),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Text(
-                  '当前显示: $filteredCount 个 (已激活 $activeCount 个)',
+                  '当前显示: $filteredCount 个',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.outline,
                   ),
@@ -1300,9 +1479,10 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
         pluginsController.pluginUpdateStatus(plugin) == 'updatable';
     final healthRecord =
         pluginsController.validityTracker.getRecord(plugin.name);
-    final healthStatus =
+    final speedTestState = ref.watch(ruleSpeedTestProvider);
+    final healthStatus = speedTestState.statusMap[plugin.name] ??
         pluginsController.validityTracker.getStatus(plugin.name);
-    final latency =
+    final latency = speedTestState.latencyMap[plugin.name] ??
         pluginsController.validityTracker.getLatency(plugin.name);
 
     return UnifiedRuleCard(
@@ -1330,6 +1510,23 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           ? () => _openBrowserUrl(plugin.baseUrl)
           : null,
       badges: [
+        SettingsBadge(
+          label: plugin.ruleType.label,
+          color: colorScheme.primary.withValues(alpha: 0.14),
+          textColor: colorScheme.primary,
+        ),
+        SettingsBadge(
+          label: plugin.ruleType.id.toUpperCase(),
+          color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
+          textColor: colorScheme.onSecondaryContainer,
+        ),
+        if (plugin.type.isNotEmpty &&
+            plugin.type.toUpperCase() != plugin.ruleType.id.toUpperCase())
+          SettingsBadge(
+            label: plugin.type.toUpperCase(),
+            color: colorScheme.secondaryContainer.withValues(alpha: 0.45),
+            textColor: colorScheme.onSecondaryContainer,
+          ),
         SettingsBadge(
           label: plugin.resolvedCategory.isResource
               ? '${plugin.resolvedCategory.label} · 资源下载类'
@@ -1361,12 +1558,15 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
               ? 'B站官方 (WBI/DASH)'
               : (plugin.isDouyin
                   ? '抖音短视频 (无水印直链)'
-                  : (plugin.isMacCms
-                      ? '影视 CMS'
-                      : 'XPath / DOM 嗅探规则')),
-        ),
-        SettingsBadge(
-          label: plugin.type.toUpperCase(),
+                  : (plugin.isTvBox
+                      ? 'TVBox 聚合协议'
+                      : (plugin.isMacCms
+                          ? '影视 CMS'
+                          : (plugin.isIptv
+                              ? 'M3U / M3U8 直播流'
+                              : (plugin.isAlist
+                                  ? 'AList V3 / WebDAV'
+                                  : 'XPath / DOM 嗅探规则'))))),
         ),
         if (healthStatus == PluginHealthStatus.testing)
           SettingsBadge(
@@ -1519,7 +1719,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             await Clipboard.setData(ClipboardData(
                 text: const JsonEncoder.withIndent('  ')
                     .convert(plugin.toJson())));
-            KazumiDialog.showToast(message: '已复制 JSON 规则定义到剪贴板');
+            HaipeeDialog.showToast(message: '已复制 JSON 规则定义到剪贴板');
           },
         ),
         AppMenuAction(
@@ -1527,7 +1727,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           icon: Icons.code_rounded,
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: plugin.toYamlString()));
-            KazumiDialog.showToast(message: '已复制 YAML 规则到剪贴板');
+            HaipeeDialog.showToast(message: '已复制 YAML 规则到剪贴板');
           },
         ),
         AppMenuAction(
@@ -1535,9 +1735,9 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           icon: Icons.share_outlined,
           onSelected: () async {
             final base64Str =
-                Utils.jsonToKazumiBase64(json.encode(plugin.toJson()));
+                Utils.jsonToHaipeeBase64(json.encode(plugin.toJson()));
             await Clipboard.setData(ClipboardData(text: base64Str));
-            KazumiDialog.showToast(message: '已复制 Kazumi 规则口令到剪贴板');
+            HaipeeDialog.showToast(message: '已复制 Haipee 规则口令到剪贴板');
           },
         ),
         if (plugin.baseUrl.isNotEmpty) ...[
@@ -1546,7 +1746,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             icon: Icons.link_rounded,
             onSelected: () async {
               await Clipboard.setData(ClipboardData(text: plugin.baseUrl));
-              KazumiDialog.showToast(message: '已复制站点主页地址');
+              HaipeeDialog.showToast(message: '已复制站点主页地址');
             },
           ),
           AppMenuAction(
@@ -1567,7 +1767,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
   }
 
   // ===========================================================================
-  // Level 4: 规则市场 Pane (KazumiRules 社区与官方市场联动)
+  // Level 4: 规则市场 Pane (Haipee 规则市场联动)
   // ===========================================================================
 
   Widget _buildMarketCatalogPane(
@@ -1586,7 +1786,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('正在载入 KazumiRules 社区视频源规则市场…'),
+            Text('正在载入 Haipee 视频源规则市场…'),
           ],
         ),
       );
@@ -1816,6 +2016,11 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
       badges: [
         if (item.author.isNotEmpty) SettingsBadge(label: '作者: ${item.author}'),
         SettingsBadge(
+          label: PluginRuleType.fromString(item.type).id.toUpperCase(),
+          color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
+          textColor: colorScheme.onSecondaryContainer,
+        ),
+        SettingsBadge(
           label: item.useNativePlayer ? '原生播放' : 'WebView',
           color: colorScheme.primary.withAlpha(20),
           textColor: colorScheme.primary,
@@ -1832,7 +2037,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           ),
         TextButton.icon(
           onPressed: () => _openBrowserUrl(
-            'https://github.com/hugetiny/Kazumi/blob/main/plugins/${item.name}.yaml',
+            'https://github.com/hugetiny/haipee/blob/main/plugins/${item.name}.yaml',
           ),
           icon: const Icon(Icons.code_rounded, size: 16),
           label: const Text('规则源码'),
@@ -1858,7 +2063,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             icon: Icons.link_rounded,
             onSelected: () async {
               await Clipboard.setData(ClipboardData(text: effectiveUrl));
-              KazumiDialog.showToast(message: '已复制源站官网地址');
+              HaipeeDialog.showToast(message: '已复制源站官网地址');
             },
           ),
         ],
@@ -1867,14 +2072,14 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           icon: Icons.copy_rounded,
           onSelected: () async {
             await Clipboard.setData(ClipboardData(text: item.name));
-            KazumiDialog.showToast(message: '已复制规则名称');
+            HaipeeDialog.showToast(message: '已复制规则名称');
           },
         ),
         AppMenuAction(
           title: '在浏览器中打开 GitHub 规则源码',
           icon: Icons.code_rounded,
           onSelected: () => _openBrowserUrl(
-            'https://github.com/hugetiny/Kazumi/blob/main/plugins/${item.name}.yaml',
+            'https://github.com/hugetiny/haipee/blob/main/plugins/${item.name}.yaml',
           ),
         ),
       ],
@@ -1894,13 +2099,31 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
   }) {
     final hasInstalledPlugins = pluginsController.pluginList.isNotEmpty;
 
-    final resolvedTitle = title ??
-        (hasInstalledPlugins ? '未找到匹配的规则' : '暂无 Kazumi 视频规则');
+    String? contextualTitle = title;
+    String? contextualSubtitle = subtitle;
+    if (contextualTitle == null && hasInstalledPlugins) {
+      if (_statusFilter == 'passed') {
+        contextualTitle = '暂无测速可用的规则';
+        contextualSubtitle = '尚未进行连通性测速，或当前规则未连通。点击下方按钮即可一键测速并自动启用可用规则。';
+      } else if (_statusFilter == 'failed') {
+        contextualTitle = '暂无测速异常/失败的规则';
+        contextualSubtitle = '当前分类下没有检测到不可达的规则，或尚未进行过连通性测速。';
+      } else if (_statusFilter == 'disabled') {
+        contextualTitle = '暂无已禁用的规则';
+        contextualSubtitle = '当前分类下的所有规则均处于启用状态。';
+      } else if (_statusFilter == 'enabled') {
+        contextualTitle = '暂无已启用的规则';
+        contextualSubtitle = '当前分类下的规则均处于禁用状态，可点击上方「全开」批量开启。';
+      }
+    }
 
-    final resolvedSubtitle = subtitle ??
+    final resolvedTitle = contextualTitle ??
+        (hasInstalledPlugins ? '未找到匹配的规则' : '暂无 Haipee 视频规则');
+
+    final resolvedSubtitle = contextualSubtitle ??
         (hasInstalledPlugins
             ? '当前筛选或搜索条件下无匹配项，请尝试更换关键词或清除筛选。'
-            : '当前没有任何视频规则。您可以一键载入官方精选规则并自动测速启用，或前往 Kazumi 规则源探索海量规则。');
+            : '当前没有任何视频规则。您可以一键载入官方精选规则并自动测速启用，或前往 Haipee 规则源探索海量规则。');
 
     return Center(
       child: ConstrainedContent(
@@ -1942,38 +2165,42 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
                     if (!hasInstalledPlugins) ...[
                       FilledButton.icon(
                         onPressed: () async {
-                          KazumiDialog.showLoading(msg: '正在载入并检测精选规则...');
+                          HaipeeDialog.showLoading(msg: '正在载入并检测精选规则...');
                           await pluginsController.resetAllBundledPlugins();
                           await _runAutoBatchTest();
-                          KazumiDialog.dismiss();
+                          HaipeeDialog.dismiss();
                           if (mounted) {
-                            KazumiDialog.showToast(message: '已成功载入并测试官方精选规则');
+                            HaipeeDialog.showToast(message: '已成功载入并测试官方精选规则');
                           }
                         },
                         icon: const Icon(Icons.download_rounded),
                         label: const Text('载入并测速精选规则'),
                       ),
                       OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _selectedGroup = PluginCategoryGroup.catalog;
-                            _categoryTabController
-                                .animateTo(PluginCategoryGroup.catalog.index);
-                          });
-                          _loadMarketIfNeeded();
-                        },
-                        icon: const Icon(Icons.storefront_outlined),
-                        label: const Text('前往 Kazumi 规则源'),
+                        onPressed: _createNewPlugin,
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('手动添加规则'),
                       ),
                     ] else ...[
+                      if (_statusFilter == 'passed') ...[
+                        FilledButton.icon(
+                          onPressed: () => _runAutoBatchTest(),
+                          icon: const Icon(Icons.speed_rounded),
+                          label: const Text('立即一键测速'),
+                        ),
+                      ] else ...[
+                        FilledButton.icon(
+                          onPressed: _createNewPlugin,
+                          icon: const Icon(Icons.add_rounded),
+                          label: const Text('手动添加规则'),
+                        ),
+                      ],
                       OutlinedButton.icon(
                         onPressed: () {
                           _searchController.clear();
-                          _typeFilter = 'all';
-                          _featureFilter = 'all';
                           _statusFilter = 'all';
                           setState(() {});
-                          KazumiDialog.showToast(message: '已重置筛选条件');
+                          HaipeeDialog.showToast(message: '已重置筛选条件');
                         },
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text('清空筛选条件'),

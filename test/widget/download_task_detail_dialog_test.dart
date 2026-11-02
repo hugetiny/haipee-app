@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/download/download_file_utils.dart';
-import 'package:kazumi/modules/download/download_task.dart';
-import 'package:kazumi/pages/download/download_task_detail_dialog.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/download/download_file_utils.dart';
+import 'package:haipee/modules/download/download_task.dart';
+import 'package:haipee/pages/download/download_task_detail_dialog.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
 
   setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('kazumi_dialog_test_');
+    tempDir = await Directory.systemTemp.createTemp('haipee_dialog_test_');
     Hive.init(tempDir.path);
     if (!Hive.isAdapterRegistered(20)) {
       Hive.registerAdapter(DownloadTaskAdapter());

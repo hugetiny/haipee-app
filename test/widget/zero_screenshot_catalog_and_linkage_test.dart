@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:kazumi/l10n/generated/translations.g.dart';
-import 'package:kazumi/modules/bangumi/bangumi_item.dart';
-import 'package:kazumi/modules/cardigann/cardigann_torznab.dart';
-import 'package:kazumi/modules/torrent_search/models/torrent_item.dart';
-import 'package:kazumi/modules/torrent_search/torrent_search_service.dart';
-import 'package:kazumi/pages/info/info_page.dart';
-import 'package:kazumi/pages/media/media_page.dart';
-import 'package:kazumi/pages/menu/navigation_provider.dart';
-import 'package:kazumi/router.dart';
-import 'package:kazumi/router_constants.dart';
-import 'package:kazumi/utils/storage.dart';
+import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/bangumi/bangumi_item.dart';
+import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/pages/info/info_page.dart';
+import 'package:haipee/pages/media/media_page.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/router.dart';
+import 'package:haipee/router_constants.dart';
+import 'package:haipee/utils/storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -44,7 +44,7 @@ void main() {
   }
 
   setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('kazumi_zero_screenshot_test_');
+    tempDir = await Directory.systemTemp.createTemp('haipee_zero_screenshot_test_');
     Hive.init(tempDir.path);
     await GStorage.init();
     await GStorage.setting.put(SettingBoxKey.showWindowButton, false);
