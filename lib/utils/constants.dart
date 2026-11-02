@@ -106,7 +106,7 @@ const List<String> acceptLanguageList = [
 /// Bangumi API 文档要求的UA格式
 Map<String, String> bangumiHTTPHeader = {
   'user-agent':
-      'hugetiny/haipee/${Api.version} (Android) (https://github.com/hugetiny/haipee)',
+      'hugetiny/haipee-app/${Api.version} (Android) (https://github.com/hugetiny/haipee-app)',
   'referer': '',
   'content-type': 'application/json'
 };

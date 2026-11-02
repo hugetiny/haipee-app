@@ -110,7 +110,7 @@ class GitProxyInterceptor extends Interceptor {
         : getEffectiveProxyUrl();
 
     // 探测测试目标：轻量级稳定 GitHub raw 文件
-    const probeTarget = 'https://raw.githubusercontent.com/hugetiny/haipee/main/README.md';
+    const probeTarget = 'https://raw.githubusercontent.com/hugetiny/haipee-app/main/README.md';
     final requestUrl = '$effectiveProxy$probeTarget';
 
     final stopwatch = Stopwatch()..start();

@@ -2,7 +2,7 @@ import 'package:haipee/request/core/git_proxy_interceptor.dart';
 
 class Api {
   /// 当前版本
-  static const String version = '1.8.2';
+  static const String version = '0.0.1';
 
   /// 规则API级别
   static const int apiLevel = 10;
@@ -11,7 +11,7 @@ class Api {
   static const String projectUrl = "https://haipee.app/";
 
   /// Github 项目主页
-  static const String sourceUrl = "https://github.com/hugetiny/haipee";
+  static const String sourceUrl = "https://github.com/hugetiny/haipee-app";
 
   /// 图标作者
   static const String iconUrl = "https://www.pixiv.net/users/66219277";
@@ -22,7 +22,7 @@ class Api {
 
   /// 在线升级
   static const String latestApp =
-      'https://api.github.com/repos/hugetiny/haipee/releases/latest';
+      'https://api.github.com/repos/hugetiny/haipee-app/releases/latest';
 
   /// Github镜像 (动态读取用户配置的生效代理地址)
   static String get gitMirror => GitProxyInterceptor.getEffectiveProxyUrl();

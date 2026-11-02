@@ -60,17 +60,17 @@ void main() {
       );
 
       // 3. GitHub API 接口
-      const apiUrl = 'https://api.github.com/repos/hugetiny/haipee/releases/latest';
+      const apiUrl = 'https://api.github.com/repos/hugetiny/haipee-app/releases/latest';
       expect(
         GitProxyInterceptor.applyProxy(apiUrl),
-        equals('https://ghfast.top/https://api.github.com/repos/hugetiny/haipee/releases/latest'),
+        equals('https://ghfast.top/https://api.github.com/repos/hugetiny/haipee-app/releases/latest'),
       );
 
       // 4. GitHub 主站与 github.io
-      const repoUrl = 'https://github.com/hugetiny/haipee';
+      const repoUrl = 'https://github.com/hugetiny/haipee-app';
       expect(
         GitProxyInterceptor.applyProxy(repoUrl),
-        equals('https://ghfast.top/https://github.com/hugetiny/haipee'),
+        equals('https://ghfast.top/https://github.com/hugetiny/haipee-app'),
       );
     });
 
@@ -140,14 +140,14 @@ void main() {
       // Case 2: baseUrl 模式
       final options2 = RequestOptions(
         baseUrl: 'https://api.github.com',
-        path: '/repos/hugetiny/haipee/releases/latest',
+        path: '/repos/hugetiny/haipee-app/releases/latest',
       );
       interceptor.onRequest(options2, RequestInterceptorHandler());
       expect(
         options2.baseUrl,
         equals('https://ghfast.top/https://api.github.com'),
       );
-      expect(options2.path, equals('/repos/hugetiny/haipee/releases/latest'));
+      expect(options2.path, equals('/repos/hugetiny/haipee-app/releases/latest'));
 
       // Case 3: 非 GitHub 请求
       final options3 = RequestOptions(

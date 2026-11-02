@@ -321,7 +321,7 @@ class _PluginShopPageState extends ConsumerState<PluginShopPage> {
           title: '在浏览器中打开 GitHub 规则源码',
           icon: Icons.code_rounded,
           onSelected: () => _openBrowserUrl(
-            'https://github.com/hugetiny/haipee/blob/main/plugins/${item.name}.yaml',
+            'https://github.com/hugetiny/haipee-app/blob/main/plugins/${item.name}.yaml',
           ),
         ),
       ],

@@ -331,7 +331,7 @@
               Essential: no
               Installed-Size: 34648
               Description: Watch Animes online with danmaku support.
-              Homepage: https://github.com/hugetiny/haipee
+              Homepage: https://github.com/hugetiny/haipee-app
               Depends: libayatana-appindicator3-1,
                        gir1.2-ayatanaappindicator3-0.1,
                        libwebkit2gtk-4.1-0

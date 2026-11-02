@@ -19,6 +19,7 @@ prowlarr_indexers/
 
 # Archives & credentials
 *.apk
+*.zip
 test_reports/
 test_lab_local.log
 *.aab

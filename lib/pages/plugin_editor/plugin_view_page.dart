@@ -2037,7 +2037,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           ),
         TextButton.icon(
           onPressed: () => _openBrowserUrl(
-            'https://github.com/hugetiny/haipee/blob/main/plugins/${item.name}.yaml',
+            'https://github.com/hugetiny/haipee-app/blob/main/plugins/${item.name}.yaml',
           ),
           icon: const Icon(Icons.code_rounded, size: 16),
           label: const Text('规则源码'),
@@ -2079,7 +2079,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           title: '在浏览器中打开 GitHub 规则源码',
           icon: Icons.code_rounded,
           onSelected: () => _openBrowserUrl(
-            'https://github.com/hugetiny/haipee/blob/main/plugins/${item.name}.yaml',
+            'https://github.com/hugetiny/haipee-app/blob/main/plugins/${item.name}.yaml',
           ),
         ),
       ],
