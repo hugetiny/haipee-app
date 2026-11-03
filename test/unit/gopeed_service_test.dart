@@ -8,6 +8,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('GopeedService initializes and creates an HTTP task', () async {
+    if (!Platform.isMacOS) {
+      return;
+    }
     final tempDir = Directory.systemTemp.createTempSync('gopeed_test_');
     try {
       final service = GopeedService();

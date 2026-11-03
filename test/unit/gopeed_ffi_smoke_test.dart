@@ -9,6 +9,9 @@ typedef _InvokeResultNative = Void Function(Uint64 requestID, Int32 success, Poi
 
 void main() {
   test('Gopeed FFI library can be loaded and Start/InvokeAsync/Stop called', () async {
+    if (!Platform.isMacOS) {
+      return;
+    }
     final dylibPath = '${Directory.current.path}/macos/Frameworks/libgopeed.dylib';
     expect(File(dylibPath).existsSync(), isTrue);
 

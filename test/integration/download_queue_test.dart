@@ -73,9 +73,11 @@ void main() {
     GStorage.shieldList = await Hive.openBox('shieldList');
     LocaleSettings.setLocale(AppLocale.zhCn);
 
-    final dylibFile = File('${Directory.current.path}/macos/Frameworks/libgopeed.dylib');
-    if (dylibFile.existsSync()) {
-      await GopeedService().initialize(storageDir: '${tempDir.path}/gopeed');
+    if (Platform.isMacOS) {
+      final dylibFile = File('${Directory.current.path}/macos/Frameworks/libgopeed.dylib');
+      if (dylibFile.existsSync()) {
+        await GopeedService().initialize(storageDir: '${tempDir.path}/gopeed');
+      }
     }
   });
 

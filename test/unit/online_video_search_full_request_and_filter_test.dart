@@ -98,14 +98,15 @@ void main() {
     GStorage.searchHistory = await Hive.openBox('searchHistory');
   });
 
-  tearDownAll(() {
+  tearDownAll(() async {
     try {
-      GStorage.setting.close();
-      GStorage.searchHistory.close();
-      if (tempDir.existsSync()) {
-        tempDir.deleteSync(recursive: true);
-      }
+      await Hive.close().timeout(const Duration(milliseconds: 500));
     } catch (_) {}
+    if (tempDir.existsSync()) {
+      try {
+        tempDir.deleteSync(recursive: true);
+      } catch (_) {}
+    }
   });
 
   group('OnlineVideoSearchPage Unified Layout & Full Request Tests', () {

@@ -12,10 +12,13 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  const targetDownloadDir = '/Volumes/HD/downloads';
+  late String targetDownloadDir;
 
   setUpAll(() async {
     tempDir = await Directory.systemTemp.createTemp('nds_download_test');
+    targetDownloadDir = Directory('/Volumes/HD/downloads').existsSync()
+        ? '/Volumes/HD/downloads'
+        : '${tempDir.path}/downloads';
     Hive.init(tempDir.path);
     if (!Hive.isAdapterRegistered(11)) {
       Hive.registerAdapter(DownloadTaskAdapter());
@@ -172,7 +175,7 @@ void main() {
         effectiveOptions['dir'] = customPath;
       }
 
-      expect(effectiveOptions['dir'], equals('/Volumes/HD/downloads'));
+      expect(effectiveOptions['dir'], equals(targetDownloadDir));
 
       // 3. 构建 DownloadTask 并验证数据状态完整性
       final task = DownloadTask(
