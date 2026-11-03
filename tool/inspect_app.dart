@@ -553,7 +553,7 @@ Future<void> _clearAllLogs() async {
   int count = 0;
   if (dir.existsSync()) {
     for (final f in dir.listSync().whereType<File>()) {
-      if (f.path.contains('kazumi') && f.path.endsWith('.log')) {
+      if ((f.path.contains('haipee') || f.path.contains('kazumi')) && f.path.endsWith('.log')) {
         try {
           f.deleteSync();
           count++;

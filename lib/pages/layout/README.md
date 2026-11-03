@@ -291,7 +291,7 @@ return TabBarView(
 
 - [ ] 移除了 `Scaffold` 包裹
 - [ ] 移除了 `SysAppBar` 导入（不再需要）
-- [ ] 添加了 `import 'package:kazumi/pages/layout/app_bar_config.dart';`
+- [ ] 添加了 `import 'package:haipee/pages/layout/app_bar_config.dart';`
 - [ ] 在合适的位置设置 `appBarConfigProvider`
 - [ ] 统一使用 `needTopOffset: false`
 - [ ] FloatingActionButton 使用 `Stack` + `Positioned`

@@ -157,13 +157,6 @@ class _AboutPageState extends ConsumerState<AboutPage> {
               tiles: [
                 SettingsTile.navigation(
                   onPressed: (_) {
-                    launchUrl(Uri.parse(Api.projectUrl),
-                        mode: LaunchMode.externalApplication);
-                  },
-                  title: Text(links.project),
-                ),
-                SettingsTile.navigation(
-                  onPressed: (_) {
                     launchUrl(Uri.parse(Api.sourceUrl),
                         mode: LaunchMode.externalApplication);
                   },

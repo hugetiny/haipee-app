@@ -7,9 +7,6 @@ class ApiEndpoints {
   /// 规则API级别
   static const int apiLevel = 8;
 
-  /// 项目主页
-  static const String projectUrl = "https://haipee.com/";
-
   /// Github 项目主页
   static const String sourceUrl = "https://github.com/hugetiny/haipee-app";
 
@@ -30,10 +27,6 @@ class ApiEndpoints {
 
   /// Bangumi 镜像测试后端
   static const String bangumiMirrorDomain = 'https://api.kazumi.fyi';
-
-  /// Haipee 镜像后端应用更新
-  static const String latestAppMirror =
-      '$bangumiMirrorDomain/kazumi/v1/app/latest';
 
   /// 弹弹官网
   static const String dandanIndex = 'https://www.dandanplay.com/';

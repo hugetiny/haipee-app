@@ -4,7 +4,7 @@ import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
 /// TVBox / FongMi (蜂蜜) 规范解析与一键规则转换器
-/// 负责将国内最庞大的电视盒/播放器规则规范无缝转换为 Kazumi 统一插件规范
+/// 负责将国内最庞大的电视盒/播放器规则规范无缝转换为 Haipee 统一插件规范
 class TvBoxImporter {
   /// 判断给定文本是否为 TVBox / FongMi 规范订阅或配置
   static bool isTvBoxConfig(String content) {

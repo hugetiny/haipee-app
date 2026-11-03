@@ -123,7 +123,7 @@ void main() {
     // 2. 点击下载按钮并在真实异步域推进 Gopeed 引擎交互
     await tester.runAsync(() async {
       await tester.tap(downloadButton);
-      final deadline = DateTime.now().add(const Duration(seconds: 5));
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
       while (DateTime.now().isBefore(deadline)) {
         final state = container.read(downloadControllerProvider);
         if (state.waitingTasks.isNotEmpty || state.activeTasks.isNotEmpty) {

@@ -6,7 +6,7 @@
 /// Locales: 4
 /// Strings: 2774 (693 per locale)
 ///
-/// Built on 2026-10-31 at 14:16 UTC
+/// Built on 2026-11-03 at 09:31 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
@@ -8315,7 +8315,7 @@ class _TranslationsSettingsOtherZhTw extends _TranslationsSettingsOtherEnUs {
 
 	// Translations
 	@override String get title => '其他';
-	@override String get about => '关于';
+	@override String get about => '關於';
 }
 
 // Path: settings.about
@@ -12680,7 +12680,7 @@ extension on _TranslationsZhTw {
 			case 'settings.update.download.complete.buttons.openFolder': return '開啟資料夾';
 			case 'settings.update.download.complete.buttons.installNow': return '立即安裝';
 			case 'settings.other.title': return '其他';
-			case 'settings.other.about': return '关于';
+			case 'settings.other.about': return '關於';
 			case 'settings.about.title': return '關於';
 			case 'settings.about.sections.licenses.title': return '開源許可證';
 			case 'settings.about.sections.licenses.description': return '查看所有開源許可證';

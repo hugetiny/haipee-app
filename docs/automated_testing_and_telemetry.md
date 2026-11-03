@@ -1,4 +1,4 @@
-# Kazumi 云端 AI 自动化测试与运行时遥测系统 (Sentry + Firebase Test Lab)
+# Haipee 云端 AI 自动化测试与运行时遥测系统 (Sentry + Firebase Test Lab)
 
 本项目已接入行业顶级的自动化崩溃发现与云端真机自动化巡检组合：**`sentry_flutter` + Google Cloud Firebase Test Lab**。
 

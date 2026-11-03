@@ -1,9 +1,9 @@
-# Weblate Configuration for Kazumi
+# Weblate Configuration for Haipee
 # This file helps configure Weblate for continuous localization
 
 # Project information
-project_name: Kazumi
-project_web: https://github.com/hugetiny/Kazumi
+project_name: Haipee
+project_web: https://github.com/hugetiny/haipee-app
 
 # File format and structure
 file_format: json
@@ -43,7 +43,7 @@ workflow:
 
 # Integration
 vcs: git
-repo: https://github.com/hugetiny/Kazumi
+repo: https://github.com/hugetiny/haipee-app
 branch: main
 
 # File handling
@@ -63,11 +63,12 @@ suggestion_autoaccept: 0
 # Glossary and style guide
 glossary: true
 style_guide: |
-  # Kazumi Translation Style Guide
+  # Haipee Translation Style Guide
   
   ## General Guidelines
   1. Keep translations natural and idiomatic
   2. Maintain consistency with UI/UX terminology
+  3. Haipee: Keep as-is (app name)
   3. Use appropriate formality level for the target language
   4. Preserve placeholders like {timestamp}
   

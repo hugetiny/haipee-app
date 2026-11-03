@@ -1,12 +1,12 @@
-# Kazumi Logging & Diagnostic Specification (日志与诊断规范)
+# Haipee Logging & Diagnostic Specification (日志与诊断规范)
 
-本文档为 Kazumi 的标准化日志子系统规范。详细定义了日志分卷存储路径、AI 代理诊断规范、模块化标签分流、子进程输出汇流及全局开发者 HUD 快捷键。
+本文档为 Haipee 的标准化日志子系统规范。详细定义了日志分卷存储路径、AI 代理诊断规范、模块化标签分流、子进程输出汇流及全局开发者 HUD 快捷键。
 
 ---
 
 ## 1. 架构总览 (Architecture Overview)
 
-Kazumi 采用基于统一门面 `AppLog` 的强类型分流日志架构：
+Haipee 采用基于统一门面 `AppLog` 的强类型分流日志架构：
 
 ```
                     ┌───────────────────────────┐
@@ -21,14 +21,14 @@ Kazumi 采用基于统一门面 `AppLog` 的强类型分流日志架构：
        └──────────┬──────────┘         └──────────┬───────────┘
                   │                               │
        ┌──────────┴──────────┐         ┌──────────┴───────────┐
-       │ In-App TalkerScreen │         │ kazumi.log (5MB)     │
-       │ Global Shortcut F12 │         │ kazumi.1.log (5MB)   │
-       │ Instant Error Toast │         │ kazumi.2.log (5MB)   │
+       │ In-App TalkerScreen │         │ haipee.log (5MB)     │
+       │ Global Shortcut F12 │         │ haipee.1.log (5MB)   │
+       │ Instant Error Toast │         │ haipee.2.log (5MB)   │
        └─────────────────────┘         └──────────────────────┘
 ```
 
 1. **强类型模块 (`LogModule`)**：杜绝零散无序日志，所有日志均打上强类型标签 (`STREAM`, `ARIA2`, `INDEXER`, `PLAYER`, `NETWORK`, `UI`, `DOWNLOAD`, `SYNCPLAY`, `STORAGE`, `SYSTEM`, `PLUGIN`)。
-2. **分卷持久化 (`RollingFileSink`)**：突破原先仅 Warning/Error 落盘的局限，持久化全量业务上下文（INFO、WARNING、ERROR、CRITICAL；开发者模式下记录 DEBUG）。单卷 5MB，最多保留 3 卷（`kazumi.log`, `kazumi.1.log`, `kazumi.2.log`），严格限制最大磁盘占用不超过 15MB。
+2. **分卷持久化 (`RollingFileSink`)**：突破原先仅 Warning/Error 落盘的局限，持久化全量业务上下文（INFO、WARNING、ERROR、CRITICAL；开发者模式下记录 DEBUG）。单卷 5MB，最多保留 3 卷（`haipee.log`, `haipee.1.log`, `haipee.2.log`），严格限制最大磁盘占用不超过 15MB。
 3. **子进程与原生库统一汇流**：Aria2 守护进程 (`[Aria2]`)、TorrServer 二进制 (`[TorrServer]`) 以及 libtorrent 核心 alert 告警均自动重定向至 `AppLog`。
 4. **实时报错感知与开发者 HUD**：全局桌面快捷键（`F12` / `Cmd+Shift+L` / `Ctrl+Shift+L`）秒级唤起交互式日志控制台；任意未捕获异常即时弹出无侵入底部通知并支持一键直达日志页面。
 
@@ -40,29 +40,29 @@ Kazumi 采用基于统一门面 `AppLog` 的强类型分流日志架构：
 
 | 平台 | 模式 / 架构 | 固定绝对路径 |
 | :--- | :--- | :--- |
-| **macOS** | 沙盒构建 (Release / App Bundle) | `~/Library/Containers/com.predidit.kazumi/Data/Library/Application Support/com.predidit.kazumi/logs/kazumi.log` |
-| **macOS** | 开发调试环境 (Flutter Run / Debug) | `~/Library/Application Support/com.example.kazumi/logs/kazumi.log` |
-| **macOS** | 非沙盒安装包 (macOS Release) | `~/Library/Application Support/com.predidit.kazumi/logs/kazumi.log` |
-| **Windows** | 标准桌面应用 | `%APPDATA%\com.predidit.kazumi\logs\kazumi.log` (即 `C:\Users\<User>\AppData\Roaming\com.predidit.kazumi\logs\kazumi.log`) |
-| **Linux** | XDG 规范路径 | `~/.local/share/com.predidit.kazumi/logs/kazumi.log` |
-| **Android** | 应用内部私有存储 | `/data/user/0/com.predidit.kazumi/files/logs/kazumi.log` |
-| **iOS** | 沙盒 Documents / Support | `~/Library/Application Support/logs/kazumi.log` |
+| **macOS** | 沙盒构建 (Release / App Bundle) | `~/Library/Containers/com.hugetiny.haipee/Data/Library/Application Support/com.hugetiny.haipee/logs/haipee.log` |
+| **macOS** | 开发调试环境 (Flutter Run / Debug) | `~/Library/Application Support/com.example.haipee/logs/haipee.log` |
+| **macOS** | 非沙盒安装包 (macOS Release) | `~/Library/Application Support/com.hugetiny.haipee/logs/haipee.log` |
+| **Windows** | 标准桌面应用 | `%APPDATA%\com.hugetiny.haipee\logs\haipee.log` (即 `C:\Users\<User>\AppData\Roaming\com.hugetiny.haipee\logs\haipee.log`) |
+| **Linux** | XDG 规范路径 | `~/.local/share/com.hugetiny.haipee/logs/haipee.log` |
+| **Android** | 应用内部私有存储 | `/data/user/0/com.hugetiny.haipee/files/logs/haipee.log` |
+| **iOS** | 沙盒 Documents / Support | `~/Library/Application Support/logs/haipee.log` |
 
 ---
 
 ## 3. 分卷回滚规范 (Rolling File Strategy)
 
-- **当前活跃日志**：`kazumi.log`（所有新日志实时异步追加写入）。
-- **历史归档日志 1**：`kazumi.1.log`（上一轮 5MB 满额日志）。
-- **历史归档日志 2**：`kazumi.2.log`（更早一轮 5MB 满额日志）。
+- **当前活跃日志**：`haipee.log`（所有新日志实时异步追加写入）。
+- **历史归档日志 1**：`haipee.1.log`（上一轮 5MB 满额日志）。
+- **历史归档日志 2**：`haipee.2.log`（更早一轮 5MB 满额日志）。
 - **回滚机制**：
-  当 `kazumi.log` 大小达到 5MB 时：
-  1. 删除最旧的 `kazumi.2.log`；
-  2. 将 `kazumi.1.log` 重命名为 `kazumi.2.log`；
-  3. 将 `kazumi.log` 重命名为 `kazumi.1.log`；
-  4. 新建空白 `kazumi.log` 继续写入。
+  当 `haipee.log` 大小达到 5MB 时：
+  1. 删除最旧的 `haipee.2.log`；
+  2. 将 `haipee.1.log` 重命名为 `haipee.2.log`；
+  3. 将 `haipee.log` 重命名为 `haipee.1.log`；
+  4. 新建空白 `haipee.log` 继续写入。
 - **全量时间轴读取**：
-  通过 `AppLog.exportDiagnostics()` 读取时，系统按 `kazumi.2.log` -> `kazumi.1.log` -> `kazumi.log` 顺序将历史拼装为完整的时间正序流水。
+  通过 `AppLog.exportDiagnostics()` 读取时，系统按 `haipee.2.log` -> `haipee.1.log` -> `haipee.log` 顺序将历史拼装为完整的时间正序流水。
 
 ---
 
@@ -95,16 +95,16 @@ AI 助手在进行故障诊断时，可直接通过 Bash / 终端执行以下指
 
 ```bash
 # 1. 查找 macOS 最新 100 行日志（自动兼容开发调试环境与沙盒路径）
-tail -n 100 ~/Library/Application\ Support/com.example.kazumi/logs/kazumi.log 2>/dev/null || tail -n 100 ~/Library/Containers/com.predidit.kazumi/Data/Library/Application\ Support/com.predidit.kazumi/logs/kazumi.log 2>/dev/null || tail -n 100 ~/Library/Application\ Support/com.predidit.kazumi/logs/kazumi.log
+tail -n 100 ~/Library/Application\ Support/com.example.haipee/logs/haipee.log 2>/dev/null || tail -n 100 ~/Library/Containers/com.hugetiny.haipee/Data/Library/Application\ Support/com.hugetiny.haipee/logs/haipee.log 2>/dev/null || tail -n 100 ~/Library/Application\ Support/com.hugetiny.haipee/logs/haipee.log
 
 # 2. 检索所有异常与报错
-rg "\[ERROR\]|\[EXCEPTION\]" ~/Library/Application\ Support/com.example.kazumi/logs/ 2>/dev/null || rg "\[ERROR\]|\[EXCEPTION\]" ~/Library/Containers/com.predidit.kazumi/Data/Library/Application\ Support/com.predidit.kazumi/logs/ 2>/dev/null || rg "\[ERROR\]|\[EXCEPTION\]" ~/Library/Application\ Support/com.predidit.kazumi/logs/
+rg "\[ERROR\]|\[EXCEPTION\]" ~/Library/Application\ Support/com.example.haipee/logs/ 2>/dev/null || rg "\[ERROR\]|\[EXCEPTION\]" ~/Library/Containers/com.hugetiny.haipee/Data/Library/Application\ Support/com.hugetiny.haipee/logs/ 2>/dev/null || rg "\[ERROR\]|\[EXCEPTION\]" ~/Library/Application\ Support/com.hugetiny.haipee/logs/
 
 # 3. 追踪流媒体或种子引擎运行态
-rg "\[STREAM\]" ~/Library/Application\ Support/com.example.kazumi/logs/kazumi.log 2>/dev/null || rg "\[STREAM\]" ~/Library/Containers/com.predidit.kazumi/Data/Library/Application\ Support/com.predidit.kazumi/logs/kazumi.log
+rg "\[STREAM\]" ~/Library/Application\ Support/com.example.haipee/logs/haipee.log 2>/dev/null || rg "\[STREAM\]" ~/Library/Containers/com.hugetiny.haipee/Data/Library/Application\ Support/com.hugetiny.haipee/logs/haipee.log
 
 # 4. 追踪 Aria2 下载进程输出
-rg "\[ARIA2\]" ~/Library/Application\ Support/com.example.kazumi/logs/kazumi.log 2>/dev/null || rg "\[ARIA2\]" ~/Library/Containers/com.predidit.kazumi/Data/Library/Application\ Support/com.predidit.kazumi/logs/kazumi.log
+rg "\[ARIA2\]" ~/Library/Application\ Support/com.example.haipee/logs/haipee.log 2>/dev/null || rg "\[ARIA2\]" ~/Library/Containers/com.hugetiny.haipee/Data/Library/Application\ Support/com.hugetiny.haipee/logs/haipee.log
 ```
 
 ---
@@ -152,7 +152,7 @@ rg "\[ARIA2\]" ~/Library/Application\ Support/com.example.kazumi/logs/kazumi.log
 
 ## 7. 无截图自省与调试 CLI (Zero-Screenshot VM Service Introspection CLI)
 
-为杜绝任何基于系统截图（`screencapture`）和盲点像素点击的低效脆弱操作，Kazumi 建立了基于 Dart VM Service JSON-RPC 的无截图运行态自省工具 `tool/inspect_app.dart`。
+为杜绝任何基于系统截图（`screencapture`）和盲点像素点击的低效脆弱操作，Haipee 建立了基于 Dart VM Service JSON-RPC 的无截图运行态自省工具 `tool/inspect_app.dart`。
 
 ### 常用命令指令集
 

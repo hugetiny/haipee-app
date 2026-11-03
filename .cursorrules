@@ -1,6 +1,6 @@
-# Kazumi Coding Agent & Cursor Rules (.cursorrules)
+# Haipee Coding Agent & Cursor Rules (.cursorrules)
 
-You are working on the Kazumi Flutter codebase. Follow these engineering invariants and AI tooling protocols strictly.
+You are working on the Haipee Flutter codebase. Follow these engineering invariants and AI tooling protocols strictly.
 
 ## 1. Zero-Screenshot Verification Standard
 - NEVER take screenshots (`screencapture`, `flutter screenshot`) or perform blind pixel clicking.
