@@ -215,7 +215,10 @@ void main() {
 
       // In multi-select mode, app bar title updates to selection count and close icon appears
       expect(find.text('已选择 1 项'), findsOneWidget);
-      final closeButton = find.byIcon(Icons.close);
+      final closeButton = find.descendant(
+        of: find.byType(SysAppBar),
+        matching: find.byIcon(Icons.close),
+      );
       expect(closeButton, findsOneWidget);
 
       // Tap close to exit multi-select mode
