@@ -150,7 +150,6 @@ build_resources/
 pubspec.lock
 
 # Native desktop binaries & external libraries
-macos/Frameworks/
 third_party/
 assets/bin/macos/torrserver
 
