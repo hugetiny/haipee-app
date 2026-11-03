@@ -50,7 +50,7 @@
 | 文件名 | 适用操作系统 | 说明 |
 | :--- | :--- | :--- |
 | `haipee-android-arm64-v0.0.1.apk` | Android | 适用于主流 64 位 Android 手机与平板 |
-| `haipee-windows-v0.0.1-x64.zip` | Windows | 绿色便携版，解压后运行 `haipee.exe` |
+| `haipee-windows-v0.0.1.zip` | Windows | 绿色便携版，解压后运行 `haipee.exe` |
 | `haipee-macos-universal-v0.0.1.zip` | macOS | 通用二进制，支持 M 系列芯片及 Intel Mac |
 | `haipee-linux-v0.0.1-amd64.deb` | Linux (Debian/Ubuntu) | 标准 Debian 安装包 |
 | `haipee-linux-v0.0.1-amd64.tar.gz` | Linux (通用发行版) | 便携免安装归档包 |
