@@ -32,7 +32,7 @@ jobs:
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake libgtk-3-dev ninja-build libayatana-appindicator3-dev libasound2-dev libmpv-dev
+          sudo apt-get install -y clang cmake libgtk-3-dev ninja-build libayatana-appindicator3-dev libasound2-dev libmpv-dev libkeybinder-3.0-dev
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
