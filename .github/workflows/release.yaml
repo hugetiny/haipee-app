@@ -1,448 +1,407 @@
----
-    name: "release"
-    
-    on:
-      push:
-        tags:
-          - "1.*"
-      workflow_dispatch:
-        inputs:
-          logLevel:
-            description: 'Log level'     
-            required: true
-            default: 'warning'
-    
-    jobs:
-      flutter-build-android:
-        name: "Release for android"
-        runs-on: "ubuntu-latest" 
-        permissions: write-all
-        steps:
-          - name: Clone repository
-            uses: actions/checkout@v4
-          - name: Extract tag name
-            run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-            shell: bash
-          - name: Echo build progress
-            run: echo "Haipee_android_${{ env.tag }}.apk build progress"
-            shell: bash
-          - name: Install dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y clang cmake libgtk-3-dev ninja-build libayatana-appindicator3-dev libasound2-dev
-            shell: bash
-          - name: Set up JDK 17
-            uses: actions/setup-java@v4
-            with:
-              java-version: '17'
-              distribution: 'temurin'          
-          - name: Set up Flutter
-            uses: subosito/flutter-action@v2.16.0
-            with:
-              channel: stable
-              flutter-version-file: pubspec.yaml
-          - name: Get Flutter dependencies
-            run: flutter pub get
-            shell: bash
-          - name: Inject DanDan API Credentials
-            run: |
-              sed -i "s/kvpx7qkqjh/${{ secrets.DANDANAPI_APPID }}/g" lib/utils/mortis.dart
-              sed -i "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/mortis.dart
-          - name: Build Flutter for Android
-            run: flutter build apk --split-per-abi
-            shell: bash
-          - name: Package android build output
-            run: cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk Haipee_android_${env:tag}.apk
-            shell: bash
+name: Release
 
-          - name: Upload android outputs
-            uses: actions/upload-artifact@v4
-            with:
-              name: android_outputs
-              path: Haipee_android_*.apk
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release Tag (e.g. v0.0.1)'
+        required: false
+        default: 'v0.0.1'
+        type: string
+      platform:
+        description: 'Target platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - windows
+          - macos
+          - linux
+          - ios
 
-      flutter-build-windows:
-        name: "Release for windows"
-        runs-on: "windows-latest"
-        needs: [flutter-build-android, flutter-build-ios, flutter-build-linux, flutter-build-macos] 
-        permissions: write-all
-    
-        steps:
-          - name: Clone repository
-            uses: actions/checkout@v4
-          - run: |
-                  $tag = "${{ github.ref }}".Replace('refs/tags/', '')
-                  echo "tag=$(echo $tag)" >> $env:GITHUB_ENV
-          - run: echo "Haipee_windows_${env:tag}.zip build progress"
-          - run: choco install yq
-          - name: Enable Git longpaths
-            run: git config --system core.longpaths true
-          - name: Set up Flutter
-            uses: subosito/flutter-action@v2.16.0
-            with:
-              channel: stable
-              flutter-version-file: pubspec.yaml
-          - name: Set up Java
-            uses: actions/setup-java@v4
-            with:
-              distribution: 'temurin'
-              java-version: '18'
-          - run: flutter pub get
-          - name: Inject DanDan API Credentials
-            env:
-              DANDANAPI_APPID: ${{ secrets.DANDANAPI_APPID }}
-              DANDANAPI_KEY: ${{ secrets.DANDANAPI_KEY }}
-            run: |
-              (Get-Content -Path 'lib/utils/mortis.dart') -replace "kvpx7qkqjh", "$env:DANDANAPI_APPID" | Set-Content -Path 'lib/utils/mortis.dart'
-              (Get-Content -Path 'lib/utils/mortis.dart') -replace "rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax", "$env:DANDANAPI_KEY" | Set-Content -Path 'lib/utils/mortis.dart'
-          - run: flutter build windows   
-          - run: Compress-Archive build/windows/x64/runner/Release/* Haipee_windows_${env:tag}.zip
-          - name: Upload windows outputs
-            uses: actions/upload-artifact@v4
-            id: unsigned-windows-zip-artifacts
-            with:
-              name: windows_outputs
-              path: |
-                Haipee_windows_*.zip
+permissions:
+  contents: write
 
-          # Sign Zip
-          - run: New-Item -Path "build/windows/zip_signed_output" -ItemType Directory
-          - name: sign windows zip
-            uses: signpath/github-action-submit-signing-request@v1.1
-            with:
-              api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-              organization-id: 'fa047255-4772-4be1-b14f-5cfa62635877'
-              project-slug: 'Haipee'
-              signing-policy-slug: 'release-signing'
-              artifact-configuration-slug: 'Packet'
-              github-artifact-id: '${{ steps.unsigned-windows-zip-artifacts.outputs.artifact-id }}'
-              wait-for-completion: true
-              output-artifact-directory: 'build/windows/zip_signed_output'
-          
-          - name: Upload windows zip signed ouputs
-            uses: actions/upload-artifact@v4
-            id: signed-windows-zip-artifacts
-            with:
-              name: windows_zip_signed_outputs
-              path: build/windows/zip_signed_output/*.zip
-              
-          # Replace Unpacked Artifact with Signed Artifact
-          - name: Replace Unpacked Artifact with Signed Artifact
-            run: Expand-Archive -Path "build/windows/zip_signed_output/Haipee_windows_${env:tag}.zip" -DestinationPath "build/windows/x64/runner/Release" -Force
-          
-          # Build Unsigned MSIX
-          - name: Build unsigned msix
-            run: dart run msix:create
-          - name: Upload windows msix ouputs
-            uses: actions/upload-artifact@v4
-            id: unsigned-windows-msix-artifacts
-            with:
-              name: windows_msix_outputs
-              path: |
-                build/windows/x64/runner/Release/haipee.msix
-          
-          # Sign MSIX
-          - run: New-Item -Path "build/windows/msix_signed_output" -ItemType Directory
-          - name: sign windows msix
-            uses: signpath/github-action-submit-signing-request@v1.1
-            with:
-              api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-              organization-id: 'fa047255-4772-4be1-b14f-5cfa62635877'
-              project-slug: 'Haipee'
-              signing-policy-slug: 'release-signing'
-              artifact-configuration-slug: 'MSIX'
-              github-artifact-id: '${{ steps.unsigned-windows-msix-artifacts.outputs.artifact-id }}'
-              wait-for-completion: true
-              output-artifact-directory: 'build/windows/msix_signed_output'
-          
-          - name: Upload windows msix signed ouputs
-            uses: actions/upload-artifact@v4
-            id: signed-windows-msix-artifacts
-            with:
-              name: windows_msix_signed_outputs
-              path: build/windows/msix_signed_output/*.msix
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Ensure GitHub Release exists (lightweight initialization)
+  # -------------------------------------------------------------
+  init-release:
+    name: Ensure Release Exists
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      flutter-build-linux:
-        name: "Release for Linux"
-        runs-on: "ubuntu-latest" 
-        permissions: write-all
-        steps:
-          - name: Clone repository
-            uses: actions/checkout@v4
-          - name: Extract tag name
-            run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-            shell: bash
-          - name: Echo build progress
-            run: echo "Haipee_linux_${{ env.tag }}.tar.gz build progress"
-            shell: bash
-          - name: Install dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install -y clang cmake libgtk-3-dev ninja-build libayatana-appindicator3-dev unzip webkit2gtk-4.1 libasound2-dev
-              sudo apt-get install -y gcc g++ autoconf automake debhelper glslang-dev ladspa-sdk xutils-dev libasound2-dev \
-                  libarchive-dev libbluray-dev libbs2b-dev libcaca-dev libcdio-paranoia-dev libdrm-dev \
-                  libdav1d-dev libdvdnav-dev libegl1-mesa-dev libepoxy-dev libfontconfig-dev libfreetype6-dev \
-                  libfribidi-dev libgl1-mesa-dev libgbm-dev libgme-dev libgsm1-dev libharfbuzz-dev libjpeg-dev \
-                  libbrotli-dev liblcms2-dev libmodplug-dev libmp3lame-dev libopenal-dev \
-                  libopus-dev libopencore-amrnb-dev libopencore-amrwb-dev libpulse-dev librtmp-dev \
-                  libsdl2-dev libsixel-dev libssh-dev libsoxr-dev libspeex-dev libtool \
-                  libv4l-dev libva-dev libvdpau-dev libvorbis-dev libvo-amrwbenc-dev \
-                  libunwind-dev libvpx-dev libwayland-dev libx11-dev libxext-dev \
-                  libxkbcommon-dev libxrandr-dev libxss-dev libxv-dev libxvidcore-dev \
-                  linux-libc-dev nasm ninja-build pkg-config python3 python3-docutils wayland-protocols \
-                  x11proto-core-dev zlib1g-dev libfdk-aac-dev libtheora-dev libwebp-dev \
-                  unixodbc-dev libpq-dev libxxhash-dev libaom-dev              
-            shell: bash
-          - name: Set up Flutter
-            uses: subosito/flutter-action@v2.16.0
-            with:
-              channel: stable
-              flutter-version-file: pubspec.yaml
-          - name: Get Flutter dependencies
-            run: flutter pub get
-            shell: bash
-          - name: Inject DanDan API Credentials
-            run: |
-              sed -i "s/kvpx7qkqjh/${{ secrets.DANDANAPI_APPID }}/g" lib/utils/mortis.dart
-              sed -i "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/mortis.dart
-          - name: Build Flutter for Linux
-            run: flutter build linux
-            shell: bash
-          # - name: Download FFmpeg Assets
-          #   uses: dsaltares/fetch-gh-release-asset@master
-          #   with:
-          #     repo: 'Predidit/avbuild'
-          #     version: 'tags/1.1.0'
-          #     file: 'ffmpeg_linux_amd64.zip'
-          #     token: ${{ secrets.GITHUB_TOKEN }}
-          # - run: rm -f build/linux/x64/release/bundle/lib/libffmpeg.so.7
-          # - run: unzip ffmpeg_linux_amd64.zip -d build/linux/x64/release/bundle/lib
-          - name: Package linux build output
-            run: |
-              # Tarball package
-              tar -zcvf Haipee_linux_${{ env.tag }}_amd64.tar.gz -C build/linux/x64/release/bundle .
+      - name: Resolve Tag
+        id: tag_step
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          elif [ -n "${GITHUB_REF_NAME}" ] && [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v0.0.1"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
 
-              # Debian package
-              mkdir Haipee_linux_${{ env.tag }}_amd64
-              cd Haipee_linux_${{ env.tag }}_amd64
-              mkdir -p opt/Haipee
-              mkdir -p usr/share/applications
-              mkdir -p usr/share/icons/hicolor/512x512/apps
-              cp -r ../build/linux/x64/release/bundle/* opt/Haipee
-              cp -r ../assets/linux/DEBIAN .
-              chmod 0755 DEBIAN/postinst
-              chmod 0755 DEBIAN/postrm
+      - name: Create or Ensure GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_step.outputs.tag }}
+          name: "Haipee ${{ steps.tag_step.outputs.tag }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
-              cat>DEBIAN/control<<EOF
-              Maintainer: madoka773 <valigarmanda55@gmail.com>
-              Package: Haipee
-              Version: ${{ env.tag }}
-              Section: x11
-              Priority: optional
-              Architecture: amd64
-              Essential: no
-              Installed-Size: 34648
-              Description: Watch Animes online with danmaku support.
-              Homepage: https://github.com/hugetiny/haipee-app
-              Depends: libayatana-appindicator3-1,
-                       gir1.2-ayatanaappindicator3-0.1,
-                       libwebkit2gtk-4.1-0
-              EOF
+  # -------------------------------------------------------------
+  # Job 2: Android Build (Runs in parallel with other platforms)
+  # -------------------------------------------------------------
+  build-android:
+    name: Build Android
+    needs: [init-release]
+    if: ${{ always() && (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'android') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-              cp ../assets/linux/io.github.hugetiny.haipee.desktop usr/share/applications
-              cp ../assets/images/logo/logo_linux.png usr/share/icons/hicolor/512x512/apps/io.github.hugetiny.haipee.png
+      - name: Resolve Tag
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          elif [ -n "${GITHUB_REF_NAME}" ] && [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v0.0.1"
+          fi
+          echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
 
-              cd ..
-              dpkg-deb --build --root-owner-group Haipee_linux_${{ env.tag }}_amd64
-            shell: bash
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-          - name: Upload linux outputs
-            uses: actions/upload-artifact@v4
-            with:
-              name: linux_outputs
-              path: |
-                Haipee_linux_*.tar.gz
-                Haipee_linux_*.deb
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml
+          cache: true
 
-      flutter-build-ios:
-        name: "Release for iOS"
-        runs-on: "macos-latest"
-        permissions: write-all
+      - name: Install dependencies
+        run: flutter pub get
 
-        steps:
-          - name: Clone repository
-            uses: actions/checkout@v4
-          - name: Extract tag name
-            run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          - name: Echo build progress
-            run: echo "Haipee_ios_${{ env.tag }}.ipa build progress"
-          - name: Set up Flutter
-            uses: subosito/flutter-action@v2.16.0
-            with:
-              channel: stable
-              flutter-version-file: pubspec.yaml
-          - run: flutter pub get
-          - name: Inject DanDan API Credentials
-            run: |
-              sed -i '' "s/kvpx7qkqjh/${{ secrets.DANDANAPI_APPID }}/g" lib/utils/mortis.dart
-              sed -i '' "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/mortis.dart
-          - name: Build IPA
-            run: |
-              flutter build ios --release --no-codesign
-          - name: Create IPA
-            run: |
-              mkdir Payload
-              cp -R build/ios/iphoneos/Runner.app Payload/Runner.app
-              zip -q -r Haipee_ios_${{ env.tag }}_no_sign.ipa Payload
-          - name: Upload iOS build
-            uses: actions/upload-artifact@v4
-            with:
-              name: ios_outputs
-              path: Haipee_ios_*.ipa
+      - name: Optional DanDan API injection
+        run: |
+          if [ -n "${{ secrets.DANDANAPI_APPID }}" ] && [ -n "${{ secrets.DANDANAPI_KEY }}" ]; then
+            sed -i "s/kvpx7qkqjh/${{ secrets.DANDANAPI_APPID }}/g" lib/utils/api_credentials.dart
+            sed -i "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/api_credentials.dart
+          fi
 
-      flutter-build-macos:
-        name: "Release for Macos"
-        runs-on: "macos-latest"
-        permissions: write-all
+      - name: Build Flutter Android APK
+        run: flutter build apk --release --split-per-abi
 
-        steps:
-          - name: Clone repository
-            uses: actions/checkout@v4
-          - name: Extract tag name
-            run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          - name: Echo build progress
-            run: echo "Haipee_macos_${{ env.tag }}.dmg build progress"
-          - name: Set up Flutter
-            uses: subosito/flutter-action@v2.16.0
-            with:
-              channel: stable
-              flutter-version-file: pubspec.yaml
-          - run: flutter pub get
-          - name: Inject DanDan API Credentials
-            run: |
-              sed -i '' "s/kvpx7qkqjh/${{ secrets.DANDANAPI_APPID }}/g" lib/utils/mortis.dart
-              sed -i '' "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/mortis.dart
-          - run: flutter build macos --release
-          - name: Create DMG
-            run: |
-              npm install --global create-dmg
-              create-dmg build/macos/Build/Products/Release/Haipee.app
-            continue-on-error: true
-          - name: Rename DMG
-            run: mv Kazumi*.dmg Haipee_macos_${{ env.tag }}.dmg
-          - name: Upload MacOS build
-            uses: actions/upload-artifact@v4
-            with:
-              name: macos_outputs
-              path: Haipee_macos_*.dmg
+      - name: Package Android Artifacts
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/haipee-android-arm64-${{ env.RELEASE_TAG }}.apk || true
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/haipee-android-armv7-${{ env.RELEASE_TAG }}.apk || true
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/haipee-android-x86_64-${{ env.RELEASE_TAG }}.apk || true
 
-      release:
-        name: "Release"
-        runs-on: "ubuntu-latest"
-        needs: [flutter-build-windows] 
-        permissions: write-all
-        steps:
-          - name: Clone repository
-            uses: actions/checkout@v4
-          - name: Extract tag name
-            run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-            shell: bash
-          - name: Set up JDK 17
-            uses: actions/setup-java@v4
-            with:
-              java-version: '17'
-              distribution: 'temurin'          
-          - name: Setup Android SDK
-            uses: android-actions/setup-android@v3
-          - name: Setup Android build tools
-            run: sdkmanager "build-tools;34.0.0"
-  
-          - name: Download windows zip build file
-            uses: actions/download-artifact@v4
-            with:
-              name: windows_zip_signed_outputs
-              path: windows_zip_signed_outputs 
-          - name: List files in windows_outputs directory
-            run: ls -l windows_zip_signed_outputs   
-          - name: Copy windows build file to root
-            run: cp windows_zip_signed_outputs/* Haipee_windows_${{ env.tag }}.zip
+      - name: Upload Android Artifacts to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: dist/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          - name: Download windows msix build file
-            uses: actions/download-artifact@v4
-            with:
-              name: windows_msix_signed_outputs
-              path: windows_msix_signed_outputs  
-          - name: List files in windows_msix_signed_outputs directory
-            run: ls -l windows_msix_signed_outputs   
-          - name: Copy windows build file to root
-            run: cp windows_msix_signed_outputs/* Haipee_windows_${{ env.tag }}.msix
+  # -------------------------------------------------------------
+  # Job 3: Windows Build (Runs in parallel with other platforms)
+  # -------------------------------------------------------------
+  build-windows:
+    name: Build Windows
+    needs: [init-release]
+    if: ${{ always() && (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'windows') }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-          - name: Download android build file
-            uses: actions/download-artifact@v4
-            with:
-              name: android_outputs
-              path: android_outputs 
-          - name: List files in android_outputs directory
-            run: ls -l android_outputs   
-          - name: Copy android build file to unsigned floder
-            run: | 
-              mkdir build
-              mkdir build/unsigned
-              mkdir build/signed
-              cp android_outputs/* build/unsigned/Haipee_android_${{ env.tag }}.apk
+      - name: Enable Git longpaths
+        run: git config --system core.longpaths true
 
-          - name: Download iOS build file
-            uses: actions/download-artifact@v4
-            with:
-              name: ios_outputs
-              path: ios_outputs  
-          - name: List files in ios_outputs directory
-            run: ls -l ios_outputs   
-          - name: Copy ios build file to root
-            run: cp ios_outputs/* Haipee_ios_${{ env.tag }}_no_sign.ipa
+      - name: Resolve Tag
+        shell: pwsh
+        run: |
+          $tag = "${{ inputs.tag }}"
+          if (-not $tag) {
+            $tag = "${{ github.ref_name }}"
+          }
+          if (-not $tag -or $tag -eq "main") {
+            $tag = "v0.0.1"
+          }
+          "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-          - name: Download macos build file
-            uses: actions/download-artifact@v4
-            with:
-              name: macos_outputs
-              path: macos_outputs  
-          - name: List files in macos_outputs directory
-            run: ls -l macos_outputs   
-          - name: Copy macos build file to root
-            run: cp macos_outputs/* Haipee_macos_${{ env.tag }}.dmg   
-            
-          - name: Download linux build file
-            uses: actions/download-artifact@v4
-            with:
-              name: linux_outputs
-              path: linux_outputs  
-          - name: List files in linux_outputs directory
-            run: ls -l linux_outputs   
-          - name: Copy linux build file to root
-            run: cp linux_outputs/* .
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml
+          cache: true
 
-          - name: Sign APK
-            id: sign_app
-            uses: filippoLeporati93/android-release-signer@v1
-            with:
-              releaseDirectory: build/unsigned
-              signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE64 }}
-              alias: ${{ secrets.KEY_ALIAS }}
-              keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-            env:
-              BUILD_TOOLS_VERSION: "34.0.0"
+      - name: Install dependencies
+        run: flutter pub get
 
-          - name: Copy Signed android build file
-            run: cp ${{steps.sign_app.outputs.signedReleaseFile}} build/signed/Haipee_android_${{ env.tag }}.apk
+      - name: Optional DanDan API injection
+        env:
+          DANDANAPI_APPID: ${{ secrets.DANDANAPI_APPID }}
+          DANDANAPI_KEY: ${{ secrets.DANDANAPI_KEY }}
+        shell: pwsh
+        run: |
+          if ($env:DANDANAPI_APPID -and $env:DANDANAPI_KEY) {
+            (Get-Content -Path 'lib/utils/api_credentials.dart') -replace "kvpx7qkqjh", "$env:DANDANAPI_APPID" | Set-Content -Path 'lib/utils/api_credentials.dart'
+            (Get-Content -Path 'lib/utils/api_credentials.dart') -replace "rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax", "$env:DANDANAPI_KEY" | Set-Content -Path 'lib/utils/api_credentials.dart'
+          }
 
-          - name: Create release
-            uses: softprops/action-gh-release@v2
-            with:
-              files: |
-                build/signed/*.apk
-                Haipee_windows_*.zip
-                Haipee_windows_*.msix
-                Haipee_macos_*.dmg
-                Haipee_ios_*.ipa
-                Haipee_linux_*.tar.gz
-                Haipee_linux_*.deb
+      - name: Build Flutter Windows
+        run: flutter build windows --release
+
+      - name: Package Windows Portable Zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "dist\haipee-windows-${{ env.RELEASE_TAG }}.zip" -Force
+
+      - name: Upload Windows Artifacts to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # -------------------------------------------------------------
+  # Job 4: macOS Build (Runs in parallel with other platforms)
+  # -------------------------------------------------------------
+  build-macos:
+    name: Build macOS
+    needs: [init-release]
+    if: ${{ always() && (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'macos') }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Tag
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          elif [ -n "${GITHUB_REF_NAME}" ] && [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v0.0.1"
+          fi
+          echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Optional DanDan API injection
+        run: |
+          if [ -n "${{ secrets.DANDANAPI_APPID }}" ] && [ -n "${{ secrets.DANDANAPI_KEY }}" ]; then
+            sed -i '' "s/kvpx7qkqjh/${{ secrets.DANDANAPI_APPID }}/g" lib/utils/api_credentials.dart
+            sed -i '' "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/api_credentials.dart
+          fi
+
+      - name: Build Flutter macOS
+        run: flutter build macos --release
+
+      - name: Package macOS Universal Zip
+        run: |
+          mkdir -p dist
+          cd build/macos/Build/Products/Release
+          zip -q -r ../../../../dist/haipee-macos-universal-${{ env.RELEASE_TAG }}.zip *.app
+          cd ../../../..
+
+      - name: Upload macOS Artifacts to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # -------------------------------------------------------------
+  # Job 5: Linux Build (Runs in parallel with other platforms)
+  # -------------------------------------------------------------
+  build-linux:
+    name: Build Linux
+    needs: [init-release]
+    if: ${{ always() && (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'linux') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Tag and Version
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          elif [ -n "${GITHUB_REF_NAME}" ] && [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v0.0.1"
+          fi
+          echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
+          VERSION="${TAG#v}"
+          echo "RELEASE_VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake libgtk-3-dev ninja-build libayatana-appindicator3-dev unzip libasound2-dev libmpv-dev libwebkit2gtk-4.1-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Optional DanDan API injection
+        run: |
+          if [ -n "${{ secrets.DANDANAPI_APPID }}" ] && [ -n "${{ secrets.DANDANAPI_KEY }}" ]; then
+            sed -i "s/kvpx7qkqjh/${{ secrets.DANDANAPI_APPID }}/g" lib/utils/api_credentials.dart
+            sed -i "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/api_credentials.dart
+          fi
+
+      - name: Build Flutter Linux
+        run: flutter build linux --release
+
+      - name: Package Linux Artifacts (tar.gz & deb)
+        shell: bash
+        run: |
+          mkdir -p dist
+
+          # 1. Tarball package
+          tar -zcvf dist/haipee-linux-${{ env.RELEASE_TAG }}-amd64.tar.gz -C build/linux/x64/release/bundle .
+
+          # 2. Debian package (.deb)
+          mkdir -p haipee_deb/opt/Haipee
+          mkdir -p haipee_deb/usr/share/applications
+          mkdir -p haipee_deb/usr/share/icons/hicolor/512x512/apps
+          cp -r build/linux/x64/release/bundle/* haipee_deb/opt/Haipee/
+          cp -r assets/linux/DEBIAN haipee_deb/
+          chmod 0755 haipee_deb/DEBIAN/postinst haipee_deb/DEBIAN/postrm
+
+          {
+            echo "Package: haipee"
+            echo "Version: ${RELEASE_VERSION}"
+            echo "Section: video"
+            echo "Priority: optional"
+            echo "Architecture: amd64"
+            echo "Maintainer: hugetiny <https://github.com/hugetiny>"
+            echo "Installed-Size: 35000"
+            echo "Description: Haipee - The modern media and streaming hub"
+            echo "Homepage: https://github.com/hugetiny/haipee-app"
+            echo "Depends: libayatana-appindicator3-1, gir1.2-ayatanaappindicator3-0.1, libwebkit2gtk-4.1-0"
+          } > haipee_deb/DEBIAN/control
+
+          cp assets/linux/io.github.hugetiny.haipee.desktop haipee_deb/usr/share/applications/
+          cp assets/images/logo/logo_linux.png haipee_deb/usr/share/icons/hicolor/512x512/apps/io.github.hugetiny.haipee.png
+
+          dpkg-deb --build --root-owner-group haipee_deb dist/haipee-linux-${{ env.RELEASE_TAG }}-amd64.deb
+
+      - name: Upload Linux Artifacts to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: |
+            dist/*.tar.gz
+            dist/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # -------------------------------------------------------------
+  # Job 6: iOS Build (Runs in parallel with other platforms)
+  # -------------------------------------------------------------
+  build-ios:
+    name: Build iOS
+    needs: [init-release]
+    if: ${{ always() && (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'ios') }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Tag
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          elif [ -n "${GITHUB_REF_NAME}" ] && [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v0.0.1"
+          fi
+          echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Optional DanDan API injection
+        run: |
+          if [ -n "${{ secrets.DANDANAPI_APPID }}" ] && [ -n "${{ secrets.DANDANAPI_KEY }}" ]; then
+            sed -i '' "s/kvpx7qkqjh/${{ secrets.DANDANAPI_APPID }}/g" lib/utils/api_credentials.dart
+            sed -i '' "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/api_credentials.dart
+          fi
+
+      - name: Build Flutter iOS (Unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package Unsigned IPA
+        run: |
+          mkdir -p dist Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/Runner.app
+          zip -q -r dist/haipee-ios-unsigned-${{ env.RELEASE_TAG }}.ipa Payload
+          rm -rf Payload
+
+      - name: Upload iOS Artifacts to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: dist/*.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
