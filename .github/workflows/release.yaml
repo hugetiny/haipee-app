@@ -249,9 +249,7 @@ jobs:
       - name: Package macOS Universal Zip
         run: |
           mkdir -p dist
-          cd build/macos/Build/Products/Release
-          zip -q -r ../../../../dist/haipee-macos-universal-${{ env.RELEASE_TAG }}.zip *.app
-          cd ../../../..
+          (cd build/macos/Build/Products/Release && zip -q -r "$GITHUB_WORKSPACE/dist/haipee-macos-universal-${{ env.RELEASE_TAG }}.zip" *.app)
 
       - name: Upload macOS Artifacts to Release
         uses: softprops/action-gh-release@v2
