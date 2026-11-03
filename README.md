@@ -8,7 +8,7 @@
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20iOS-orange.svg)](https://github.com/hugetiny/haipee-app/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg)](LICENSE)
 
-[功能特性](#-功能特性) • [支持平台](#-支持平台) • [快速下载](#-快速下载) • [多语言支持](#-多语言支持) • [常见问题](#-常见问题) • [致谢](#-致谢)
+[官方网站](https://haipee.com) • [功能特性](#-功能特性) • [支持平台](#-支持平台) • [快速下载](#-快速下载) • [多语言支持](#-多语言支持) • [常见问题](#-常见问题) • [致谢](#-致谢)
 
 </div>
 

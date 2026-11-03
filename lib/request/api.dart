@@ -8,7 +8,7 @@ class Api {
   static const int apiLevel = 10;
 
   /// 项目主页
-  static const String projectUrl = "https://haipee.app/";
+  static const String projectUrl = "https://haipee.com/";
 
   /// Github 项目主页
   static const String sourceUrl = "https://github.com/hugetiny/haipee-app";

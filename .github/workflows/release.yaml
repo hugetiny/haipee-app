@@ -340,7 +340,7 @@ jobs:
             echo "Maintainer: hugetiny <https://github.com/hugetiny>"
             echo "Installed-Size: 35000"
             echo "Description: Haipee - The modern media and streaming hub"
-            echo "Homepage: https://github.com/hugetiny/haipee-app"
+            echo "Homepage: https://haipee.com"
             echo "Depends: libayatana-appindicator3-1, gir1.2-ayatanaappindicator3-0.1, libwebkit2gtk-4.1-0"
           } > haipee_deb/DEBIAN/control
 
