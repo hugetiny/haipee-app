@@ -100,6 +100,9 @@ jobs:
           flutter-version-file: pubspec.yaml
           cache: true
 
+      - name: Disable Swift Package Manager in Flutter
+        run: flutter config --no-enable-swift-package-manager
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -162,6 +165,9 @@ jobs:
           flutter-version-file: pubspec.yaml
           cache: true
 
+      - name: Disable Swift Package Manager in Flutter
+        run: flutter config --no-enable-swift-package-manager
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -223,6 +229,9 @@ jobs:
           channel: stable
           flutter-version-file: pubspec.yaml
           cache: true
+
+      - name: Disable Swift Package Manager in Flutter
+        run: flutter config --no-enable-swift-package-manager
 
       - name: Install dependencies
         run: flutter pub get
@@ -289,6 +298,9 @@ jobs:
           channel: stable
           flutter-version-file: pubspec.yaml
           cache: true
+
+      - name: Disable Swift Package Manager in Flutter
+        run: flutter config --no-enable-swift-package-manager
 
       - name: Install dependencies
         run: flutter pub get
@@ -377,6 +389,9 @@ jobs:
           channel: stable
           flutter-version-file: pubspec.yaml
           cache: true
+
+      - name: Disable Swift Package Manager in Flutter
+        run: flutter config --no-enable-swift-package-manager
 
       - name: Install dependencies
         run: flutter pub get

@@ -60,7 +60,6 @@ ios/Flutter/engine/
 ios/Flutter/flutter_assets/
 ios/Flutter/flutter_export_environment.sh
 ios/ServiceDefinitions.json
-ios/Podfile.lock
 ios/**/Pods/
 
 ios/Runner.xcodeproj/project.xcworkspace/
@@ -99,7 +98,6 @@ macos/**/xcuserdata/
 macos/Flutter/GeneratedPluginRegistrant.swift
 macos/**/Flutter/ephemeral/
 macos/**/Pods/
-macos/Podfile.lock
 
 # Windows
 windows/flutter/ephemeral/
@@ -153,7 +151,6 @@ pubspec.lock
 
 # Native desktop binaries & external libraries
 macos/Frameworks/
-android/app/libs/
 third_party/
 assets/bin/macos/torrserver
 
