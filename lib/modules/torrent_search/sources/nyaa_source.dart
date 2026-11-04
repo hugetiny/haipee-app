@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 import 'package:haipee/modules/torrent_search/parser/anime_title_parser.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
 import 'package:haipee/modules/torrent_search/sources/torrent_source.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
@@ -13,14 +14,15 @@ class NyaaSource implements TorrentSource {
   NyaaSource({
     Dio? dio,
     this.baseUrl = 'https://nyaa.si',
-  }) : _dio = dio ?? Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-          headers: {
-            'User-Agent':
-                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          },
-        ));
+  }) : _dio = dio ??
+            TorrentDioFactory.create(
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+              headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              },
+            );
 
   @override
   String get name => 'Nyaa';

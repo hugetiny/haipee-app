@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart';
 import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
@@ -10,6 +12,7 @@ import 'package:haipee/modules/cardigann/engine/cloudflare_bypass.dart';
 import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 import 'package:haipee/modules/torrent_search/parser/scene_release_parser.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:haipee/utils/utils.dart';
 import 'package:logger/logger.dart';
@@ -25,16 +28,22 @@ class CardigannQueryExecutor {
   CardigannQueryExecutor({
     Dio? dio,
     CloudflareBypassHandler? cloudflareBypass,
-  })  : dio = dio ??
-            Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 12),
-              receiveTimeout: const Duration(seconds: 12),
-              followRedirects: true,
-              maxRedirects: 5,
-              validateStatus: (status) =>
-                  status != null && status < 600,
-            )),
-        cloudflareBypass = cloudflareBypass ?? CloudflareBypassHandler();
+  })  : dio = dio ?? TorrentDioFactory.create(),
+        cloudflareBypass = cloudflareBypass ?? CloudflareBypassHandler() {
+    _ensureInsecureTlsAllowed(this.dio);
+  }
+
+  static void _ensureInsecureTlsAllowed(Dio dio) {
+    if (dio.httpClientAdapter is IOHttpClientAdapter) {
+      final adapter = dio.httpClientAdapter as IOHttpClientAdapter;
+      final originalCreate = adapter.createHttpClient;
+      adapter.createHttpClient = () {
+        final client = originalCreate != null ? originalCreate() : HttpClient();
+        client.badCertificateCallback = (cert, host, port) => true;
+        return client;
+      };
+    }
+  }
 
   /// Executes a search on a Cardigann tracker definition.
   Future<List<TorrentItem>> search(

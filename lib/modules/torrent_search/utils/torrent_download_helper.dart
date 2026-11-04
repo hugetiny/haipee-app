@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:haipee/modules/torrent_search/parser/torrent_file_parser.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
 import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:haipee/utils/storage.dart';
@@ -30,21 +31,19 @@ class TorrentDownloadHelper {
 
     final dioCancelToken = CancelToken();
 
-    final dio = Dio(
-      BaseOptions(
-        connectTimeout: timeout,
-        receiveTimeout: timeout,
-        sendTimeout: timeout,
-        responseType: ResponseType.bytes,
-        followRedirects: true,
-        maxRedirects: 5,
-        headers: {
-          'User-Agent': Utils.getRandomUA(),
-          'Accept':
-              'application/x-bittorrent, application/octet-stream, */*;q=0.8',
-        },
-      ),
+    final dio = TorrentDioFactory.create(
+      connectTimeout: timeout,
+      receiveTimeout: timeout,
+      headers: {
+        'User-Agent': Utils.getRandomUA(),
+        'Accept':
+            'application/x-bittorrent, application/octet-stream, */*;q=0.8',
+      },
     );
+    dio.options.sendTimeout = timeout;
+    dio.options.responseType = ResponseType.bytes;
+    dio.options.followRedirects = true;
+    dio.options.maxRedirects = 5;
 
     try {
       final response = await dio.get<List<int>>(

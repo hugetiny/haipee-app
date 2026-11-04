@@ -33,6 +33,11 @@ void setupGlobalErrorHandlers() {
     final exceptionStr = details.exceptionAsString();
     if (exceptionStr.contains('overflowed') || exceptionStr.contains('RenderFlex')) {
       AppLog.recordRenderFlexOverflow(details);
+    } else if (exceptionStr.contains('NOTICES.Z')) {
+      AppLog.w(
+        LogModule.system,
+        'NOTICES.Z asset is omitted in debug build: $exceptionStr',
+      );
     } else {
       AppLog.e(
         LogModule.system,
@@ -48,6 +53,14 @@ void setupGlobalErrorHandlers() {
 
   final originalPlatformOnError = PlatformDispatcher.instance.onError;
   PlatformDispatcher.instance.onError = (error, stack) {
+    final errStr = error.toString();
+    if (errStr.contains('NOTICES.Z')) {
+      AppLog.w(
+        LogModule.system,
+        'NOTICES.Z asset is omitted in debug build: $errStr',
+      );
+      return true;
+    }
     AppLog.e(
       LogModule.system,
       '[HAIPEE_EXCEPTION] Unhandled platform exception: $error',

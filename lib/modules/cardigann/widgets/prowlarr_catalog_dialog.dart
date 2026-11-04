@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
 import 'package:haipee/request/core/git_proxy_interceptor.dart';
 
 class ProwlarrCatalogEntry {
@@ -183,10 +183,10 @@ class _ProwlarrCatalogDialogState extends ConsumerState<ProwlarrCatalogDialog> {
 
       // 2. 本地不存在时（如手机打包端），在线从 GitHub raw / jsDelivr CDN 拉取
       if (yamlContent == null || yamlContent.isEmpty) {
-        final dio = Dio(BaseOptions(
+        final dio = TorrentDioFactory.create(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
-        ));
+        );
         dio.interceptors.add(GitProxyInterceptor());
 
         try {

@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 import 'package:haipee/modules/torrent_search/sources/mikan_source.dart';
 import 'package:haipee/modules/torrent_search/sources/nyaa_source.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
 import 'package:haipee/modules/torrent_search/sources/torrent_source.dart';
 import 'package:haipee/modules/torrent_search/sources/torznab_source.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
@@ -144,12 +144,12 @@ class TorrentSearchService {
       return (success: false, message: 'Endpoint不能为空', indexers: <String>[]);
     }
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: endpoint.endsWith('/') ? endpoint : '$endpoint/',
-        headers: {'X-Api-Key': apiKey},
+      final dio = TorrentDioFactory.create(
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
-      ));
+        headers: {'X-Api-Key': apiKey},
+      );
+      dio.options.baseUrl = endpoint.endsWith('/') ? endpoint : '$endpoint/';
       final res = await dio.get('api/v1/indexer');
       if (res.statusCode == 200 && res.data is List) {
         final names = (res.data as List)

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 import 'package:haipee/modules/torrent_search/parser/anime_title_parser.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
 import 'package:haipee/modules/torrent_search/sources/torrent_source.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
@@ -20,10 +21,11 @@ class TorznabSource implements TorrentSource {
     required this.host,
     required this.apiKey,
     this.category = '5000', // 5000 为 Newznab/Torznab 标准动漫分类代码
-  }) : _dio = dio ?? Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-        ));
+  }) : _dio = dio ??
+            TorrentDioFactory.create(
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            );
 
   @override
   String get name => customName ?? 'Torznab (Prowlarr/Jackett)';

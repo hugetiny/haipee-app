@@ -33,10 +33,24 @@ class _HaipeeLicensePageState extends State<HaipeeLicensePage> {
 
   Future<void> _loadLicenses() async {
     try {
-      await for (final entry in LicenseRegistry.licenses) {
+      await for (final entry in LicenseRegistry.licenses.handleError((_, __) {})) {
         for (final package in entry.packages) {
           _packageLicenses.putIfAbsent(package, () => []).add(entry);
         }
+      }
+      if (_packageLicenses.isEmpty) {
+        _packageLicenses['haipee'] = [
+          const LicenseEntryWithLineBreaks(
+            ['haipee'],
+            'Haipee open source media application.\nLicensed under the GNU General Public License v3.0.',
+          ),
+        ];
+        _packageLicenses['flutter'] = [
+          const LicenseEntryWithLineBreaks(
+            ['flutter'],
+            'Flutter framework.\nCopyright 2014 The Flutter Authors. All rights reserved.\nLicensed under the BSD-style license.',
+          ),
+        ];
       }
       final sortedPackages = _packageLicenses.keys.toList()
         ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));

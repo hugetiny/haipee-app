@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +8,7 @@ import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
 import 'package:haipee/request/core/git_proxy_interceptor.dart';
 import 'package:haipee/services/logging/app_log.dart';
 
@@ -119,14 +119,14 @@ class _IndexerImportDialogState extends ConsumerState<IndexerImportDialog> {
         _error = null;
       });
 
-      final dio = Dio(BaseOptions(
+      final dio = TorrentDioFactory.create(
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {
           'User-Agent':
               'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)',
         },
-      ));
+      );
       dio.interceptors.add(GitProxyInterceptor());
 
       final response = await dio.get<String>(rawUrl);

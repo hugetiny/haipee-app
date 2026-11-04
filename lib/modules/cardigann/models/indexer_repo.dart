@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
 import 'package:haipee/request/core/git_proxy_interceptor.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
@@ -135,10 +136,10 @@ class IndexerRepoSubscription {
     Dio? client,
   }) async {
     final dio = client ??
-        Dio(BaseOptions(
+        TorrentDioFactory.create(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
-        ));
+        );
     dio.interceptors.add(GitProxyInterceptor());
 
     try {
@@ -162,11 +163,11 @@ class IndexerRepoSubscription {
     Dio? client,
   }) async {
     final dio = client ??
-        Dio(BaseOptions(
+        TorrentDioFactory.create(
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
-          responseType: ResponseType.plain,
-        ));
+        );
+    dio.options.responseType = ResponseType.plain;
     dio.interceptors.add(GitProxyInterceptor());
 
     try {
