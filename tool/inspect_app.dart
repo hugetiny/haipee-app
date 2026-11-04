@@ -544,6 +544,30 @@ Future<void> _dumpErrors(int limit, {required bool asJson}) async {
 }
 
 Future<void> _clearAllLogs() async {
+  // 1. Try VM Service extension to clear in-memory logs and reset error count
+  try {
+    final uriStr = await _autoDiscoverVmServiceUri();
+    if (uriStr != null) {
+      String wsUri = uriStr;
+      if (wsUri.startsWith('http://')) wsUri = wsUri.replaceFirst('http://', 'ws://');
+      if (!wsUri.endsWith('/ws') && !wsUri.endsWith('ws')) {
+        if (!wsUri.endsWith('/')) wsUri += '/';
+        wsUri += 'ws';
+      }
+      final client = await vmServiceConnectUri(wsUri).timeout(const Duration(seconds: 2));
+      final vm = await client.getVM();
+      final mainIso = vm.isolates?.firstWhere((iso) => !(iso.isSystemIsolate ?? false), orElse: () => vm.isolates!.first);
+      if (mainIso?.id != null) {
+        try {
+          await client.callServiceExtension('ext.haipee.clearLogs', isolateId: mainIso!.id).timeout(const Duration(seconds: 2));
+          stdout.writeln('⚡ 成功调用运行态 ext.haipee.clearLogs (内存日志已重置，错误计数已归零)');
+        } catch (_) {}
+      }
+      client.dispose();
+    }
+  } catch (_) {}
+
+  // 2. Clear disk log files
   final file = _findHaipeeLogFile();
   if (file == null) {
     stderr.writeln('❌ 未找到本地 haipee.log 日志文件');

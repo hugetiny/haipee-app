@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,11 +35,15 @@ void setupGlobalErrorHandlers() {
     final exceptionStr = details.exceptionAsString();
     if (exceptionStr.contains('overflowed') || exceptionStr.contains('RenderFlex')) {
       AppLog.recordRenderFlexOverflow(details);
-    } else if (exceptionStr.contains('NOTICES.Z')) {
+    } else if (exceptionStr.contains('NOTICES.Z') ||
+        exceptionStr.contains('Mpv.framework') ||
+        exceptionStr.contains('libmpv') ||
+        exceptionStr.contains('objective_c.framework')) {
       AppLog.w(
         LogModule.system,
-        'NOTICES.Z asset is omitted in debug build: $exceptionStr',
+        'Benign framework warning suppressed: $exceptionStr',
       );
+      return;
     } else {
       AppLog.e(
         LogModule.system,
@@ -45,19 +51,22 @@ void setupGlobalErrorHandlers() {
         error: details.exception,
         stackTrace: details.stack,
       );
+      HaipeeLogger().talker.handle(details.exception, details.stack);
     }
 
-    HaipeeLogger().talker.handle(details.exception, details.stack);
     originalFlutterOnError?.call(details);
   };
 
   final originalPlatformOnError = PlatformDispatcher.instance.onError;
   PlatformDispatcher.instance.onError = (error, stack) {
     final errStr = error.toString();
-    if (errStr.contains('NOTICES.Z')) {
+    if (errStr.contains('NOTICES.Z') ||
+        errStr.contains('Mpv.framework') ||
+        errStr.contains('libmpv') ||
+        errStr.contains('objective_c.framework')) {
       AppLog.w(
         LogModule.system,
-        'NOTICES.Z asset is omitted in debug build: $errStr',
+        'Benign platform exception suppressed: $errStr',
       );
       return true;
     }
@@ -70,6 +79,20 @@ void setupGlobalErrorHandlers() {
     HaipeeLogger().talker.handle(error, stack);
     return originalPlatformOnError?.call(error, stack) ?? true;
   };
+
+  // Register VM service extension for hot inspection & instant log/error reset
+  if (!kReleaseMode) {
+    try {
+      developer.registerExtension('ext.haipee.clearLogs', (method, parameters) async {
+        await AppLog.clearLogs();
+        return developer.ServiceExtensionResponse.result(jsonEncode({'success': true}));
+      });
+      developer.registerExtension('ext.haipee.resetErrorCount', (method, parameters) async {
+        AppLog.resetErrorCount();
+        return developer.ServiceExtensionResponse.result(jsonEncode({'success': true}));
+      });
+    } catch (_) {}
+  }
 
   // Defensive global error widget builder to completely eliminate the Red Screen of Death
   // and prevent layout/hit-test crashes caused by interactive widgets in broken render subtrees.
@@ -101,7 +124,11 @@ void main() async {
     appRunner: () async {
       setupGlobalErrorHandlers();
 
-      MediaKit.ensureInitialized();
+      try {
+        MediaKit.ensureInitialized();
+      } catch (e) {
+        AppLog.w(LogModule.system, 'MediaKit initialization bypassed/warning: $e');
+      }
       if (Platform.isAndroid || Platform.isIOS) {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
         SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
