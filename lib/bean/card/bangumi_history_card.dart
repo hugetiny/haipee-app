@@ -7,6 +7,7 @@ import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:haipee/bean/widget/app_context_menu.dart';
 import 'package:haipee/bean/widget/bangumi_context_menu.dart';
 import 'package:haipee/bean/widget/collect_button.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:haipee/modules/history/history_module.dart';
 import 'package:haipee/pages/history/history_controller.dart';
 import 'package:haipee/pages/history/providers.dart';
@@ -129,8 +130,29 @@ class _BangumiHistoryCardVState extends ConsumerState<BangumiHistoryCardV> {
           }
           if (!flag) {
             HaipeeDialog.dismiss();
-            HaipeeDialog.showToast(
-              message: context.t.library.history.toast.sourceMissing,
+            final title = widget.historyItem.bangumiItem.nameCn.isNotEmpty
+                ? widget.historyItem.bangumiItem.nameCn
+                : widget.historyItem.bangumiItem.name;
+            final epNum = widget.historyItem.lastWatchEpisode;
+            final epPadded = epNum < 10 ? '0$epNum' : '$epNum';
+            final primary = title.isNotEmpty ? '$title $epPadded' : epPadded;
+            final candidateAliases = <String>{
+              if (title.isNotEmpty) '$title $epNum',
+              if (widget.historyItem.bangumiItem.name.isNotEmpty &&
+                  widget.historyItem.bangumiItem.name != title) ...[
+                '${widget.historyItem.bangumiItem.name} $epPadded',
+                '${widget.historyItem.bangumiItem.name} $epNum',
+              ],
+              for (final a in widget.historyItem.bangumiItem.alias) ...[
+                '$a $epPadded',
+                '$a $epNum',
+              ],
+            }.toList();
+            TorrentSearchSheet.show(
+              context,
+              initialKeyword: primary,
+              bangumiId: widget.historyItem.bangumiItem.id.toString(),
+              aliases: candidateAliases,
             );
             return;
           }

@@ -57,7 +57,7 @@
   - 元数据源站选择器：`Key('metadata_provider_selector')`
   - 5 大分类 Tab：`Key('catalog_tab_anime')`、`Key('catalog_tab_real')`、`Key('catalog_tab_game')`、`Key('catalog_tab_music')`、`Key('catalog_tab_book')`
   - 分类直搜动作芯片：`Key('catalog_chip_timeline')`、`Key('catalog_chip_search_real')`、`Key('catalog_chip_search_game')`、`Key('catalog_chip_search_music')`、`Key('catalog_chip_search_book')`
-  - 详情页分流按钮：`Key('info_btn_search_torrent')`（全网BT搜索）、`Key('info_btn_watch_online')`（在线观看）、`Key('info_btn_universal_search')`（全网搜索资源）
+  - 详情页核心动作按钮：`Key('info_btn_watch_online')`（视频类开始观看与资源流）、`Key('info_btn_universal_search')`（非视频类全网搜索资源）
   - 全网资源单选过滤器：`ValueKey('category_chip_video')`、`ValueKey('category_chip_game')` 等
 - 依托 Robot 模式封装高阶交互动作，实现端到端业务流的代码级自运转。
 

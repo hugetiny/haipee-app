@@ -69,7 +69,7 @@ dart tool/inspect_app.dart --restart
 > 输出结果全部为结构化纯文本与 JSON 数据，耗费极少 Token，100% 精准确定。
 
 ### 2.3 第 3 层：强语义 Key 契约
-- 严禁任何盲点坐标点击。所有核心页面、Tab、功能按钮、单选芯片、输入框均必须赋予显式强类型 Key（如 `Key('catalog_tab_anime')`, `Key('info_btn_search_torrent')`）。
+- 严禁任何盲点坐标点击。所有核心页面、Tab、功能按钮、单选芯片、输入框均必须赋予显式强类型 Key（如 `Key('catalog_tab_anime')`, `Key('info_btn_watch_online')`）。
 - 自动化驱动通过 Key 进行交互和校验。
 
 ### 2.4 第 4 层：日志与遥测共存架构 (`AppLog` + `SentryFlutter`)

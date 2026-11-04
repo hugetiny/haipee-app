@@ -1,16 +1,21 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/modules/download/download_task.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 import 'package:haipee/modules/torrent_search/widgets/selective_download_dialog.dart';
 import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
+import 'package:haipee/modules/torrent_stream/widgets/torrent_stream_dialog.dart';
 import 'package:haipee/modules/torrent_search/parser/torrent_file_parser.dart';
 import 'package:haipee/modules/torrent_search/utils/torrent_download_helper.dart';
+import 'package:haipee/pages/player/local_video_play_args.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 import 'package:haipee/pages/download/providers.dart';
@@ -20,17 +25,20 @@ import 'package:haipee/utils/utils.dart';
 class TorrentSearchSheet extends ConsumerStatefulWidget {
   final String initialKeyword;
   final String? bangumiId;
+  final List<String> aliases;
 
   const TorrentSearchSheet({
     super.key,
     required this.initialKeyword,
     this.bangumiId,
+    this.aliases = const [],
   });
 
   static void show(
     BuildContext context, {
     required String initialKeyword,
     String? bangumiId,
+    List<String> aliases = const [],
   }) {
     showModalBottomSheet(
       context: context,
@@ -39,6 +47,7 @@ class TorrentSearchSheet extends ConsumerStatefulWidget {
       builder: (context) => TorrentSearchSheet(
         initialKeyword: initialKeyword,
         bangumiId: bangumiId,
+        aliases: aliases,
       ),
     );
   }
@@ -54,10 +63,15 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
   @override
   void initState() {
     super.initState();
-    _textController = TextEditingController(text: widget.initialKeyword);
-    Future.microtask(() {
-      ref.read(torrentSearchProvider.notifier).search(widget.initialKeyword);
-    });
+    final effectiveKeyword = widget.initialKeyword.trim().isNotEmpty
+        ? widget.initialKeyword.trim()
+        : (widget.aliases.isNotEmpty ? widget.aliases.first.trim() : '');
+    _textController = TextEditingController(text: effectiveKeyword);
+    if (effectiveKeyword.isNotEmpty) {
+      Future.microtask(() {
+        ref.read(torrentSearchProvider.notifier).search(effectiveKeyword);
+      });
+    }
   }
 
   @override
@@ -180,39 +194,110 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
   }
 
   Future<void> _handleStreamPlay(TorrentItem item) async {
-    final magnet = item.magnetUrl;
-    if (magnet.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('未找到有效的下载链接')),
+    final magnet = item.effectiveMagnetUrl ?? item.magnetUrl;
+    final torrent = item.effectiveTorrentUrl ?? item.torrentUrl;
+    if (magnet.isEmpty && (torrent == null || torrent.isEmpty)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('未找到有效的下载链接')),
+        );
+      }
+      return;
+    }
+
+    if (item.isArchive) {
+      final format = item.archiveFormatName ?? '压缩包';
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('无法在线播放'),
+          content: Text(
+            '该资源为 $format 压缩包格式（${item.title}），不支持直接在线边下边播。\n\n建议离线下载到本地解压后播放。',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _handleDownload(item);
+              },
+              child: const Text('立即下载'),
+            ),
+          ],
+        ),
       );
       return;
     }
 
     try {
-      final downloadCtrl = ref.read(downloadControllerProvider.notifier);
+      final downloadState = ref.read(downloadControllerProvider);
       final downloadTitle = item.displayTitle == item.title
           ? item.title
           : '${widget.initialKeyword} - ${item.displayTitle}';
+      final episodeNumber = int.tryParse(item.episode ?? '');
 
-      await downloadCtrl.addUris(
-        [magnet],
-        title: downloadTitle,
+      // 1. 优先检查当前离线下载库中是否已有已就绪的完整文件，有则直接本地播放
+      final allTasks = [
+        ...downloadState.activeTasks,
+        ...downloadState.waitingTasks,
+        ...downloadState.completedTasks,
+      ];
+      DownloadTask? existingTask;
+      for (final t in allTasks) {
+        if ((magnet.isNotEmpty && t.url == magnet) ||
+            (torrent != null && torrent.isNotEmpty && t.url == torrent) ||
+            (t.title == downloadTitle && t.filePath != null)) {
+          existingTask = t;
+          break;
+        }
+      }
+
+      if (existingTask != null && existingTask.filePath != null) {
+        final existingFile = File(existingTask.filePath!);
+        if (existingFile.existsSync()) {
+          if (mounted) {
+            final router = GoRouter.of(context);
+            Navigator.of(context).pop();
+            router.push(
+              Routes.localPlayer,
+              extra: LocalVideoPlayArgs(
+                filePath: existingFile.absolute.path,
+                title: downloadTitle,
+                episode: episodeNumber,
+                isAudio: item.isAudio,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      // 2. 边下边播由 TorrentStreamDialog 与流式引擎协同接管，实时展示做种节点与首尾分片预缓冲 HUD
+      final session = await TorrentStreamDialog.show(
+        context: context,
+        ref: ref,
+        item: item,
+        overrideTitle: downloadTitle,
+        episode: episodeNumber,
         bangumiId: widget.bangumiId,
-        episodeNumber: int.tryParse(item.episode ?? ''),
+        isAudio: item.isAudio,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('已启动首尾关键帧优先缓冲: $downloadTitle'),
-            action: SnackBarAction(
-              label: '查看下载/播放',
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.push(Routes.download);
-              },
-            ),
-            duration: const Duration(seconds: 4),
+      if (session != null && mounted) {
+        final router = GoRouter.of(context);
+        Navigator.of(context).pop();
+        router.push(
+          Routes.localPlayer,
+          extra: LocalVideoPlayArgs(
+            filePath: session.streamUrl,
+            title: session.selectedFile?.name ?? downloadTitle,
+            episode: episodeNumber,
+            isAudio: session.isAudio || item.isAudio,
+            streamId: session.streamId,
+            torrentId: session.torrentId,
           ),
         );
       }
@@ -390,8 +475,9 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
               action: SnackBarAction(
                 label: '查看下载',
                 onPressed: () {
+                  final router = GoRouter.of(context);
                   Navigator.of(context).pop();
-                  context.push(Routes.download);
+                  router.push(Routes.download);
                 },
               ),
             ),
@@ -428,6 +514,13 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
     final filteredItems = _selectedEpisodeFilter == '全部'
         ? state.items
         : state.items.where((i) => i.episode == _selectedEpisodeFilter).toList();
+
+    final currentText = _textController.text.trim();
+    final candidateAliases = widget.aliases
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toSet()
+        .toList();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -495,9 +588,60 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                       ),
                       child: const Text('搜索'),
                     ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      tooltip: '在全网资源页中查看',
+                      icon: const Icon(Icons.open_in_new_rounded),
+                      onPressed: () {
+                        final router = GoRouter.of(context);
+                        Navigator.of(context).pop();
+                        final kw = _textController.text.trim();
+                        if (kw.isNotEmpty) {
+                          ref.read(torrentSearchProvider.notifier).search(kw);
+                        }
+                        ref.read(navigationProvider.notifier).updateSelectedIndex(1);
+                        router.go(Routes.resource);
+                      },
+                    ),
                   ],
                 ),
               ),
+
+              // 备选别名/原名 Chips 栏（当条目包含多语种别名时快速一键切换）
+              if (candidateAliases.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+                  child: SizedBox(
+                    height: 32,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: candidateAliases.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 6),
+                      itemBuilder: (context, index) {
+                        final alias = candidateAliases[index];
+                        final isSelected = alias == currentText;
+                        return ActionChip(
+                          avatar: Icon(
+                            isSelected ? Icons.check : Icons.translate_rounded,
+                            size: 14,
+                          ),
+                          label: Text(
+                            alias,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            if (_textController.text.trim() != alias) {
+                              _textController.text = alias;
+                              _triggerSearch();
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ),
 
               // 集数过滤 Chips 栏
               if (sortedEpisodes.length > 1)
@@ -546,22 +690,45 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                       )
                     : filteredItems.isEmpty
                         ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.cloud_off_outlined,
-                                  size: 48,
-                                  color: colorScheme.outline,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  state.items.isEmpty
-                                      ? '未找到相关资源，可尝试更换关键词'
-                                      : '当前集数下暂无资源，切换“全部”查看',
-                                  style: TextStyle(color: colorScheme.outline),
-                                ),
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_off_outlined,
+                                    size: 48,
+                                    color: colorScheme.outline,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    state.items.isEmpty
+                                        ? '未找到相关资源，可尝试切换其他备选名称或更换关键词'
+                                        : '当前集数下暂无资源，切换“全部”查看',
+                                    style: TextStyle(color: colorScheme.outline),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (state.items.isEmpty && candidateAliases.length > 1) ...[
+                                    const SizedBox(height: 16),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      alignment: WrapAlignment.center,
+                                      children: [
+                                        for (final alias in candidateAliases.where((a) => a != currentText))
+                                          ActionChip(
+                                            avatar: const Icon(Icons.search, size: 14),
+                                            label: Text(alias),
+                                            onPressed: () {
+                                              _textController.text = alias;
+                                              _triggerSearch();
+                                            },
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
                           )
                         : ListView.separated(

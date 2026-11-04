@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:haipee/router_constants.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:haipee/bean/widget/app_context_menu.dart';
 import 'package:haipee/bean/widget/error_widget.dart';
@@ -174,8 +175,7 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
           ),
           onPressed: () {
             context.push(
-              '/search',
-              extra: widget.bangumiItem.tags[index].name,
+              Routes.searchWithTag(widget.bangumiItem.tags[index].name),
             );
           },
         );
@@ -335,6 +335,36 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
     ];
   }
 
+  void _openTorrentSearchForEpisode(
+    BuildContext context,
+    String animeTitle,
+    int episodeNumber,
+  ) {
+    final epPadded = episodeNumber < 10 ? '0$episodeNumber' : '$episodeNumber';
+    final primaryKeyword = animeTitle.isNotEmpty
+        ? '$animeTitle $epPadded'
+        : epPadded;
+    final candidateAliases = <String>{
+      if (animeTitle.isNotEmpty) '$animeTitle $episodeNumber',
+      if (widget.bangumiItem.name.isNotEmpty &&
+          widget.bangumiItem.name != animeTitle) ...[
+        '${widget.bangumiItem.name} $epPadded',
+        '${widget.bangumiItem.name} $episodeNumber',
+      ],
+      for (final a in widget.bangumiItem.alias) ...[
+        '$a $epPadded',
+        '$a $episodeNumber',
+      ],
+    }.toList();
+
+    TorrentSearchSheet.show(
+      context,
+      initialKeyword: primaryKeyword,
+      bangumiId: widget.bangumiItem.id.toString(),
+      aliases: candidateAliases,
+    );
+  }
+
   Widget _buildEpisodeTile(EpisodeMetadata episode) {
     final ThemeData theme = Theme.of(context);
     final episodesTexts = context.t.library.info.episodes;
@@ -371,6 +401,16 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
             ),
         ],
       ),
+      trailing: IconButton(
+        icon: const Icon(Icons.play_circle_outline_rounded),
+        tooltip: '播放本集',
+        onPressed: () {
+          _openTorrentSearchForEpisode(context, animeTitle, episode.number);
+        },
+      ),
+      onTap: () {
+        _openTorrentSearchForEpisode(context, animeTitle, episode.number);
+      },
     );
 
     return AppContextMenu(
@@ -379,11 +419,7 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
           title: '检索本集磁力/离线下载...',
           icon: Icons.download_rounded,
           onSelected: () {
-            TorrentSearchSheet.show(
-              context,
-              initialKeyword: '$animeTitle ${episode.number}',
-              bangumiId: widget.bangumiItem.id.toString(),
-            );
+            _openTorrentSearchForEpisode(context, animeTitle, episode.number);
           },
         ),
         const AppMenuSeparator(),

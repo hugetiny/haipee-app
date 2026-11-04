@@ -356,7 +356,9 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.search,
       builder: (context, state) => SearchPage(
-        inputTag: Routes.getSearchTag(state.uri.queryParameters),
+        inputTag: state.extra is String
+            ? (state.extra as String)
+            : Routes.getSearchTag(state.uri.queryParameters),
       ),
     ),
   ],

@@ -6,8 +6,11 @@ import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:haipee/bean/widget/app_context_menu.dart';
 import 'package:haipee/modules/bangumi/bangumi_item.dart';
 import 'package:haipee/modules/history/history_module.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:haipee/pages/history/providers.dart';
+import 'package:haipee/pages/menu/navigation_provider.dart';
 import 'package:haipee/pages/my/providers.dart';
 import 'package:haipee/pages/video/providers.dart';
 import 'package:haipee/plugins/plugins.dart';
@@ -47,7 +50,30 @@ class BangumiContextMenuHelper {
     }
     if (!flag) {
       HaipeeDialog.dismiss();
-      HaipeeDialog.showToast(message: '该视频来源规则已缺失或已卸载');
+      final title = historyItem.bangumiItem.nameCn.isNotEmpty
+          ? historyItem.bangumiItem.nameCn
+          : historyItem.bangumiItem.name;
+      final epNum = historyItem.lastWatchEpisode;
+      final epPadded = epNum < 10 ? '0$epNum' : '$epNum';
+      final primary = title.isNotEmpty ? '$title $epPadded' : epPadded;
+      final candidateAliases = <String>{
+        if (title.isNotEmpty) '$title $epNum',
+        if (historyItem.bangumiItem.name.isNotEmpty &&
+            historyItem.bangumiItem.name != title) ...[
+          '${historyItem.bangumiItem.name} $epPadded',
+          '${historyItem.bangumiItem.name} $epNum',
+        ],
+        for (final a in historyItem.bangumiItem.alias) ...[
+          '$a $epPadded',
+          '$a $epNum',
+        ],
+      }.toList();
+      TorrentSearchSheet.show(
+        context,
+        initialKeyword: primary,
+        bangumiId: historyItem.bangumiItem.id.toString(),
+        aliases: candidateAliases,
+      );
       return;
     }
     videoPageController.bangumiItem = historyItem.bangumiItem;
@@ -111,12 +137,43 @@ class BangumiContextMenuHelper {
           onSelected: () => playBangumiHistory(context, ref, matchedHistory),
         ),
       );
-    } else {
+    } else if (bangumiItem.type == 2 || bangumiItem.type == 6) {
       items.add(
         AppMenuAction(
           title: '立即观看',
           icon: Icons.play_arrow_rounded,
-          onSelected: () => context.push(Routes.info, extra: bangumiItem),
+          onSelected: () {
+            final candidateAliases = <String>{
+              if (bangumiItem.nameCn.isNotEmpty) bangumiItem.nameCn,
+              if (bangumiItem.name.isNotEmpty) bangumiItem.name,
+              ...bangumiItem.alias,
+            }.toList();
+            TorrentSearchSheet.show(
+              context,
+              initialKeyword: title,
+              bangumiId: bangumiItem.id.toString(),
+              aliases: candidateAliases,
+            );
+          },
+        ),
+      );
+    } else {
+      items.add(
+        AppMenuAction(
+          title: '全网搜索资源',
+          icon: Icons.travel_explore_rounded,
+          onSelected: () {
+            final TorrentCategory category = switch (bangumiItem.type) {
+              1 => TorrentCategory.document,
+              3 => TorrentCategory.audio,
+              4 => TorrentCategory.game,
+              _ => TorrentCategory.all,
+            };
+            ref.read(torrentSearchProvider.notifier).setCategoryFilter(category);
+            ref.read(torrentSearchProvider.notifier).search(title);
+            ref.read(navigationProvider.notifier).updateSelectedIndex(1);
+            context.go(Routes.resource);
+          },
         ),
       );
     }

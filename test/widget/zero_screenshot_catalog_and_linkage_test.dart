@@ -8,9 +8,16 @@ import 'package:haipee/modules/bangumi/bangumi_item.dart';
 import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
+import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:haipee/pages/info/info_page.dart';
 import 'package:haipee/pages/media/media_page.dart';
+import 'package:haipee/pages/media_library/media_library_page.dart';
 import 'package:haipee/pages/menu/navigation_provider.dart';
+import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/bangumi_context_menu.dart';
+import 'package:haipee/modules/history/history_module.dart';
+import 'package:haipee/modules/metadata_sync/models/metadata_record.dart';
+import 'package:haipee/pages/info/info_tabview.dart';
 import 'package:haipee/router.dart';
 import 'package:haipee/router_constants.dart';
 import 'package:haipee/utils/storage.dart';
@@ -129,7 +136,7 @@ void main() {
   });
 
   group('【无截图验证体系】2. 详情页 (InfoPage) 按媒体类型智能分流断言', () {
-    testWidgets('视频类（动画/影视）：断言渲染左右双按钮（全网BT搜索 + 在线观看）', (tester) async {
+    testWidgets('视频类（动画/影视）：断言渲染单一高对比度「开始观看」核心按钮，点击直通全网资源聚合与播放流 (TorrentSearchSheet)，彻底杜绝双轨制与旧Kazumi搜索', (tester) async {
       final animeSubject = makeSubject(
         id: 1001,
         name: '葬送のフリーレン',
@@ -152,13 +159,21 @@ void main() {
       );
       await tester.pump();
 
-      // 断言双按钮存在
-      expect(find.byKey(const Key('info_btn_search_torrent')), findsOneWidget);
-      expect(find.text('全网BT搜索'), findsOneWidget);
+      // 断言单一统一按钮「开始观看」存在，且彻底杜绝双按钮分流
       expect(find.byKey(const Key('info_btn_watch_online')), findsOneWidget);
+      expect(find.text('开始观看'), findsOneWidget);
+      expect(find.byKey(const Key('info_btn_search_torrent')), findsNothing);
+      expect(find.text('全网BT搜索'), findsNothing);
 
       // 断言不存在非视频类的单一宽按钮
       expect(find.byKey(const Key('info_btn_universal_search')), findsNothing);
+
+      // 点击「开始观看」，验证直接唤起聚合资源与播放流 (TorrentSearchSheet)，绝不跳转旧版Kazumi规则搜索
+      await tester.tap(find.byKey(const Key('info_btn_watch_online')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(TorrentSearchSheet), findsOneWidget);
 
       // 推进时间以排空底层网络超时定时器
       await tester.pump(const Duration(seconds: 15));
@@ -259,6 +274,236 @@ void main() {
 
       // 推进时间以排空底层网络超时定时器
       await tester.pump(const Duration(seconds: 16));
+    });
+  });
+
+  group('【无截图验证体系】4. 剧集列表与卡片菜单深度直通聚合播放流断言', () {
+    testWidgets('条目详情页 (InfoTabView) 点击分集卡片，断言直接唤起 TorrentSearchSheet 并填入作品与集数', (tester) async {
+      final animeSubject = makeSubject(
+        id: 1001,
+        name: '葬送のフリーレン',
+        nameCn: '葬送的芙莉莲',
+        type: 2,
+      );
+
+      final metadata = MetadataRecord(
+        slug: 'frieren',
+        primaryTitle: '葬送的芙莉莲',
+        localeTag: 'zh-CN',
+        updatedAt: DateTime.now(),
+        episodes: const [
+          EpisodeMetadata(
+            number: 1,
+            title: '冒险的终点',
+            synopsis: '勇者一行人击败魔王后的旅程...',
+          ),
+        ],
+      );
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TranslationProvider(
+            child: MaterialApp(
+              home: DefaultTabController(
+                length: 5,
+                child: Scaffold(
+                  body: NestedScrollView(
+                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                      SliverOverlapAbsorber(
+                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                        sliver: const SliverToBoxAdapter(),
+                      ),
+                    ],
+                    body: Builder(
+                      builder: (context) => InfoTabView(
+                        tabController: DefaultTabController.of(context),
+                        bangumiItem: animeSubject,
+                        commentsList: const [],
+                        isLoading: false,
+                        metadataRecord: metadata,
+                        metadataLoading: false,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // 断言剧集 ListTile 渲染
+      expect(find.text('冒险的终点'), findsOneWidget);
+      expect(find.byIcon(Icons.play_circle_outline_rounded), findsOneWidget);
+
+      // 点击分集卡片直接播放
+      await tester.tap(find.text('冒险的终点'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(TorrentSearchSheet), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 15));
+    });
+
+    testWidgets('番剧卡片上下文菜单：旧规则缺失时，继续观看优雅回退至 TorrentSearchSheet', (tester) async {
+      final animeSubject = makeSubject(
+        id: 1001,
+        name: '葬送のフリーレン',
+        nameCn: '葬送的芙莉莲',
+        type: 2,
+      );
+
+      final history = History(
+        animeSubject,
+        5,
+        'uninstalled_plugin',
+        DateTime.now(),
+        'https://example.com/video',
+        '第5话',
+      );
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      router.go(Routes.media);
+
+      late WidgetRef capturedRef;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TranslationProvider(
+            child: MaterialApp.router(
+              routerConfig: router,
+              builder: (ctx, child) => Consumer(
+                builder: (context, ref, _) {
+                  capturedRef = ref;
+                  return child!;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final BuildContext currentContext = tester.element(find.byType(MediaLibraryPage));
+
+      await BangumiContextMenuHelper.playBangumiHistory(
+        currentContext,
+        capturedRef,
+        history,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(TorrentSearchSheet), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 15));
+    });
+
+    testWidgets('TorrentSearchSheet 多语种备选别名芯片渲染与一键切换检索断言', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TranslationProvider(
+            child: MaterialApp(
+              home: Scaffold(
+                body: TorrentSearchSheet(
+                  initialKeyword: '葬送的芙莉莲',
+                  aliases: [
+                    '葬送的芙莉莲',
+                    'Sousou no Frieren',
+                    'Frieren: Beyond Journey\'s End',
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // 验证备选别名芯片正常渲染
+      expect(find.text('Sousou no Frieren'), findsOneWidget);
+      expect(find.text('Frieren: Beyond Journey\'s End'), findsOneWidget);
+
+      // 点击别名芯片，断言输入框文本同步切换
+      await tester.tap(find.text('Sousou no Frieren'));
+      await tester.pump();
+
+      expect(find.widgetWithText(TextField, 'Sousou no Frieren'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 15));
+    });
+
+    testWidgets('卡片上下文菜单：视频类展示「立即观看」，非视频类（游戏/书籍）展示「全网搜索资源」', (tester) async {
+      final animeSubject = makeSubject(
+        id: 1001,
+        name: '葬送のフリーレン',
+        nameCn: '葬送的芙莉莲',
+        type: 2, // 动画
+      );
+      final gameSubject = makeSubject(
+        id: 2001,
+        name: '塞尔达传说',
+        nameCn: '塞尔达传说',
+        type: 4, // 游戏
+      );
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      late BuildContext buildContext;
+      late WidgetRef widgetRef;
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TranslationProvider(
+            child: MaterialApp(
+              home: Scaffold(
+                body: Consumer(
+                  builder: (context, ref, _) {
+                    buildContext = context;
+                    widgetRef = ref;
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // 1. 动画条目上下文菜单检查
+      final animeMenuItems = BangumiContextMenuHelper.buildMenuItems(
+        context: buildContext,
+        ref: widgetRef,
+        bangumiItem: animeSubject,
+      );
+      final animeTitles = animeMenuItems.whereType<AppMenuAction>().map((a) => a.title).toList();
+      expect(animeTitles.contains('立即观看'), isTrue);
+      expect(animeTitles.contains('全网搜索资源'), isFalse);
+
+      // 2. 游戏条目上下文菜单检查
+      final gameMenuItems = BangumiContextMenuHelper.buildMenuItems(
+        context: buildContext,
+        ref: widgetRef,
+        bangumiItem: gameSubject,
+      );
+      final gameTitles = gameMenuItems.whereType<AppMenuAction>().map((a) => a.title).toList();
+      expect(gameTitles.contains('全网搜索资源'), isTrue);
+      expect(gameTitles.contains('立即观看'), isFalse);
     });
   });
 }
