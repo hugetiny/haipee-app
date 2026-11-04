@@ -431,11 +431,15 @@ Future<void> _dumpParseFailures() async {
 Future<void> _dumpRecentLogs(int limit) async {
   final file = _findHaipeeLogFile();
   if (file == null) {
-    stderr.writeln('❌ 未找到本地 haipee.log 日志文件');
-    exit(1);
+    stdout.writeln('✨ 暂无本地日志文件或日志已清空重置。');
+    return;
   }
   stdout.writeln('📋 最近 $limit 条日志 (${file.path}):\n');
   final lines = await file.readAsLines();
+  if (lines.isEmpty) {
+    stdout.writeln('✨ 日志文件为空。');
+    return;
+  }
   final recent = lines.length > limit ? lines.sublist(lines.length - limit) : lines;
   for (final line in recent) {
     stdout.writeln(line);
@@ -448,7 +452,7 @@ Future<void> _dumpErrors(int limit, {required bool asJson}) async {
     if (asJson) {
       stdout.writeln('[]');
     } else {
-      stderr.writeln('❌ 未找到本地 haipee.log 日志文件');
+      stdout.writeln('✨ 日志文件为空或已重置，暂无任何异常或错误记录。');
     }
     return;
   }
@@ -515,31 +519,55 @@ Future<void> _dumpErrors(int limit, {required bool asJson}) async {
     return;
   }
 
-  stdout.writeln('📋 Haipee 异常与错误自省诊断报告 (共 ${errorEntries.length} 条，展示最近 ${recent.length} 条):\n');
   if (recent.isEmpty) {
+    stdout.writeln('📋 Haipee 异常与错误自省诊断报告 (共 0 条):\n');
     stdout.writeln('✨ 完美！未检测到任何近期异常或错误记录。');
     return;
   }
 
-  for (final err in recent) {
-    final ts = err['timestamp'];
-    final lvl = err['level'];
-    final mod = err['module'];
-    final msg = err['message'];
-    stdout.writeln('🚨 [$ts] [$lvl] [$mod] $msg');
-    if (err.containsKey('diagnosticCode')) {
-      stdout.writeln('   ├─ 诊断代号: [${err['diagnosticCode']}] ${err['diagnosticTitle']}');
+  final fatalList = recent.where((e) => e['level'] != 'WARNING').toList();
+  final warningList = recent.where((e) => e['level'] == 'WARNING').toList();
+
+  stdout.writeln('📋 Haipee 运行诊断报告 (共 ${recent.length} 项记录: ${fatalList.length} 项严重错误/溢出, ${warningList.length} 项外部网络告警):\n');
+
+  if (fatalList.isNotEmpty) {
+    stdout.writeln('=== 🚨 严重错误与 UI 溢出 (${fatalList.length} 项) ===');
+    for (final err in fatalList) {
+      final ts = err['timestamp'];
+      final lvl = err['level'];
+      final mod = err['module'];
+      final msg = err['message'];
+      stdout.writeln('🚨 [$ts] [$lvl] [$mod] $msg');
+      if (err.containsKey('diagnosticCode')) {
+        stdout.writeln('   ├─ 诊断代号: [${err['diagnosticCode']}] ${err['diagnosticTitle']}');
+      }
+      if (err.containsKey('explanation')) {
+        stdout.writeln('   ├─ 根因剖析: ${err['explanation']}');
+      }
+      if (err.containsKey('action')) {
+        stdout.writeln('   ├─ 建议操作: ${err['action']}');
+      }
+      if (err.containsKey('error')) {
+        stdout.writeln('   ├─ 底层错误: ${err['error']}');
+      }
+      stdout.writeln('   └────────────────────────────────────────');
     }
-    if (err.containsKey('explanation')) {
-      stdout.writeln('   ├─ 根因剖析: ${err['explanation']}');
+    stdout.writeln('');
+  }
+
+  if (warningList.isNotEmpty) {
+    stdout.writeln('=== ⚠️ 外部网络与索引器告警 (${warningList.length} 项) ===');
+    for (final err in warningList) {
+      final ts = err['timestamp'];
+      final lvl = err['level'];
+      final mod = err['module'];
+      final msg = err['message'];
+      stdout.writeln('⚠️  [$ts] [$lvl] [$mod] $msg');
+      if (err.containsKey('error')) {
+        stdout.writeln('   ├─ 底层错误: ${err['error']}');
+      }
+      stdout.writeln('   └────────────────────────────────────────');
     }
-    if (err.containsKey('action')) {
-      stdout.writeln('   ├─ 建议操作: ${err['action']}');
-    }
-    if (err.containsKey('error')) {
-      stdout.writeln('   ├─ 底层错误: ${err['error']}');
-    }
-    stdout.writeln('   └────────────────────────────────────────');
   }
 }
 

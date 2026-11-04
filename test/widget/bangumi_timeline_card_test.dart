@@ -115,4 +115,31 @@ void main() {
       },
     );
   }
+
+  testWidgets('BangumiTimelineCard 在极窄卡片宽度 (240px-330px) 下 0 像素溢出', (tester) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    for (final testWidth in [240.0, 260.0, 280.0, 300.0, 320.0, 330.0]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: testWidth,
+                child: BangumiTimelineCard(
+                  bangumiItem: sampleItemWithLongText,
+                  cardHeight: 160,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+  });
 }

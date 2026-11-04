@@ -218,43 +218,47 @@ class BangumiTimelineCard extends ConsumerWidget {
           )
         else
         const SizedBox(height: 4),
-        Row(
-          children: [
-            if (bangumiItem.ratingScore > 0)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star_rounded,
-                      size: 15, color: colorScheme.primary),
-                  const SizedBox(width: 2),
-                  Text(bangumiItem.ratingScore.toStringAsFixed(1),
-                      style: infoStyle),
-                ],
-              ),
-            if (bangumiItem.rank > 0)
-              Padding(
-                padding: const EdgeInsets.only(left: 6),
-                child: Row(
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (bangumiItem.ratingScore > 0)
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.leaderboard,
-                        size: 15, color: colorScheme.tertiary),
+                    Icon(Icons.star_rounded,
+                        size: 14, color: colorScheme.primary),
                     const SizedBox(width: 2),
-                    Text('Rank ${bangumiItem.rank}', style: infoStyle),
+                    Text(bangumiItem.ratingScore.toStringAsFixed(1),
+                        style: infoStyle),
                   ],
                 ),
-              ),
-            const Spacer(),
-            if (bangumiItem.votes > 0)
-              Flexible(
-                child: Text(
-                  '${bangumiItem.votes}人',
-                  style: subStyle,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+              if (bangumiItem.rank > 0)
+                Padding(
+                  padding: EdgeInsets.only(
+                      left: bangumiItem.ratingScore > 0 ? 6 : 0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.leaderboard,
+                          size: 14, color: colorScheme.tertiary),
+                      const SizedBox(width: 2),
+                      Text('Rank ${bangumiItem.rank}', style: infoStyle),
+                    ],
+                  ),
                 ),
-              ),
-          ],
+              if (bangumiItem.votes > 0)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text(
+                    '${bangumiItem.votes}人',
+                    style: subStyle,
+                  ),
+                ),
+            ],
+          ),
         ),
       ],
     );
