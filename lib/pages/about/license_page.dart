@@ -38,13 +38,23 @@ class _HaipeeLicensePageState extends State<HaipeeLicensePage> {
           _packageLicenses.putIfAbsent(package, () => []).add(entry);
         }
       }
-      if (_packageLicenses.isEmpty) {
+      if (!_packageLicenses.containsKey('kazumi')) {
+        _packageLicenses['kazumi'] = [
+          const LicenseEntryWithLineBreaks(
+            ['kazumi'],
+            'Kazumi media application.\nCopyright (c) Predidit.\nLicensed under the GNU General Public License v3.0.',
+          ),
+        ];
+      }
+      if (_packageLicenses.isEmpty || !_packageLicenses.containsKey('haipee')) {
         _packageLicenses['haipee'] = [
           const LicenseEntryWithLineBreaks(
             ['haipee'],
             'Haipee open source media application.\nLicensed under the GNU General Public License v3.0.',
           ),
         ];
+      }
+      if (!_packageLicenses.containsKey('flutter')) {
         _packageLicenses['flutter'] = [
           const LicenseEntryWithLineBreaks(
             ['flutter'],

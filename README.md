@@ -104,6 +104,7 @@ For Debian, Ubuntu, Linux Mint, and related distributions, installing the `.deb`
 
 ## 🙏 Credits
 
+- [Kazumi](https://github.com/Predidit/Kazumi) - An exceptional cross-platform media player and rule parser foundation.
 - [Gopeed](https://github.com/GopeedLab/gopeed) - High-performance multi-threaded download and BitTorrent engine.
 - [media-kit](https://github.com/media-kit/media-kit) - Cross-platform media playback library for Flutter.
 - [Dandanplay](https://www.dandanplay.com/) - Open danmaku protocol and comment databases.

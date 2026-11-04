@@ -104,6 +104,7 @@ Anime4K 实时超分滤镜直接由 GPU 执行着色计算。如果在核芯显�
 
 ## 🙏 致谢 (Credits)
 
+- [Kazumi](https://github.com/Predidit/Kazumi) - 卓越的跨平台视听播放器架构与规则解析基石。
 - [Gopeed](https://github.com/GopeedLab/gopeed) - 提供卓越的高性能多线程与 BitTorrent 磁力下载能力。
 - [media-kit](https://github.com/media-kit/media-kit) - 强大的跨平台媒体播放渲染引擎。
 - [Dandanplay](https://www.dandanplay.com/) - 开放弹幕协议与弹幕数据源支持。
