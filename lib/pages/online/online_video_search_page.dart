@@ -42,6 +42,7 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
   final FocusNode _searchFocusNode = FocusNode();
 
   List<BiliVideoItem> _popularVideos = [];
+  bool _isFilterExpanded = false;
 
   @override
   void initState() {
@@ -726,137 +727,510 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
     required bool isWide,
     required OnlineVideoSearchState searchState,
   }) {
+    final hasActiveFilter = searchState.hasActiveFilter;
+    final activeFilterCount = searchState.activeFilterCount;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // 搜索框主体 (整合统一下拉历史记录浮层)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: SearchHistoryDropdown(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              onSelectKeyword: _performSearch,
-              child: TextField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (val) {
-                  _performSearch(val);
-                },
-                decoration: InputDecoration(
-                  hintText: selectedFilter == OnlineSourceFilter.video
-                      ? '搜索在线视频、动漫番剧或粘贴 B站 BV 号'
-                      : (selectedFilter == OnlineSourceFilter.live
-                          ? '搜索电视直播频道、央视、卫视或轮播台'
-                          : '输入作品、频道名称或粘贴 B站 BV 号'),
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_searchController.text.isNotEmpty)
-                        IconButton(
-                          icon: const Icon(Icons.clear, size: 20),
-                          onPressed: () {
-                            _searchController.clear();
-                            searchNotifier.clear();
-                          },
-                        ),
-                      IconButton(
-                        icon: const Icon(Icons.arrow_forward),
-                        tooltip: '开始搜索',
-                        onPressed: () {
-                          _performSearch(_searchController.text);
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 820),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. 搜索框 + 右侧「筛选」触发按钮
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: SearchHistoryDropdown(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      onSelectKeyword: _performSearch,
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (val) {
+                          _performSearch(val);
                         },
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          // 统一横向分类与规则筛选栏 (对齐下载界面规范，全屏统一呈现，包含全部/视频/直播及5大规则协议并附带动态数量Badge)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: OnlineSourceFilter.audiovisualFilters.map((filter) {
-                final isSelected = selectedFilter == filter;
-                final count = searchState.countForFilter(filter);
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: ChoiceChip(
-                    key: Key('online_search_chip_${filter.id}'),
-                    showCheckmark: false,
-                    avatar: Icon(
-                      filter.icon,
-                      size: 16,
-                      color: isSelected
-                          ? colorScheme.onSecondaryContainer
-                          : colorScheme.onSurfaceVariant,
-                    ),
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          filter.label,
-                          style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        decoration: InputDecoration(
+                          hintText: searchState.videoModeFilter ==
+                                      OnlineSourceFilter.video ||
+                                  selectedFilter == OnlineSourceFilter.video
+                              ? '搜索在线视频、动漫番剧或粘贴 B站 BV 号'
+                              : (searchState.videoModeFilter ==
+                                          OnlineSourceFilter.live ||
+                                      selectedFilter == OnlineSourceFilter.live
+                                  ? '搜索电视直播频道、央视、卫视或轮播台'
+                                  : '输入作品、频道名称或粘贴 B站 BV 号'),
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_searchController.text.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    searchNotifier.clear();
+                                  },
+                                ),
+                              IconButton(
+                                icon: const Icon(Icons.arrow_forward),
+                                tooltip: '开始搜索',
+                                onPressed: () {
+                                  _performSearch(_searchController.text);
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
                           ),
                         ),
-                        if (searchState.allResults.isNotEmpty || count > 0) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 1.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? (count > 0
-                                      ? colorScheme.primary
-                                      : colorScheme.outline.withValues(alpha: 0.3))
-                                  : (count > 0
-                                      ? colorScheme.primary.withValues(alpha: 0.15)
-                                      : colorScheme.surfaceContainerHighest),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '$count',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected
-                                    ? (count > 0 ? colorScheme.onPrimary : colorScheme.onSurface)
-                                    : (count > 0 ? colorScheme.primary : colorScheme.outline),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // 搜索框旁边的「筛选」按钮
+                  SizedBox(
+                    height: 50,
+                    child: FilledButton.tonalIcon(
+                      key: const Key('online_search_filter_toggle_btn'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _isFilterExpanded || hasActiveFilter
+                            ? colorScheme.primaryContainer
+                            : colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.65),
+                        foregroundColor: _isFilterExpanded || hasActiveFilter
+                            ? colorScheme.onPrimaryContainer
+                            : colorScheme.onSurfaceVariant,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: _isFilterExpanded || hasActiveFilter
+                                ? colorScheme.primary.withValues(alpha: 0.45)
+                                : colorScheme.outlineVariant
+                                    .withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isFilterExpanded = !_isFilterExpanded;
+                        });
+                      },
+                      icon: const Icon(Icons.tune_rounded, size: 18),
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            '筛选',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          if (activeFilterCount > 0) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
                               ),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$activeFilterCount',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(width: 2),
+                          Icon(
+                            _isFilterExpanded
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // 2. 当筛选面板收起且存在已激活筛选条件时，展示紧凑的当前筛选条件摘要条
+              if (!_isFilterExpanded && hasActiveFilter) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.filter_alt_outlined,
+                            size: 15,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '当前筛选:',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        searchNotifier.setFilter(filter);
-                      }
-                    },
+                      ),
+                      if (searchState.videoModeFilter != OnlineSourceFilter.all)
+                        InputChip(
+                          visualDensity: VisualDensity.compact,
+                          label: Text(
+                            '视频类型: ${searchState.videoModeFilter.label}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          onDeleted: () => searchNotifier
+                              .setVideoModeFilter(OnlineSourceFilter.all),
+                        ),
+                      if (searchState.ruleTypeFilter != null)
+                        InputChip(
+                          visualDensity: VisualDensity.compact,
+                          label: Text(
+                            '规则: ${searchState.ruleTypeFilter!.label}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          onDeleted: () =>
+                              searchNotifier.setRuleTypeFilter(null),
+                        ),
+                      if (searchState.sourceNameFilter != null &&
+                          searchState.sourceNameFilter!.isNotEmpty)
+                        InputChip(
+                          visualDensity: VisualDensity.compact,
+                          label: Text(
+                            '来源: ${searchState.sourceNameFilter}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          onDeleted: () =>
+                              searchNotifier.setSourceNameFilter(null),
+                        ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        onPressed: searchNotifier.resetFilters,
+                        icon: const Icon(Icons.restart_alt_rounded, size: 15),
+                        label: const Text('重置全部', style: TextStyle(fontSize: 12)),
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
-            ),
+                ),
+              ],
+
+              // 3. 点开「筛选」按钮后展开的结构化多维度分类筛选面板
+              if (_isFilterExpanded) ...[
+                const SizedBox(height: 12),
+                _buildCategorizedFilterPanel(
+                  theme,
+                  colorScheme,
+                  searchState,
+                  searchNotifier,
+                ),
+              ],
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// 构建结构化多维度分类筛选面板（明确区分：1. 视频类型[点播/直播]  2. 规则类型  3. 来源站点）
+  Widget _buildCategorizedFilterPanel(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    OnlineVideoSearchState searchState,
+    OnlineVideoSearchNotifier searchNotifier,
+  ) {
+    final availableSites = searchState.availableSourceSites;
+
+    return Container(
+      key: const Key('online_search_filter_panel'),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 维度 1：视频类型（全部 / 点播 / 直播）
+          _buildFilterCategoryRow(
+            theme: theme,
+            colorScheme: colorScheme,
+            categoryTitle: '视频类型',
+            categorySubtitle: '点播 / 直播',
+            trailing: searchState.hasActiveFilter
+                ? TextButton.icon(
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    onPressed: searchNotifier.resetFilters,
+                    icon: const Icon(Icons.restart_alt_rounded, size: 15),
+                    label: const Text('重置筛选', style: TextStyle(fontSize: 12)),
+                  )
+                : null,
+            chips: [
+              for (final mode in OnlineSourceFilter.overviewFilters)
+                _buildFilterChoiceChip(
+                  colorScheme: colorScheme,
+                  chipKey: Key('online_search_chip_${mode.id}'),
+                  icon: mode.icon,
+                  label: mode == OnlineSourceFilter.all
+                      ? '全部视频'
+                      : (mode == OnlineSourceFilter.video
+                          ? '点播视频'
+                          : '实时直播'),
+                  count: searchState.countForFilter(mode),
+                  showCount: searchState.allResults.isNotEmpty ||
+                      searchState.countForFilter(mode) > 0,
+                  isSelected: mode == OnlineSourceFilter.all
+                      ? (searchState.videoModeFilter == OnlineSourceFilter.all &&
+                          searchState.ruleTypeFilter == null)
+                      : searchState.videoModeFilter == mode,
+                  onSelected: () {
+                    if (mode == OnlineSourceFilter.all) {
+                      searchNotifier.resetFilters();
+                    } else {
+                      searchNotifier.setVideoModeFilter(mode);
+                    }
+                  },
+                ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Divider(height: 1),
+          ),
+          // 维度 2：规则类型（Haipee / MacCMS / TVBox / Piped / IPTV）
+          _buildFilterCategoryRow(
+            theme: theme,
+            colorScheme: colorScheme,
+            categoryTitle: '规则类型',
+            categorySubtitle: '解析协议',
+            chips: [
+              _buildFilterChoiceChip(
+                colorScheme: colorScheme,
+                chipKey: const Key('online_search_chip_rule_all'),
+                icon: Icons.layers_outlined,
+                label: '全部规则',
+                count: searchState.countForFilter(OnlineSourceFilter.all),
+                showCount: false,
+                isSelected: searchState.ruleTypeFilter == null,
+                onSelected: () => searchNotifier.setRuleTypeFilter(null),
+              ),
+              for (final rule in OnlineSourceFilter.ruleProtocolFilters)
+                _buildFilterChoiceChip(
+                  colorScheme: colorScheme,
+                  chipKey: Key('online_search_chip_${rule.id}'),
+                  icon: rule.icon,
+                  label: rule.label,
+                  count: searchState.countForFilter(rule),
+                  showCount: searchState.allResults.isNotEmpty ||
+                      searchState.countForFilter(rule) > 0,
+                  isSelected: searchState.ruleTypeFilter == rule,
+                  onSelected: () => searchNotifier.setRuleTypeFilter(rule),
+                ),
+            ],
+          ),
+          // 维度 3：来源站点（当搜索结果包含多个具体站点时动态呈现）
+          if (availableSites.length > 1) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Divider(height: 1),
+            ),
+            _buildFilterCategoryRow(
+              theme: theme,
+              colorScheme: colorScheme,
+              categoryTitle: '来源站点',
+              categorySubtitle: '具体源',
+              chips: [
+                _buildFilterChoiceChip(
+                  colorScheme: colorScheme,
+                  chipKey: const Key('online_search_chip_source_all'),
+                  icon: Icons.public_rounded,
+                  label: '全部来源',
+                  count: searchState.allResults.length,
+                  showCount: false,
+                  isSelected: searchState.sourceNameFilter == null,
+                  onSelected: () => searchNotifier.setSourceNameFilter(null),
+                ),
+                for (final site in availableSites)
+                  _buildFilterChoiceChip(
+                    colorScheme: colorScheme,
+                    chipKey: Key('online_search_chip_source_${site.name}'),
+                    icon: Icons.dns_outlined,
+                    label: site.name,
+                    count: site.count,
+                    showCount: true,
+                    isSelected: searchState.sourceNameFilter == site.name,
+                    onSelected: () =>
+                        searchNotifier.setSourceNameFilter(site.name),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildFilterCategoryRow({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required String categoryTitle,
+    required String categorySubtitle,
+    required List<Widget> chips,
+    Widget? trailing,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: colorScheme.secondaryContainer.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                categoryTitle,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              categorySubtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const Spacer(),
+            if (trailing != null) trailing,
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: chips,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChoiceChip({
+    required ColorScheme colorScheme,
+    required Key chipKey,
+    required IconData icon,
+    required String label,
+    required int count,
+    required bool showCount,
+    required bool isSelected,
+    required VoidCallback onSelected,
+  }) {
+    return ChoiceChip(
+      key: chipKey,
+      showCheckmark: false,
+      visualDensity: VisualDensity.compact,
+      avatar: Icon(
+        icon,
+        size: 15,
+        color: isSelected
+            ? colorScheme.onSecondaryContainer
+            : colorScheme.onSurfaceVariant,
+      ),
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+          if (showCount) ...[
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 5,
+                vertical: 1,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? (count > 0
+                        ? colorScheme.primary
+                        : colorScheme.outline.withValues(alpha: 0.3))
+                    : (count > 0
+                        ? colorScheme.primary.withValues(alpha: 0.15)
+                        : colorScheme.surfaceContainerHighest),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? (count > 0
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurface)
+                      : (count > 0
+                          ? colorScheme.primary
+                          : colorScheme.outline),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+      selected: isSelected,
+      onSelected: (_) => onSelected(),
     );
   }
 

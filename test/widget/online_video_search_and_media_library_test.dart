@@ -202,10 +202,16 @@ void main() {
         findsOneWidget,
       );
 
-      // 2. 验证规则源切换 Chips (无冗余底层技术文本与生硬数字)
-      expect(find.text('全部'), findsOneWidget);
-      expect(find.text('视频'), findsOneWidget);
-      expect(find.text('直播'), findsOneWidget);
+      // 2. 验证搜索框旁边的「筛选」按钮及点开后的多维度分类面板 (无冗余底层技术文本与生硬数字)
+      expect(find.byKey(const Key('online_search_filter_toggle_btn')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('online_search_filter_panel')), findsOneWidget);
+      expect(find.text('视频类型'), findsOneWidget);
+      expect(find.text('规则类型'), findsOneWidget);
+      expect(find.text('全部视频'), findsOneWidget);
+      expect(find.text('点播视频'), findsOneWidget);
+      expect(find.text('实时直播'), findsOneWidget);
       expect(find.text('网盘资源 (0)'), findsNothing);
       expect(find.textContaining('底层技术:'), findsNothing);
 
@@ -328,7 +334,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify initial rendering
-      expect(find.text('视频'), findsOneWidget);
+      expect(find.byKey(const Key('online_search_filter_toggle_btn')), findsOneWidget);
 
       // Mutate pluginsProvider state as if catalog/disabled state loaded asynchronously
       final controller = container.read(pluginsProvider.notifier);
@@ -338,7 +344,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify reactive update succeeded without ProviderException
-      expect(find.text('视频'), findsOneWidget);
+      expect(find.byKey(const Key('online_search_filter_toggle_btn')), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       tester.view.resetPhysicalSize();
@@ -438,7 +444,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // 切换至视频分类
+      // 点击搜索框旁边的「筛选」按钮并切换至视频分类
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('online_search_chip_video')));
       await tester.pumpAndSettle();
 
@@ -533,7 +541,9 @@ void main() {
       );
       expect(find.textContaining('底层技术:'), findsNothing);
 
-      // 2. 切换至视频
+      // 2. 展开筛选面板并切换至点播视频
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('online_search_chip_video')));
       await tester.pumpAndSettle();
 
@@ -634,10 +644,15 @@ void main() {
       expect(find.textContaining('找到 2 条视听内容'), findsOneWidget);
       expect(find.text('已检索全部 2 个源'), findsOneWidget);
 
-      // 验证 Chips 纯净展示「全部」「视频」「直播」，绝不附带任何生硬杂乱的数字
-      expect(find.text('全部'), findsOneWidget);
-      expect(find.text('视频'), findsOneWidget);
-      expect(find.text('直播'), findsOneWidget);
+      // 验证展开筛选面板后，各分类标签清晰展示「全部视频」「点播视频」「实时直播」
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('online_search_chip_all')), findsOneWidget);
+      expect(find.byKey(const Key('online_search_chip_video')), findsOneWidget);
+      expect(find.byKey(const Key('online_search_chip_live')), findsOneWidget);
+      expect(find.text('全部视频'), findsOneWidget);
+      expect(find.text('点播视频'), findsOneWidget);
+      expect(find.text('实时直播'), findsWidgets);
 
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
@@ -700,7 +715,9 @@ void main() {
       // 快源视频已展示
       expect(find.text('孤独摇滚 正片'), findsOneWidget);
 
-      // 切换至“直播”标签（慢源此时仍在网络请求中）
+      // 展开筛选面板并切换至“直播”标签（慢源此时仍在网络请求中）
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pump();
       await tester.tap(find.byKey(const Key('online_search_chip_live')));
       await tester.pump();
 
@@ -965,7 +982,9 @@ void main() {
 
       expect(find.text('仅视频有结果的正片'), findsOneWidget);
 
-      // 切换到“直播”标签
+      // 展开筛选面板并切换到“直播”标签
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('online_search_chip_live')));
       await tester.pumpAndSettle();
 

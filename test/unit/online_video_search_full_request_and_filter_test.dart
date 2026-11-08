@@ -6,6 +6,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:haipee/modules/search/plugin_search_module.dart';
 import 'package:haipee/modules/search/search_history_module.dart';
 import 'package:haipee/pages/online/online_video_search_page.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/plugins/plugins.dart';
 import 'package:haipee/plugins/plugins_controller.dart';
 import 'package:haipee/plugins/plugins_providers.dart';
@@ -161,12 +162,21 @@ void main() {
       expect(find.text('视听规则协议 (5类)'), findsNothing);
       expect(find.byType(VerticalDivider), findsNothing);
 
-      // 断言：顶部横向筛选栏在宽屏上居中完整呈现全部 8 个筛选芯片
+      // 断言：搜索框旁边展示「筛选」按钮，点击后展开结构化多维度分类筛选面板
+      final filterBtn = find.byKey(const Key('online_search_filter_toggle_btn'));
+      expect(filterBtn, findsOneWidget);
+      await tester.tap(filterBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('online_search_filter_panel')), findsOneWidget);
+      expect(find.text('视频类型'), findsOneWidget);
+      expect(find.text('规则类型'), findsOneWidget);
+
       for (final filter in OnlineSourceFilter.audiovisualFilters) {
         expect(
           find.byKey(Key('online_search_chip_${filter.id}')),
           findsOneWidget,
-          reason: 'Filter chip for ${filter.id} should be visible in top bar',
+          reason: 'Filter chip for ${filter.id} should be visible in filter panel',
         );
       }
 
@@ -297,6 +307,9 @@ void main() {
       // 切换筛选选项完全在前端执行，不发起新的网络请求
       queriedPlugins.clear();
 
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.byKey(const Key('online_search_chip_maccms')));
       await tester.pumpAndSettle();
 
@@ -314,6 +327,76 @@ void main() {
       container.dispose();
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
+    });
+
+    test('Multi-dimensional categorized filter combines 视频类型 (点播/直播), 规则类型, and 来源站点 accurately', () {
+      const state = OnlineVideoSearchState(
+        keyword: '测试',
+        allResults: [
+          BiliVideoItem(
+            bvid: 'web_baimao_/play/1',
+            title: '白猫点播动漫',
+            author: 'baimao',
+            pic: '',
+            duration: 'Haipee规则',
+            tag: 'Haipee规则',
+          ),
+          BiliVideoItem(
+            bvid: 'web_fantuan_/play/2',
+            title: '饭团点播动漫',
+            author: 'fantuan',
+            pic: '',
+            duration: 'Haipee规则',
+            tag: 'Haipee规则',
+          ),
+          BiliVideoItem(
+            bvid: 'web_maccms1_/vod/1',
+            title: '苹果CMS点播剧集',
+            author: 'maccms1',
+            pic: '',
+            duration: 'MacCMS',
+            tag: 'MacCMS',
+          ),
+          BiliVideoItem(
+            bvid: 'web_iptv1_http://live/1.m3u8',
+            title: 'CCTV-6 电影频道',
+            author: 'iptv1',
+            pic: '',
+            duration: '直播流',
+            tag: 'IPTV直播',
+          ),
+        ],
+      );
+
+      // 默认全量：4 条，无激活筛选
+      expect(state.hasActiveFilter, isFalse);
+      expect(state.activeFilterCount, 0);
+      expect(state.currentFilteredResults.length, 4);
+      expect(state.availableSourceSites.length, 4);
+
+      // 维度 1：仅筛选「点播视频」 -> 排除 IPTV 直播，剩余 3 条点播
+      final vodOnly = state.copyWith(videoModeFilter: OnlineSourceFilter.video);
+      expect(vodOnly.hasActiveFilter, isTrue);
+      expect(vodOnly.activeFilterCount, 1);
+      expect(vodOnly.currentFilteredResults.length, 3);
+
+      // 维度 1 + 维度 2：点播视频 + Haipee 规则 -> 剩余 2 条 (baimao, fantuan)
+      final vodPlusHaipee = vodOnly.copyWith(
+        ruleTypeFilter: OnlineSourceFilter.haipee,
+      );
+      expect(vodPlusHaipee.activeFilterCount, 2);
+      expect(vodPlusHaipee.currentFilteredResults.length, 2);
+
+      // 维度 1 + 维度 2 + 维度 3：点播视频 + Haipee 规则 + 来源站点 baimao -> 精确命中 1 条
+      final vodPlusHaipeePlusSite = vodPlusHaipee.copyWith(
+        sourceNameFilter: 'baimao',
+      );
+      expect(vodPlusHaipeePlusSite.activeFilterCount, 3);
+      expect(vodPlusHaipeePlusSite.currentFilteredResults.length, 1);
+      expect(
+        vodPlusHaipeePlusSite.currentFilteredResults.first.title,
+        '白猫点播动漫',
+      );
     });
   });
 }

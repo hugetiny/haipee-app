@@ -174,7 +174,9 @@ void main() {
       expect(find.text('TVBox 规则'), findsWidgets);
       expect(find.text('IPTV 直播'), findsWidgets);
 
-      // 验证左侧导航中的 8 大筛选标签全部存在
+      // 点击搜索框旁边的「筛选」按钮展开分类筛选面板，验证 8 大筛选标签全部存在
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('online_search_chip_all')), findsOneWidget);
       expect(find.byKey(const Key('online_search_chip_video')), findsOneWidget);
       expect(find.byKey(const Key('online_search_chip_live')), findsOneWidget);
@@ -242,6 +244,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // 先展开搜索框旁边的「筛选」面板以实时观察各维度筛选标签角标流式累加
+      await tester.tap(find.byKey(const Key('online_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
+
       // 发起检索
       await tester.enterText(find.byType(TextField), '鬼灭');
       await tester.testTextInput.receiveAction(TextInputAction.search);
@@ -267,7 +273,7 @@ void main() {
       expect(find.text('找到 3 条视听内容'), findsOneWidget);
       expect(find.text('已检索全部 2 个源'), findsOneWidget);
 
-      // 点击左侧 TVBox 规则筛选
+      // 点击 TVBox 规则筛选
       await tester.tap(find.byKey(const Key('online_search_chip_tvbox')));
       await tester.pumpAndSettle();
 

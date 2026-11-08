@@ -12,9 +12,11 @@ import 'package:haipee/request/bangumi.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
+const Object _filterSentinel = Object();
+
 enum OnlineSourceFilter {
   all(id: 'all', label: '全部', icon: Icons.auto_awesome_motion_outlined),
-  video(id: 'video', label: '视频', icon: Icons.video_library_outlined),
+  video(id: 'video', label: '点播', icon: Icons.ondemand_video_rounded),
   live(id: 'live', label: '直播', icon: Icons.live_tv_outlined),
   haipee(id: 'haipee', label: 'Haipee 规则', icon: Icons.extension_rounded),
   maccms(id: 'maccms', label: 'MacCMS 规则', icon: Icons.movie_outlined),
@@ -38,23 +40,23 @@ enum OnlineSourceFilter {
     required this.icon,
   });
 
-  /// 视频直播界面：内容总览筛选
+  /// 第一维度：视频形态分类（全部 / 点播 / 直播）
   static const List<OnlineSourceFilter> overviewFilters = [
     OnlineSourceFilter.all,
     OnlineSourceFilter.video,
     OnlineSourceFilter.live,
   ];
 
-  /// 视频直播界面：5 大视听流媒体规则协议类型
+  /// 第二维度：5 大视听流媒体规则协议类型
   static const List<OnlineSourceFilter> ruleProtocolFilters = [
     OnlineSourceFilter.haipee,
     OnlineSourceFilter.maccms,
     OnlineSourceFilter.tvbox,
-    OnlineSourceFilter.iptv,
     OnlineSourceFilter.piped,
+    OnlineSourceFilter.iptv,
   ];
 
-  /// 视频直播界面的全部主筛选列表
+  /// 全部筛选项合集
   static const List<OnlineSourceFilter> audiovisualFilters = [
     OnlineSourceFilter.all,
     OnlineSourceFilter.video,
@@ -74,6 +76,9 @@ class OnlineVideoSearchState {
   final int totalSources;
   final List<BiliVideoItem> allResults;
   final OnlineSourceFilter selectedFilter;
+  final OnlineSourceFilter videoModeFilter;
+  final OnlineSourceFilter? ruleTypeFilter;
+  final String? sourceNameFilter;
   final int sessionId;
   final Map<String, String> synergyCovers;
 
@@ -84,9 +89,49 @@ class OnlineVideoSearchState {
     this.totalSources = 0,
     this.allResults = const [],
     this.selectedFilter = OnlineSourceFilter.all,
+    this.videoModeFilter = OnlineSourceFilter.all,
+    this.ruleTypeFilter,
+    this.sourceNameFilter,
     this.sessionId = 0,
     this.synergyCovers = const {},
   });
+
+  bool get hasActiveFilter =>
+      videoModeFilter != OnlineSourceFilter.all ||
+      ruleTypeFilter != null ||
+      (sourceNameFilter != null && sourceNameFilter!.isNotEmpty) ||
+      selectedFilter != OnlineSourceFilter.all;
+
+  int get activeFilterCount =>
+      (videoModeFilter != OnlineSourceFilter.all ? 1 : 0) +
+      (ruleTypeFilter != null ? 1 : 0) +
+      (sourceNameFilter != null && sourceNameFilter!.isNotEmpty ? 1 : 0);
+
+  static String sourceLabelForItem(BiliVideoItem item) {
+    if (item.bvid.startsWith('douyin_')) return '抖音';
+    if (item.bvid.startsWith('web_')) {
+      return item.author.isNotEmpty
+          ? item.author
+          : (item.tag.isNotEmpty ? item.tag : '网络');
+    }
+    return 'BiliBili';
+  }
+
+  /// 当前结果中出现过的具体来源站点及数量统计
+  List<({String name, int count})> get availableSourceSites {
+    final counts = <String, int>{};
+    for (final item in allResults) {
+      final name = sourceLabelForItem(item);
+      if (name.isNotEmpty) {
+        counts[name] = (counts[name] ?? 0) + 1;
+      }
+    }
+    final entries = counts.entries
+        .map((e) => (name: e.key, count: e.value))
+        .toList()
+      ..sort((a, b) => b.count.compareTo(a.count));
+    return entries;
+  }
 
   /// 解析指定条目的跨源协同备用封面（当主封面为空或第三方采集站图片 CDN 劫持失效时自动接管）
   String resolveFallbackCover(BiliVideoItem item) {
@@ -192,7 +237,33 @@ class OnlineVideoSearchState {
     }
   }
 
-  List<BiliVideoItem> get currentFilteredResults => resultsForFilter(selectedFilter);
+  List<BiliVideoItem> get currentFilteredResults {
+    var list = allResults;
+    // 1. 按视频形态筛选 (全部 / 点播 / 直播)
+    if (videoModeFilter == OnlineSourceFilter.video) {
+      list = list.where((item) => !isLiveItem(item)).toList();
+    } else if (videoModeFilter == OnlineSourceFilter.live) {
+      list = list.where((item) => isLiveItem(item)).toList();
+    }
+
+    // 2. 按规则协议类型筛选 (Haipee / MacCMS / TVBox / Piped / IPTV)
+    if (ruleTypeFilter != null && ruleTypeFilter != OnlineSourceFilter.all) {
+      final allowedByRule = resultsForFilter(ruleTypeFilter!).toSet();
+      list = list.where(allowedByRule.contains).toList();
+    } else if (videoModeFilter == OnlineSourceFilter.all &&
+        ruleTypeFilter == null &&
+        selectedFilter != OnlineSourceFilter.all) {
+      list = resultsForFilter(selectedFilter);
+    }
+
+    // 3. 按具体来源站点筛选
+    if (sourceNameFilter != null && sourceNameFilter!.isNotEmpty) {
+      list = list
+          .where((item) => sourceLabelForItem(item) == sourceNameFilter)
+          .toList();
+    }
+    return list;
+  }
 
   int countForFilter(OnlineSourceFilter filter, [List<BiliVideoItem>? fallbackList]) {
     return resultsForFilter(filter, fallbackList).length;
@@ -205,6 +276,9 @@ class OnlineVideoSearchState {
     int? totalSources,
     List<BiliVideoItem>? allResults,
     OnlineSourceFilter? selectedFilter,
+    OnlineSourceFilter? videoModeFilter,
+    Object? ruleTypeFilter = _filterSentinel,
+    Object? sourceNameFilter = _filterSentinel,
     int? sessionId,
     Map<String, String>? synergyCovers,
   }) {
@@ -215,6 +289,13 @@ class OnlineVideoSearchState {
       totalSources: totalSources ?? this.totalSources,
       allResults: allResults ?? this.allResults,
       selectedFilter: selectedFilter ?? this.selectedFilter,
+      videoModeFilter: videoModeFilter ?? this.videoModeFilter,
+      ruleTypeFilter: identical(ruleTypeFilter, _filterSentinel)
+          ? this.ruleTypeFilter
+          : (ruleTypeFilter as OnlineSourceFilter?),
+      sourceNameFilter: identical(sourceNameFilter, _filterSentinel)
+          ? this.sourceNameFilter
+          : (sourceNameFilter as String?),
       sessionId: sessionId ?? this.sessionId,
       synergyCovers: synergyCovers ?? this.synergyCovers,
     );
@@ -227,10 +308,72 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
     return const OnlineVideoSearchState();
   }
 
-  /// 一瞬间切换分类标签，完全不影响正在后台进行的并发网络请求
+  /// 切换第一维度：视频形态（全部 / 点播 / 直播）
+  void setVideoModeFilter(OnlineSourceFilter mode) {
+    OnlineSourceFilter? nextRule = state.ruleTypeFilter;
+    // 若选择“直播”而规则选了非IPTV点播源，或选择“点播”而规则选了IPTV，自动重置冲突的规则筛选
+    if (mode == OnlineSourceFilter.live &&
+        nextRule != null &&
+        nextRule != OnlineSourceFilter.iptv) {
+      nextRule = null;
+    } else if (mode == OnlineSourceFilter.video &&
+        nextRule == OnlineSourceFilter.iptv) {
+      nextRule = null;
+    }
+    state = state.copyWith(
+      videoModeFilter: mode,
+      ruleTypeFilter: nextRule,
+      selectedFilter: nextRule ?? mode,
+    );
+  }
+
+  /// 切换第二维度：规则协议类型（全部规则 / Haipee / MacCMS / TVBox / Piped / IPTV）
+  void setRuleTypeFilter(OnlineSourceFilter? rule) {
+    final normalizedRule =
+        (rule == OnlineSourceFilter.all) ? null : rule;
+    OnlineSourceFilter nextVideoMode = state.videoModeFilter;
+    if (normalizedRule == OnlineSourceFilter.iptv &&
+        nextVideoMode == OnlineSourceFilter.video) {
+      nextVideoMode = OnlineSourceFilter.all;
+    } else if (normalizedRule != null &&
+        normalizedRule != OnlineSourceFilter.iptv &&
+        nextVideoMode == OnlineSourceFilter.live) {
+      nextVideoMode = OnlineSourceFilter.all;
+    }
+    state = state.copyWith(
+      videoModeFilter: nextVideoMode,
+      ruleTypeFilter: normalizedRule,
+      sourceNameFilter: null,
+      selectedFilter: normalizedRule ?? nextVideoMode,
+    );
+  }
+
+  /// 切换第三维度：具体来源站点
+  void setSourceNameFilter(String? sourceName) {
+    final normalized =
+        (sourceName == null || sourceName.trim().isEmpty) ? null : sourceName;
+    state = state.copyWith(sourceNameFilter: normalized);
+  }
+
+  /// 一键重置全部筛选条件
+  void resetFilters() {
+    state = state.copyWith(
+      selectedFilter: OnlineSourceFilter.all,
+      videoModeFilter: OnlineSourceFilter.all,
+      ruleTypeFilter: null,
+      sourceNameFilter: null,
+    );
+  }
+
+  /// 兼容单枚举切换分类标签，完全不影响正在后台进行的并发网络请求
   void setFilter(OnlineSourceFilter filter) {
-    if (state.selectedFilter != filter) {
-      state = state.copyWith(selectedFilter: filter);
+    if (filter == OnlineSourceFilter.all) {
+      resetFilters();
+    } else if (filter == OnlineSourceFilter.video ||
+        filter == OnlineSourceFilter.live) {
+      setVideoModeFilter(filter);
+    } else {
+      setRuleTypeFilter(filter);
     }
   }
 
