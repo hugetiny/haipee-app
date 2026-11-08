@@ -61,6 +61,7 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
       _playerController.activeLocalVideoArgs = widget.args;
       _playerController.currentTitle = widget.args.title;
       _playerController.isAudioMode = widget.args.effectiveIsAudio;
+      _playerController.videoPageController.loading = false;
 
       await _playerController.init(
         widget.args.filePath,
@@ -77,18 +78,6 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
       // 智能同名伴飞字幕自动探测与匹配 (SubtitleMatcher)
       if (!isHttp) {
         unawaited(_autoMatchCompanionSubtitle(widget.args.filePath));
-      }
-
-      // 自动加载弹幕与 AniSkip 片头片尾 (原生 B站 弹幕由 biliCid 精确直载，其他全源一律直通弹弹play)
-      if (widget.args.biliCid == null || widget.args.biliCid! <= 0) {
-        final ep = widget.args.episode ?? 1;
-        final bgmId = int.tryParse(widget.args.bangumiId ?? '');
-        if (bgmId != null && bgmId > 0) {
-          await _playerController.getDanDanmakuByBgmBangumiID(bgmId, ep);
-          unawaited(_playerController.fetchAniSkipIntervals(bgmId, ep));
-        } else if (widget.args.title.isNotEmpty) {
-          await _playerController.getDanDanmakuByTitle(widget.args.title, ep);
-        }
       }
     });
   }

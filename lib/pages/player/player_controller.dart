@@ -181,7 +181,10 @@ class PlayerController extends Notifier<PlayerState> {
       danDanmakus: const {},
     );
     try {
-      await disposeResources(disposeSyncPlayController: false);
+      await disposeResources(
+        disposeSyncPlayController: false,
+        markDisposed: false,
+      );
     } catch (_) {}
     if (_isDisposed || generation != _initGeneration) return;
     activeBiliCid = resolvedBiliCid;
@@ -207,8 +210,7 @@ class PlayerController extends Notifier<PlayerState> {
 
     // 原生官方弹幕优先直载 (B站 视频具有确定的 CID，以官方原生弹幕为准，严禁弹弹play跨站模糊盲搜)
     if (resolvedBiliCid != null && resolvedBiliCid > 0) {
-      await loadBiliDanmaku(resolvedBiliCid);
-      if (_isDisposed || generation != _initGeneration) return;
+      unawaited(loadBiliDanmaku(resolvedBiliCid));
     } else {
       int episodeFromTitle = 0;
       final bgmItem = videoPageController.state.bangumiItem;
@@ -293,7 +295,11 @@ class PlayerController extends Notifier<PlayerState> {
     }
     setPlaybackSpeed(state.playerSpeed);
     HaipeeLogger().log(Level.info, 'VideoURL初始化完成');
-    state = state.copyWith(loading: false);
+    state = state.copyWith(
+      loading: false,
+      isBuffering: mediaPlayer?.state.buffering ?? false,
+    );
+    videoPageController.loading = false;
     if (syncplayController?.isConnected ?? false) {
       final bgmId = videoPageController.bangumiItem.id;
       if (syncplayController!.currentFileName !=
@@ -377,7 +383,10 @@ class PlayerController extends Notifier<PlayerState> {
     playerPlayingSubscription = mediaPlayer!.stream.playing.listen((isPlaying) {
       state = state.copyWith(playing: isPlaying);
       if (isPlaying) {
-        state = state.copyWith(loading: false);
+        state = state.copyWith(
+          loading: false,
+          isBuffering: mediaPlayer?.state.buffering ?? false,
+        );
         videoPageController.loading = false;
         unawaited(syncVideoQualityMetrics());
       }
@@ -715,9 +724,14 @@ class PlayerController extends Notifier<PlayerState> {
     }
   }
 
-  Future<void> disposeResources({bool disposeSyncPlayController = true}) async {
-    _isDisposed = true;
-    _initGeneration++;
+  Future<void> disposeResources({
+    bool disposeSyncPlayController = true,
+    bool markDisposed = true,
+  }) async {
+    if (markDisposed) {
+      _isDisposed = true;
+      _initGeneration++;
+    }
     if (disposeSyncPlayController) {
       activeBiliCid = null;
       activeBiliBvid = null;

@@ -1365,7 +1365,10 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                           return KeyEventResult.handled;
                         },
                         child: const PlayerItemSurface())),
-                (playerController.isBuffering || videoPageController.loading)
+                (playerState.isBuffering ||
+                        playerState.loading ||
+                        (playerController.activeLocalVideoArgs == null &&
+                            videoState.loading))
                     ? const Positioned.fill(
                         child: Center(
                           child: CircularProgressIndicator(),
