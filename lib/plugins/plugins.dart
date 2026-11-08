@@ -17,6 +17,7 @@ import 'package:haipee/modules/tvbox/tvbox_importer.dart';
 import 'package:haipee/modules/iptv/iptv_service.dart';
 import 'package:haipee/modules/alist/alist_service.dart';
 import 'package:haipee/modules/piped/piped_service.dart';
+import 'package:haipee/plugins/rule_cover_extractor.dart';
 
 /// 规则与媒体源一级分类枚举 (四大分类架构，网盘与BT明确归属为资源类/下载类)
 enum PluginCategory {
@@ -215,7 +216,8 @@ class Plugin {
       type == '2' ||
       type.toLowerCase() == 'maccms' ||
       type.toLowerCase() == 'applecms' ||
-      searchURL.contains('/api.php/provide/vod');
+      searchURL.contains('/provide/vod') ||
+      searchURL.contains('/inc/apijson');
 
   bool get isBilibili =>
       type.toLowerCase() == 'bilibili' ||
@@ -252,6 +254,7 @@ class Plugin {
       type.toLowerCase() == 'fongmi' ||
       name.toLowerCase().contains('tvbox') ||
       userAgent.toLowerCase().contains('kazumi/tvbox') ||
+      userAgent.toLowerCase().contains('haipee/tvbox') ||
       searchMode.toLowerCase() == 'tvbox';
 
   bool get isCardigann =>
@@ -733,9 +736,16 @@ class Plugin {
             .map((item) => SearchItem(
                   name: item.title,
                   src: 'https://www.bilibili.com/video/${item.bvid}',
+                  pic: RuleCoverExtractor.normalizeCoverUrl(item.pic, baseUrl: baseUrl),
+                  remarks: item.duration,
+                  category: resolvedCategory.id,
                 ))
             .toList();
-        return PluginSearchResponse(pluginName: name, data: items);
+        return PluginSearchResponse(
+          pluginName: name,
+          data: items,
+          category: resolvedCategory.id,
+        );
       } catch (e) {
         HaipeeLogger().log(Level.warning, 'Bilibili 规则搜索异常: $e');
         if (shouldRethrow) rethrow;
@@ -752,9 +762,16 @@ class Plugin {
                   src: item.playUrl.isNotEmpty
                       ? item.playUrl
                       : 'https://www.douyin.com/video/${item.id}',
+                  pic: RuleCoverExtractor.normalizeCoverUrl(item.cover, baseUrl: baseUrl),
+                  remarks: item.duration > 0 ? '${item.duration}s' : '',
+                  category: resolvedCategory.id,
                 ))
             .toList();
-        return PluginSearchResponse(pluginName: name, data: items);
+        return PluginSearchResponse(
+          pluginName: name,
+          data: items,
+          category: resolvedCategory.id,
+        );
       } catch (e) {
         HaipeeLogger().log(Level.warning, 'Douyin 规则搜索异常: $e');
         if (shouldRethrow) rethrow;
@@ -798,7 +815,7 @@ class Plugin {
     if (searchMode.toLowerCase() == 'api' && searchApiConfig != null) {
       return _queryApiBangumi(keyword, shouldRethrow: shouldRethrow);
     }
-    if (isMacCms || (isTvBox && searchURL.contains('/api.php/provide/vod'))) {
+    if (isMacCms || (isTvBox && (searchList.isEmpty || searchURL.contains('/provide/vod') || searchURL.contains('/inc/apijson')))) {
       return _queryMacCmsBangumi(keyword, shouldRethrow: shouldRethrow);
     }
 
@@ -859,46 +876,11 @@ class Plugin {
           // 相对路径
           fullUrl = baseUrl.endsWith('/') ? baseUrl + srcUrl : '$baseUrl/$srcUrl';
         }
-        String picUrl = '';
-        if (searchPic.isNotEmpty) {
-          try {
-            final picNode = element.queryXPath(searchPic).node;
-            if (picNode != null) {
-              picUrl = picNode.attributes['src'] ??
-                  picNode.attributes['data-original'] ??
-                  picNode.attributes['data-src'] ??
-                  picNode.attributes['data-echo'] ??
-                  picNode.text?.trim() ??
-                  '';
-            }
-          } catch (_) {}
-        }
-        // 自动回退：当规则未配置 searchPic 或未提取到时，尝试抓取该条目内的首个 img 标签
-        if (picUrl.isEmpty) {
-          try {
-            final fallbackImg = element.queryXPath('.//img').node;
-            if (fallbackImg != null) {
-              picUrl = fallbackImg.attributes['src'] ??
-                  fallbackImg.attributes['data-original'] ??
-                  fallbackImg.attributes['data-src'] ??
-                  fallbackImg.attributes['data-echo'] ??
-                  '';
-            }
-          } catch (_) {}
-        }
-
-        if (picUrl.isNotEmpty) {
-          picUrl = picUrl.trim();
-          if (picUrl.startsWith('//')) {
-            picUrl = 'https:$picUrl';
-          } else if (picUrl.startsWith('http://')) {
-            picUrl = picUrl.replaceFirst('http://', 'https://');
-          } else if (!picUrl.startsWith('https://')) {
-            picUrl = baseUrl.endsWith('/')
-                ? (picUrl.startsWith('/') ? baseUrl + picUrl.substring(1) : '$baseUrl$picUrl')
-                : (picUrl.startsWith('/') ? '$baseUrl$picUrl' : '$baseUrl/$picUrl');
-          }
-        }
+        final String picUrl = RuleCoverExtractor.extractFromXPathNode(
+          element,
+          searchPic: searchPic,
+          baseUrl: baseUrl,
+        );
         SearchItem searchItem = SearchItem(
           name: element.queryXPath(searchName).node!.text?.trim() ?? '',
           src: srcUrl,
@@ -1022,23 +1004,11 @@ class Plugin {
           } else if (!itemSrc.startsWith('http://') && !itemSrc.startsWith('https://')) {
             itemSrc = baseUrl.endsWith('/') ? '$baseUrl$itemId.html' : '$baseUrl/$itemId.html';
           }
-          String itemPic = '';
-          final rawPic = (picKey.isNotEmpty ? item[picKey] : null) ??
-              item['pic'] ??
-              item['vod_pic'] ??
-              item['cover'] ??
-              item['img'];
-          if (rawPic != null) {
-            itemPic = rawPic.toString().trim();
-            if (itemPic.startsWith('//')) {
-              itemPic = 'https:$itemPic';
-            } else if (itemPic.startsWith('http://')) {
-              itemPic = itemPic.replaceFirst('http://', 'https://');
-            } else if (!itemPic.startsWith('https://')) {
-              final cleanPath = itemPic.startsWith('/') ? itemPic.substring(1) : itemPic;
-              itemPic = baseUrl.endsWith('/') ? '$baseUrl$cleanPath' : '$baseUrl/$cleanPath';
-            }
-          }
+          final String itemPic = RuleCoverExtractor.extractFromJsonMap(
+            item,
+            picKey: picKey.isNotEmpty ? picKey : searchPic,
+            baseUrl: baseUrl,
+          );
           searchItems.add(SearchItem(
             name: itemName,
             src: itemSrc,
@@ -1057,7 +1027,7 @@ class Plugin {
     );
   }
 
-  /// 苹果 CMS V10 标准 JSON 采集接口搜索 (支持 ac=detail 快速获取高清海报、更新状态与播放线路)
+  /// 苹果 CMS V10 标准 JSON/XML 采集接口搜索 (强制确保 ac=detail 以返回 vod_pic 海报、更新状态与播放线路)
   Future<PluginSearchResponse> _queryMacCmsBangumi(String keyword,
       {bool shouldRethrow = false}) async {
     final cleanKeyword = cleanKeywordForSearch(keyword);
@@ -1069,13 +1039,19 @@ class Plugin {
           ? '${baseUrl}api.php/provide/vod/?ac=detail&at=json&wd=${Uri.encodeComponent(cleanKeyword)}'
           : '$baseUrl/api.php/provide/vod/?ac=detail&at=json&wd=${Uri.encodeComponent(cleanKeyword)}';
     }
-    if (!queryURL.contains('at=json')) {
+    // 确保使用 ac=detail / ac=videolist：MacCMS 默认 ac=list 不返回 vod_pic 封面字段
+    if (queryURL.contains('ac=list')) {
+      queryURL = queryURL.replaceAll('ac=list', 'ac=detail');
+    } else if (!queryURL.contains('ac=')) {
+      queryURL += queryURL.contains('?') ? '&ac=detail' : '?ac=detail';
+    }
+    if (!queryURL.contains('at=json') && !queryURL.contains('/at/xml')) {
       queryURL += queryURL.contains('?') ? '&at=json' : '?at=json';
     }
 
     final httpHeaders = {
       'referer': '$baseUrl/',
-      'Accept': 'application/json, text/plain, */*',
+      'Accept': 'application/json, application/xml, text/xml, text/plain, */*',
       'Accept-Language': Utils.getRandomAcceptedLanguage(),
       'User-Agent': userAgent.isNotEmpty ? userAgent : 'Mozilla/5.0 (Haipee/Player)',
     };
@@ -1089,9 +1065,11 @@ class Plugin {
 
     List<SearchItem> searchItems = [];
     dynamic data = resp.data;
+    String? rawString;
     if (data is String) {
+      rawString = data.trim();
       try {
-        data = jsonDecode(data);
+        data = jsonDecode(rawString);
       } catch (_) {}
     }
 
@@ -1099,20 +1077,20 @@ class Plugin {
       final list = data['list'] as List;
       for (final item in list) {
         if (item is Map) {
-          final vodName = item['vod_name']?.toString().trim() ?? '';
-          final vodId = item['vod_id']?.toString().trim() ?? '';
-          var vodPic = item['vod_pic']?.toString().trim() ??
-              item['pic']?.toString().trim() ??
+          final vodName = item['vod_name']?.toString().trim() ??
+              item['name']?.toString().trim() ??
               '';
-          if (vodPic.startsWith('//')) {
-            vodPic = 'https:$vodPic';
-          } else if (vodPic.startsWith('http://')) {
-            vodPic = vodPic.replaceFirst('http://', 'https://');
-          } else if (vodPic.startsWith('/') && baseUrl.isNotEmpty) {
-            vodPic = baseUrl.endsWith('/') ? '$baseUrl${vodPic.substring(1)}' : '$baseUrl$vodPic';
-          }
+          final vodId = item['vod_id']?.toString().trim() ??
+              item['id']?.toString().trim() ??
+              '';
+          final vodPic = RuleCoverExtractor.extractFromJsonMap(
+            item,
+            picKey: searchPic,
+            baseUrl: baseUrl,
+          );
           final vodRemarks = item['vod_remarks']?.toString().trim() ??
               item['vod_sub']?.toString().trim() ??
+              item['note']?.toString().trim() ??
               '';
           if (vodName.isNotEmpty && vodId.isNotEmpty) {
             final detailSrc = '/api.php/provide/vod/?ac=detail&at=json&ids=$vodId';
@@ -1127,6 +1105,46 @@ class Plugin {
           }
         }
       }
+    } else if (rawString != null && rawString.startsWith('<')) {
+      // 兼容 TVBox Type 0 / 苹果 CMS XML 格式 (<rss><list><video><id/><name/><pic/><note/></video></list></rss>)
+      try {
+        final doc = parse(rawString);
+        for (final videoEl in doc.querySelectorAll('video')) {
+          final vodName = videoEl
+                  .querySelector('name')
+                  ?.text
+                  .replaceAll('<![CDATA[', '')
+                  .replaceAll(']]>', '')
+                  .trim() ??
+              '';
+          final vodId = videoEl.querySelector('id')?.text.trim() ?? '';
+          final rawPic = videoEl
+                  .querySelector('pic')
+                  ?.text
+                  .replaceAll('<![CDATA[', '')
+                  .replaceAll(']]>', '')
+                  .trim() ??
+              '';
+          final vodPic = RuleCoverExtractor.normalizeCoverUrl(rawPic, baseUrl: baseUrl);
+          final vodRemarks = videoEl
+                  .querySelector('note')
+                  ?.text
+                  .replaceAll('<![CDATA[', '')
+                  .replaceAll(']]>', '')
+                  .trim() ??
+              '';
+          if (vodName.isNotEmpty && vodId.isNotEmpty) {
+            final detailSrc = '/api.php/provide/vod/?ac=detail&ids=$vodId';
+            searchItems.add(SearchItem(
+              name: vodName,
+              src: detailSrc,
+              pic: vodPic,
+              remarks: vodRemarks,
+              category: resolvedCategory.id,
+            ));
+          }
+        }
+      } catch (_) {}
     }
 
     return PluginSearchResponse(

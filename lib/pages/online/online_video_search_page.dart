@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:haipee/bean/appbar/sys_app_bar.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/image/rule_cover_image.dart';
 import 'package:haipee/modules/bangumi/bangumi_item.dart';
 import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/modules/bilibili/bilibili_service.dart';
@@ -133,9 +133,12 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
       }
       HaipeeDialog.showToast(message: '正在拉取 [$pluginName] 剧集与播放线路...');
       final videoPageController = ref.read(videoProvider.notifier);
+      final effectiveCover = item.pic.isNotEmpty
+          ? item.pic
+          : ref.read(onlineVideoSearchProvider).resolveFallbackCover(item);
       videoPageController.bangumiItem = BangumiItem.dummy(
         title: item.title,
-        image: item.pic,
+        image: effectiveCover,
       );
       videoPageController.title = item.title;
       videoPageController.src = src;
@@ -1101,30 +1104,14 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (item.pic.isNotEmpty)
-                    CachedNetworkImage(
-                      imageUrl: item.pic,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: colorScheme.surfaceContainerHighest,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: colorScheme.surfaceContainerHighest,
-                        child: const Center(
-                          child: Icon(Icons.broken_image_outlined, size: 28),
-                        ),
-                      ),
-                    )
-                  else
-                    Container(
-                      color: colorScheme.surfaceContainerHighest,
-                      child: const Center(
-                        child: Icon(Icons.movie_outlined, size: 32),
-                      ),
-                    ),
+                  RuleCoverImage(
+                    imageUrl: item.pic,
+                    fallbackImageUrl: ref
+                        .read(onlineVideoSearchProvider)
+                        .resolveFallbackCover(item),
+                    title: item.title,
+                    ruleTag: item.tag,
+                  ),
                   // 时长或分P药丸 (右下角)
                   if (item.duration.isNotEmpty)
                     Positioned(

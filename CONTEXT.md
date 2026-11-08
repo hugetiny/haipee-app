@@ -278,6 +278,14 @@ _Avoid_: Sequential blocking iteration over rules, halting UI updates until the 
 The search scoping contract specifying that initiating a search always queries all enabled audiovisual rules concurrently to establish comprehensive multi-rule result statistics, regardless of which left category filter is active. The user's active filter chip strictly controls client-side viewport visibility, allowing instantaneous switching between rule categories without triggering redundant network requests.
 _Avoid_: Limiting backend search queries to a single active category, invalidating global category statistics on filtered searches
 
+**Resilient Media Cover Pipeline (强韧媒体封面提取与加载管线)**:
+The multi-stage cover resolution and delivery contract across heterogeneous audiovisual rules (Haipee XPath, MacCMS JSON, TVBox, Piped, IPTV):
+1. *Heuristic Multi-Attribute DOM Extraction*: Prioritizes lazy-loaded image attributes (`data-original`, `data-src`, `data-lazy-src`, `data-echo`, `data-cover`, `data-bg`) on both `<img>` and container nodes (`<a>`, `<div>`, `<span>`), falling back to inline CSS `background-image: url(...)` extraction and non-placeholder `src` attributes.
+2. *Protocol-Preserving & TLS-Tolerant Delivery*: Preserves original `http://` or `https://` schemes returned by third-party CMS CDNs without blind HTTPS coercion, tolerates self-signed or hostname-mismatched media certificates, injects source-aware `Referer`/`User-Agent` headers, and automatically downgrades failed `https://` media fetches to `http://`.
+3. *Cross-Source Cover Synergy & M3 Fallback*: Dynamically shares discovered cover URLs across identical normalized titles within the active search session and renders adaptive Material 3 gradient cards when no cover exists.
+_Avoid_: Blindly rewriting `http://` image URLs to `https://`, reading placeholder `src` before `data-original`, ignoring `style="background-image:url(...)"` or `<a data-original="...">` containers, failing cover rendering on mismatched CDN TLS certificates
+
+
 
 
 

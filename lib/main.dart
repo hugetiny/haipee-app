@@ -194,18 +194,20 @@ void main() async {
       Request();
       await Request.setCookie();
 
-      // Initialize Gopeed download engine in background without blocking UI startup
-      unawaited(
-        GopeedService().initialize().catchError((e) {
-          HaipeeLogger().log(Level.warning, '[Main] Failed to initialize Gopeed: $e');
-        }),
-      );
-
       runApp(
         const ProviderScope(
           child: AppWidget(),
         ),
       );
+
+      // Initialize Gopeed download engine after first frame to avoid cold-start JNI/UI contention
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(
+          GopeedService().initialize().catchError((e) {
+            HaipeeLogger().log(Level.warning, '[Main] Failed to initialize Gopeed: $e');
+          }),
+        );
+      });
     },
   );
 }

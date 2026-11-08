@@ -27,10 +27,16 @@ class GopeedService {
   Future<void> initialize({String? storageDir}) {
     if (_initialized) return Future.value();
     if (_initFuture != null) return _initFuture!;
+    final isTest = Platform.environment.containsKey('FLUTTER_TEST');
+    final totalTimeout = isTest
+        ? const Duration(seconds: 4)
+        : const Duration(seconds: 20);
     return _initFuture = _doInitialize(storageDir: storageDir).timeout(
-      const Duration(seconds: 4),
+      totalTimeout,
       onTimeout: () {
-        throw TimeoutException('GopeedService initialization timed out after 4 seconds');
+        throw TimeoutException(
+          'GopeedService initialization timed out after ${totalTimeout.inSeconds} seconds',
+        );
       },
     ).then((_) {
       _initialized = true;
@@ -57,7 +63,7 @@ class GopeedService {
 
     if (targetDir.isEmpty) {
       try {
-        final appDir = await getApplicationSupportDirectory().timeout(const Duration(seconds: 1));
+        final appDir = await getApplicationSupportDirectory().timeout(const Duration(seconds: 3));
         targetDir = '${appDir.path}/gopeed';
       } catch (_) {
         targetDir = '${Directory.current.path}/.gopeed';
@@ -86,9 +92,14 @@ class GopeedService {
       },
     };
 
-    await _worker.start(jsonEncode(config)).timeout(const Duration(seconds: 3));
+    final isTest = Platform.environment.containsKey('FLUTTER_TEST');
+    await _worker
+        .start(jsonEncode(config))
+        .timeout(isTest ? const Duration(seconds: 3) : const Duration(seconds: 15));
     // Subscribe to task done and error events (mask = 0x03: done=1, error=2)
-    await _worker.subscribeTaskEvents(0x03).timeout(const Duration(seconds: 2));
+    await _worker
+        .subscribeTaskEvents(0x03)
+        .timeout(isTest ? const Duration(seconds: 2) : const Duration(seconds: 5));
     await _workerSub?.cancel();
     _workerSub = _worker.taskEvents.listen((data) {
       _eventController.add(GopeedTaskEvent.fromJson(data));

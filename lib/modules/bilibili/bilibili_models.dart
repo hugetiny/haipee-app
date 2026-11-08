@@ -26,6 +26,34 @@ class BiliVideoItem {
     this.ruleType = '',
   });
 
+  BiliVideoItem copyWith({
+    String? bvid,
+    String? title,
+    String? author,
+    String? pic,
+    int? play,
+    int? danmaku,
+    String? duration,
+    int? pubdate,
+    String? description,
+    String? tag,
+    String? ruleType,
+  }) {
+    return BiliVideoItem(
+      bvid: bvid ?? this.bvid,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      pic: pic ?? this.pic,
+      play: play ?? this.play,
+      danmaku: danmaku ?? this.danmaku,
+      duration: duration ?? this.duration,
+      pubdate: pubdate ?? this.pubdate,
+      description: description ?? this.description,
+      tag: tag ?? this.tag,
+      ruleType: ruleType ?? this.ruleType,
+    );
+  }
+
   String get resolvedRuleType {
     if (ruleType.isNotEmpty) {
       final clean = ruleType.trim().toLowerCase();

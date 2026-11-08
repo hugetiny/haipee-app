@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/modules/bilibili/bilibili_models.dart';
@@ -6,6 +7,8 @@ import 'package:haipee/modules/bilibili/bilibili_service.dart';
 import 'package:haipee/modules/douyin/douyin_service.dart';
 import 'package:haipee/plugins/plugins.dart';
 import 'package:haipee/plugins/plugins_providers.dart';
+import 'package:haipee/plugins/rule_cover_extractor.dart';
+import 'package:haipee/request/bangumi.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
@@ -72,6 +75,7 @@ class OnlineVideoSearchState {
   final List<BiliVideoItem> allResults;
   final OnlineSourceFilter selectedFilter;
   final int sessionId;
+  final Map<String, String> synergyCovers;
 
   const OnlineVideoSearchState({
     this.keyword = '',
@@ -81,7 +85,34 @@ class OnlineVideoSearchState {
     this.allResults = const [],
     this.selectedFilter = OnlineSourceFilter.all,
     this.sessionId = 0,
+    this.synergyCovers = const {},
   });
+
+  /// 解析指定条目的跨源协同备用封面（当主封面为空或第三方采集站图片 CDN 劫持失效时自动接管）
+  String resolveFallbackCover(BiliVideoItem item) {
+    final normTitle = RuleCoverExtractor.normalizeTitleForSynergy(item.title);
+    if (normTitle.isNotEmpty) {
+      final exact = synergyCovers[normTitle];
+      if (exact != null && exact.isNotEmpty && exact != item.pic) {
+        return exact;
+      }
+      for (final entry in synergyCovers.entries) {
+        if (entry.key.length >= 2 &&
+            entry.value != item.pic &&
+            (normTitle.contains(entry.key) || entry.key.contains(normTitle))) {
+          return entry.value;
+        }
+      }
+    }
+    final normKeyword = RuleCoverExtractor.normalizeTitleForSynergy(keyword);
+    if (normKeyword.isNotEmpty) {
+      final keywordCover = synergyCovers[normKeyword];
+      if (keywordCover != null && keywordCover.isNotEmpty && keywordCover != item.pic) {
+        return keywordCover;
+      }
+    }
+    return '';
+  }
 
   static bool isLiveItem(BiliVideoItem item) {
     return item.resolvedRuleType == 'iptv' ||
@@ -175,6 +206,7 @@ class OnlineVideoSearchState {
     List<BiliVideoItem>? allResults,
     OnlineSourceFilter? selectedFilter,
     int? sessionId,
+    Map<String, String>? synergyCovers,
   }) {
     return OnlineVideoSearchState(
       keyword: keyword ?? this.keyword,
@@ -184,6 +216,7 @@ class OnlineVideoSearchState {
       allResults: allResults ?? this.allResults,
       selectedFilter: selectedFilter ?? this.selectedFilter,
       sessionId: sessionId ?? this.sessionId,
+      synergyCovers: synergyCovers ?? this.synergyCovers,
     );
   }
 }
@@ -210,6 +243,7 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       totalSources: 0,
       allResults: const [],
       sessionId: state.sessionId + 1,
+      synergyCovers: const {},
     );
   }
 
@@ -251,9 +285,15 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       allResults: const [],
       selectedFilter: initialFilter,
       sessionId: sessionId,
+      synergyCovers: const {},
     );
 
     if (totalSources == 0) return;
+
+    // 0. 后台非阻塞 Bangumi 官方高清海报联动补全（不计入规则进度，仅用于同名无封面规则源智能补全）
+    if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+      unawaited(_enrichWithBangumiCovers(clean, sessionId));
+    }
 
     // 1. 直链快捷匹配 (抖音短视频)
     if (DouyinService.hasDouyinPattern(clean)) {
@@ -409,17 +449,92 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
     }
   }
 
+  Future<void> _enrichWithBangumiCovers(String keyword, int sessionId) async {
+    try {
+      final bangumiList = await BangumiHTTP.bangumiSearch(keyword)
+          .timeout(const Duration(seconds: 5));
+      if (state.sessionId != sessionId || bangumiList.isEmpty) return;
+
+      final mergedCovers = Map<String, String>.from(state.synergyCovers);
+      for (final bgm in bangumiList) {
+        final cover = (bgm.images['large'] ?? bgm.images['common'] ?? '').trim();
+        if (cover.isEmpty || RuleCoverExtractor.isPlaceholderImageUrl(cover)) {
+          continue;
+        }
+        final normCn = RuleCoverExtractor.normalizeTitleForSynergy(bgm.nameCn);
+        final normJp = RuleCoverExtractor.normalizeTitleForSynergy(bgm.name);
+        if (normCn.isNotEmpty) {
+          mergedCovers[normCn] = cover;
+        }
+        if (normJp.isNotEmpty) {
+          mergedCovers[normJp] = cover;
+        }
+      }
+
+      if (mergedCovers.length != state.synergyCovers.length) {
+        final backfilled = _backfillMissingCovers(state.allResults, mergedCovers);
+        state = state.copyWith(
+          allResults: List.unmodifiable(backfilled),
+          synergyCovers: Map.unmodifiable(mergedCovers),
+        );
+      }
+    } catch (_) {}
+  }
+
+  List<BiliVideoItem> _backfillMissingCovers(
+    List<BiliVideoItem> list,
+    Map<String, String> covers,
+  ) {
+    if (covers.isEmpty) return list;
+    final normKeyword = RuleCoverExtractor.normalizeTitleForSynergy(state.keyword);
+    return list.map((item) {
+      if (item.pic.isNotEmpty && !RuleCoverExtractor.isPlaceholderImageUrl(item.pic)) {
+        return item;
+      }
+      final normTitle = RuleCoverExtractor.normalizeTitleForSynergy(item.title);
+      String? matched = covers[normTitle];
+      if (matched == null && normTitle.isNotEmpty) {
+        for (final entry in covers.entries) {
+          if (entry.key.length >= 2 &&
+              (normTitle.contains(entry.key) || entry.key.contains(normTitle))) {
+            matched = entry.value;
+            break;
+          }
+        }
+      }
+      matched ??= normKeyword.isNotEmpty ? covers[normKeyword] : null;
+      if (matched != null && matched.isNotEmpty) {
+        return item.copyWith(pic: matched);
+      }
+      return item;
+    }).toList();
+  }
+
   void _appendResults(List<BiliVideoItem> items, int sessionId) {
     if (state.sessionId != sessionId || items.isEmpty) return;
     final existingBvids = state.allResults.map((i) => i.bvid).toSet();
     final updated = List<BiliVideoItem>.from(state.allResults);
+    final mergedCovers = Map<String, String>.from(state.synergyCovers);
+
     for (final item in items) {
+      final cleanPic = item.pic.trim();
+      if (cleanPic.isNotEmpty && !RuleCoverExtractor.isPlaceholderImageUrl(cleanPic)) {
+        final normTitle = RuleCoverExtractor.normalizeTitleForSynergy(item.title);
+        if (normTitle.isNotEmpty) {
+          mergedCovers.putIfAbsent(normTitle, () => cleanPic);
+        }
+      }
       if (!existingBvids.contains(item.bvid)) {
         existingBvids.add(item.bvid);
         updated.add(item);
       }
     }
-    state = state.copyWith(allResults: List.unmodifiable(updated));
+
+    final backfilled = _backfillMissingCovers(updated, mergedCovers);
+    state = state.copyWith(
+      allResults: List.unmodifiable(backfilled),
+      synergyCovers: Map.unmodifiable(mergedCovers),
+    );
   }
 
   void _insertDirectMatch(BiliVideoItem directItem, int sessionId) {
@@ -427,7 +542,18 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
     final updated = List<BiliVideoItem>.from(state.allResults);
     updated.removeWhere((i) => i.bvid == directItem.bvid);
     updated.insert(0, directItem);
-    state = state.copyWith(allResults: List.unmodifiable(updated));
+    final mergedCovers = Map<String, String>.from(state.synergyCovers);
+    if (directItem.pic.isNotEmpty &&
+        !RuleCoverExtractor.isPlaceholderImageUrl(directItem.pic)) {
+      final normTitle = RuleCoverExtractor.normalizeTitleForSynergy(directItem.title);
+      if (normTitle.isNotEmpty) {
+        mergedCovers.putIfAbsent(normTitle, () => directItem.pic);
+      }
+    }
+    state = state.copyWith(
+      allResults: List.unmodifiable(_backfillMissingCovers(updated, mergedCovers)),
+      synergyCovers: Map.unmodifiable(mergedCovers),
+    );
   }
 
   void _onSourceCompleted(int sessionId) {

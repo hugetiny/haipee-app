@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:haipee/bean/widget/image/rule_cover_image.dart';
 import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:haipee/modules/search/plugin_search_module.dart';
 import 'package:haipee/plugins/plugins.dart';
@@ -319,7 +320,7 @@ class _PluginDryRunDialogState extends ConsumerState<PluginDryRunDialog> {
                       child: Text(
                         _testResults!.isEmpty
                             ? '请求完成 (耗时 ${_elapsedMs ?? 0}ms)，但未匹配到搜索结果，建议更换关键词'
-                            : '抓取成功！耗时 ${_elapsedMs ?? 0}ms，成功解析出 ${_testResults!.length} 条资源条目',
+                            : '抓取成功！耗时 ${_elapsedMs ?? 0}ms，成功解析出 ${_testResults!.length} 条资源 (含封面 ${_testResults!.where((e) => e.pic.isNotEmpty).length} 条)',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: _testResults!.isEmpty ? Colors.amber.shade800 : Colors.green,
@@ -350,22 +351,15 @@ class _PluginDryRunDialogState extends ConsumerState<PluginDryRunDialog> {
                         final item = _testResults![index];
                         return ListTile(
                           dense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                          leading: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${index + 1}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: colorScheme.primary,
-                                ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: SizedBox(
+                              width: 40,
+                              height: 52,
+                              child: RuleCoverImage(
+                                imageUrl: item.pic,
+                                iconSize: 16,
                               ),
                             ),
                           ),
@@ -375,17 +369,34 @@ class _PluginDryRunDialogState extends ConsumerState<PluginDryRunDialog> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          subtitle: item.src.isNotEmpty
-                              ? Text(
-                                  item.src,
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (item.src.isNotEmpty)
+                                Text(
+                                  '地址: ${item.src}',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: colorScheme.outline,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                )
-                              : null,
+                                ),
+                              Text(
+                                item.pic.isNotEmpty
+                                    ? '封面: ${item.pic}'
+                                    : '封面: 未提取到 (将使用跨源协同兜底)',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: item.pic.isNotEmpty
+                                      ? colorScheme.primary
+                                      : colorScheme.outline,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                           trailing: SettingsBadge(
                             label: widget.plugin.type.toUpperCase(),
                             color: colorScheme.surfaceContainerHighest,

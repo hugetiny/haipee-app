@@ -33,6 +33,7 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
   final TextEditingController searchListController = TextEditingController();
   final TextEditingController searchNameController = TextEditingController();
   final TextEditingController searchResultController = TextEditingController();
+  final TextEditingController searchPicController = TextEditingController();
   final TextEditingController chapterRoadsController = TextEditingController();
   final TextEditingController chapterResultController = TextEditingController();
   final TextEditingController refererController = TextEditingController();
@@ -54,6 +55,7 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
     searchListController.text = plugin.searchList;
     searchNameController.text = plugin.searchName;
     searchResultController.text = plugin.searchResult;
+    searchPicController.text = plugin.searchPic;
     chapterRoadsController.text = plugin.chapterRoads;
     chapterResultController.text = plugin.chapterResult;
     refererController.text = plugin.referer;
@@ -86,6 +88,7 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
     searchListController.dispose();
     searchNameController.dispose();
     searchResultController.dispose();
+    searchPicController.dispose();
     chapterRoadsController.dispose();
     chapterResultController.dispose();
     refererController.dispose();
@@ -117,6 +120,7 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
     plugin.searchList = searchListController.text.trim();
     plugin.searchName = searchNameController.text.trim();
     plugin.searchResult = searchResultController.text.trim();
+    plugin.searchPic = searchPicController.text.trim();
     plugin.chapterRoads = chapterRoadsController.text.trim();
     plugin.chapterResult = chapterResultController.text.trim();
     plugin.muliSources = muliSources;
@@ -245,6 +249,7 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
                 searchList: searchListController.text.trim(),
                 searchName: searchNameController.text.trim(),
                 searchResult: searchResultController.text.trim(),
+                searchPic: searchPicController.text.trim(),
                 chapterRoads: chapterRoadsController.text.trim(),
                 chapterResult: chapterResultController.text.trim(),
                 referer: refererController.text,
@@ -313,6 +318,10 @@ class _PluginEditorPageState extends ConsumerState<PluginEditorPage> {
               _buildFieldTile(
                 controller: searchResultController,
                 label: editorTexts.fields.searchResult,
+              ),
+              _buildFieldTile(
+                controller: searchPicController,
+                label: '搜索封面 XPath / 字段 (searchPic，留空则自动探测)',
               ),
             ],
           ),
