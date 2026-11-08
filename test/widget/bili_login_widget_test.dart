@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,11 +28,11 @@ void main() {
   setUpAll(() async {
     tempDir = Directory.systemTemp.createTempSync('bili_widget_test_');
     Hive.init(tempDir.path);
-    GStorage.setting = await Hive.openBox('setting_test_widget');
-    GStorage.collectibles = await Hive.openBox<CollectedBangumi>('collectibles_test_widget');
-    GStorage.collectChanges = await Hive.openBox<CollectedBangumiChange>('collect_changes_test_widget');
-    GStorage.histories = await Hive.openBox<History>('histories_test_widget');
-    GStorage.shieldList = await Hive.openBox<String>('shield_list_test_widget');
+    GStorage.setting = await Hive.openBox('setting_test_widget', bytes: Uint8List(0));
+    GStorage.collectibles = await Hive.openBox<CollectedBangumi>('collectibles_test_widget', bytes: Uint8List(0));
+    GStorage.collectChanges = await Hive.openBox<CollectedBangumiChange>('collect_changes_test_widget', bytes: Uint8List(0));
+    GStorage.histories = await Hive.openBox<History>('histories_test_widget', bytes: Uint8List(0));
+    GStorage.shieldList = await Hive.openBox<String>('shield_list_test_widget', bytes: Uint8List(0));
   });
 
   tearDownAll(() async {
@@ -293,17 +294,64 @@ void main() {
       expect(find.byKey(const Key('bili_player_login_button')), findsOneWidget);
     });
 
-    testWidgets('4. BiliLoginDialog supports switching between WebView, QR Code, and Cookie tabs', (tester) async {
+    testWidgets('4. Desktop BiliLoginDialog presents QR code only (no Web/SMS or Cookie tabs) and auto-closes on mobile confirmation', (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
+      await BiliAuthService().logout();
 
+      int pollCount = 0;
+      final confirmDio = Dio();
+      confirmDio.httpClientAdapter = _MockHttpClientAdapter((options) {
+        if (options.uri.path.contains('/qrcode/generate')) {
+          return ResponseBody.fromString(
+            '{"code":0,"data":{"url":"https://account.bilibili.com/h5/account-h5/auth/scan-web?qrcode_key=desktop_qr_key","qrcode_key":"desktop_qr_key"}}',
+            200,
+            headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+          );
+        }
+        if (options.uri.path.contains('/qrcode/poll')) {
+          pollCount++;
+          if (pollCount == 1) {
+            return ResponseBody.fromString(
+              '{"code":0,"data":{"code":86090,"message":"已扫码，请在手机端确认登录"}}',
+              200,
+              headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+            );
+          }
+          return ResponseBody.fromString(
+            '{"code":0,"data":{"code":0,"message":"","url":"https://passport.biligame.com/crossDomain?DedeUserID=999888&SESSDATA=desktop_sess%2C1750000000%2Cabc%2A31=&bili_jct=desktop_jct"}}',
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+              'set-cookie': [
+                'SESSDATA=desktop_sess%2C1750000000%2Cabc%2A31=; Path=/; Domain=.bilibili.com;',
+                'bili_jct=desktop_jct; Path=/; Domain=.bilibili.com;',
+                'DedeUserID=999888; Path=/; Domain=.bilibili.com;',
+              ],
+            },
+          );
+        }
+        if (options.uri.path.contains('/x/web-interface/nav')) {
+          return ResponseBody.fromString(
+            '{"code":0,"data":{"isLogin":true,"mid":999888,"uname":"桌面扫码用户","face":"","vipType":2,"vip_label":{"text":"大会员"}}}',
+            200,
+            headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+          );
+        }
+        return ResponseBody.fromString('{}', 404);
+      });
+      BiliAuthService().setCustomDio(confirmDio);
+
+      bool? dialogResult;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(
-                onPressed: () => BiliLoginDialog.show(context),
+                onPressed: () async {
+                  dialogResult = await BiliLoginDialog.show(context);
+                },
                 child: const Text('Open Dialog'),
               ),
             ),
@@ -315,32 +363,26 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // 1. Verify 3 tab options exist in SegmentedButton
-      expect(find.text('网页/短信'), findsOneWidget);
-      expect(find.text('扫码登录'), findsOneWidget);
-      expect(find.text('Cookie'), findsOneWidget);
+      // 1. Desktop does not render Web/SMS or Cookie tabs
+      expect(find.text('网页/短信'), findsNothing);
+      expect(find.text('Cookie'), findsNothing);
+      expect(find.text('桌面端推荐'), findsNothing);
+      expect(find.text('请使用哔哩哔哩客户端扫码登录'), findsOneWidget);
 
-      // On macOS desktop test runner, initial tab is QR Code (desktop recommended)
-      expect(find.text('桌面端推荐'), findsOneWidget);
-
-      // 2. Switch to Cookie tab
-      await tester.tap(find.text('Cookie'));
+      // 2. First poll tick (1.5s): phone scanned, waiting confirmation
+      await tester.pump(const Duration(milliseconds: 1500));
       await tester.pump();
+      expect(find.text('已扫码，请在手机端确认登录'), findsOneWidget);
 
-      expect(find.text('手动粘贴 B站登录凭据 (SESSDATA)'), findsOneWidget);
-      expect(find.byType(TextField), findsOneWidget);
-      expect(find.text('验证并登录'), findsOneWidget);
-
-      // 3. Switch to Webview tab
-      await tester.tap(find.text('网页/短信'));
-      await tester.pump();
-
-      expect(find.text('桌面端推荐使用手机 App 扫码登录'), findsOneWidget);
-      expect(find.text('在默认浏览器中打开登录页'), findsOneWidget);
-
-      // Dismiss dialog
-      await tester.tap(find.text('暂不登录 (保持360P)'));
+      // 3. Second poll tick (1.5s): phone confirmed -> dialog auto-closes with result=true
+      await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
+
+      expect(find.byType(BiliLoginDialog), findsNothing);
+      expect(dialogResult, isTrue);
+      expect(BiliAuthService().isLoggedIn, isTrue);
+      expect(BiliAuthService().currentUser?.uname, equals('桌面扫码用户'));
+      await BiliAuthService().logout();
     });
   });
 }

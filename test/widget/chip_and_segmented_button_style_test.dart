@@ -98,7 +98,7 @@ void main() {
       expect(find.byIcon(Icons.check), findsNothing);
     });
 
-    testWidgets('SegmentedButton in BiliLoginDialog has showSelectedIcon disabled',
+    testWidgets('Desktop BiliLoginDialog presents clean QR login without SegmentedButton tabs',
         (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1000, 700);
       tester.view.devicePixelRatio = 1.0;
@@ -112,23 +112,14 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
-      // Find SegmentedButton
+      // Desktop hides SegmentedButton (Web/SMS & Cookie tabs) and shows only QR Code login
       final segmentedButtonFinder = find.byType(SegmentedButton<BiliLoginTab>);
-      expect(segmentedButtonFinder, findsOneWidget);
-
-      final segmentedButton =
-          tester.widget<SegmentedButton<BiliLoginTab>>(segmentedButtonFinder);
-      expect(segmentedButton.showSelectedIcon, isFalse,
-          reason: 'SegmentedButton must have showSelectedIcon set to false to avoid crude hook');
-
-      // The 3 segments should have phone, qr, vpn icons visible
-      expect(find.byIcon(Icons.phone_android), findsOneWidget);
-      expect(find.byIcon(Icons.qr_code_2), findsOneWidget);
-      expect(find.byIcon(Icons.vpn_key_outlined), findsOneWidget);
-
-      // And no checkmark icon is displayed
+      expect(segmentedButtonFinder, findsNothing);
+      expect(find.text('网页/短信'), findsNothing);
+      expect(find.text('Cookie'), findsNothing);
       expect(find.byIcon(Icons.check), findsNothing);
     });
   });

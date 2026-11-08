@@ -50,6 +50,8 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
   String _qrStatusMessage = '正在生成登录二维码...';
   bool _qrLoading = true;
   Timer? _qrPollTimer;
+  bool _isPollInFlight = false;
+  bool _loginCompleted = false;
 
   // --- 网页登录状态 ---
   WebViewController? _webViewController;
@@ -66,7 +68,7 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
   @override
   void initState() {
     super.initState();
-    // 手机端默认进入网页/短信登录，桌面端默认进入扫码登录
+    // 手机端默认进入网页/短信登录，桌面端仅使用扫码登录
     _currentTab = _isMobilePlatform ? BiliLoginTab.webview : BiliLoginTab.qrCode;
 
     if (!_authService.isLoggedIn) {
@@ -86,14 +88,19 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
   }
 
   void _switchTab(BiliLoginTab tab) {
+    if (!_isMobilePlatform && tab != BiliLoginTab.qrCode) return;
     if (_currentTab == tab) return;
     setState(() {
       _currentTab = tab;
     });
 
     if (tab == BiliLoginTab.qrCode) {
-      if (_qrData == null) {
+      if (_qrData == null ||
+          _qrStatus == BiliQrCodeStatus.expired ||
+          _qrStatus == BiliQrCodeStatus.error) {
         _startQrCodeFlow();
+      } else {
+        _startQrPolling(_qrData!.qrcodeKey);
       }
     } else {
       _qrPollTimer?.cancel();
@@ -109,6 +116,8 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
   // ==========================================
   Future<void> _startQrCodeFlow() async {
     _qrPollTimer?.cancel();
+    _isPollInFlight = false;
+    _loginCompleted = false;
     setState(() {
       _qrLoading = true;
       _qrStatus = BiliQrCodeStatus.notScanned;
@@ -123,6 +132,7 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
         _qrLoading = false;
         _qrStatusMessage = '请使用哔哩哔哩客户端扫码登录';
       });
+      WidgetsBinding.instance.scheduleForcedFrame();
 
       _startQrPolling(qrData.qrcodeKey);
     } catch (e) {
@@ -132,35 +142,55 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
         _qrStatus = BiliQrCodeStatus.error;
         _qrStatusMessage = '二维码生成失败，请点击重试';
       });
+      WidgetsBinding.instance.scheduleForcedFrame();
     }
   }
 
   void _startQrPolling(String qrcodeKey) {
     _qrPollTimer?.cancel();
-    _qrPollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+    _isPollInFlight = false;
+    _qrPollTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) async {
+      if (!mounted || _loginCompleted) {
+        timer.cancel();
+        return;
+      }
+      if (_isPollInFlight) return;
+      _isPollInFlight = true;
       try {
         final result = await _authService.pollQrCode(qrcodeKey);
-        if (!mounted) {
+        if (!mounted || _loginCompleted) {
           timer.cancel();
           return;
         }
 
-        setState(() {
-          _qrStatus = result.status;
-          _qrStatusMessage = result.message;
-        });
+        final String nextMessage = result.status == BiliQrCodeStatus.notScanned
+            ? '请使用哔哩哔哩客户端扫码登录'
+            : result.message;
+
+        if (_qrStatus != result.status || _qrStatusMessage != nextMessage) {
+          setState(() {
+            _qrStatus = result.status;
+            _qrStatusMessage = nextMessage;
+          });
+          WidgetsBinding.instance.scheduleForcedFrame();
+        }
 
         if (result.status == BiliQrCodeStatus.success) {
+          _loginCompleted = true;
           timer.cancel();
-          HaipeeDialog.showToast(message: '登录成功！已解锁 1080P/4K 高清画质', context: context);
-          Future.delayed(const Duration(milliseconds: 800), () {
-            if (mounted) Navigator.of(context).pop(true);
-          });
+          if (mounted) {
+            Navigator.of(context).pop(true);
+            WidgetsBinding.instance.scheduleForcedFrame();
+          }
+          HaipeeDialog.showToast(message: '登录成功！已解锁 1080P/4K 高清画质');
         } else if (result.status == BiliQrCodeStatus.expired ||
             result.status == BiliQrCodeStatus.error) {
           timer.cancel();
         }
-      } catch (_) {}
+      } catch (_) {
+      } finally {
+        _isPollInFlight = false;
+      }
     });
   }
 
@@ -347,19 +377,19 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (!isLoggedIn)
+              if (!isLoggedIn && _isMobilePlatform)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _isMobilePlatform ? Colors.blue.withValues(alpha: 0.1) : Colors.purple.withValues(alpha: 0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    _isMobilePlatform ? '手机端推荐' : '桌面端推荐',
+                    '手机端推荐',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: _isMobilePlatform ? Colors.blue.shade700 : Colors.purple.shade700,
+                      color: Colors.blue.shade700,
                     ),
                   ),
                 ),
@@ -367,8 +397,8 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
           ),
           content: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: _currentTab == BiliLoginTab.webview && _isMobilePlatform ? 420 : 360,
-              maxHeight: _currentTab == BiliLoginTab.webview && _isMobilePlatform ? 480 : 420,
+              maxWidth: _currentTab == BiliLoginTab.webview && _isMobilePlatform ? 420 : 340,
+              maxHeight: _currentTab == BiliLoginTab.webview && _isMobilePlatform ? 480 : 400,
             ),
             child: isLoggedIn
                 ? _buildLoggedInView(user, colorScheme)
@@ -376,13 +406,18 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildTabSelector(colorScheme),
-                        const SizedBox(height: 14),
-                        switch (_currentTab) {
-                          BiliLoginTab.webview => _buildWebviewLoginView(colorScheme, textTheme),
-                          BiliLoginTab.qrCode => _buildQrLoginView(colorScheme),
-                          BiliLoginTab.cookie => _buildCookieLoginView(colorScheme, textTheme),
-                        },
+                        if (_isMobilePlatform) ...[
+                          _buildTabSelector(colorScheme),
+                          const SizedBox(height: 14),
+                          switch (_currentTab) {
+                            BiliLoginTab.webview => _buildWebviewLoginView(colorScheme, textTheme),
+                            BiliLoginTab.qrCode => _buildQrLoginView(colorScheme),
+                            BiliLoginTab.cookie => _buildCookieLoginView(colorScheme, textTheme),
+                          },
+                        ] else ...[
+                          const SizedBox(height: 4),
+                          _buildQrLoginView(colorScheme),
+                        ],
                       ],
                     ),
                   ),
@@ -413,14 +448,14 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
                 onPressed: () => Navigator.of(context).pop(false),
                 child: const Text('暂不登录 (保持360P)'),
               ),
-              if (_currentTab == BiliLoginTab.qrCode &&
+              if ((!_isMobilePlatform || _currentTab == BiliLoginTab.qrCode) &&
                   (_qrStatus == BiliQrCodeStatus.expired || _qrStatus == BiliQrCodeStatus.error))
                 FilledButton.icon(
                   onPressed: _startQrCodeFlow,
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('重新生成'),
                 ),
-              if (_currentTab == BiliLoginTab.cookie)
+              if (_isMobilePlatform && _currentTab == BiliLoginTab.cookie)
                 FilledButton(
                   onPressed: _cookieVerifying ? null : _handleCookieImport,
                   child: _cookieVerifying

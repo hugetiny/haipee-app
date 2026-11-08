@@ -14,8 +14,14 @@ class BiliAuthService {
     _loadStoredUser();
   }
 
+  final Dio _defaultDio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 8),
+      receiveTimeout: const Duration(seconds: 8),
+    ),
+  );
   Dio? _customDio;
-  Dio get _client => _customDio ?? Dio();
+  Dio get _client => _customDio ?? _defaultDio;
 
   @visibleForTesting
   void setCustomDio(Dio dio) {
@@ -61,10 +67,22 @@ class BiliAuthService {
     } catch (_) {}
   }
 
+  Map<String, dynamic>? _asJsonMap(dynamic raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    if (raw is String && raw.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {}
+    }
+    return null;
+  }
+
   /// 1. 获取扫码登录的二维码 URL 与 qrcodeKey
   Future<BiliQrCodeData> generateQrCode() async {
     const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate';
-    final response = await _client.get<Map<String, dynamic>>(
+    final response = await _client.get<dynamic>(
       url,
       options: Options(
         headers: {
@@ -75,7 +93,8 @@ class BiliAuthService {
       ),
     );
 
-    final data = response.data?['data'];
+    final resData = _asJsonMap(response.data);
+    final data = _asJsonMap(resData?['data']);
     if (data == null || data['url'] == null || data['qrcode_key'] == null) {
       throw StateError('获取B站登录二维码失败: ${response.data}');
     }
@@ -90,7 +109,7 @@ class BiliAuthService {
   Future<BiliQrCodePollResult> pollQrCode(String qrcodeKey) async {
     final url =
         'https://passport.bilibili.com/x/passport-login/web/qrcode/poll?qrcode_key=$qrcodeKey';
-    final response = await _client.get<Map<String, dynamic>>(
+    final response = await _client.get<dynamic>(
       url,
       options: Options(
         headers: {
@@ -101,42 +120,63 @@ class BiliAuthService {
       ),
     );
 
-    final resData = response.data;
-    final data = resData?['data'] as Map<String, dynamic>?;
-    final int code = data?['code'] is int ? data!['code'] as int : -1;
+    final resData = _asJsonMap(response.data);
+    final data = _asJsonMap(resData?['data']);
+    final rawCode = data?['code'];
+    final int code = rawCode is num
+        ? rawCode.toInt()
+        : (int.tryParse(rawCode?.toString() ?? '') ?? -1);
     final String message = data?['message']?.toString() ?? resData?['message']?.toString() ?? '';
 
     switch (code) {
       case 0:
-        // 扫码登录成功！解析 Cookie
+        // 扫码登录成功！优先从 Set-Cookie 提取原始编码 Cookie，防止 Uri.queryParameters 解码 %2C/%2A 破坏 SESSDATA
         final String callbackUrl = data?['url']?.toString() ?? '';
         String? sessData;
         String? biliJct;
         String? dedeUserId;
 
-        // 从回调 URL query 参数解析
-        if (callbackUrl.isNotEmpty) {
-          try {
-            final uri = Uri.parse(callbackUrl);
-            sessData = uri.queryParameters['SESSDATA'];
-            biliJct = uri.queryParameters['bili_jct'];
-            dedeUserId = uri.queryParameters['DedeUserID'];
-          } catch (_) {}
-        }
-
-        // 备用：从 response header set-cookie 解析
         final setCookies = response.headers['set-cookie'];
         if (setCookies != null) {
           for (final line in setCookies) {
             for (final part in line.split(';')) {
-              final kv = part.trim().split('=');
-              if (kv.length == 2) {
-                if (kv[0] == 'SESSDATA' && sessData == null) sessData = kv[1];
-                if (kv[0] == 'bili_jct' && biliJct == null) biliJct = kv[1];
-                if (kv[0] == 'DedeUserID' && dedeUserId == null) dedeUserId = kv[1];
+              final trimmed = part.trim();
+              final eqIdx = trimmed.indexOf('=');
+              if (eqIdx > 0) {
+                final k = trimmed.substring(0, eqIdx).trim();
+                final v = trimmed.substring(eqIdx + 1).trim();
+                if (v.isEmpty) continue;
+                if (k == 'SESSDATA' && (sessData == null || sessData.isEmpty)) {
+                  sessData = v;
+                } else if (k == 'bili_jct' && (biliJct == null || biliJct.isEmpty)) {
+                  biliJct = v;
+                } else if (k == 'DedeUserID' && (dedeUserId == null || dedeUserId.isEmpty)) {
+                  dedeUserId = v;
+                }
               }
             }
           }
+        }
+
+        // 从回调 URL 参数解析（优先正则提取保留原始百分号编码的 SESSDATA）
+        if (callbackUrl.isNotEmpty) {
+          final rawSessMatch =
+              RegExp(r'(?:^|[?&])SESSDATA=([^&#]+)').firstMatch(callbackUrl);
+          if (rawSessMatch != null && (sessData == null || sessData.isEmpty)) {
+            sessData = rawSessMatch.group(1)?.trim();
+          }
+          try {
+            final uri = Uri.parse(callbackUrl);
+            if (sessData == null || sessData.isEmpty) {
+              sessData = uri.queryParameters['SESSDATA'];
+            }
+            if (biliJct == null || biliJct.isEmpty) {
+              biliJct = uri.queryParameters['bili_jct'];
+            }
+            if (dedeUserId == null || dedeUserId.isEmpty) {
+              dedeUserId = uri.queryParameters['DedeUserID'];
+            }
+          } catch (_) {}
         }
 
         if (sessData != null && sessData.isNotEmpty) {
@@ -146,9 +186,26 @@ class BiliAuthService {
             dedeUserId: dedeUserId,
           );
 
-          // 异步刷新获取最新用户信息
+          // 立即设置保底登录用户态，确保 UI 瞬间响应登录成功，不被 nav 接口延迟或波动阻断
+          if (userNotifier.value == null) {
+            final fallbackProfile = BiliUserProfile(
+              isLogin: true,
+              mid: int.tryParse(dedeUserId ?? '0') ?? 0,
+              uname: dedeUserId != null && dedeUserId.isNotEmpty
+                  ? 'B站用户 ($dedeUserId)'
+                  : 'B站用户',
+              face: '',
+              vipType: 0,
+              vipLabel: '',
+              vipDueDate: 0,
+            );
+            userNotifier.value = fallbackProfile;
+            await GStorage.setting.put('bilibiliUserInfo', fallbackProfile.toJson());
+          }
+
+          // 异步刷新获取最新用户昵称与大会员资料（禁止在刚扫码成功时因 nav 波动触发 logout）
           try {
-            await fetchUserProfile();
+            await fetchUserProfile(allowLogoutOnInvalid: false);
           } catch (e) {
             HaipeeLogger().log(Level.warning, '[BiliAuth] 刷新用户资料异常: $e');
           }
@@ -176,7 +233,7 @@ class BiliAuthService {
       case 86090:
         return BiliQrCodePollResult(
           status: BiliQrCodeStatus.scannedWaitingConfirmation,
-          message: message.isNotEmpty ? message : '已扫码，等待确认',
+          message: message.isNotEmpty ? message : '已扫码，请在手机端确认登录',
         );
 
       case 86038:
@@ -209,7 +266,9 @@ class BiliAuthService {
   }
 
   /// 4. 远程拉取最新用户资料与大会员状态
-  Future<BiliUserProfile?> fetchUserProfile() async {
+  Future<BiliUserProfile?> fetchUserProfile({
+    bool allowLogoutOnInvalid = true,
+  }) async {
     final sessData = getSessData();
     if (sessData == null || sessData.isEmpty) {
       userNotifier.value = null;
@@ -219,19 +278,27 @@ class BiliAuthService {
 
     try {
       const url = 'https://api.bilibili.com/x/web-interface/nav';
-      final response = await _client.get<Map<String, dynamic>>(
+      final biliJct = getBiliJct();
+      final dedeUserId = GStorage.setting.get('bilibiliDedeUserId')?.toString();
+      final cookieParts = <String>[
+        'SESSDATA=$sessData',
+        if (biliJct != null && biliJct.isNotEmpty) 'bili_jct=$biliJct',
+        if (dedeUserId != null && dedeUserId.isNotEmpty) 'DedeUserID=$dedeUserId',
+      ];
+      final response = await _client.get<dynamic>(
         url,
         options: Options(
           headers: {
             'Referer': 'https://www.bilibili.com',
             'User-Agent':
                 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Cookie': 'SESSDATA=$sessData;',
+            'Cookie': '${cookieParts.join('; ')};',
           },
         ),
       );
 
-      final data = response.data?['data'] as Map<String, dynamic>?;
+      final resData = _asJsonMap(response.data);
+      final data = _asJsonMap(resData?['data']);
       if (data != null && data['isLogin'] == true) {
         final profile = BiliUserProfile(
           isLogin: true,
@@ -247,9 +314,12 @@ class BiliAuthService {
         await GStorage.setting.put('bilibiliUserInfo', profile.toJson());
         return profile;
       } else {
-        // Cookie 已失效
-        await logout();
-        return null;
+        if (allowLogoutOnInvalid) {
+          // Cookie 已失效
+          await logout();
+          return null;
+        }
+        return userNotifier.value;
       }
     } catch (e) {
       HaipeeLogger().log(Level.warning, '[BiliAuth] 获取用户资料失败: $e');

@@ -131,21 +131,39 @@ class BilibiliService {
     if (bvid.isEmpty || cid <= 0) return null;
 
     String? sessDataValue = sessData;
-    if (sessDataValue == null || sessDataValue.trim().isEmpty) {
-      try {
+    String? biliJctValue;
+    String? dedeUserIdValue;
+    try {
+      if (sessDataValue == null || sessDataValue.trim().isEmpty) {
         final saved = GStorage.setting.get('bilibiliSessData');
         if (saved is String && saved.trim().isNotEmpty) {
           sessDataValue = saved.trim();
         }
-      } catch (_) {}
-    }
+      }
+      final savedJct = GStorage.setting.get('bilibiliBiliJct');
+      if (savedJct is String && savedJct.trim().isNotEmpty) {
+        biliJctValue = savedJct.trim();
+      }
+      final savedUid = GStorage.setting.get('bilibiliDedeUserId');
+      if (savedUid is String && savedUid.trim().isNotEmpty) {
+        dedeUserIdValue = savedUid.trim();
+      }
+    } catch (_) {}
+
+    final cookieParts = <String>[
+      if (sessDataValue != null && sessDataValue.isNotEmpty)
+        'SESSDATA=$sessDataValue',
+      if (biliJctValue != null && biliJctValue.isNotEmpty)
+        'bili_jct=$biliJctValue',
+      if (dedeUserIdValue != null && dedeUserIdValue.isNotEmpty)
+        'DedeUserID=$dedeUserIdValue',
+    ];
 
     final headers = {
       'Referer': 'https://www.bilibili.com',
       'User-Agent':
           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      if (sessDataValue != null && sessDataValue.isNotEmpty)
-        'Cookie': 'SESSDATA=$sessDataValue;',
+      if (cookieParts.isNotEmpty) 'Cookie': '${cookieParts.join('; ')};',
     };
 
     try {

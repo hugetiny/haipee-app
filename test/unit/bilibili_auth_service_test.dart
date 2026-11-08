@@ -80,18 +80,25 @@ void main() {
             );
           } else {
             return ResponseBody.fromString(
-              '{"code":0,"data":{"code":0,"message":"成功","url":"https://passport.biligame.com/crossDomain?DedeUserID=123456&SESSDATA=mock_sess_abc123&bili_jct=mock_jct_789"}}',
+              '{"code":0,"data":{"code":0,"message":"成功","url":"https://passport.biligame.com/crossDomain?DedeUserID=123456&SESSDATA=mock_sess_abc123%2C1750000000%2Cxyz%2A31=&bili_jct=mock_jct_789"}}',
               200,
               headers: {
                 Headers.contentTypeHeader: [Headers.jsonContentType],
                 'set-cookie': [
-                  'SESSDATA=mock_sess_abc123; Path=/; Domain=.bilibili.com;',
+                  'SESSDATA=mock_sess_abc123%2C1750000000%2Cxyz%2A31=; Path=/; Domain=.bilibili.com;',
                   'bili_jct=mock_jct_789; Path=/; Domain=.bilibili.com;',
                   'DedeUserID=123456; Path=/; Domain=.bilibili.com;',
                 ],
               },
             );
           }
+        }
+        if (options.uri.path.contains('/x/web-interface/nav')) {
+          return ResponseBody.fromString(
+            '{"code":-101,"data":{"isLogin":false}}',
+            200,
+            headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+          );
         }
         return ResponseBody.fromString('{}', 404);
       });
@@ -110,16 +117,17 @@ void main() {
       final res3 = await authService.pollQrCode('key_1');
       expect(res3.status, equals(BiliQrCodeStatus.expired));
 
-      // Call 4: success
+      // Call 4: success (preserves URL-encoded %2C/%2A and = padding, and does not logout even if /nav returns isLogin:false)
       final res4 = await authService.pollQrCode('key_1');
       expect(res4.status, equals(BiliQrCodeStatus.success));
-      expect(res4.sessData, equals('mock_sess_abc123'));
+      expect(res4.sessData, equals('mock_sess_abc123%2C1750000000%2Cxyz%2A31='));
       expect(res4.biliJct, equals('mock_jct_789'));
       expect(res4.dedeUserId, equals('123456'));
 
-      // Verify stored in Hive
+      // Verify stored in Hive and fallback user profile is immediately active
       expect(authService.isLoggedIn, isTrue);
-      expect(authService.getSessData(), equals('mock_sess_abc123'));
+      expect(authService.currentUser, isNotNull);
+      expect(authService.getSessData(), equals('mock_sess_abc123%2C1750000000%2Cxyz%2A31='));
       expect(authService.getBiliJct(), equals('mock_jct_789'));
     });
 
