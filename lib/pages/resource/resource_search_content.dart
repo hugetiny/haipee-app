@@ -1079,16 +1079,6 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
             ),
           );
         }),
-        const SizedBox(width: 4),
-        ActionChip(
-          key: const Key('indexer_rule_manage_btn'),
-          avatar: const Icon(Icons.rule_folder_outlined, size: 14),
-          label: const Text('规则管理', style: TextStyle(fontSize: 12)),
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          tooltip: '前往设置管理 Cardigann 索引规则 (多级分类与市场)',
-          onPressed: () => context.push(Routes.settingsIndexers),
-        ),
       ],
     );
   }

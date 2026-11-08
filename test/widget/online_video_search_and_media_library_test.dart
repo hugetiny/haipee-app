@@ -215,9 +215,10 @@ void main() {
       expect(find.text('网盘资源 (0)'), findsNothing);
       expect(find.textContaining('底层技术:'), findsNothing);
 
-      // 3. 验证快捷操作入口 (视频规则管理与下载管理快捷图标)
-      expect(find.byIcon(Icons.video_library_outlined), findsWidgets);
-      expect(find.byIcon(Icons.download_outlined), findsOneWidget);
+      // 3. 验证顶栏右上角保持极简主流设计，不堆砌冗余的规则设置、下载管理与独立BT直搜按钮
+      expect(find.byTooltip('BT/磁力直搜 (Mikan/Nyaa)'), findsNothing);
+      expect(find.byTooltip('Haipee 视频规则'), findsNothing);
+      expect(find.byTooltip('下载管理'), findsNothing);
 
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();

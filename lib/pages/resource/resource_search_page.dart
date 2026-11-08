@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:haipee/bean/appbar/sys_app_bar.dart';
 import 'package:haipee/modules/search/search_history_dropdown.dart';
 import 'package:haipee/modules/search/search_history_provider.dart';
 import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 import 'package:haipee/pages/resource/resource_search_content.dart';
-import 'package:haipee/router_constants.dart';
 import 'package:haipee/utils/utils.dart';
 
 /// 全网资源搜索一级页面（支持 Mikan、Nyaa、Torznab 聚合直搜与一键下载/播放）
@@ -59,23 +57,6 @@ class _ResourceSearchPageState extends ConsumerState<ResourceSearchPage> {
     return Scaffold(
       appBar: SysAppBar(
         title: const Text('全网资源搜索'),
-        actions: [
-          IconButton(
-            tooltip: 'AList 规则',
-            icon: const Icon(Icons.cloud_outlined),
-            onPressed: () => context.push('${Routes.settingsPlugin}?type=alist'),
-          ),
-          IconButton(
-            tooltip: 'Cardigann 规则',
-            icon: const Icon(Icons.tune),
-            onPressed: () => context.push(Routes.settingsIndexers),
-          ),
-          IconButton(
-            tooltip: '下载管理',
-            icon: const Icon(Icons.download_outlined),
-            onPressed: () => context.go(Routes.download),
-          ),
-        ],
         needTopOffset: !isDesktopSideMenu,
       ),
       body: NotificationListener<ScrollNotification>(

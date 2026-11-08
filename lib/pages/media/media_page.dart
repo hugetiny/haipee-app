@@ -376,19 +376,9 @@ class _MediaPageState extends ConsumerState<MediaPage>
             ),
             actions: [
               IconButton(
-                tooltip: t.navigation.tabs.timeline,
-                icon: const Icon(Icons.calendar_month_outlined),
-                onPressed: () => context.push(Routes.timeline),
-              ),
-              IconButton(
                 tooltip: t.navigation.actions.search,
                 icon: const Icon(Icons.search),
                 onPressed: () => context.push(Routes.search),
-              ),
-              IconButton(
-                tooltip: t.navigation.tabs.download,
-                icon: const Icon(Icons.download_outlined),
-                onPressed: () => context.go(Routes.download),
               ),
             ],
             needTopOffset: !isDesktopSideMenu,

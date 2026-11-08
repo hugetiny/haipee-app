@@ -124,5 +124,48 @@ void main() {
             '违规位置：\n${violations.join('\n')}',
       );
     });
+
+    test('5. 主流响应式顶栏规范：一级业务页面右上角严禁堆砌冗余的规则设置跳转、一级菜单重复链接或独立BT弹窗按钮', () {
+      final primaryPages = <String>[
+        'lib/pages/online/online_video_search_page.dart',
+        'lib/pages/resource/resource_search_page.dart',
+        'lib/pages/media_library/media_library_page.dart',
+      ];
+
+      for (final path in primaryPages) {
+        final file = File(path);
+        expect(file.existsSync(), isTrue, reason: '缺少核心文件: $path');
+        final content = file.readAsStringSync();
+
+        // 严禁在视频直播、全网资源、媒体库的 SysAppBar 中塞入 actions 按钮
+        final sysAppBarMatch = RegExp(
+          r'SysAppBar\s*\(([\s\S]*?)\)\s*,',
+        ).firstMatch(content);
+        expect(sysAppBarMatch, isNotNull, reason: '$path 应使用 SysAppBar');
+        final appBarBody = sysAppBarMatch!.group(1) ?? '';
+        expect(
+          appBarBody.contains('actions:'),
+          isFalse,
+          reason: '$path 的 SysAppBar 严禁包含冗余右上角 actions 按钮（规则与下载设置统一由「设置」管理，下载管理/媒体库子项已有主导航或侧边栏）！',
+        );
+      }
+
+      // 进一步确认 OnlineVideoSearchPage 与 SearchPage 不再引入独立的 TorrentSearchSheet 弹窗
+      final onlineContent =
+          File('lib/pages/online/online_video_search_page.dart').readAsStringSync();
+      expect(
+        onlineContent.contains('TorrentSearchSheet'),
+        isFalse,
+        reason: '视频直播页面严禁包含独立的 TorrentSearchSheet 弹窗入口！',
+      );
+
+      final downloadContent =
+          File('lib/pages/download/download_page.dart').readAsStringSync();
+      expect(
+        downloadContent.contains("context.push('/settings/download')"),
+        isFalse,
+        reason: '下载管理页面右上角严禁包含重复的「下载设置」跳转按钮（全部设置统一在设置页管理）！',
+      );
+    });
   });
 }

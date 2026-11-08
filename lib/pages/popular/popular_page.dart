@@ -238,11 +238,6 @@ class _PopularPageState extends ConsumerState<PopularPage>
         onPressed: () => context.push(Routes.search),
         icon: const Icon(Icons.search),
       ),
-      IconButton(
-        tooltip: t.navigation.actions.history,
-        onPressed: () => context.push(Routes.history),
-        icon: const Icon(Icons.history),
-      ),
     ];
     return actions;
   }

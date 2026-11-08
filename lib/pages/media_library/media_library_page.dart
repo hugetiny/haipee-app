@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:haipee/bean/appbar/sys_app_bar.dart';
 import 'package:haipee/bean/widget/responsive/responsive_menu_scaffold.dart';
 import 'package:haipee/pages/history/history_page.dart';
@@ -91,28 +90,6 @@ class _MediaLibraryPageState extends ConsumerState<MediaLibraryPage> {
       onSelected: (id) => setState(() => _selectedId = id),
       appBarBuilder: (context, wide) => SysAppBar(
         title: const Text('媒体库'),
-        actions: [
-          IconButton(
-            tooltip: '追番日历',
-            icon: const Icon(Icons.calendar_month_outlined),
-            onPressed: () => context.push(Routes.timeline),
-          ),
-          IconButton(
-            tooltip: '个人收藏',
-            icon: const Icon(Icons.collections_bookmark_outlined),
-            onPressed: () => context.push(Routes.favorites),
-          ),
-          IconButton(
-            tooltip: '播放历史',
-            icon: const Icon(Icons.history_rounded),
-            onPressed: () => context.push(Routes.history),
-          ),
-          IconButton(
-            tooltip: 'Haipee 视频规则',
-            icon: const Icon(Icons.video_library_outlined),
-            onPressed: () => context.push(Routes.settingsPlugin),
-          ),
-        ],
         needTopOffset: !isDesktopSideMenu && !wide,
       ),
     );

@@ -117,7 +117,7 @@ void main() {
       expect(find.text('下载设置'), findsOneWidget);
     });
 
-    testWidgets('OnlineVideoSearchPage has dedicated contextual rule button for Kazumi video rules',
+    testWidgets('OnlineVideoSearchPage keeps SysAppBar clean without redundant rule/download/BT-popup buttons',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -138,11 +138,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byTooltip('Haipee 视频规则'), findsOneWidget);
+      // 遵循主流响应式设计与“全部设置管 App 设置”原则，主内容页右上角严禁堆砌冗余规则设置/一级导航/独立BT弹窗按钮
+      expect(find.byTooltip('BT/磁力直搜 (Mikan/Nyaa)'), findsNothing);
+      expect(find.byTooltip('Haipee 视频规则'), findsNothing);
+      expect(find.byTooltip('下载管理'), findsNothing);
       expect(find.byTooltip('规则管理中心'), findsNothing);
     });
 
-    testWidgets('ResourceSearchPage has dedicated contextual rule button for Cardigann rules',
+    testWidgets('ResourceSearchPage keeps SysAppBar clean without redundant rule/download buttons',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -165,7 +168,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byTooltip('Cardigann 规则'), findsOneWidget);
+      expect(find.byTooltip('AList 规则'), findsNothing);
+      expect(find.byTooltip('Cardigann 规则'), findsNothing);
+      expect(find.byTooltip('下载管理'), findsNothing);
       expect(find.byTooltip('规则管理中心'), findsNothing);
     });
   });

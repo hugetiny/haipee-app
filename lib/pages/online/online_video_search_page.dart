@@ -17,7 +17,6 @@ import 'package:haipee/plugins/plugins.dart';
 import 'package:haipee/plugins/plugins_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:haipee/bean/widget/app_context_menu.dart';
-import 'package:haipee/modules/torrent_search/widgets/torrent_search_sheet.dart';
 import 'package:haipee/router_constants.dart';
 import 'package:haipee/utils/utils.dart';
 import 'package:haipee/services/logging/app_log.dart';
@@ -316,29 +315,6 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
         return Scaffold(
           appBar: SysAppBar(
             title: const Text('在线视频搜索'),
-            actions: [
-              IconButton(
-                tooltip: 'BT/磁力直搜 (Mikan/Nyaa)',
-                icon: const Icon(Icons.cloud_download_outlined),
-                onPressed: () {
-                  final kw = _searchController.text.trim();
-                  TorrentSearchSheet.show(
-                    context,
-                    initialKeyword: kw,
-                  );
-                },
-              ),
-              IconButton(
-                tooltip: 'Haipee 视频规则',
-                icon: const Icon(Icons.video_library_outlined),
-                onPressed: () => context.push(Routes.settingsPlugin),
-              ),
-              IconButton(
-                tooltip: '下载管理',
-                icon: const Icon(Icons.download_outlined),
-                onPressed: () => context.push(Routes.download),
-              ),
-            ],
             needTopOffset: !isDesktopSideMenu,
           ),
           body: NotificationListener<ScrollNotification>(
@@ -1648,16 +1624,6 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
           title: '播放视频',
           icon: Icons.play_arrow_rounded,
           onSelected: () => _handleVideoTap(item),
-        ),
-        AppMenuAction(
-          title: '检索相关资源/下载...',
-          icon: Icons.download_rounded,
-          onSelected: () {
-            TorrentSearchSheet.show(
-              context,
-              initialKeyword: item.title,
-            );
-          },
         ),
         if (item.tag.contains('资源') ||
             item.tag.contains('网盘') ||

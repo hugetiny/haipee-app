@@ -240,13 +240,6 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       ];
     } else {
       return [
-        IconButton(
-          icon: const Icon(Icons.settings_outlined),
-          onPressed: () {
-            context.push('/settings/download');
-          },
-          tooltip: t.downloads.page.downloadSettings,
-        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
           onSelected: (value) {
