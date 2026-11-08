@@ -772,10 +772,14 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
             // 第一行：展示集数标签 + 来源 Badge + 做种数
             Row(
               children: [
-                Text(
-                  item.displayTitle,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    item.displayTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -784,14 +788,8 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                   backgroundColor: colorScheme.secondaryContainer,
                   textColor: colorScheme.onSecondaryContainer,
                 ),
-                const SizedBox(width: 6),
-                Badge(
-                  label: const Text('Torznab / Cardigann P2P 种子索引'),
-                  backgroundColor: colorScheme.surfaceContainerHighest,
-                  textColor: colorScheme.onSurfaceVariant,
-                ),
-                const Spacer(),
-                if (item.seeders > 0)
+                if (item.seeders > 0) ...[
+                  const SizedBox(width: 8),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -805,6 +803,7 @@ class _TorrentSearchSheetState extends ConsumerState<TorrentSearchSheet> {
                       ),
                     ],
                   ),
+                ],
               ],
             ),
             const SizedBox(height: 8),

@@ -239,72 +239,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         ),
       ];
     } else {
-      return [
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            switch (value) {
-              case 'pause_all':
-                downloadController.pauseAll();
-                break;
-              case 'resume_all':
-                downloadController.resumeAll();
-                break;
-              case 'clear_completed':
-                downloadController.clearCompleted();
-                break;
-              case 'delete_all':
-                _showDeleteConfirmDialog(
-                  context,
-                  () => downloadController.deleteAll(),
-                );
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'resume_all',
-              child: const Row(
-                children: [
-                  Icon(Icons.play_arrow_rounded, color: xunleiBlue),
-                  SizedBox(width: 8),
-                  Text('全部开始'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'pause_all',
-              child: const Row(
-                children: [
-                  Icon(Icons.pause_rounded),
-                  SizedBox(width: 8),
-                  Text('全部暂停'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'clear_completed',
-              child: const Row(
-                children: [
-                  Icon(Icons.cleaning_services_outlined),
-                  SizedBox(width: 8),
-                  Text('清空已完成'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete_all',
-              child: Row(
-                children: [
-                  Icon(Icons.delete_forever, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('全部删除', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ];
+      return const [];
     }
   }
 
@@ -557,7 +492,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 750;
+          final isNarrow = constraints.maxWidth < 920;
           return Column(
             children: [
               if (isNarrow) ...[
@@ -747,12 +682,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                             horizontal: 10, vertical: 8),
                       ),
                     ),
-                    const Spacer(),
-                    // 宽屏模式下将搜索框并列于工具栏
-                    SizedBox(
-                      width: 220,
-                      height: 36,
-                      child: _buildSearchTextField(theme, uiState),
+                    const SizedBox(width: 8),
+                    // 宽屏模式下将搜索框自适应并列于工具栏，防止中等窗口宽度下溢出
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 220),
+                          child: SizedBox(
+                            height: 36,
+                            child: _buildSearchTextField(theme, uiState),
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     // 排序下拉

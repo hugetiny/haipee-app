@@ -4,10 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/search/unified_search_workspace.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
 import 'package:haipee/modules/parse_failure/parse_failure_module.dart';
+import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
+import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 import 'package:haipee/pages/menu/menu.dart';
 import 'package:haipee/pages/menu/navigation_provider.dart';
 import 'package:haipee/pages/online/online_video_search_page.dart';
@@ -172,6 +176,145 @@ void main() {
       expect(find.byTooltip('Cardigann 规则'), findsNothing);
       expect(find.byTooltip('下载管理'), findsNothing);
       expect(find.byTooltip('规则管理中心'), findsNothing);
+    });
+
+    testWidgets(
+        'Both OnlineVideoSearchPage and ResourceSearchPage share UnifiedSearchHeader, UnifiedRuleReadinessCard, and support switching between Grid View and Table View',
+        (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      // 1. 验证 OnlineVideoSearchPage 共享组件与 Grid View <-> Table View 切换
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            pluginsProvider.overrideWith(() => MockPluginsControllerWithData([])),
+          ],
+          child: TranslationProvider(
+            child: MaterialApp(
+              home: OnlineVideoSearchPage(
+                initialPopularVideos: [
+                  BiliVideoItem(
+                    bvid: 'web_test_1',
+                    title: '统一工作区测试番剧',
+                    author: 'TestRule',
+                    pic: '',
+                    duration: '24:00',
+                    play: 1000,
+                    danmaku: 100,
+                    description: 'https://example.com/play/1',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(UnifiedSearchHeader), findsOneWidget);
+      expect(find.byType(UnifiedViewToggleButtons), findsOneWidget);
+
+      // 默认 Grid View 展示卡片，切换到 Table View 后展示表头与表格行
+      await tester.tap(find.byKey(const Key('unified_view_mode_table')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('名称 / 封面'), findsOneWidget);
+      expect(find.text('播放'), findsWidgets);
+
+      // 切回 Grid View
+      await tester.tap(find.byKey(const Key('unified_view_mode_grid')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('名称 / 封面'), findsNothing);
+
+      // 2. 验证 ResourceSearchPage 共享完全一致的 UnifiedSearchHeader、可折叠筛选面板与 Grid View <-> Table View 切换
+      final container = ProviderContainer(
+        overrides: [
+          popularProvider.overrideWith(() => _MockPopularController()),
+          indexerPluginsProvider
+              .overrideWith(() => FakeIndexerPluginsNotifierWithData([])),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: TranslationProvider(
+            child: const MaterialApp(
+              home: ResourceSearchPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // 空闲未搜索时复用 UnifiedSearchHeader 与 UnifiedRuleReadinessCard
+      expect(find.byType(UnifiedSearchHeader), findsOneWidget);
+      expect(find.byType(UnifiedRuleReadinessCard), findsOneWidget);
+      expect(find.byKey(const Key('resource_search_filter_panel')), findsNothing);
+
+      // 点击搜索框旁边的「筛选」按钮展开 UnifiedFilterPanelContainer
+      await tester.tap(find.byKey(const Key('resource_search_filter_toggle_btn')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(const Key('resource_search_filter_panel')), findsOneWidget);
+
+      // 注入资源搜索结果，验证 Table View <-> Grid View 切换
+      container.read(torrentSearchProvider.notifier).state = TorrentSearchState(
+        isLoading: false,
+        keyword: '芙莉莲',
+        items: [
+          TorrentItem(
+            title: '[ANi] 葬送的芙莉莲 - 01 [1080P][MP4]',
+            magnetUrl:
+                'magnet:?xt=urn:btih:1111111111111111111111111111111111111111',
+            fileSize: '1.2 GB',
+            sizeBytes: 1200000000,
+            seeders: 120,
+            leechers: 8,
+            publishDate: '1小时前',
+            source: TorrentSourceType.mikan,
+            indexerName: 'Mikan',
+            customCategory: TorrentCategory.video,
+          ),
+          TorrentItem(
+            title: '[Sub] 葬送的芙莉莲 - 02 [1080P][MKV]',
+            magnetUrl:
+                'magnet:?xt=urn:btih:2222222222222222222222222222222222222222',
+            fileSize: '1.5 GB',
+            sizeBytes: 1500000000,
+            seeders: 95,
+            leechers: 5,
+            publishDate: '2小时前',
+            source: TorrentSourceType.nyaa,
+            indexerName: 'Nyaa',
+            customCategory: TorrentCategory.video,
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // 桌面宽屏默认展示 Table View
+      expect(find.text('做种数'), findsOneWidget);
+
+      // 切换到 Grid View (多列网格卡片视图)
+      await tester.tap(find.byKey(const Key('unified_view_mode_grid')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(GridView), findsOneWidget);
+      expect(find.text('立即下载'), findsWidgets);
+
+      // 切回 Table View
+      await tester.tap(find.byKey(const Key('unified_view_mode_table')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('做种数'), findsOneWidget);
     });
   });
 

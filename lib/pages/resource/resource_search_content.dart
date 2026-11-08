@@ -20,11 +20,11 @@ import 'package:haipee/modules/torrent_search/utils/torrent_download_helper.dart
 import 'package:haipee/modules/torrent_search/parser/torrent_file_parser.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
-import 'package:haipee/modules/search/search_history_provider.dart';
 import 'package:haipee/router_constants.dart';
 
 import 'package:haipee/utils/constants.dart';
 import 'package:haipee/bean/widget/adaptive_data_view.dart';
+import 'package:haipee/bean/widget/search/unified_search_workspace.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:haipee/bean/widget/app_context_menu.dart';
 
@@ -35,10 +35,16 @@ typedef ResourceViewMode = AdaptiveViewMode;
 /// 深度整合 Bangumi 官方元数据与多源全网资源下载检索
 class ResourceSearchContent extends ConsumerStatefulWidget {
   final void Function(String keyword)? onSearchKeywordSelected;
+  final bool showInlineFilterSection;
+  final ResourceViewMode? externalViewMode;
+  final ValueChanged<ResourceViewMode>? onExternalViewModeChanged;
 
   const ResourceSearchContent({
     super.key,
     this.onSearchKeywordSelected,
+    this.showInlineFilterSection = true,
+    this.externalViewMode,
+    this.onExternalViewModeChanged,
   });
 
   @override
@@ -51,8 +57,21 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
   final ScrollController _horizontalScrollController = ScrollController();
   final ScrollController _verticalScrollController = ScrollController();
 
-  // 视图显示模式（默认为 auto 自动响应式，亦支持强制表格或卡片）
+  // 视图显示模式（默认为 auto 自动响应式，亦支持强制表格或卡片/网格）
   ResourceViewMode _viewMode = ResourceViewMode.auto;
+
+  ResourceViewMode get _effectiveViewMode =>
+      widget.externalViewMode ?? _viewMode;
+
+  void _updateViewMode(ResourceViewMode mode) {
+    if (widget.onExternalViewModeChanged != null) {
+      widget.onExternalViewModeChanged!(mode);
+    } else {
+      setState(() {
+        _viewMode = mode;
+      });
+    }
+  }
 
   /// 自动切换表格视图的可用宽度断点（对齐 Material 3 紧凑屏基准 600dp 并预留侧边栏与边距）
   static final double responsiveBreakpoint =
@@ -63,7 +82,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
 
   /// 计算在给定可用宽度和当前视图模式下的实际展示样式
   bool _isTableViewForWidth(double availableWidth) {
-    switch (_viewMode) {
+    switch (_effectiveViewMode) {
       case ResourceViewMode.auto:
         return availableWidth >= responsiveBreakpoint;
       case ResourceViewMode.table:
@@ -675,15 +694,16 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
 
         return Column(
           children: [
-            // Cardigann 规范多行参数筛选体系 (分类 cat / 性质 type / 站点 indexer / 排序 sort)
-            _buildCardigannFilterSection(theme, searchState,
-                isTableView: isTableView),
+            // Cardigann 规范多行参数筛选体系 (独立内嵌模式展示；在 UnifiedSearchHeader 页面级模式中由顶部「筛选」按钮统一控制)
+            if (widget.showInlineFilterSection)
+              _buildCardigannFilterSection(theme, searchState,
+                  isTableView: isTableView),
 
             // 渐进式流式抓取进度条（首屏已呈现，后台索引器仍在并发追加）
             if (searchState.isLoading && searchState.items.isNotEmpty)
               const LinearProgressIndicator(minHeight: 2),
 
-            // 内容展示区域（表格视图 / 卡片视图 / 欢迎推荐）
+            // 内容展示区域（表格视图 / 网格卡片视图 / 统一规则就绪态）
             Expanded(
               child: _buildBody(theme, searchState, isTableView: isTableView),
             ),
@@ -1134,13 +1154,9 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
           ),
           // 响应式视图切换器（自动 / 表格 / 卡片）
           AdaptiveViewSwitcher(
-            viewMode: _viewMode,
+            viewMode: _effectiveViewMode,
             isTableView: isTableView,
-            onModeChanged: (mode) {
-              setState(() {
-                _viewMode = mode;
-              });
-            },
+            onModeChanged: _updateViewMode,
           ),
           const SizedBox(width: 8),
           // 统计计数徽章
@@ -1311,21 +1327,57 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
       );
     }
 
-    // 使用全局统一自适应公共组件（宽屏表格 vs 窄屏卡片）
+    // 使用全局统一自适应公共组件（支持 Table View 表格视图与 Grid View 网格卡片视图）
     return Column(
       children: [
+        if (!widget.showInlineFilterSection)
+          UnifiedSearchResultSummaryBar(
+            headerIcon: Icons.hub_outlined,
+            countLabel: filtered.length == searchState.items.length
+                ? '找到 ${filtered.length} 项全网资源'
+                : '筛选出 ${filtered.length} / ${searchState.items.length} 项全网资源',
+            isSearching: searchState.isLoading,
+            completedSources: searchState.sourceCount.length,
+            totalSources: searchState.sourceCount.length,
+          ),
         Expanded(
           child: AdaptiveDataView(
-            viewMode: _viewMode,
+            viewMode: _effectiveViewMode,
             breakpoint: LayoutBreakpoint.compact['width']! + 100.0,
-            cardBuilder: (context) => ListView.separated(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final item = filtered[index];
-                return _buildTorrentCard(theme, item);
+            cardBuilder: (context) => LayoutBuilder(
+              builder: (context, cardConstraints) {
+                final width = cardConstraints.maxWidth;
+                // 宽屏/平板 (>= 620px) 采用多列网格视图 (Grid View)，窄屏移动端 (< 620px) 采用单列卡片流
+                if (width >= 620) {
+                  final crossAxisCount = width >= 1150 ? 3 : 2;
+                  return GridView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      mainAxisExtent: 232,
+                    ),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final item = filtered[index];
+                      return _buildTorrentCard(theme, item, inGrid: true);
+                    },
+                  );
+                }
+                return ListView.separated(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final item = filtered[index];
+                    return _buildTorrentCard(theme, item, inGrid: false);
+                  },
+                );
               },
             ),
             tableBuilder: (context) =>
@@ -2288,11 +2340,323 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
   );
 }
 
-  /// 迅雷风格资源卡片（供移动端或卡片模式使用）
-  Widget _buildTorrentCard(ThemeData theme, TorrentItem item) {
+  /// 迅雷风格资源卡片（同时兼容桌面端多列 Grid View 与移动端单列卡片视图）
+  Widget _buildTorrentCard(
+    ThemeData theme,
+    TorrentItem item, {
+    bool inGrid = false,
+  }) {
     final isDead = item.seeders == 0;
     final icon = _getCategoryIcon(item.category);
     final iconColor = _getCategoryColor(item.category, theme);
+
+    final middleSection = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 属性徽章行（列式信息客观展现）
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            // 协议类型徽标 (区分 CARDIGANN 与 ALIST)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: TorrentSearchState.isAlistItem(item)
+                    ? Colors.blue.withValues(alpha: 0.15)
+                    : theme.colorScheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                TorrentSearchState.isAlistItem(item) ? 'ALIST' : 'CARDIGANN',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: TorrentSearchState.isAlistItem(item)
+                      ? Colors.blue.shade700
+                      : theme.colorScheme.primary,
+                ),
+              ),
+            ),
+            // 站点
+            Tooltip(
+              message: 'Torznab / Cardigann P2P 种子索引',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  item.indexerName ?? _getSourceName(item.source),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
+                ),
+              ),
+            ),
+            _buildTrackerNatureTag(theme, item),
+
+            // 链接类型徽章（标清楚是磁力还是种子，还是两者都有）
+            if (item.linkType != TorrentLinkType.none)
+              TorrentLinkBadge.fromItem(item, compact: false),
+
+            // 分类徽标
+            if (item.category != TorrentCategory.all)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: iconColor.withAlpha(25),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  item.category.label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: iconColor,
+                  ),
+                ),
+              ),
+
+            if (item.isArchive)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withAlpha(30),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.amber.shade700, width: 0.6),
+                ),
+                child: Text(
+                  '${item.archiveFormatName ?? "压缩包"} 需解压',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber.shade800,
+                  ),
+                ),
+              ),
+
+            // 视频特有属性（画质、片源、编码等，非视频直接留空省略）
+            if (item.isVideo && item.tableResolution.isNotEmpty)
+              Badge(
+                backgroundColor: theme.colorScheme.tertiaryContainer,
+                label: Text(
+                  item.tableResolution,
+                  style: TextStyle(
+                    color: theme.colorScheme.onTertiaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+            if (item.isVideo && item.tableCodecInfo.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  item.tableCodecInfo,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+
+            if (item.subgroup != null && item.subgroup!.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  item.subgroup!,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+
+            if (item.isFreeleech)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.withAlpha(40),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.green.shade600, width: 0.8),
+                ),
+                child: const Text(
+                  'Freeleech',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+            if (item.isVideo && item.isCollection)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withAlpha(30),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                      color: theme.colorScheme.primary.withAlpha(140),
+                      width: 0.6),
+                ),
+                child: Text(
+                  '合集',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+            // 体积
+            if (item.displayFileSize.isNotEmpty && item.displayFileSize != '-')
+              Text(
+                item.displayFileSize,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+            // 发布时间
+            if (item.ageString.isNotEmpty)
+              Text(
+                '· ${item.ageString}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+
+            // 做种与下载健康度
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.arrow_upward,
+                  size: 13,
+                  color: isDead
+                      ? theme.colorScheme.outline
+                      : Colors.green.shade700,
+                ),
+                Text(
+                  '${item.seeders}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDead
+                        ? theme.colorScheme.outline
+                        : Colors.green.shade700,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.arrow_downward,
+                    size: 13, color: theme.colorScheme.outline),
+                Text(
+                  '${item.leechers}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: (isDead ? Colors.grey : Colors.green).withAlpha(30),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: Text(
+                    item.health.label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isDead
+                          ? theme.colorScheme.outline
+                          : Colors.green.shade800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+
+        // 原始完整标题
+        Text(
+          item.title,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+            fontSize: 11,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+
+        // 原始发布页 URL（如果存在，直观显示并支持一键打开）
+        if (item.pageUrl != null && item.pageUrl!.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Tooltip(
+            message: '点击在浏览器中打开原始发布页:\n${item.pageUrl}',
+            child: InkWell(
+              onTap: () => _openBrowserUrl(item.pageUrl!),
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Icon(Icons.link,
+                        size: 14, color: theme.colorScheme.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '原始页面',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        item.pageUrl!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.open_in_new,
+                        size: 12, color: theme.colorScheme.primary),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
 
     final cardWidget = Card.outlined(
       elevation: 0,
@@ -2323,7 +2687,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
                       fontWeight: FontWeight.w600,
                       color: isDead ? theme.colorScheme.outline : null,
                     ),
-                    maxLines: 2,
+                    maxLines: inGrid ? 1 : 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -2331,404 +2695,101 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
             ),
             const SizedBox(height: 8),
 
-            // 属性徽章行（列式信息客观展现）
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                // 协议类型徽标 (区分 CARDIGANN 与 ALIST)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: TorrentSearchState.isAlistItem(item)
-                        ? Colors.blue.withValues(alpha: 0.15)
-                        : theme.colorScheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    TorrentSearchState.isAlistItem(item)
-                        ? 'ALIST'
-                        : 'CARDIGANN',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: TorrentSearchState.isAlistItem(item)
-                          ? Colors.blue.shade700
-                          : theme.colorScheme.primary,
-                    ),
-                  ),
+            if (inGrid)
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: middleSection,
                 ),
-                // 站点
-                Tooltip(
-                  message: 'Torznab / Cardigann P2P 种子索引',
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      item.indexerName ?? _getSourceName(item.source),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSecondaryContainer,
-                      ),
-                    ),
-                  ),
-                ),
-                _buildTrackerNatureTag(theme, item),
-
-                // 链接类型徽章（标清楚是磁力还是种子，还是两者都有）
-                if (item.linkType != TorrentLinkType.none)
-                  TorrentLinkBadge.fromItem(item, compact: false),
-
-                // 分类徽标
-                if (item.category != TorrentCategory.all)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: iconColor.withAlpha(25),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      item.category.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: iconColor,
-                      ),
-                    ),
-                  ),
-
-                if (item.isArchive)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withAlpha(30),
-                      borderRadius: BorderRadius.circular(4),
-                      border:
-                          Border.all(color: Colors.amber.shade700, width: 0.6),
-                    ),
-                    child: Text(
-                      '${item.archiveFormatName ?? "压缩包"} 需解压',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.amber.shade800,
-                      ),
-                    ),
-                  ),
-
-                // 视频特有属性（画质、片源、编码等，非视频直接留空省略）
-                if (item.isVideo && item.tableResolution.isNotEmpty)
-                  Badge(
-                    backgroundColor: theme.colorScheme.tertiaryContainer,
-                    label: Text(
-                      item.tableResolution,
-                      style: TextStyle(
-                        color: theme.colorScheme.onTertiaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                if (item.isVideo && item.tableCodecInfo.isNotEmpty)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      item.tableCodecInfo,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-
-                if (item.subgroup != null && item.subgroup!.isNotEmpty)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      item.subgroup!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-
-                if (item.isFreeleech)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withAlpha(40),
-                      borderRadius: BorderRadius.circular(4),
-                      border:
-                          Border.all(color: Colors.green.shade600, width: 0.8),
-                    ),
-                    child: const Text(
-                      'Freeleech',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                if (item.isVideo && item.isCollection)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withAlpha(30),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                          color: theme.colorScheme.primary.withAlpha(140),
-                          width: 0.6),
-                    ),
-                    child: Text(
-                      '合集',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-
-
-                // 体积
-                if (item.displayFileSize.isNotEmpty &&
-                    item.displayFileSize != '-')
-                  Text(
-                    item.displayFileSize,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                // 发布时间
-                if (item.ageString.isNotEmpty)
-                  Text(
-                    '· ${item.ageString}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
-                    ),
-                  ),
-
-                // 做种与下载健康度
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.arrow_upward,
-                      size: 13,
-                      color: isDead
-                          ? theme.colorScheme.outline
-                          : Colors.green.shade700,
-                    ),
-                    Text(
-                      '${item.seeders}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDead
-                            ? theme.colorScheme.outline
-                            : Colors.green.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_downward,
-                        size: 13, color: theme.colorScheme.outline),
-                    Text(
-                      '${item.leechers}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.outline,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 1),
-                      decoration: BoxDecoration(
-                        color:
-                            (isDead ? Colors.grey : Colors.green).withAlpha(30),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: Text(
-                        item.health.label,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: isDead
-                              ? theme.colorScheme.outline
-                              : Colors.green.shade800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-
-            // 原始完整标题
-            Text(
-              item.title,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-                fontSize: 11,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-
-            // 原始发布页 URL（如果存在，直观显示并支持一键打开）
-            if (item.pageUrl != null && item.pageUrl!.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Tooltip(
-                message: '点击在浏览器中打开原始发布页:\n${item.pageUrl}',
-                child: InkWell(
-                  onTap: () => _openBrowserUrl(item.pageUrl!),
-                  borderRadius: BorderRadius.circular(4),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Icon(Icons.link, size: 14, color: theme.colorScheme.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          '原始页面',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            item.pageUrl!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: theme.colorScheme.primary,
-                              decoration: TextDecoration.underline,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.open_in_new, size: 12, color: theme.colorScheme.primary),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              )
+            else
+              middleSection,
             const SizedBox(height: 10),
 
             // 操作按钮行（迅雷风格：工具操作居左，在线播放与立即下载严格锚定右下角，全卡片基线对齐）
-            FittedBox(
-              fit: BoxFit.scaleDown,
+            Align(
               alignment: Alignment.centerRight,
-              child: Row(
-                children: [
-                  // 复制磁力链接
-                  IconButton.outlined(
-                    icon: const Icon(Icons.copy, size: 16),
-                    tooltip: '复制磁力链接',
-                    onPressed: () => _copyMagnet(item),
-                    constraints:
-                        const BoxConstraints(minWidth: 34, minHeight: 34),
-                    padding: EdgeInsets.zero,
-                  ),
-                  const SizedBox(width: 6),
-
-                  // 选文件（三联树选择性下载）
-                  IconButton.outlined(
-                    onPressed: () => _handleSelectiveDownload(item),
-                    icon: const Icon(Icons.checklist_rtl, size: 16),
-                    tooltip: '选择性下载 (三联树)',
-                    constraints:
-                        const BoxConstraints(minWidth: 34, minHeight: 34),
-                    padding: EdgeInsets.zero,
-                  ),
-
-                  // 原始发布页 (如果存在)
-                  if (item.pageUrl != null && item.pageUrl!.isNotEmpty) ...[
-                    const SizedBox(width: 6),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Row(
+                  children: [
+                    // 复制磁力链接
                     IconButton.outlined(
-                      onPressed: () => _openBrowserUrl(item.pageUrl!),
-                      icon: const Icon(Icons.open_in_browser, size: 16),
-                      tooltip: '原始页面:\n${item.pageUrl}',
+                      icon: const Icon(Icons.copy, size: 16),
+                      tooltip: '复制磁力链接',
+                      onPressed: () => _copyMagnet(item),
                       constraints:
                           const BoxConstraints(minWidth: 34, minHeight: 34),
                       padding: EdgeInsets.zero,
                     ),
-                  ],
+                    const SizedBox(width: 6),
 
-                  const SizedBox(width: 12),
+                    // 选文件（三联树选择性下载）
+                    IconButton.outlined(
+                      onPressed: () => _handleSelectiveDownload(item),
+                      icon: const Icon(Icons.checklist_rtl, size: 16),
+                      tooltip: '选择性下载 (三联树)',
+                      constraints:
+                          const BoxConstraints(minWidth: 34, minHeight: 34),
+                      padding: EdgeInsets.zero,
+                    ),
 
-                  // 在线看 / 在线听
-                  if (item.canStreamVideo) ...[
-                    OutlinedButton.icon(
-                      onPressed: () => _handleStreamPlay(item),
-                      icon: const Icon(Icons.play_arrow, size: 15),
-                      label: const Text('在线看', maxLines: 1, softWrap: false),
-                      style: OutlinedButton.styleFrom(
+                    // 原始发布页 (如果存在)
+                    if (item.pageUrl != null && item.pageUrl!.isNotEmpty) ...[
+                      const SizedBox(width: 6),
+                      IconButton.outlined(
+                        onPressed: () => _openBrowserUrl(item.pageUrl!),
+                        icon: const Icon(Icons.open_in_browser, size: 16),
+                        tooltip: '原始页面:\n${item.pageUrl}',
+                        constraints:
+                            const BoxConstraints(minWidth: 34, minHeight: 34),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ],
+
+                    const SizedBox(width: 12),
+
+                    // 在线看 / 在线听
+                    if (item.canStreamVideo) ...[
+                      OutlinedButton.icon(
+                        onPressed: () => _handleStreamPlay(item),
+                        icon: const Icon(Icons.play_arrow, size: 15),
+                        label: const Text('在线看', maxLines: 1, softWrap: false),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ] else if (item.canStreamAudio) ...[
+                      OutlinedButton.icon(
+                        onPressed: () => _handleStreamPlay(item),
+                        icon: const Icon(Icons.headphones_outlined, size: 15),
+                        label: const Text('在线听', maxLines: 1, softWrap: false),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+
+                    // 立即下载 (统一锚定在卡片最右侧，全卡片严格垂直对齐)
+                    FilledButton.tonalIcon(
+                      onPressed: () => _handleDownload(item),
+                      icon: const Icon(Icons.download, size: 16),
+                      label: const Text('立即下载', maxLines: 1, softWrap: false),
+                      style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                            horizontal: 14, vertical: 6),
                         visualDensity: VisualDensity.compact,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                  ] else if (item.canStreamAudio) ...[
-                    OutlinedButton.icon(
-                      onPressed: () => _handleStreamPlay(item),
-                      icon: const Icon(Icons.headphones_outlined, size: 15),
-                      label: const Text('在线听', maxLines: 1, softWrap: false),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
                   ],
-
-                  // 立即下载 (统一锚定在卡片最右侧，全卡片严格垂直对齐)
-                  FilledButton.tonalIcon(
-                    onPressed: () => _handleDownload(item),
-                    icon: const Icon(Icons.download, size: 16),
-                    label: const Text('立即下载', maxLines: 1, softWrap: false),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 6),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -2745,188 +2806,272 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
     );
   }
 
-  /// 搜索未发起时的工具型首屏（仅展示用户本身的搜索历史，杜绝硬编码假热门推荐）
+  /// 搜索未发起时的工具型首屏（复用全局统一组件 UnifiedRuleReadinessCard，消除冗余搜索历史重复渲染）
   Widget _buildWelcomeSearchHome(ThemeData theme) {
-    final histories = ref.watch(searchHistoryProvider);
+    final plugins = ref.watch(indexerPluginsProvider).plugins;
+    final enabledPlugins = plugins.where((p) => p.isEnabled).toList();
+    final alistCount = enabledPlugins
+        .where((p) =>
+            p.id.toLowerCase().contains('alist') ||
+            p.name.toLowerCase().contains('alist'))
+        .length;
+    final cardigannCount = enabledPlugins.length - alistCount;
+    final publicCount = enabledPlugins
+        .where((p) => p.typeStr.toLowerCase() == 'public')
+        .length;
+    final semiPrivateCount = enabledPlugins
+        .where((p) => p.typeStr.toLowerCase() == 'semi-private')
+        .length;
+    final privateCount = enabledPlugins
+        .where((p) => p.typeStr.toLowerCase() == 'private')
+        .length;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (histories.isNotEmpty) ...[
-              // 搜索历史标题与清空操作栏
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.history,
-                          size: 16, color: theme.colorScheme.primary),
-                      const SizedBox(width: 6),
-                      Text(
-                        '搜索历史',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                  TextButton.icon(
-                    onPressed: () {
-                      ref.read(searchHistoryProvider.notifier).clearAll();
-                    },
-                    icon: Icon(
-                      Icons.delete_sweep_outlined,
-                      size: 15,
-                      color: theme.colorScheme.outline,
-                    ),
-                    label: Text(
-                      '清空历史',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.outline,
-                      ),
-                    ),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+      child: UnifiedRuleReadinessCard(
+        title: '已启用规则 (${enabledPlugins.length} 个资源索引规则)',
+        badges: [
+          UnifiedRuleBadgeData(
+            icon: Icons.downloading_outlined,
+            label: 'Cardigann 规则',
+            count: cardigannCount,
+          ),
+          UnifiedRuleBadgeData(
+            icon: Icons.cloud_outlined,
+            label: 'AList 规则',
+            count: alistCount,
+          ),
+          UnifiedRuleBadgeData(
+            icon: Icons.public_rounded,
+            label: '公开 Public 站点',
+            count: publicCount,
+          ),
+          UnifiedRuleBadgeData(
+            icon: Icons.lock_open_outlined,
+            label: '半私有 Semi 站点',
+            count: semiPrivateCount,
+          ),
+          UnifiedRuleBadgeData(
+            icon: Icons.lock_outlined,
+            label: '私有 PT 站点',
+            count: privateCount,
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-              // 历史记录气泡标签列表
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: histories.map((h) {
-                  return InputChip(
-                    avatar: Icon(
-                      Icons.history,
-                      size: 14,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    label: Text(
-                      h.keyword,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontSize: 13,
-                      ),
-                    ),
-                    onPressed: () {
-                      widget.onSearchKeywordSelected?.call(h.keyword);
-                      ref
-                          .read(torrentSearchProvider.notifier)
-                          .search(h.keyword);
-                    },
-                    onDeleted: () {
-                      ref
-                          .read(searchHistoryProvider.notifier)
-                          .deleteHistory(h);
-                    },
-                    deleteIcon: const Icon(Icons.close, size: 14),
-                    deleteButtonTooltipMessage: '删除此记录',
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(
-                        color: theme.dividerColor.withAlpha(50),
-                      ),
-                    ),
-                    backgroundColor:
-                        theme.colorScheme.surfaceContainerHighest.withAlpha(90),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 36),
-            ] else ...[
-              // 无搜索历史时的极简工具型占位引导
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 48),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest
-                              .withAlpha(100),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.travel_explore_outlined,
-                          size: 36,
-                          color: theme.colorScheme.primary.withAlpha(200),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '资源检索',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+/// 全网资源搜索统一多维筛选面板（复用 UnifiedFilterPanelContainer / UnifiedFilterCategoryRow / UnifiedFilterChoiceChip）
+/// 与「视频直播 (OnlineVideoSearchPage)」共享完全一致的筛选面板视觉与交互组件规范
+class ResourceSearchFilterPanel extends ConsumerWidget {
+  const ResourceSearchFilterPanel({super.key});
 
-            // 底部索引器引擎就绪状态指示器
-            Consumer(
-              builder: (context, ref, _) {
-                final activeCount = ref
-                    .watch(indexerPluginsProvider)
-                    .plugins
-                    .where((p) => p.isEnabled)
-                    .length;
-                return Center(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest
-                          .withAlpha(60),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.dividerColor.withAlpha(40),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          size: 13,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 6),
-                         Flexible(
-                          child: Text(
-                            'Cardigann 规则就绪 (已激活 $activeCount 个 BT/磁力索引源) · AList 规则就绪 (网盘挂载直搜)',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.outline,
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
+  IconData _getCategoryIcon(TorrentCategory category) {
+    switch (category) {
+      case TorrentCategory.video:
+        return Icons.movie_outlined;
+      case TorrentCategory.audio:
+        return Icons.music_note_outlined;
+      case TorrentCategory.software:
+        return Icons.computer_outlined;
+      case TorrentCategory.game:
+        return Icons.sports_esports_outlined;
+      case TorrentCategory.document:
+        return Icons.menu_book_outlined;
+      case TorrentCategory.all:
+        return Icons.insert_drive_file_outlined;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final searchState = ref.watch(torrentSearchProvider);
+    final notifier = ref.read(torrentSearchProvider.notifier);
+    final counts = searchState.categoryCounts;
+    final activeProtocol = searchState.ruleProtocolFilter ?? 'all';
+    final alistCount =
+        searchState.items.where(TorrentSearchState.isAlistItem).length;
+    final cardigannCount = searchState.items.length - alistCount;
+    final currentType = searchState.trackerTypeFilter ?? 'all';
+    final currentIndexer = searchState.indexerFilter ?? '全部';
+
+    int publicCount = 0;
+    int semiPrivateCount = 0;
+    int privateCount = 0;
+    final indexerCounts = <String, int>{};
+    for (final item in searchState.items) {
+      if (item.isPrivateTracker) {
+        privateCount++;
+      } else if (item.isSemiPrivateTracker) {
+        semiPrivateCount++;
+      } else {
+        publicCount++;
+      }
+      final name = item.effectiveSourceName;
+      indexerCounts[name] = (indexerCounts[name] ?? 0) + 1;
+    }
+
+    final types = [
+      ('all', '全部性质', searchState.items.length, Icons.all_inclusive),
+      ('public', '公开 Public', publicCount, Icons.public),
+      ('semi-private', '半私有 Semi', semiPrivateCount, Icons.lock_open_outlined),
+      ('private', '私有 PT', privateCount, Icons.lock_outlined),
+    ];
+
+    final sortOptions = [
+      (TorrentSortMode.smart, '智能综合', Icons.auto_awesome),
+      (TorrentSortMode.seeders, '做种优先', Icons.arrow_upward),
+      (TorrentSortMode.age, '发布时间', Icons.schedule),
+      (TorrentSortMode.size, '文件体积', Icons.data_usage),
+      (TorrentSortMode.leechers, '下载热度', Icons.arrow_downward),
+      (TorrentSortMode.title, '资源名称', Icons.sort_by_alpha),
+    ];
+
+    return UnifiedFilterPanelContainer(
+      panelKey: const Key('resource_search_filter_panel'),
+      rows: [
+        // 维度 1：分类 (cat)
+        UnifiedFilterCategoryRow(
+          categoryTitle: '分类 (cat)',
+          categorySubtitle: '资源类型与协议',
+          trailing: searchState.hasActiveFilter
+              ? TextButton.icon(
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
-                );
-              },
+                  onPressed: notifier.resetFilters,
+                  icon: const Icon(Icons.restart_alt_rounded, size: 15),
+                  label: const Text('重置筛选', style: TextStyle(fontSize: 12)),
+                )
+              : null,
+          chips: [
+            for (final cat in TorrentCategory.values)
+              UnifiedFilterChoiceChip(
+                chipKey: ValueKey('category_chip_${cat.name}'),
+                icon: _getCategoryIcon(cat),
+                label: cat.label,
+                count: cat == TorrentCategory.all
+                    ? searchState.items.length
+                    : (counts[cat] ?? 0),
+                showCount: searchState.items.isNotEmpty &&
+                    (cat == TorrentCategory.all || (counts[cat] ?? 0) > 0),
+                isSelected: searchState.categoryFilter == cat,
+                onSelected: () => notifier.setCategoryFilter(cat),
+              ),
+            UnifiedFilterChoiceChip(
+              chipKey: const Key('resource_rule_chip_cardigann'),
+              icon: Icons.downloading_outlined,
+              label: 'Cardigann 规则',
+              count: cardigannCount,
+              showCount: searchState.items.isNotEmpty && cardigannCount > 0,
+              isSelected: activeProtocol == 'cardigann',
+              onSelected: () => notifier.setRuleProtocolFilter(
+                activeProtocol == 'cardigann' ? 'all' : 'cardigann',
+              ),
+            ),
+            UnifiedFilterChoiceChip(
+              chipKey: const Key('resource_rule_chip_alist'),
+              icon: Icons.cloud_outlined,
+              label: 'AList 规则',
+              count: alistCount,
+              showCount: searchState.items.isNotEmpty && alistCount > 0,
+              isSelected: activeProtocol == 'alist',
+              onSelected: () => notifier.setRuleProtocolFilter(
+                activeProtocol == 'alist' ? 'all' : 'alist',
+              ),
             ),
           ],
         ),
-      );
+        // 维度 2：性质 (type)
+        UnifiedFilterCategoryRow(
+          categoryTitle: '性质 (type)',
+          categorySubtitle: '公开 / 半私有 / 私有 PT',
+          chips: [
+            for (final entry in types)
+              UnifiedFilterChoiceChip(
+                chipKey: ValueKey('tracker_type_chip_${entry.$1}'),
+                icon: entry.$4,
+                label: entry.$2,
+                count: entry.$3,
+                showCount: searchState.items.isNotEmpty && entry.$3 > 0,
+                isSelected: currentType == entry.$1,
+                onSelected: () => notifier.setTrackerTypeFilter(entry.$1),
+              ),
+          ],
+        ),
+        // 维度 3：站点 (indexer)
+        if (indexerCounts.isNotEmpty)
+          UnifiedFilterCategoryRow(
+            categoryTitle: '站点 (indexer)',
+            categorySubtitle: '索引源过滤',
+            chips: [
+              UnifiedFilterChoiceChip(
+                chipKey: const Key('indexer_chip_all'),
+                icon: Icons.hub_outlined,
+                label: '全部站点',
+                count: searchState.items.length,
+                showCount: searchState.items.isNotEmpty,
+                isSelected: currentIndexer == '全部',
+                onSelected: () => notifier.setIndexerFilter(null),
+              ),
+              for (final entry in indexerCounts.entries)
+                UnifiedFilterChoiceChip(
+                  chipKey: ValueKey('indexer_chip_${entry.key}'),
+                  icon: Icons.dns_outlined,
+                  label: entry.key,
+                  count: entry.value,
+                  showCount: true,
+                  isSelected: currentIndexer == entry.key,
+                  onSelected: () => notifier.setIndexerFilter(
+                    currentIndexer == entry.key ? null : entry.key,
+                  ),
+                ),
+            ],
+          ),
+        // 维度 4：排序 (sort)
+        UnifiedFilterCategoryRow(
+          categoryTitle: '排序 (sort)',
+          categorySubtitle: searchState.sortAscending ? '当前升序' : '当前降序',
+          trailing: IconButton(
+            tooltip: searchState.sortAscending
+                ? '当前升序 (点击切换为降序)'
+                : '当前降序 (点击切换为升序)',
+            icon: Icon(
+              searchState.sortAscending ? Icons.north : Icons.south,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            onPressed: () => notifier.setSortMode(
+              searchState.sortMode,
+              ascending: !searchState.sortAscending,
+            ),
+          ),
+          chips: [
+            for (final entry in sortOptions)
+              UnifiedFilterChoiceChip(
+                chipKey: ValueKey('sort_chip_${entry.$1.name}'),
+                icon: entry.$3,
+                label: entry.$2,
+                showCount: false,
+                isSelected: searchState.sortMode == entry.$1,
+                onSelected: () {
+                  if (searchState.sortMode == entry.$1) {
+                    notifier.setSortMode(
+                      entry.$1,
+                      ascending: !searchState.sortAscending,
+                    );
+                  } else {
+                    notifier.setSortMode(entry.$1);
+                  }
+                },
+              ),
+          ],
+        ),
+      ],
+    );
   }
 }

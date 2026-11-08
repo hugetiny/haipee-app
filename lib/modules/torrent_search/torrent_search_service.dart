@@ -52,6 +52,27 @@ class TorrentSearchState {
     return name.contains('alist') || name.contains('网盘');
   }
 
+  bool get hasActiveFilter =>
+      categoryFilter != TorrentCategory.all ||
+      (ruleProtocolFilter != null && ruleProtocolFilter != 'all') ||
+      (trackerTypeFilter != null && trackerTypeFilter != 'all') ||
+      (indexerFilter != null &&
+          indexerFilter!.isNotEmpty &&
+          indexerFilter != '全部');
+
+  int get activeFilterCount {
+    int count = 0;
+    if (categoryFilter != TorrentCategory.all) count++;
+    if (ruleProtocolFilter != null && ruleProtocolFilter != 'all') count++;
+    if (trackerTypeFilter != null && trackerTypeFilter != 'all') count++;
+    if (indexerFilter != null &&
+        indexerFilter!.isNotEmpty &&
+        indexerFilter != '全部') {
+      count++;
+    }
+    return count;
+  }
+
   List<TorrentItem> get filteredItems {
     var list = items;
     if (ruleProtocolFilter == 'alist') {
@@ -462,7 +483,7 @@ class TorrentSearchNotifier extends Notifier<TorrentSearchState> {
   }
 
   void setIndexerFilter(String? idx) {
-    state = state.copyWith(indexerFilter: idx);
+    state = state.copyWith(indexerFilter: idx ?? '全部');
   }
 
   void setTrackerTypeFilter(String? type) {
@@ -471,6 +492,20 @@ class TorrentSearchNotifier extends Notifier<TorrentSearchState> {
 
   void setRuleProtocolFilter(String? protocol) {
     state = state.copyWith(ruleProtocolFilter: protocol ?? 'all');
+  }
+
+  void resetFilters() {
+    state = state.copyWith(
+      categoryFilter: TorrentCategory.all,
+      ruleProtocolFilter: 'all',
+      trackerTypeFilter: 'all',
+      indexerFilter: '全部',
+    );
+  }
+
+  void clear() {
+    _searchRequestId++;
+    state = const TorrentSearchState();
   }
 
   void reloadProwlarrConfig() {

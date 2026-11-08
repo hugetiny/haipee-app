@@ -107,40 +107,65 @@ void main(List<String> args) async {
 
   switch (command) {
     case 'reload':
-      try {
-        final res = await client.callServiceExtension('ext.flutter.reassemble', isolateId: isolateId);
-        stdout.writeln('⚡ 热重载成功: ${res.json}');
-      } catch (e) {
-        stderr.writeln('❌ 热重载失败: $e');
+      bool signalSent = false;
+      if (Platform.isMacOS || Platform.isLinux) {
+        try {
+          final res = await Process.run('pkill', ['-USR1', '-f', r'flutter_tools\.snapshot run']);
+          if (res.exitCode == 0) {
+            signalSent = true;
+            await Future.delayed(const Duration(milliseconds: 600));
+            stdout.writeln('⚡ 已向 flutter_tools 发送 SIGUSR1 触发增量重编译与热重载');
+          }
+        } catch (_) {}
+      }
+      if (!signalSent) {
+        try {
+          final res = await client.callServiceExtension('ext.flutter.reassemble', isolateId: isolateId);
+          stdout.writeln('⚡ 热重载 Reassemble 成功: ${res.json}');
+        } catch (e) {
+          stderr.writeln('❌ 热重载失败: $e');
+        }
       }
       break;
 
     case 'restart':
       stdout.writeln('🔄 正在执行热重启...');
       bool restarted = false;
+      if (Platform.isMacOS || Platform.isLinux) {
+        try {
+          final res = await Process.run('pkill', ['-USR2', '-f', r'flutter_tools\.snapshot run']);
+          if (res.exitCode == 0) {
+            restarted = true;
+            await Future.delayed(const Duration(milliseconds: 1200));
+            stdout.writeln('⚡ 已向 flutter_tools 发送 SIGUSR2 触发完整热重启');
+          }
+        } catch (_) {}
+      }
       try {
         final vm = await client.getVM();
         stdout.writeln('  Isolates: ${vm.isolates?.length}');
       } catch (_) {}
 
-      // Try registered flutter hotRestart services
-      for (var i = 0; i < 20; i++) {
-        try {
-          final res = await client
-              .callMethod('s$i.hotRestart', args: {'pause': false})
-              .timeout(const Duration(milliseconds: 600));
-          stdout.writeln('⚡ 热重启成功: ${res.json}');
-          restarted = true;
-          break;
-        } catch (_) {}
-        try {
-          final res = await client
-              .callMethod('hotRestart', args: {'pause': false})
-              .timeout(const Duration(milliseconds: 600));
-          stdout.writeln('⚡ 热重启成功: ${res.json}');
-          restarted = true;
-          break;
-        } catch (_) {}
+      // Try registered flutter hotRestart services if signal was not sent
+      if (!restarted) {
+        for (var i = 0; i < 20; i++) {
+          try {
+            final res = await client
+                .callMethod('s$i.hotRestart', args: {'pause': false})
+                .timeout(const Duration(milliseconds: 600));
+            stdout.writeln('⚡ 热重启成功: ${res.json}');
+            restarted = true;
+            break;
+          } catch (_) {}
+          try {
+            final res = await client
+                .callMethod('hotRestart', args: {'pause': false})
+                .timeout(const Duration(milliseconds: 600));
+            stdout.writeln('⚡ 热重启成功: ${res.json}');
+            restarted = true;
+            break;
+          } catch (_) {}
+        }
       }
       if (!restarted) {
         try {

@@ -167,5 +167,60 @@ void main() {
         reason: '下载管理页面右上角严禁包含重复的「下载设置」跳转按钮（全部设置统一在设置页管理）！',
       );
     });
+
+    test('6. 统一搜索工作区组件复用规范：视频直播与全网资源必须共用 UnifiedSearchWorkspace 标准组件体系且同时具备 Grid View 与 Table View', () {
+      final onlinePage =
+          File('lib/pages/online/online_video_search_page.dart').readAsStringSync();
+      final resourcePage =
+          File('lib/pages/resource/resource_search_page.dart').readAsStringSync();
+      final resourceContent =
+          File('lib/pages/resource/resource_search_content.dart').readAsStringSync();
+
+      // 两大板块一级入口必须同时复用 UnifiedSearchHeader
+      expect(
+        onlinePage.contains('UnifiedSearchHeader('),
+        isTrue,
+        reason: 'OnlineVideoSearchPage 必须复用全局 UnifiedSearchHeader 组件',
+      );
+      expect(
+        resourcePage.contains('UnifiedSearchHeader('),
+        isTrue,
+        reason: 'ResourceSearchPage 必须复用全局 UnifiedSearchHeader 组件',
+      );
+
+      // 两大板块必须同时复用 UnifiedFilterPanelContainer / UnifiedFilterCategoryRow / UnifiedFilterChoiceChip / UnifiedSearchResultSummaryBar / UnifiedRuleReadinessCard
+      for (final comp in const [
+        'UnifiedFilterPanelContainer(',
+        'UnifiedFilterCategoryRow(',
+        'UnifiedFilterChoiceChip(',
+        'UnifiedSearchResultSummaryBar(',
+        'UnifiedRuleReadinessCard(',
+      ]) {
+        expect(
+          onlinePage.contains(comp),
+          isTrue,
+          reason: 'OnlineVideoSearchPage 必须复用标准组件 $comp',
+        );
+        expect(
+          resourceContent.contains(comp),
+          isTrue,
+          reason: 'ResourceSearchContent 必须复用标准组件 $comp',
+        );
+      }
+
+      // 两大板块必须同时具备 Grid View 与 Table View 实现
+      expect(
+        onlinePage.contains('_buildVideoTableView(') &&
+            onlinePage.contains('SliverGrid('),
+        isTrue,
+        reason: 'OnlineVideoSearchPage 必须同时支持 Grid View (SliverGrid) 与 Table View (_buildVideoTableView)',
+      );
+      expect(
+        resourceContent.contains('_buildXunleiTableView(') &&
+            resourceContent.contains('GridView.builder('),
+        isTrue,
+        reason: 'ResourceSearchContent 必须同时支持 Table View (_buildXunleiTableView) 与 Grid View (GridView.builder)',
+      );
+    });
   });
 }
