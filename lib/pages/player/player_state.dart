@@ -1,3 +1,4 @@
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/modules/danmaku/danmaku_module.dart';
 import 'package:haipee/modules/playback/aniskip_model.dart';
 import 'package:media_kit/media_kit.dart';
@@ -75,6 +76,10 @@ class PlayerState {
   final AniSkipInterval? currentAniSkipInterval;
   final bool autoSkipOpEd;
 
+  // B站 画质档位控制
+  final int biliQuality;
+  final List<BiliStreamQuality> biliAvailableQualities;
+
   const PlayerState({
     this.danDanmakus = const {},
     this.danmakuOn = false,
@@ -121,6 +126,8 @@ class PlayerState {
     this.aniSkipIntervals = const [],
     this.currentAniSkipInterval,
     this.autoSkipOpEd = false,
+    this.biliQuality = 0,
+    this.biliAvailableQualities = const [],
   });
 
   PlayerState copyWith({
@@ -169,6 +176,8 @@ class PlayerState {
     List<AniSkipInterval>? aniSkipIntervals,
     Object? currentAniSkipInterval = _sentinel,
     bool? autoSkipOpEd,
+    int? biliQuality,
+    List<BiliStreamQuality>? biliAvailableQualities,
   }) {
     return PlayerState(
       danDanmakus: danDanmakus ?? this.danDanmakus,
@@ -224,6 +233,9 @@ class PlayerState {
           ? this.currentAniSkipInterval
           : (currentAniSkipInterval as AniSkipInterval?),
       autoSkipOpEd: autoSkipOpEd ?? this.autoSkipOpEd,
+      biliQuality: biliQuality ?? this.biliQuality,
+      biliAvailableQualities:
+          biliAvailableQualities ?? this.biliAvailableQualities,
     );
   }
 }

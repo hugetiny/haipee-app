@@ -191,37 +191,77 @@ class BilibiliService {
 
       final data = response.data?['data'];
       if (data != null) {
+        final acceptQualities = <int>[];
+        final rawAccept = data['accept_quality'];
+        if (rawAccept is List) {
+          for (final item in rawAccept) {
+            final q = item is int ? item : int.tryParse(item?.toString() ?? '0') ?? 0;
+            if (q > 0) acceptQualities.add(q);
+          }
+        }
+
         final dash = data['dash'];
         if (dash != null) {
           final List<dynamic>? videoList = dash['video'];
           final List<dynamic>? audioList = dash['audio'];
 
-          final List<BiliStreamQuality> availableQualities = [];
+          final unlockedIds = <int>{};
+          final typedVideos = <Map<String, dynamic>>[];
           if (videoList != null) {
             for (final v in videoList) {
-              final id = v['id'] is int ? v['id'] as int : int.tryParse(v['id']?.toString() ?? '0') ?? 0;
-              if (id > 0 && !availableQualities.any((q) => q.id == id)) {
-                availableQualities.add(BiliStreamQuality(
-                  id: id,
-                  label: BiliQualityHelper.getLabel(id),
-                  format: 'dash',
-                ));
+              if (v is Map<String, dynamic>) {
+                final id = v['id'] is int
+                    ? v['id'] as int
+                    : int.tryParse(v['id']?.toString() ?? '0') ?? 0;
+                if (id > 0) {
+                  unlockedIds.add(id);
+                  typedVideos.add(v);
+                }
               }
             }
-            availableQualities.sort((a, b) => b.id.compareTo(a.id));
           }
+
+          // 按画质从高到低排序，同画质优先选择兼容性最佳的 AVC (codecid=7)
+          typedVideos.sort((a, b) {
+            final idA = a['id'] is int ? a['id'] as int : int.tryParse(a['id']?.toString() ?? '0') ?? 0;
+            final idB = b['id'] is int ? b['id'] as int : int.tryParse(b['id']?.toString() ?? '0') ?? 0;
+            if (idA != idB) return idB.compareTo(idA);
+            final codecA = a['codecid'] == 7 ? 0 : 1;
+            final codecB = b['codecid'] == 7 ? 0 : 1;
+            return codecA.compareTo(codecB);
+          });
+
+          final availableQualities = BiliQualityHelper.buildQualityList(
+            unlockedIds: unlockedIds,
+            acceptQualityIds: acceptQualities,
+            format: 'dash',
+          );
 
           String? videoUrl;
           int quality = 80;
-          if (videoList != null && videoList.isNotEmpty) {
+          if (typedVideos.isNotEmpty) {
             Map<String, dynamic>? selectedVideo;
             if (targetQuality != null) {
-              selectedVideo = videoList.firstWhere(
-                (v) => (v['id'] is int ? v['id'] : int.tryParse(v['id']?.toString() ?? '0')) == targetQuality,
-                orElse: () => videoList.first as Map<String, dynamic>,
-              ) as Map<String, dynamic>?;
+              // 1. 精确匹配目标画质
+              for (final v in typedVideos) {
+                final id = v['id'] is int ? v['id'] as int : int.tryParse(v['id']?.toString() ?? '0') ?? 0;
+                if (id == targetQuality) {
+                  selectedVideo = v;
+                  break;
+                }
+              }
+              // 2. 若目标画质受限或不存在，向下寻找不超过目标画质的最高可用流
+              if (selectedVideo == null) {
+                for (final v in typedVideos) {
+                  final id = v['id'] is int ? v['id'] as int : int.tryParse(v['id']?.toString() ?? '0') ?? 0;
+                  if (id <= targetQuality) {
+                    selectedVideo = v;
+                    break;
+                  }
+                }
+              }
             }
-            selectedVideo ??= videoList.first as Map<String, dynamic>;
+            selectedVideo ??= typedVideos.first;
 
             videoUrl = selectedVideo['baseUrl'] ?? selectedVideo['base_url'];
             quality = selectedVideo['id'] is int
@@ -254,18 +294,17 @@ class BilibiliService {
           final first = durls.first as Map<String, dynamic>;
           final url = first['url']?.toString();
           if (url != null && url.isNotEmpty) {
+            final durlQuality = data['quality'] is int ? data['quality'] as int : 64;
             return BiliPlayUrl(
               videoUrl: url,
-              quality: data['quality'] is int ? data['quality'] : 64,
+              quality: durlQuality,
               format: 'durl',
               headers: headers,
-              availableQualities: [
-                BiliStreamQuality(
-                  id: data['quality'] is int ? data['quality'] : 64,
-                  label: BiliQualityHelper.getLabel(data['quality'] is int ? data['quality'] : 64),
-                  format: 'durl',
-                )
-              ],
+              availableQualities: BiliQualityHelper.buildQualityList(
+                unlockedIds: [durlQuality],
+                acceptQualityIds: acceptQualities,
+                format: 'durl',
+              ),
             );
           }
         }

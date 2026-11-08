@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:haipee/utils/logger.dart';
-import 'package:logger/logger.dart';
 import 'package:haipee/bean/appbar/drag_to_move_bar.dart' as dtb;
 import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:haipee/bean/widget/app_back_button.dart';
@@ -27,7 +25,6 @@ import 'package:haipee/utils/remote.dart';
 import 'package:haipee/utils/utils.dart';
 import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
 import 'package:haipee/modules/bilibili/bilibili_models.dart';
-import 'package:haipee/modules/bilibili/bilibili_service.dart';
 import 'package:haipee/modules/bilibili/widgets/bili_login_dialog.dart';
 import 'package:haipee/pages/player/tracks_settings_sheet.dart';
 import 'package:saver_gallery/saver_gallery.dart';
@@ -223,32 +220,8 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
     return buffer.toString();
   }
 
-  Future<void> _refreshBiliStreamWithNewAuth() async {
-    final biliCid = playerController.activeBiliCid;
-    final biliBvid = playerController.activeBiliBvid ??
-        playerController.activeLocalVideoArgs?.biliBvid;
-    if (biliCid == null || biliBvid == null || biliBvid.isEmpty) return;
-
-    try {
-      HaipeeDialog.showToast(message: '已成功登录！正在为您切换 1080P/4K 高清画质流...');
-      final playUrl = await BilibiliService.getPlayUrl(biliBvid, biliCid);
-      if (playUrl != null && playUrl.videoUrl.isNotEmpty) {
-        final currentPos = playerController.playerPosition;
-        await playerController.init(
-          playUrl.videoUrl,
-          audioUrl: playUrl.audioUrl,
-          httpHeaders: playUrl.headers,
-          biliCid: biliCid,
-          biliBvid: biliBvid,
-        );
-        if (currentPos > Duration.zero) {
-          playerController.seek(currentPos);
-        }
-        playerController.play();
-      }
-    } catch (e) {
-      HaipeeLogger().log(Level.warning, '登录后切换高清流失败: $e');
-    }
+  Future<void> _refreshBiliStreamWithNewAuth({int? targetQuality}) async {
+    await playerController.switchBiliQuality(targetQuality: targetQuality);
   }
 
   Widget _buildBiliLoginPrompt(ThemeData theme, ColorScheme colorScheme) {
@@ -356,65 +329,207 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
     if (!playerController.isBiliPlayback) {
       return const SizedBox.shrink();
     }
+    final playerState = ref.watch(playerProvider);
     return ValueListenableBuilder<BiliUserProfile?>(
       valueListenable: BiliAuthService().userNotifier,
       builder: (context, user, _) {
         final isLogin = BiliAuthService().isLoggedIn && user != null;
+        final isVip = isLogin && user.isVip;
+        final activeQuality = playerState.biliQuality > 0
+            ? playerState.biliQuality
+            : (isLogin ? (isVip ? 112 : 80) : 32);
+        final qualities = playerState.biliAvailableQualities.isNotEmpty
+            ? playerState.biliAvailableQualities
+            : BiliQualityHelper.buildQualityList(
+                unlockedIds: isLogin
+                    ? (isVip
+                        ? const [112, 80, 64, 32, 16]
+                        : const [80, 64, 32, 16])
+                    : const [32, 16],
+              );
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: InkWell(
-            key: const Key('player_bili_quality_badge'),
-            borderRadius: BorderRadius.circular(14),
-            onTap: () {
+          child: MenuAnchor(
+            consumeOutsideTap: true,
+            onOpen: () {
               widget.cancelHideTimer();
               playerController.canHidePlayerPanel = false;
-              BiliLoginDialog.show(context).then((_) {
-                if (mounted) {
-                  widget.cancelHideTimer();
-                  widget.startHideTimer();
-                  playerController.canHidePlayerPanel = true;
-                  if (BiliAuthService().isLoggedIn && !isLogin) {
-                    _refreshBiliStreamWithNewAuth();
-                  }
-                }
-              });
             },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isLogin
-                    ? Colors.white.withAlpha(32)
-                    : Colors.pinkAccent.withAlpha(50),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isLogin
-                      ? Colors.white38
-                      : Colors.pinkAccent.withAlpha(180),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isLogin ? Icons.hd_rounded : Icons.lock_open_rounded,
-                    size: 14,
-                    color: isLogin ? Colors.white : Colors.pinkAccent,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    isLogin
-                        ? (user.isVip ? '大会员 4K' : '1080P 高清')
-                        : '360P · 登录享高清',
-                    style: TextStyle(
-                      color: isLogin ? Colors.white : Colors.pinkAccent.shade100,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+            onClose: () {
+              widget.cancelHideTimer();
+              widget.startHideTimer();
+              playerController.canHidePlayerPanel = true;
+            },
+            menuChildren: [
+              for (final q in qualities)
+                MenuItemButton(
+                  key: Key('bili_quality_option_${q.id}'),
+                  onPressed: () {
+                    if (!isLogin && q.requiresLogin) {
+                      HaipeeDialog.showToast(
+                        message: '登录 B站 账号后即可切换 ${q.label}',
+                      );
+                      widget.cancelHideTimer();
+                      playerController.canHidePlayerPanel = false;
+                      BiliLoginDialog.show(context).then((_) {
+                        if (mounted) {
+                          widget.cancelHideTimer();
+                          widget.startHideTimer();
+                          playerController.canHidePlayerPanel = true;
+                          if (BiliAuthService().isLoggedIn) {
+                            _refreshBiliStreamWithNewAuth(targetQuality: q.id);
+                          }
+                        }
+                      });
+                      return;
+                    }
+                    if (q.requiresVip && !isVip) {
+                      HaipeeDialog.showToast(
+                        message: '${q.label} 为 B站 大会员专属画质',
+                      );
+                      return;
+                    }
+                    if (q.id != activeQuality) {
+                      playerController.switchBiliQuality(targetQuality: q.id);
+                    }
+                  },
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 168),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              q.id == activeQuality
+                                  ? Icons.check_rounded
+                                  : Icons.circle_outlined,
+                              size: 16,
+                              color: q.id == activeQuality
+                                  ? Colors.pinkAccent
+                                  : Colors.transparent,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              q.label,
+                              style: TextStyle(
+                                fontWeight: q.id == activeQuality
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: q.id == activeQuality
+                                    ? Colors.pinkAccent
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (q.requiresVip) ...[
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.pinkAccent.withAlpha(36),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: Colors.pinkAccent.withAlpha(140),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: const Text(
+                              '大会员',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.pinkAccent,
+                              ),
+                            ),
+                          ),
+                        ] else if (!isLogin && q.requiresLogin) ...[
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '登录享',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+            ],
+            builder: (context, controller, _) {
+              return InkWell(
+                key: const Key('player_bili_quality_badge'),
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(32),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white38,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.hd_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        BiliQualityHelper.getShortLabel(activeQuality),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.arrow_drop_down_rounded,
+                        size: 16,
+                        color: Colors.white70,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         );
       },
@@ -1588,45 +1703,6 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                   );
                 },
                 menuChildren: [
-                  if (playerController.isBiliPlayback)
-                    ValueListenableBuilder<BiliUserProfile?>(
-                      valueListenable: BiliAuthService().userNotifier,
-                      builder: (context, user, _) {
-                        final isLogin = BiliAuthService().isLoggedIn && user != null;
-                        return MenuItemButton(
-                          onPressed: () {
-                            widget.cancelHideTimer();
-                            playerController.canHidePlayerPanel = false;
-                            BiliLoginDialog.show(context).then((_) {
-                              if (mounted) {
-                                widget.cancelHideTimer();
-                                widget.startHideTimer();
-                                playerController.canHidePlayerPanel = true;
-                                if (BiliAuthService().isLoggedIn) {
-                                  _refreshBiliStreamWithNewAuth();
-                                }
-                              }
-                            });
-                          },
-                          leadingIcon: Icon(
-                            isLogin ? Icons.verified_user_rounded : Icons.login_rounded,
-                            color: Colors.pinkAccent,
-                            size: 20,
-                          ),
-                          child: SizedBox(
-                            height: 48,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                isLogin
-                                    ? 'B站账号: ${user.uname} (${user.isVip ? "大会员" : "已登录"})'
-                                    : '登录 B站 账号 (解锁 1080P/4K)',
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
                   if (playerController.activeBiliCid == null ||
                       playerController.activeBiliCid! <= 0)
                     MenuItemButton(

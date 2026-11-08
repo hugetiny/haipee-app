@@ -12,7 +12,6 @@ import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
 import 'package:haipee/bean/widget/embedded_native_control_area.dart';
 import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
 import 'package:haipee/modules/bilibili/bilibili_models.dart';
-import 'package:haipee/modules/bilibili/bilibili_service.dart';
 import 'package:haipee/modules/bilibili/widgets/bili_login_dialog.dart';
 import 'package:haipee/pages/player/player_controller.dart';
 import 'package:haipee/pages/player/player_providers.dart';
@@ -22,11 +21,9 @@ import 'package:haipee/pages/video/providers.dart';
 import 'package:haipee/pages/video/video_controller.dart';
 import 'package:haipee/pages/video/video_state.dart';
 import 'package:haipee/utils/constants.dart';
-import 'package:haipee/utils/logger.dart';
 import 'package:haipee/utils/remote.dart';
 import 'package:haipee/utils/utils.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
-import 'package:logger/logger.dart';
 
 class SmallestPlayerItemPanel extends ConsumerStatefulWidget {
   const SmallestPlayerItemPanel({
@@ -121,32 +118,8 @@ class _SmallestPlayerItemPanelState
     super.dispose();
   }
 
-  Future<void> _refreshBiliStreamWithNewAuth() async {
-    final biliCid = playerController.activeBiliCid;
-    final biliBvid = playerController.activeBiliBvid ??
-        playerController.activeLocalVideoArgs?.biliBvid;
-    if (biliCid == null || biliBvid == null || biliBvid.isEmpty) return;
-
-    try {
-      HaipeeDialog.showToast(message: '已成功登录！正在为您切换 1080P/4K 高清画质流...');
-      final playUrl = await BilibiliService.getPlayUrl(biliBvid, biliCid);
-      if (playUrl != null && playUrl.videoUrl.isNotEmpty) {
-        final currentPos = playerController.playerPosition;
-        await playerController.init(
-          playUrl.videoUrl,
-          audioUrl: playUrl.audioUrl,
-          httpHeaders: playUrl.headers,
-          biliCid: biliCid,
-          biliBvid: biliBvid,
-        );
-        if (currentPos > Duration.zero) {
-          playerController.seek(currentPos);
-        }
-        playerController.play();
-      }
-    } catch (e) {
-      HaipeeLogger().log(Level.warning, '登录后切换高清流失败: $e');
-    }
+  Future<void> _refreshBiliStreamWithNewAuth({int? targetQuality}) async {
+    await playerController.switchBiliQuality(targetQuality: targetQuality);
   }
 
   Widget _buildBiliLoginPrompt() {
@@ -668,30 +641,69 @@ class _SmallestPlayerItemPanelState
                   valueListenable: BiliAuthService().userNotifier,
                   builder: (context, user, _) {
                     final isLogin = BiliAuthService().isLoggedIn && user != null;
-                    return MenuItemButton(
-                      onPressed: () {
-                        widget.cancelHideTimer();
-                        playerController.setCanHidePlayerPanel(false);
-                        BiliLoginDialog.show(context).then((_) {
-                          if (mounted) {
-                            widget.cancelHideTimer();
-                            widget.startHideTimer();
-                            playerController.setCanHidePlayerPanel(true);
-                            if (BiliAuthService().isLoggedIn) {
-                              _refreshBiliStreamWithNewAuth();
-                            }
-                          }
-                        });
-                      },
-                      leadingIcon: Icon(
-                        isLogin ? Icons.verified_user_rounded : Icons.login_rounded,
-                        color: Colors.pinkAccent,
-                        size: 20,
-                      ),
+                    final isVip = isLogin && user.isVip;
+                    final activeQuality = playerState.biliQuality > 0
+                        ? playerState.biliQuality
+                        : (isLogin ? (isVip ? 112 : 80) : 32);
+                    final qualities = playerState.biliAvailableQualities.isNotEmpty
+                        ? playerState.biliAvailableQualities
+                        : BiliQualityHelper.buildQualityList(
+                            unlockedIds: isLogin
+                                ? (isVip
+                                    ? const [112, 80, 64, 32, 16]
+                                    : const [80, 64, 32, 16])
+                                : const [32, 16],
+                          );
+                    return SubmenuButton(
+                      menuChildren: [
+                        for (final q in qualities)
+                          MenuItemButton(
+                            onPressed: () {
+                              if (!isLogin && q.requiresLogin) {
+                                HaipeeDialog.showToast(
+                                  message: '登录 B站 账号后即可切换 ${q.label}',
+                                );
+                                widget.cancelHideTimer();
+                                playerController.setCanHidePlayerPanel(false);
+                                BiliLoginDialog.show(context).then((_) {
+                                  if (mounted) {
+                                    widget.cancelHideTimer();
+                                    widget.startHideTimer();
+                                    playerController.setCanHidePlayerPanel(true);
+                                    if (BiliAuthService().isLoggedIn) {
+                                      _refreshBiliStreamWithNewAuth(
+                                        targetQuality: q.id,
+                                      );
+                                    }
+                                  }
+                                });
+                                return;
+                              }
+                              if (q.requiresVip && !isVip) {
+                                HaipeeDialog.showToast(
+                                  message: '${q.label} 为 B站 大会员专属画质',
+                                );
+                                return;
+                              }
+                              if (q.id != activeQuality) {
+                                playerController.switchBiliQuality(
+                                  targetQuality: q.id,
+                                );
+                              }
+                            },
+                            child: _buildMenuItem(
+                              title: q.requiresVip
+                                  ? '${q.label} (大会员)'
+                                  : (!isLogin && q.requiresLogin
+                                      ? '${q.label} (登录享)'
+                                      : q.label),
+                              highlighted: q.id == activeQuality,
+                            ),
+                          ),
+                      ],
                       child: _buildMenuItem(
-                        title: isLogin
-                            ? 'B站账号: ${user.uname}'
-                            : '登录 B站 账号 (解锁 1080P/4K)',
+                        title:
+                            '清晰度 (${BiliQualityHelper.getShortLabel(activeQuality)})',
                       ),
                     );
                   },

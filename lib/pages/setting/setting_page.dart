@@ -27,7 +27,7 @@ const List<ResponsiveMenuGroup> _settingsGroups = [
       ResponsiveMenuItem(
         id: Routes.settingsPlayer,
         title: '播放设置',
-        description: '解码、渲染与播放行为',
+        description: 'B站账号、解码、渲染与播放行为',
         icon: Icons.display_settings_rounded,
         route: Routes.settingsPlayer,
       ),
@@ -88,7 +88,7 @@ const List<ResponsiveMenuGroup> _settingsGroups = [
       ResponsiveMenuItem(
         id: Routes.settingsSync,
         title: '同步设置',
-        description: '追番状态与多设备同步',
+        description: 'B站账号、追番状态与多设备同步',
         icon: Icons.cloud_rounded,
         route: Routes.settingsSync,
       ),

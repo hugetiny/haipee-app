@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
+import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/bilibili/widgets/bili_login_dialog.dart';
 import 'package:haipee/pages/setting/providers.dart';
 import 'package:haipee/router_constants.dart';
 import 'package:haipee/services/storage/storage.dart';
@@ -27,129 +30,163 @@ class _SyncSettingsPageState extends ConsumerState<SyncSettingsPage> {
 
     final colors = Theme.of(context).colorScheme;
 
-    final cards = [
-      _SyncCard(
-        title: '追番与媒体元数据',
-        service: 'Bangumi & TMDB',
-        description: '自动刮削剧集封面、分集简介，支持网络加速。',
-        content:
-            'Bangumi: ${metadataState.bangumiEnabled ? "已启用 (${metadataState.bangumiAcceleration.label})" : "已禁用"} · TMDB: ${metadataState.tmdbEnabled ? "已启用" : "已禁用"}',
-        icon: Icons.auto_awesome_mosaic_rounded,
-        color: colors.secondaryContainer,
-        onColor: colors.onSecondaryContainer,
-        statusText: metadataState.bangumiEnabled || metadataState.tmdbEnabled
-            ? '已开启'
-            : '已关闭',
-        statusIcon: metadataState.bangumiEnabled || metadataState.tmdbEnabled
-            ? Icons.check_circle_outline_rounded
-            : Icons.pause_circle_outline_rounded,
-        action: '管理元数据与刮削',
-        onPressed: () => context.push(Routes.settingsMetadata),
-      ),
-      _SyncCard(
-        title: '多设备数据同步',
-        service: 'WebDAV',
-        description: '通过私有云盘或 NAS，在不同设备间无缝同步。',
-        content: '观看记录 · 追番收藏 · 弹幕屏蔽词',
-        icon: Icons.cloud_sync_rounded,
-        color: colors.tertiaryContainer,
-        onColor: colors.onTertiaryContainer,
-        statusText: !hasServer
-            ? '未配置'
-            : webDavEnabled
-                ? (hasSyncContent ? '已开启' : '待选择内容')
+    return ValueListenableBuilder<BiliUserProfile?>(
+      valueListenable: BiliAuthService().userNotifier,
+      builder: (context, biliUser, _) {
+        final isBiliLoggedIn =
+            BiliAuthService().isLoggedIn && biliUser != null;
+
+        final cards = [
+          _SyncCard(
+            title: '哔哩哔哩账号授权',
+            service: 'Bilibili',
+            description: '扫码登录解锁 B站 1080P 高清、1080P 高码率及 4K 超清画质流。',
+            content: isBiliLoggedIn
+                ? '当前账号: ${biliUser.uname} · ${biliUser.isVip ? "大会员 (已解锁高码率/4K)" : "普通用户 (已解锁 1080P)"}'
+                : '未登录 (默认 360P/480P) · 支持手机客户端扫码登录与退出管理',
+            icon: Icons.tv_rounded,
+            color: colors.primaryContainer,
+            onColor: colors.onPrimaryContainer,
+            statusText: isBiliLoggedIn
+                ? (biliUser.isVip ? '大会员已登录' : '已登录')
+                : '未登录',
+            statusIcon: isBiliLoggedIn
+                ? Icons.verified_user_rounded
+                : Icons.qr_code_scanner_rounded,
+            action: isBiliLoggedIn ? '管理 / 退出 B站账号' : '扫码登录 B站账号',
+            onPressed: () async {
+              await BiliLoginDialog.show(context);
+              if (mounted) setState(() {});
+            },
+          ),
+          _SyncCard(
+            title: '追番与媒体元数据',
+            service: 'Bangumi & TMDB',
+            description: '自动刮削剧集封面、分集简介，支持网络加速。',
+            content:
+                'Bangumi: ${metadataState.bangumiEnabled ? "已启用 (${metadataState.bangumiAcceleration.label})" : "已禁用"} · TMDB: ${metadataState.tmdbEnabled ? "已启用" : "已禁用"}',
+            icon: Icons.auto_awesome_mosaic_rounded,
+            color: colors.secondaryContainer,
+            onColor: colors.onSecondaryContainer,
+            statusText: metadataState.bangumiEnabled || metadataState.tmdbEnabled
+                ? '已开启'
                 : '已关闭',
-        statusIcon: !hasServer
-            ? Icons.settings_outlined
-            : webDavEnabled
+            statusIcon: metadataState.bangumiEnabled || metadataState.tmdbEnabled
                 ? Icons.check_circle_outline_rounded
                 : Icons.pause_circle_outline_rounded,
-        action: hasServer ? '管理多设备同步' : '配置 WebDAV',
-        onPressed: () => context.push(Routes.settingsWebdav),
-      ),
-    ];
+            action: '管理元数据与刮削',
+            onPressed: () => context.push(Routes.settingsMetadata),
+          ),
+          _SyncCard(
+            title: '多设备数据同步',
+            service: 'WebDAV',
+            description: '通过私有云盘或 NAS，在不同设备间无缝同步。',
+            content: '观看记录 · 追番收藏 · 弹幕屏蔽词',
+            icon: Icons.cloud_sync_rounded,
+            color: colors.tertiaryContainer,
+            onColor: colors.onTertiaryContainer,
+            statusText: !hasServer
+                ? '未配置'
+                : webDavEnabled
+                    ? (hasSyncContent ? '已开启' : '待选择内容')
+                    : '已关闭',
+            statusIcon: !hasServer
+                ? Icons.settings_outlined
+                : webDavEnabled
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.pause_circle_outline_rounded,
+            action: hasServer ? '管理多设备同步' : '配置 WebDAV',
+            onPressed: () => context.push(Routes.settingsWebdav),
+          ),
+        ];
 
-    return SettingsDetailScaffold(
-      title: const Text('同步设置'),
-      body: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 880),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: colors.primaryContainer,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            Icons.sync_rounded,
-                            size: 28,
-                            color: colors.onPrimaryContainer,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '让追番与数据保持同步',
-                                style: Theme.of(context).textTheme.headlineSmall,
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                '通过元数据刮削与 WebDAV 云同步实现全端追番体验。',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(color: colors.onSurfaceVariant),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth >= 680) {
-                        return Row(
+        return SettingsDetailScaffold(
+          title: const Text('同步设置'),
+          body: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 880),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: cards[0]),
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: colors.primaryContainer,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(
+                                Icons.sync_rounded,
+                                size: 28,
+                                color: colors.onPrimaryContainer,
+                              ),
+                            ),
                             const SizedBox(width: 16),
-                            Expanded(child: cards[1]),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '账号授权与多端数据同步',
+                                    style:
+                                        Theme.of(context).textTheme.headlineSmall,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '管理 B站 高清画质账号授权、媒体元数据刮削与 WebDAV 多设备同步。',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                            color: colors.onSurfaceVariant),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
-                        );
-                      }
-                      return Column(
-                        children: [
-                          cards[0],
-                          const SizedBox(height: 16),
-                          cards[1],
-                        ],
-                      );
-                    },
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      cards[0],
+                      const SizedBox(height: 16),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth >= 680) {
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: cards[1]),
+                                const SizedBox(width: 16),
+                                Expanded(child: cards[2]),
+                              ],
+                            );
+                          }
+                          return Column(
+                            children: [
+                              cards[1],
+                              const SizedBox(height: 16),
+                              cards[2],
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -30,6 +30,8 @@ import 'package:haipee/modules/playback/media_selector.dart';
 import 'package:haipee/pages/player/local_video_play_args.dart';
 import 'package:haipee/services/player/player_error_mapper.dart';
 import 'package:haipee/modules/source_quality/source_quality_tracker.dart';
+import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/modules/bilibili/bilibili_service.dart';
 
 class PlayerController extends Notifier<PlayerState> {
@@ -146,6 +148,8 @@ class PlayerController extends Notifier<PlayerState> {
     Map<String, String>? httpHeaders,
     int? biliCid,
     String? biliBvid,
+    int? biliQuality,
+    List<BiliStreamQuality>? biliAvailableQualities,
   }) async {
     _isDisposed = false;
     final int generation = ++_initGeneration;
@@ -154,6 +158,9 @@ class PlayerController extends Notifier<PlayerState> {
     Map<String, String>? resolvedHeaders = httpHeaders;
     int? resolvedBiliCid = biliCid ?? activeLocalVideoArgs?.biliCid;
     String? resolvedBiliBvid = biliBvid ?? activeLocalVideoArgs?.biliBvid;
+    int? resolvedBiliQuality = biliQuality ?? activeLocalVideoArgs?.biliQuality;
+    List<BiliStreamQuality>? resolvedBiliQualities =
+        biliAvailableQualities ?? activeLocalVideoArgs?.biliAvailableQualities;
 
     if (url.startsWith('bili://')) {
       final parts = url.substring('bili://'.length).split('/');
@@ -170,6 +177,27 @@ class PlayerController extends Notifier<PlayerState> {
     activeHttpHeaders = resolvedHeaders;
     activeBiliCid = resolvedBiliCid;
     activeBiliBvid = resolvedBiliBvid;
+    final isBiliStream = isBiliPlayback;
+    final defaultUnlocked = BiliAuthService().isLoggedIn
+        ? ((BiliAuthService().userNotifier.value?.isVip ?? false)
+            ? const [120, 116, 112, 80, 64, 32, 16]
+            : const [80, 64, 32, 16])
+        : const [32, 16];
+    final initialQuality = resolvedBiliQuality ??
+        (isBiliStream
+            ? (BiliAuthService().isLoggedIn
+                ? ((BiliAuthService().userNotifier.value?.isVip ?? false)
+                    ? 112
+                    : 80)
+                : 32)
+            : 0);
+    final initialQualities = resolvedBiliQualities != null &&
+            resolvedBiliQualities.isNotEmpty
+        ? resolvedBiliQualities
+        : (isBiliStream
+            ? BiliQualityHelper.buildQualityList(unlockedIds: defaultUnlocked)
+            : const <BiliStreamQuality>[]);
+
     state = state.copyWith(
       playing: false,
       loading: true,
@@ -179,6 +207,8 @@ class PlayerController extends Notifier<PlayerState> {
       duration: Duration.zero,
       completed: false,
       danDanmakus: const {},
+      biliQuality: initialQuality,
+      biliAvailableQualities: initialQualities,
     );
     try {
       await disposeResources(
@@ -195,13 +225,20 @@ class PlayerController extends Notifier<PlayerState> {
         resolvedBiliBvid.isNotEmpty &&
         resolvedBiliCid != null &&
         resolvedBiliCid > 0) {
-      final streamInfo =
-          await BilibiliService.getPlayUrl(resolvedBiliBvid, resolvedBiliCid);
+      final streamInfo = await BilibiliService.getPlayUrl(
+        resolvedBiliBvid,
+        resolvedBiliCid,
+        targetQuality: resolvedBiliQuality,
+      );
       if (_isDisposed || generation != _initGeneration) return;
       if (streamInfo != null && streamInfo.videoUrl.isNotEmpty) {
         videoUrl = streamInfo.videoUrl;
         activeAudioUrl = streamInfo.audioUrl;
         activeHttpHeaders = streamInfo.headers;
+        state = state.copyWith(
+          biliQuality: streamInfo.quality,
+          biliAvailableQualities: streamInfo.availableQualities,
+        );
       }
     }
 
@@ -614,6 +651,74 @@ class PlayerController extends Notifier<PlayerState> {
       }
     } catch (e) {
       HaipeeLogger().log(Level.warning, '加载 B站 弹幕失败 cid=$cid: $e');
+    }
+  }
+
+  /// 切换 B站 播放清晰度档位 (无缝保持当前播放进度)
+  Future<void> switchBiliQuality({int? targetQuality}) async {
+    final biliCid = activeBiliCid ?? activeLocalVideoArgs?.biliCid;
+    final biliBvid = activeBiliBvid ?? activeLocalVideoArgs?.biliBvid;
+    if (biliCid == null || biliBvid == null || biliBvid.isEmpty) return;
+
+    try {
+      final currentPos = playerPosition > Duration.zero
+          ? playerPosition
+          : state.currentPosition;
+      final playUrl = await BilibiliService.getPlayUrl(
+        biliBvid,
+        biliCid,
+        targetQuality: targetQuality,
+      );
+      if (playUrl == null || playUrl.videoUrl.isEmpty) {
+        HaipeeDialog.showToast(message: '切换画质失败，请稍后重试');
+        return;
+      }
+
+      if (activeLocalVideoArgs != null) {
+        activeLocalVideoArgs = LocalVideoPlayArgs(
+          filePath: playUrl.videoUrl,
+          title: activeLocalVideoArgs!.title,
+          bangumiId: activeLocalVideoArgs!.bangumiId,
+          episode: activeLocalVideoArgs!.episode,
+          isAudio: activeLocalVideoArgs!.isAudio,
+          streamId: activeLocalVideoArgs!.streamId,
+          torrentId: activeLocalVideoArgs!.torrentId,
+          audioUrl: playUrl.audioUrl,
+          httpHeaders: playUrl.headers,
+          biliCid: biliCid,
+          biliBvid: biliBvid,
+          biliQuality: playUrl.quality,
+          biliAvailableQualities: playUrl.availableQualities,
+          danmakus: activeLocalVideoArgs!.danmakus,
+        );
+      }
+
+      await init(
+        playUrl.videoUrl,
+        offset: currentPos.inSeconds,
+        audioUrl: playUrl.audioUrl,
+        httpHeaders: playUrl.headers,
+        biliCid: biliCid,
+        biliBvid: biliBvid,
+        biliQuality: playUrl.quality,
+        biliAvailableQualities: playUrl.availableQualities,
+      );
+      if (currentPos > Duration.zero) {
+        await seek(currentPos);
+      }
+      await play();
+      if (targetQuality != null && playUrl.quality < targetQuality) {
+        HaipeeDialog.showToast(
+          message:
+              '目标画质受限，已为您切换至最高可用画质: ${BiliQualityHelper.getLabel(playUrl.quality)}',
+        );
+      } else {
+        HaipeeDialog.showToast(
+          message: '已切换至 ${BiliQualityHelper.getLabel(playUrl.quality)}',
+        );
+      }
+    } catch (e) {
+      HaipeeLogger().log(Level.warning, '切换 B站 画质失败: $e');
     }
   }
 

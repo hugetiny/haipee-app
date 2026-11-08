@@ -7,6 +7,9 @@ import 'package:hive_ce/hive.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
 import 'package:haipee/bean/settings/settings_list.dart';
+import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
+import 'package:haipee/modules/bilibili/widgets/bili_login_dialog.dart';
 import 'package:haipee/pages/player/controller/player_aspect_ratio.dart';
 import 'package:haipee/pages/setting/providers.dart';
 import 'package:haipee/pages/settings/low_memory_mode_settings.dart';
@@ -334,10 +337,37 @@ class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
 
     return SettingsDetailScaffold(
       title: const Text('播放设置'),
-      body: SettingsList(
-        sections: [
-          SettingsSection(
-            title: const Text('解码与渲染'),
+      body: ValueListenableBuilder<BiliUserProfile?>(
+        valueListenable: BiliAuthService().userNotifier,
+        builder: (context, biliUser, _) {
+          final isBiliLoggedIn =
+              BiliAuthService().isLoggedIn && biliUser != null;
+          return SettingsList(
+            sections: [
+              SettingsSection(
+                title: const Text('平台账号与画质授权'),
+                tiles: [
+                  SettingsTile(
+                    key: const Key('settings_bili_account_tile'),
+                    leading: isBiliLoggedIn
+                        ? Icons.verified_user_rounded
+                        : Icons.tv_rounded,
+                    title: const Text('哔哩哔哩 (Bilibili) 账号管理'),
+                    description: Text(
+                      isBiliLoggedIn
+                          ? '已登录: ${biliUser.uname} · ${biliUser.isVip ? "大会员 (已解锁 1080P 高码率 / 4K)" : "普通用户 (已解锁 1080P 高清)"}'
+                          : '未登录 (默认 360P/480P · 扫码登录解锁 1080P 高清与大会员高码率)',
+                    ),
+                    value: Text(isBiliLoggedIn ? '账号管理 / 退出' : '扫码登录'),
+                    onPressed: (_) async {
+                      await BiliLoginDialog.show(context);
+                      if (mounted) setState(() {});
+                    },
+                  ),
+                ],
+              ),
+              SettingsSection(
+                title: const Text('解码与渲染'),
             tiles: [
               SettingsTile.switchTile(
                 leading: Icons.memory_rounded,
@@ -687,17 +717,19 @@ class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
               ),
             ],
           ),
-          SettingsSection(
-            tiles: [
-              SettingsTile(
-                leading: Icons.settings_backup_restore_rounded,
-                onPressed: (_) => resetPlayerSettings(),
-                title: const Text('恢复默认设置'),
-                description: const Text('将播放相关设置恢复为默认值'),
+              SettingsSection(
+                tiles: [
+                  SettingsTile(
+                    leading: Icons.settings_backup_restore_rounded,
+                    onPressed: (_) => resetPlayerSettings(),
+                    title: const Text('恢复默认设置'),
+                    description: const Text('将播放相关设置恢复为默认值'),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }

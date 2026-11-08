@@ -207,12 +207,20 @@ class BiliStreamQuality {
   final int id;
   final String label;
   final String format;
+  final bool isUnlocked;
 
   const BiliStreamQuality({
     required this.id,
     required this.label,
     required this.format,
+    this.isUnlocked = true,
   });
+
+  /// 是否需要大会员 (1080P 高码率 112 / 1080P 60帧 116 / 4K 120 及以上)
+  bool get requiresVip => id >= 112;
+
+  /// 是否需要登录 (1080P 高清 80 及以上)
+  bool get requiresLogin => id >= 80;
 }
 
 /// B站扫码登录二维码数据
@@ -317,5 +325,63 @@ class BiliQualityHelper {
     16: '360P 流畅',
   };
 
+  /// B站标准主流清晰度档位 (从高到低: 1080P高码率、1080P、720P、480P、360P)
+  static const List<int> standardTiers = [112, 80, 64, 32, 16];
+
   static String getLabel(int quality) => qualityMap[quality] ?? '${quality}P';
+
+  static String getShortLabel(int quality) {
+    switch (quality) {
+      case 127:
+        return '8K';
+      case 126:
+        return '杜比视界';
+      case 125:
+        return 'HDR';
+      case 120:
+        return '4K 超清';
+      case 116:
+        return '1080P 60帧';
+      case 112:
+        return '1080P 高码率';
+      case 80:
+        return '1080P 高清';
+      case 74:
+        return '720P 60帧';
+      case 64:
+        return '720P 高清';
+      case 32:
+        return '480P 清晰';
+      case 16:
+        return '360P 流畅';
+      default:
+        return getLabel(quality);
+    }
+  }
+
+  /// 构建默认主流画质档位列表（当接口尚未返回或部分受限档位未下发时兜底展示）
+  static List<BiliStreamQuality> buildQualityList({
+    Iterable<int> unlockedIds = const [],
+    Iterable<int> acceptQualityIds = const [],
+    String format = 'dash',
+  }) {
+    final unlockedSet = unlockedIds.where((id) => id > 0).toSet();
+    final allIds = <int>{
+      ...standardTiers,
+      ...acceptQualityIds.where((id) => id > 0),
+      ...unlockedSet,
+    }.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    return allIds
+        .map(
+          (id) => BiliStreamQuality(
+            id: id,
+            label: getLabel(id),
+            format: format,
+            isUnlocked: unlockedSet.isEmpty ? id <= 32 : unlockedSet.contains(id),
+          ),
+        )
+        .toList();
+  }
 }

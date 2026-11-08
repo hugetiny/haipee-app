@@ -17,7 +17,9 @@ import 'package:haipee/pages/player/player_item.dart';
 import 'package:haipee/pages/player/player_item_panel.dart';
 import 'package:haipee/pages/player/player_providers.dart';
 import 'package:haipee/pages/player/smallest_player_item_panel.dart';
+import 'package:haipee/pages/player/tracks_settings_sheet.dart';
 import 'package:haipee/utils/storage.dart';
+import 'package:media_kit/media_kit.dart' hide PlayerState;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -140,11 +142,24 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // 验证检测到正在播放 B站 视频且未登录时，播放器浮层展示上下文登录胶囊与底部画质登录徽标
+      // 验证检测到正在播放 B站 视频且未登录时，播放器浮层展示上下文登录胶囊与底部画质选择器
       expect(find.byKey(const Key('player_bili_login_prompt')), findsOneWidget);
       expect(find.byKey(const Key('player_bili_quality_badge')), findsOneWidget);
       expect(find.textContaining('当前为访客模式 (限360P) · 登录B站解锁 1080P/4K'), findsOneWidget);
-      expect(find.text('360P · 登录享高清'), findsOneWidget);
+      expect(find.text('480P 清晰'), findsOneWidget);
+
+      // 点击底部画质选择器，展示标准 360P / 480P / 720P / 1080P / 1080P 高码率(大会员) 档位菜单
+      await tester.tap(find.byKey(const Key('player_bili_quality_badge')));
+      await tester.pumpAndSettle();
+      expect(find.text('1080P 高码率'), findsOneWidget);
+      expect(find.text('大会员'), findsWidgets);
+      expect(find.text('1080P 高清'), findsOneWidget);
+      expect(find.text('720P 高清'), findsOneWidget);
+      expect(find.text('360P 流畅'), findsOneWidget);
+
+      // 关闭画质菜单
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
 
       final loginBtn = find.byKey(const Key('bili_player_login_button'));
       expect(loginBtn, findsOneWidget);
@@ -383,6 +398,54 @@ void main() {
       expect(BiliAuthService().isLoggedIn, isTrue);
       expect(BiliAuthService().currentUser?.uname, equals('桌面扫码用户'));
       await BiliAuthService().logout();
+    });
+
+    testWidgets('7. TracksSettingsSheet filters out mpv auto/no pseudo-tracks and adapts to active rule context', (tester) async {
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final controller = container.read(playerProvider.notifier);
+      controller.activeBiliCid = 98765;
+      controller.state = controller.state.copyWith(
+        playerTracks: Tracks(
+          audio: [
+            AudioTrack.auto(),
+            AudioTrack.no(),
+            const AudioTrack('1', null, null),
+          ],
+          subtitle: [
+            SubtitleTrack.auto(),
+            SubtitleTrack.no(),
+          ],
+        ),
+        currentAudioTrack: const AudioTrack('1', null, null),
+        currentSubtitleTrack: SubtitleTrack.no(),
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(
+              body: TracksSettingsSheet(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 严禁出现 mpv 内部虚拟轨道 #auto 或 #no (未知语言)
+      expect(find.textContaining('#auto'), findsNothing);
+      expect(find.textContaining('#no'), findsNothing);
+      expect(find.textContaining('未知语言'), findsNothing);
+
+      // 清晰展示 B站 DASH 音画分离流徽标与原生高音质音频说明
+      expect(find.text('B站 DASH 音画分离流'), findsOneWidget);
+      expect(find.text('B站原生高音质音频流 (DASH AAC)'), findsOneWidget);
+      expect(find.text('当前生效'), findsOneWidget);
     });
   });
 }

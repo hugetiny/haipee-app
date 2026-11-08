@@ -284,6 +284,8 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
           httpHeaders: playUrl.headers,
           biliCid: part.cid,
           biliBvid: detail.bvid,
+          biliQuality: playUrl.quality,
+          biliAvailableQualities: playUrl.availableQualities,
         ),
       );
     } catch (e) {

@@ -1,3 +1,4 @@
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/modules/danmaku/danmaku_module.dart';
 
 class LocalVideoPlayArgs {
@@ -12,6 +13,8 @@ class LocalVideoPlayArgs {
   final Map<String, String>? httpHeaders;
   final int? biliCid;
   final String? biliBvid;
+  final int? biliQuality;
+  final List<BiliStreamQuality>? biliAvailableQualities;
   final List<DanmakuEntry>? danmakus;
 
   const LocalVideoPlayArgs({
@@ -26,6 +29,8 @@ class LocalVideoPlayArgs {
     this.httpHeaders,
     this.biliCid,
     this.biliBvid,
+    this.biliQuality,
+    this.biliAvailableQualities,
     this.danmakus,
   });
 

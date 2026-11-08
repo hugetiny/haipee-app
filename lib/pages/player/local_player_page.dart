@@ -69,6 +69,8 @@ class _LocalPlayerPageState extends ConsumerState<LocalPlayerPage> {
         httpHeaders: widget.args.httpHeaders,
         biliCid: widget.args.biliCid,
         biliBvid: widget.args.biliBvid,
+        biliQuality: widget.args.biliQuality,
+        biliAvailableQualities: widget.args.biliAvailableQualities,
       );
 
       if (widget.args.danmakus != null && widget.args.danmakus!.isNotEmpty) {
