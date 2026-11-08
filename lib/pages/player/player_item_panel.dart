@@ -1543,6 +1543,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                     ],
                   ),
                   IconButton(
+                    key: const Key('full_panel_tracks_button'),
                     onPressed: () {
                       TracksSettingsSheet.show(context);
                     },
@@ -1638,6 +1639,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
               forwardIcon(),
               if (Utils.isDesktop() && !videoState.isFullscreen)
                 IconButton(
+                  key: const Key('full_panel_pip_button'),
                   onPressed: () {
                     if (videoState.isPip) {
                       Utils.exitDesktopPIPWindow();
@@ -1677,6 +1679,15 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
               ),
               MenuAnchor(
                 consumeOutsideTap: true,
+                style: MenuStyle(
+                  maximumSize: WidgetStatePropertyAll(
+                    Size(
+                      280,
+                      (MediaQuery.sizeOf(context).height - 64)
+                          .clamp(160.0, 600.0),
+                    ),
+                  ),
+                ),
                 onOpen: () {
                   widget.cancelHideTimer();
                   playerController.canHidePlayerPanel = false;
@@ -1689,6 +1700,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                 builder: (BuildContext context, MenuController controller,
                     Widget? child) {
                   return IconButton(
+                    key: const Key('full_panel_more_menu_button'),
                     onPressed: () {
                       if (controller.isOpen) {
                         controller.close();
@@ -1728,6 +1740,7 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                     ),
                   ),
                   MenuItemButton(
+                    key: const Key('full_menu_video_info'),
                     onPressed: widget.showVideoInfo,
                     child: SizedBox(
                       height: 48,
@@ -1741,8 +1754,11 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                     onPressed: () {
                       final needRestart = playerState.playing;
                       playerController.pause();
-                      final plugin = videoState.currentPlugin;
-                      final referer = plugin?.referer ?? '';
+                      final referer =
+                          videoPageController.currentPluginOrNull?.referer ??
+                              playerController.activeHttpHeaders?['Referer'] ??
+                              playerController.activeHttpHeaders?['referer'] ??
+                              '';
                       RemotePlay()
                           .castVideo(playerController.videoUrl, referer)
                           .whenComplete(() {

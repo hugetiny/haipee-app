@@ -352,9 +352,41 @@ bool _isBoilerplateWidget(String type) {
   return boilerplate.contains(type);
 }
 
+Future<bool> _isLocalPortAlive(int port) async {
+  try {
+    final socket = await Socket.connect(
+      '127.0.0.1',
+      port,
+      timeout: const Duration(milliseconds: 250),
+    );
+    socket.destroy();
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 Future<String?> _autoDiscoverVmServiceUri() async {
   final regExp = RegExp(r'ws://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/ws');
-  final vmNoticeRegExp = RegExp(r'Dart VM Service.*?http://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/');
+  final httpVmRegExp =
+      RegExp(r'http://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/?');
+  final vmNoticeRegExp =
+      RegExp(r'Dart VM Service.*?http://127\.0\.0\.1:(\d+)/([a-zA-Z0-9_\-=]+)/');
+
+  // 1. 优先读取显式落盘的活跃 VM Service 文件
+  final vmOutFile = File('/tmp/haipee_vm_service.txt');
+  if (vmOutFile.existsSync()) {
+    try {
+      final raw = (await vmOutFile.readAsString()).trim();
+      final m = httpVmRegExp.firstMatch(raw);
+      if (m != null) {
+        final port = int.parse(m.group(1)!);
+        if (await _isLocalPortAlive(port)) {
+          return 'ws://127.0.0.1:$port/${m.group(2)}/ws';
+        }
+      }
+    } catch (_) {}
+  }
 
   final brainDir = Directory('/Users/a12/.gemini/antigravity-cli/brain');
   if (await brainDir.exists()) {
@@ -362,22 +394,32 @@ Future<String?> _autoDiscoverVmServiceUri() async {
     for (final conv in brainDir.listSync().whereType<Directory>()) {
       final tasksDir = Directory('${conv.path}/.system_generated/tasks');
       if (tasksDir.existsSync()) {
-        taskFiles.addAll(tasksDir.listSync().whereType<File>().where((f) => f.path.endsWith('.log')));
+        taskFiles.addAll(tasksDir
+            .listSync()
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.log')));
       }
     }
-    taskFiles.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+    taskFiles
+        .sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
 
-    for (final file in taskFiles) {
+    for (final file in taskFiles.take(15)) {
       try {
         final lines = await file.readAsLines();
         for (final line in lines.reversed) {
           final vmMatch = vmNoticeRegExp.firstMatch(line);
           if (vmMatch != null) {
-            return 'ws://127.0.0.1:${vmMatch.group(1)}/${vmMatch.group(2)}/ws';
+            final port = int.parse(vmMatch.group(1)!);
+            if (await _isLocalPortAlive(port)) {
+              return 'ws://127.0.0.1:$port/${vmMatch.group(2)}/ws';
+            }
           }
           final match = regExp.firstMatch(line);
           if (match != null && !line.contains('/stream/')) {
-            return match.group(0);
+            final port = int.parse(match.group(1)!);
+            if (await _isLocalPortAlive(port)) {
+              return match.group(0);
+            }
           }
         }
       } catch (_) {}

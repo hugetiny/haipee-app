@@ -2,6 +2,7 @@ import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
+import 'package:haipee/pages/player/player_providers.dart';
 import 'package:haipee/utils/utils.dart';
 import 'package:haipee/pages/settings/danmaku/danmaku_shield_settings.dart';
 import 'package:haipee/pages/settings/danmaku/providers.dart';
@@ -19,13 +20,17 @@ class DanmakuSettingsSheet extends ConsumerStatefulWidget {
 
 class _DanmakuSettingsSheetState extends ConsumerState<DanmakuSettingsSheet> {
   void showDanmakuShieldSheet() {
+    final screenSize = MediaQuery.sizeOf(context);
+    final sheetMaxWidth =
+        (Utils.isDesktop() || Utils.isTablet()) && screenSize.width >= 640
+            ? (screenSize.width * 9 / 16).clamp(420.0, screenSize.width)
+            : screenSize.width;
     showModalBottomSheet(
         isScrollControlled: true,
         constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 3 / 4,
-            maxWidth: (Utils.isDesktop() || Utils.isTablet())
-                ? MediaQuery.of(context).size.width * 9 / 16
-                : MediaQuery.of(context).size.width),
+            maxHeight:
+                (screenSize.height * 0.82).clamp(180.0, screenSize.height),
+            maxWidth: sheetMaxWidth),
         clipBehavior: Clip.antiAlias,
         context: context,
         builder: (context) {
@@ -36,8 +41,80 @@ class _DanmakuSettingsSheetState extends ConsumerState<DanmakuSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final playerTexts = context.t.settings.player;
+    final sourcesTexts = playerTexts.danmakuSources;
+    final danmakuSettings = ref.watch(danmakuSettingsProvider);
+    final playerState = ref.watch(playerProvider);
+    final playerController = ref.read(playerProvider.notifier);
+
+    int totalCount = 0;
+    int biliCount = 0;
+    int gamerCount = 0;
+    int dandanCount = 0;
+    for (final list in playerState.danDanmakus.values) {
+      for (final item in list) {
+        totalCount++;
+        if (item.source.contains('BiliBili')) {
+          biliCount++;
+        } else if (item.source.contains('Gamer')) {
+          gamerCount++;
+        } else {
+          dandanCount++;
+        }
+      }
+    }
+    final isBiliNative = playerController.activeBiliCid != null &&
+        playerController.activeBiliCid! > 0;
+
     return SettingsList(
       sections: [
+        SettingsSection(
+          title: Text('${playerTexts.danmakuSource} (已加载 $totalCount 条)'),
+          tiles: isBiliNative
+              ? [
+                  SettingsTile(
+                    leading: Icons.verified_rounded,
+                    title: const Text('哔哩哔哩官方原生弹幕'),
+                    description: Text(
+                      'CID: ${playerController.activeBiliCid} · 共 $totalCount 条 (原生直连，画面不混入第三方源标签)',
+                    ),
+                  ),
+                ]
+              : [
+                  SettingsTile.switchTile(
+                    leading: Icons.video_collection_rounded,
+                    onToggle: (value) async {
+                      await ref
+                          .read(danmakuSettingsProvider.notifier)
+                          .setDanmakuBiliBiliSource(
+                              value ?? !danmakuSettings.danmakuBiliBiliSource);
+                    },
+                    title: Text('${sourcesTexts.bilibili} ($biliCount 条)'),
+                    initialValue: danmakuSettings.danmakuBiliBiliSource,
+                  ),
+                  SettingsTile.switchTile(
+                    leading: Icons.sports_esports_rounded,
+                    onToggle: (value) async {
+                      await ref
+                          .read(danmakuSettingsProvider.notifier)
+                          .setDanmakuGamerSource(
+                              value ?? !danmakuSettings.danmakuGamerSource);
+                    },
+                    title: Text('${sourcesTexts.gamer} ($gamerCount 条)'),
+                    initialValue: danmakuSettings.danmakuGamerSource,
+                  ),
+                  SettingsTile.switchTile(
+                    leading: Icons.cloud_download_rounded,
+                    onToggle: (value) async {
+                      await ref
+                          .read(danmakuSettingsProvider.notifier)
+                          .setDanmakuDanDanSource(
+                              value ?? !danmakuSettings.danmakuDanDanSource);
+                    },
+                    title: Text('${sourcesTexts.dandan} ($dandanCount 条)'),
+                    initialValue: danmakuSettings.danmakuDanDanSource,
+                  ),
+                ],
+        ),
         SettingsSection(
           title: Text(playerTexts.danmakuShield),
           tiles: [

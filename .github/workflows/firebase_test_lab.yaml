@@ -3,10 +3,19 @@ name: Firebase Test Lab Automated AI Testing
 on:
   workflow_dispatch:
     inputs:
-      test_timeout:
-        description: 'Robo test exploration timeout (e.g. 3m, 5m)'
+      test_mode:
+        description: 'Test Lab execution mode (instrumentation, robo, or both)'
         required: false
-        default: '3m'
+        type: choice
+        options:
+          - 'both'
+          - 'instrumentation'
+          - 'robo'
+        default: 'both'
+      test_timeout:
+        description: 'Test timeout per matrix (e.g. 3m, 5m)'
+        required: false
+        default: '5m'
       device_tier:
         description: 'Device Tier to test against'
         required: false
@@ -67,15 +76,25 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
-      - name: Build Android Release APK with Sentry & TestLab Flags
+      - name: Build Android Instrumentation & Release APKs
         run: |
-          echo "Building arm64 Release APK with Sentry Telemetry..."
-          flutter build apk --release \
-            --target-platform android-arm64 \
-            --android-skip-build-dependency-validation \
-            --dart-define=SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
-            --dart-define=FIREBASE_TEST_LAB=true
-          ls -la build/app/outputs/flutter-apk/
+          TEST_MODE="${{ github.event.inputs.test_mode }}"
+          TEST_MODE="${TEST_MODE:-both}"
+          if [[ "$TEST_MODE" == "instrumentation" || "$TEST_MODE" == "both" ]]; then
+            echo "Building Android Instrumentation Test APKs (integration_test/app_crawler_test.dart)..."
+            pushd android
+            ./gradlew app:assembleAndroidTest
+            ./gradlew app:assembleDebug -Ptarget="$(pwd)/../integration_test/app_crawler_test.dart" -Pdart-defines="RklSRUJBU0VfVEVTVF9MQUI9dHJ1ZQ=="
+            popd
+          fi
+          if [[ "$TEST_MODE" == "robo" || "$TEST_MODE" == "both" ]]; then
+            echo "Building arm64 Release APK with Sentry Telemetry..."
+            flutter build apk --release \
+              --target-platform android-arm64 \
+              --android-skip-build-dependency-validation \
+              --dart-define=SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
+              --dart-define=FIREBASE_TEST_LAB=true
+          fi
         shell: bash
 
       - name: Upload APK Build Artifact
@@ -109,12 +128,14 @@ jobs:
         if: steps.check_creds.outputs.has_creds == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Run Firebase Test Lab Robo Exploration
+      - name: Run Firebase Test Lab Dual-Mode Suite (Instrumentation + Robo)
         if: steps.check_creds.outputs.has_creds == 'true'
         id: run_testlab
         run: |
+          TEST_MODE="${{ github.event.inputs.test_mode }}"
+          TEST_MODE="${TEST_MODE:-both}"
           TIMEOUT="${{ github.event.inputs.test_timeout }}"
-          TIMEOUT="${TIMEOUT:-3m}"
+          TIMEOUT="${TIMEOUT:-5m}"
           DEVICE_TIER="${{ github.event.inputs.device_tier }}"
           DEVICE_TIER="${DEVICE_TIER:-Flagship (Pixel 7 / Android 33)}"
           PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}"
@@ -125,27 +146,53 @@ jobs:
             DEVICE_ARGS="$DEVICE_ARGS --device model=oriole,version=32,locale=zh_CN,orientation=portrait"
           fi
 
-          APK_FILE=$(ls build/app/outputs/flutter-apk/*.apk | head -n 1)
-          echo "Target APK: $APK_FILE"
+          TEST_EXIT_CODE=0
 
-          ROBO_SCRIPT_ARG=""
-          if [ -f "tool/testlab_roboscript.json" ]; then
-            ROBO_SCRIPT_ARG="--robo-script tool/testlab_roboscript.json"
+          if [[ "$TEST_MODE" == "instrumentation" || "$TEST_MODE" == "both" ]]; then
+            DEBUG_APK=$(find build/app/outputs/apk/debug -name "*.apk" | head -n 1)
+            TEST_APK=$(find build/app/outputs/apk/androidTest/debug -name "*.apk" | head -n 1)
+            echo "Launching Firebase Test Lab Instrumentation Patrol ($DEBUG_APK + $TEST_APK)..."
+            gcloud firebase test android run \
+              --type instrumentation \
+              --app "$DEBUG_APK" \
+              --test "$TEST_APK" \
+              --project "$PROJECT_ID" \
+              $DEVICE_ARGS \
+              --timeout "$TIMEOUT" \
+              --client-details matrixLabel="Haipee CI Instrumentation Bug Hunter" \
+              --no-record-video 2>&1 | tee test_lab_inst_output.log
+            INST_EXIT=${PIPESTATUS[0]}
+            if [ "$INST_EXIT" -ne 0 ]; then
+              TEST_EXIT_CODE=$INST_EXIT
+            fi
           fi
 
-          echo "Launching Firebase Test Lab Robo crawl on project: $PROJECT_ID..."
-          gcloud firebase test android run \
-            --type robo \
-            --app "$APK_FILE" \
-            --project "$PROJECT_ID" \
-            $DEVICE_ARGS \
-            $ROBO_SCRIPT_ARG \
-            --timeout "$TIMEOUT" \
-            --client-details matrixLabel="Haipee GitHub Actions CI" \
-            --no-record-video 2>&1 | tee test_lab_output.log
+          if [[ "$TEST_MODE" == "robo" || "$TEST_MODE" == "both" ]]; then
+            APK_FILE=$(ls build/app/outputs/flutter-apk/*release*.apk | head -n 1)
+            echo "Target Release APK: $APK_FILE"
 
-          TEST_EXIT_CODE=${PIPESTATUS[0]}
-          echo "Test Lab completed with exit code: $TEST_EXIT_CODE"
+            ROBO_SCRIPT_ARG=""
+            if [ -f "tool/testlab_roboscript.json" ]; then
+              ROBO_SCRIPT_ARG="--robo-script tool/testlab_roboscript.json"
+            fi
+
+            echo "Launching Firebase Test Lab Robo crawl on project: $PROJECT_ID..."
+            gcloud firebase test android run \
+              --type robo \
+              --app "$APK_FILE" \
+              --project "$PROJECT_ID" \
+              $DEVICE_ARGS \
+              $ROBO_SCRIPT_ARG \
+              --timeout "$TIMEOUT" \
+              --client-details matrixLabel="Haipee GitHub Actions CI" \
+              --no-record-video 2>&1 | tee test_lab_output.log
+            ROBO_EXIT=${PIPESTATUS[0]}
+            if [ "$ROBO_EXIT" -ne 0 ]; then
+              TEST_EXIT_CODE=$ROBO_EXIT
+            fi
+          fi
+
+          echo "Test Lab completed with overall exit code: $TEST_EXIT_CODE"
 
           # Extract Firebase Test Lab results URL from logs
           RESULTS_URL=$(grep -oE 'https://console.firebase.google.com/project/[^ ]*' test_lab_output.log | head -n 1 || true)

@@ -580,7 +580,7 @@ class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
                 initialValue: showPlayerError,
               ),
               SettingsTile.switchTile(
-                leading: Icons.bug_report_rounded,
+                leading: Icons.analytics_outlined,
                 onToggle: (value) async {
                   playerDebugMode = value ?? !playerDebugMode;
                   await GStorage.putSetting<bool>(
@@ -590,8 +590,8 @@ class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
                       .setPlayerDebugMode(playerDebugMode);
                   setState(() {});
                 },
-                title: const Text('调试模式'),
-                description: const Text('记录播放器内部日志'),
+                title: const Text('调试与统计模式'),
+                description: const Text('启用播放器详细媒体统计与调试面板 (与系统运行日志独立)'),
                 initialValue: playerDebugMode,
               ),
               SettingsDropdownTile<int>(

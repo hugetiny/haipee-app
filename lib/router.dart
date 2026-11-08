@@ -177,7 +177,9 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.localPlayer,
       builder: (context, state) => LocalPlayerPage(
-        args: state.extra as LocalVideoPlayArgs,
+        args: state.extra is LocalVideoPlayArgs
+            ? state.extra as LocalVideoPlayArgs
+            : null,
       ),
     ),
     GoRoute(

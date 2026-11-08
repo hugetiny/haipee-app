@@ -18,6 +18,7 @@ import 'package:haipee/request/request.dart';
 import 'package:haipee/utils/storage.dart';
 import 'robots/log_watcher_robot.dart';
 import 'robots/navigation_robot.dart';
+import 'robots/player_and_window_lifecycle_robot.dart';
 import 'robots/search_and_download_robot.dart';
 
 void main() {
@@ -62,6 +63,7 @@ void main() {
         return tempDir.path;
       },
     );
+    PlayerAndWindowLifecycleRobot.installPlatformMocks();
 
     GStorage.setting = await Hive.openBox('setting');
     GStorage.collectibles = await Hive.openBox<CollectedBangumi>('collectibles');
@@ -274,6 +276,23 @@ void main() {
 
       // 快速切换多次
       await navRobot.stressRapidNavigation(rounds: 3);
+
+      logWatcher.assertNoErrors();
+    });
+
+    testWidgets('6. 常规高危交互巡检: 小窗(PIP)切换、无参路由防崩、迷你条往返、弹幕源与独立统计面板、分类筛选',
+        (tester) async {
+      final navRobot = NavigationRobot(tester: tester, logWatcher: logWatcher);
+      final playerRobot = PlayerAndWindowLifecycleRobot(
+        tester: tester,
+        logWatcher: logWatcher,
+      );
+
+      await navRobot.setViewport(const Size(1280, 800));
+      addTearDown(navRobot.resetViewport);
+
+      await navRobot.pumpApp();
+      await playerRobot.runFullRoutinePatrol();
 
       logWatcher.assertNoErrors();
     });

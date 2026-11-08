@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:haipee/modules/bangumi/bangumi_item.dart';
@@ -17,10 +18,11 @@ import 'package:haipee/request/request.dart';
 import 'package:haipee/utils/storage.dart';
 import '../test/integration/robots/log_watcher_robot.dart';
 import '../test/integration/robots/navigation_robot.dart';
+import '../test/integration/robots/player_and_window_lifecycle_robot.dart';
 import '../test/integration/robots/search_and_download_robot.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
   late LogWatcherRobot logWatcher;
@@ -87,6 +89,7 @@ void main() {
         return null;
       },
     );
+    PlayerAndWindowLifecycleRobot.installPlatformMocks();
 
     GStorage.setting = await Hive.openBox('setting');
     GStorage.collectibles = await Hive.openBox<CollectedBangumi>('collectibles');
@@ -193,7 +196,14 @@ void main() {
         savePath: '/Volumes/HD/downloads',
       );
 
-      // 6. 验证全程零异常与零溢出
+      // 6. 执行播放器小窗口(PIP)切换、返回拦截、迷你播放条往返、弹幕来源与视频统计面板、在线搜索分类筛选巡检
+      final playerRobot = PlayerAndWindowLifecycleRobot(
+        tester: tester,
+        logWatcher: logWatcher,
+      );
+      await playerRobot.runFullRoutinePatrol();
+
+      // 7. 验证全程零异常与零溢出
       await tester.pumpAndSettle();
       logWatcher.assertNoErrors();
     });

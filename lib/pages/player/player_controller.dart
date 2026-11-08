@@ -68,11 +68,11 @@ class PlayerController extends Notifier<PlayerState> {
 
   Box setting = GStorage.setting;
   bool hAenable = true;
-  late String hardwareDecoder;
+  String hardwareDecoder = 'auto-safe';
   bool androidEnableOpenSLES = true;
   bool lowMemoryMode = false;
   bool autoPlay = true;
-  bool playerDebugMode = kDebugMode;
+  bool playerDebugMode = false;
   int forwardTime = 80;
 
   // 播放器实时状态
@@ -350,11 +350,14 @@ class PlayerController extends Notifier<PlayerState> {
   Future<void> setupPlayerDebugInfoSubscription() async {
     await playerLogSubscription?.cancel();
     playerLogSubscription = mediaPlayer!.stream.log.listen((event) {
-      final newLog = [...state.playerLog, event.toString()];
+      if (!playerDebugMode) return;
+      final logLine = event.toString();
+      const maxPlayerLogLines = 200;
+      final currentLogs = state.playerLog;
+      final newLog = currentLogs.length >= maxPlayerLogLines
+          ? [...currentLogs.sublist(currentLogs.length - maxPlayerLogLines + 1), logLine]
+          : [...currentLogs, logLine];
       state = state.copyWith(playerLog: newLog);
-      if (playerDebugMode) {
-        HaipeeLogger().simpleLog(event.toString());
-      }
     });
     await playerWidthSubscription?.cancel();
     playerWidthSubscription = mediaPlayer!.stream.width.listen((event) {
@@ -479,7 +482,7 @@ class PlayerController extends Notifier<PlayerState> {
         setting.get(SettingBoxKey.lowMemoryMode, defaultValue: false);
     playerDebugMode = setting.get(
       SettingBoxKey.playerDebugMode,
-      defaultValue: kDebugMode,
+      defaultValue: false,
     );
     final plugin = videoPageController.currentPluginOrNull;
     if (plugin == null || plugin.userAgent.isEmpty) {
@@ -488,17 +491,18 @@ class PlayerController extends Notifier<PlayerState> {
       userAgent = plugin.userAgent;
     }
     String referer = plugin?.referer ?? '';
-    var httpHeaders = {
-      'user-agent': userAgent,
-      if (referer.isNotEmpty) 'referer': referer,
-      if (activeHttpHeaders != null) ...activeHttpHeaders!,
-    };
+    final httpHeaders = buildNormalizedHttpHeaders(
+      defaultUserAgent: userAgent,
+      defaultReferer: referer,
+      overrideHeaders: activeHttpHeaders,
+    );
+    final extraMpvHeaders = extractExtraMpvHeaders(httpHeaders);
 
     mediaPlayer = Player(
       configuration: PlayerConfiguration(
         bufferSize: lowMemoryMode ? 15 * 1024 * 1024 : 1500 * 1024 * 1024,
         osc: false,
-        logLevel: MPVLogLevel.info,
+        logLevel: playerDebugMode ? MPVLogLevel.info : MPVLogLevel.warn,
       ),
     );
 
@@ -507,18 +511,20 @@ class PlayerController extends Notifier<PlayerState> {
     setupPlayerDebugInfoSubscription();
 
     var pp = mediaPlayer!.platform as NativePlayer;
-    if (activeHttpHeaders != null && activeHttpHeaders!.isNotEmpty) {
-      final headerString = activeHttpHeaders!.entries
-          .map((e) => '${e.key}: ${e.value}')
-          .join('\r\n');
-      await pp.setProperty('http-header-fields', headerString);
-      final ref = activeHttpHeaders!['referer'] ?? activeHttpHeaders!['Referer'];
-      if (ref != null) {
-        await pp.setProperty('referrer', ref);
+    if (httpHeaders.isNotEmpty) {
+      final refHeader = httpHeaders['Referer'];
+      if (refHeader != null && refHeader.isNotEmpty) {
+        await pp.setProperty('referrer', refHeader);
       }
-      final ua = activeHttpHeaders!['user-agent'] ?? activeHttpHeaders!['User-Agent'];
-      if (ua != null) {
-        await pp.setProperty('user-agent', ua);
+      final uaHeader = httpHeaders['User-Agent'];
+      if (uaHeader != null && uaHeader.isNotEmpty) {
+        await pp.setProperty('user-agent', uaHeader);
+      }
+      if (extraMpvHeaders.isNotEmpty) {
+        final extraHeaderLines = extraMpvHeaders.entries
+            .map((e) => '${e.key}: ${e.value}')
+            .join('\r\n');
+        await pp.setProperty('http-header-fields', extraHeaderLines);
       }
     }
     // media-kit 默认启用硬盘作为双重缓存，这可以维持大缓存的前提下减轻内存压力
@@ -614,8 +620,11 @@ class PlayerController extends Notifier<PlayerState> {
         return null;
       }
       await mediaPlayer!.open(
-        Media(videoUrl,
-            start: Duration(seconds: offset), httpHeaders: httpHeaders),
+        Media(
+          videoUrl,
+          start: Duration(seconds: offset),
+          httpHeaders: extraMpvHeaders.isEmpty ? null : extraMpvHeaders,
+        ),
         play: autoPlay,
       );
     } catch (e) {
@@ -637,6 +646,56 @@ class PlayerController extends Notifier<PlayerState> {
     }
 
     return mediaPlayer!;
+  }
+
+  /// 统一归一化 HTTP 请求头，消除大小写差异导致的重复 User-Agent / Referer
+  static Map<String, String> buildNormalizedHttpHeaders({
+    required String defaultUserAgent,
+    String defaultReferer = '',
+    Map<String, String>? overrideHeaders,
+  }) {
+    final normalized = <String, String>{
+      if (defaultUserAgent.isNotEmpty) 'User-Agent': defaultUserAgent,
+      if (defaultReferer.isNotEmpty) 'Referer': defaultReferer,
+    };
+    if (overrideHeaders != null) {
+      for (final entry in overrideHeaders.entries) {
+        final lowerKey = entry.key.trim().toLowerCase();
+        if (lowerKey == 'user-agent') {
+          normalized['User-Agent'] = entry.value;
+        } else if (lowerKey == 'referer' || lowerKey == 'referrer') {
+          normalized['Referer'] = entry.value;
+        } else {
+          // 合并其他同名不同大小写的自定义请求头
+          final existingKey = normalized.keys.cast<String?>().firstWhere(
+                (k) => k?.toLowerCase() == lowerKey,
+                orElse: () => null,
+              );
+          if (existingKey != null && existingKey != entry.key) {
+            normalized.remove(existingKey);
+          }
+          normalized[entry.key] = entry.value;
+        }
+      }
+    }
+    return normalized;
+  }
+
+  /// 提取除 User-Agent / Referer 之外的额外自定义请求头供 mpv `http-header-fields` 使用，
+  /// 避免与 mpv 原生 `user-agent` / `referrer` 属性叠加发出双份重复请求头（引发 CDN 403/503）。
+  static Map<String, String> extractExtraMpvHeaders(
+    Map<String, String> normalizedHeaders,
+  ) {
+    final extra = <String, String>{};
+    for (final entry in normalizedHeaders.entries) {
+      final lowerKey = entry.key.trim().toLowerCase();
+      if (lowerKey != 'user-agent' &&
+          lowerKey != 'referer' &&
+          lowerKey != 'referrer') {
+        extra[entry.key] = entry.value;
+      }
+    }
+    return extra;
   }
 
   Future<void> loadBiliDanmaku(int cid) async {
@@ -693,6 +752,7 @@ class PlayerController extends Notifier<PlayerState> {
         );
       }
 
+      final preservedDanmakus = state.danDanmakus;
       await init(
         playUrl.videoUrl,
         offset: currentPos.inSeconds,
@@ -703,8 +763,8 @@ class PlayerController extends Notifier<PlayerState> {
         biliQuality: playUrl.quality,
         biliAvailableQualities: playUrl.availableQualities,
       );
-      if (currentPos > Duration.zero) {
-        await seek(currentPos);
+      if (preservedDanmakus.isNotEmpty && state.danDanmakus.isEmpty) {
+        state = state.copyWith(danDanmakus: preservedDanmakus);
       }
       await play();
       if (targetQuality != null && playUrl.quality < targetQuality) {
@@ -945,7 +1005,10 @@ class PlayerController extends Notifier<PlayerState> {
   }
 
   void lanunchExternalPlayer() async {
-    String referer = videoPageController.currentPlugin.referer;
+    String referer = videoPageController.currentPluginOrNull?.referer ??
+        activeHttpHeaders?['Referer'] ??
+        activeHttpHeaders?['referer'] ??
+        '';
     final t = ref.read(translationsProvider);
     if ((Platform.isAndroid || Platform.isWindows) && referer.isEmpty) {
       if (await ExternalPlayer.launchURLWithMIME(videoUrl, 'video/mp4')) {

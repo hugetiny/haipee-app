@@ -537,6 +537,7 @@ class _SmallestPlayerItemPanelState
     );
 
     return EmbeddedNativeControlArea(
+      requireOffset: !videoState.isFullscreen,
       child: DesktopWindowControlsSafeArea(
         requireOffset: !videoState.isFullscreen,
         child: Row(
@@ -564,6 +565,7 @@ class _SmallestPlayerItemPanelState
           forwardIcon(),
           if (Utils.isDesktop())
             IconButton(
+              key: const Key('smallest_panel_pip_button'),
               onPressed: () {
                 if (videoState.isPip) {
                   Utils.exitDesktopPIPWindow();
@@ -610,6 +612,15 @@ class _SmallestPlayerItemPanelState
             ),
           MenuAnchor(
             consumeOutsideTap: true,
+            style: MenuStyle(
+              maximumSize: WidgetStatePropertyAll(
+                Size(
+                  260,
+                  (MediaQuery.sizeOf(context).height - 56)
+                      .clamp(140.0, 560.0),
+                ),
+              ),
+            ),
             onOpen: () {
               widget.cancelHideTimer();
               playerController.setCanHidePlayerPanel(false);
@@ -622,6 +633,7 @@ class _SmallestPlayerItemPanelState
             builder:
                 (BuildContext context, MenuController controller, Widget? _) {
               return IconButton(
+                key: const Key('smallest_panel_more_menu_button'),
                 onPressed: () {
                   if (controller.isOpen) {
                     controller.close();
@@ -817,14 +829,21 @@ class _SmallestPlayerItemPanelState
                       title: t.playback.controls.menu.danmakuToggle),
                 ),
               MenuItemButton(
+                key: const Key('smallest_menu_danmaku_settings'),
                 onPressed: () {
+                  final screenSize = MediaQuery.sizeOf(context);
+                  final sheetMaxWidth =
+                      (Utils.isDesktop() || Utils.isTablet()) &&
+                              screenSize.width >= 640
+                          ? (screenSize.width * 9 / 16)
+                              .clamp(420.0, screenSize.width)
+                          : screenSize.width;
                   showModalBottomSheet(
                     isScrollControlled: true,
                     constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 3 / 4,
-                      maxWidth: (Utils.isDesktop() || Utils.isTablet())
-                          ? MediaQuery.of(context).size.width * 9 / 16
-                          : MediaQuery.of(context).size.width,
+                      maxHeight: (screenSize.height * 0.82)
+                          .clamp(180.0, screenSize.height),
+                      maxWidth: sheetMaxWidth,
                     ),
                     clipBehavior: Clip.antiAlias,
                     context: context,
@@ -838,6 +857,7 @@ class _SmallestPlayerItemPanelState
                 child: _buildMenuItem(title: t.settings.player.danmakuSettings),
               ),
               MenuItemButton(
+                key: const Key('smallest_menu_video_info'),
                 onPressed: widget.showVideoInfo,
                 child:
                     _buildMenuItem(title: t.playback.controls.menu.videoInfo),
@@ -849,7 +869,7 @@ class _SmallestPlayerItemPanelState
                   RemotePlay()
                       .castVideo(
                     playerController.videoUrl,
-                    videoPageController.currentPlugin.referer,
+                    videoPageController.currentPluginOrNull?.referer ?? '',
                   )
                       .whenComplete(() {
                     if (needRestart) {
@@ -875,8 +895,9 @@ class _SmallestPlayerItemPanelState
     required String title,
     bool highlighted = false,
   }) {
+    final isUltraShort = MediaQuery.sizeOf(context).height < 360;
     return Container(
-      height: 48,
+      height: isUltraShort ? 36 : 48,
       constraints: const BoxConstraints(minWidth: 112),
       alignment: Alignment.centerLeft,
       child: Text(

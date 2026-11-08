@@ -58,9 +58,6 @@ class _VideoPageState extends ConsumerState<VideoPage>
   final FocusNode keyboardFocus = FocusNode();
 
   ScrollController scrollController = ScrollController();
-  // Dedicated controllers for debug log lists to keep Scrollbar attached
-  final ScrollController _webviewLogController = ScrollController();
-  final ScrollController _playerLogController = ScrollController();
   late GridObserverController observerController;
   late AnimationController animation;
   late Animation<Offset> _rightOffsetAnimation;
@@ -232,12 +229,6 @@ class _VideoPageState extends ConsumerState<VideoPage>
     } catch (_) {}
     try {
       _logSubscription.cancel();
-    } catch (_) {}
-    try {
-      _webviewLogController.dispose();
-    } catch (_) {}
-    try {
-      _playerLogController.dispose();
     } catch (_) {}
     if (!Utils.isDesktop()) {
       try {
@@ -1054,22 +1045,6 @@ class _VideoPageState extends ConsumerState<VideoPage>
       ),
     ];
 
-    const maxLogLines = 200;
-    final recentPlayerLogs = playerState.playerLog.length > maxLogLines
-        ? playerState.playerLog
-            .sublist(playerState.playerLog.length - maxLogLines)
-        : List<String>.from(playerState.playerLog);
-    final recentWebviewLogs = webviewLogLines.length > maxLogLines
-        ? webviewLogLines.sublist(webviewLogLines.length - maxLogLines)
-        : List<String>.from(webviewLogLines);
-
-    final playerLogTitle = playerState.playerLog.isEmpty
-        ? '播放器日志（0）'
-        : '播放器日志（${playerState.playerLog.length} 条，展示 ${recentPlayerLogs.length} 条）';
-    final webviewLogTitle = webviewLogLines.isEmpty
-        ? 'WebView 日志（0）'
-        : 'WebView 日志（${webviewLogLines.length} 条，展示 ${recentWebviewLogs.length} 条）';
-
     return Container(
       color: Colors.black.withValues(alpha: 0.78),
       child: SafeArea(
@@ -1084,7 +1059,7 @@ class _VideoPageState extends ConsumerState<VideoPage>
                 children: [
                   Expanded(
                     child: Text(
-                      '调试信息',
+                      '统计与调试信息',
                       style: titleStyle,
                     ),
                   ),
@@ -1109,8 +1084,6 @@ class _VideoPageState extends ConsumerState<VideoPage>
                       superResolutionLabel: superResolutionLabel,
                       volumeText: volumeText,
                       brightnessText: brightnessText,
-                      recentPlayerLogs: recentPlayerLogs,
-                      recentWebviewLogs: recentWebviewLogs,
                     ),
                     icon: const Icon(Icons.copy, color: Colors.white),
                   ),
@@ -1132,20 +1105,6 @@ class _VideoPageState extends ConsumerState<VideoPage>
                           '播放器状态', playbackSection, sectionHeaderStyle),
                       _buildSection('时间与参数', timingSection, sectionHeaderStyle),
                       _buildSection('媒体轨道', mediaSection, sectionHeaderStyle),
-                      _buildLogViewer(
-                        webviewLogTitle,
-                        recentWebviewLogs,
-                        sectionHeaderStyle,
-                        valueStyle,
-                        controller: _webviewLogController,
-                      ),
-                      _buildLogViewer(
-                        playerLogTitle,
-                        recentPlayerLogs,
-                        sectionHeaderStyle,
-                        valueStyle,
-                        controller: _playerLogController,
-                      ),
                     ],
                   ),
                 ),
@@ -1212,52 +1171,6 @@ class _VideoPageState extends ConsumerState<VideoPage>
     );
   }
 
-  Widget _buildLogViewer(
-    String title,
-    List<String> lines,
-    TextStyle headerStyle,
-    TextStyle valueStyle, {
-    ScrollController? controller,
-  }) {
-    if (lines.isEmpty) {
-      return _buildSection(
-        title,
-        [SelectableText('--', style: valueStyle)],
-        headerStyle,
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: headerStyle),
-          const SizedBox(height: 12),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 260),
-            child: Scrollbar(
-              controller: controller,
-              thumbVisibility: true,
-              child: ListView.builder(
-                controller: controller,
-                shrinkWrap: true,
-                physics: const ClampingScrollPhysics(),
-                itemCount: lines.length,
-                itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: SelectableText(
-                    lines[index],
-                    style: valueStyle,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _copyAllDebugInfo({
     required String bangumiName,
     required Plugin? plugin,
@@ -1277,13 +1190,11 @@ class _VideoPageState extends ConsumerState<VideoPage>
     required String superResolutionLabel,
     required String volumeText,
     required String brightnessText,
-    required List<String> recentPlayerLogs,
-    required List<String> recentWebviewLogs,
   }) {
     final hasPlayer = playerController.mediaPlayer != null;
 
     final buffer = StringBuffer();
-    buffer.writeln('=== Haipee 调试信息 ===');
+    buffer.writeln('=== Haipee 视频统计与调试信息 ===');
     buffer.writeln();
 
     // 播放源
@@ -1336,28 +1247,6 @@ class _VideoPageState extends ConsumerState<VideoPage>
     buffer.writeln('音频轨: ${playerState.playerAudioTracks}');
     buffer.writeln('视频轨: ${playerState.playerVideoTracks}');
     buffer.writeln('音频码率: ${playerState.playerAudioBitrate.isEmpty ? '--' : playerState.playerAudioBitrate}');
-    buffer.writeln();
-
-    // WebView 日志
-    buffer.writeln('【WebView 日志】');
-    if (recentWebviewLogs.isEmpty) {
-      buffer.writeln('--');
-    } else {
-      for (final log in recentWebviewLogs) {
-        buffer.writeln(log);
-      }
-    }
-    buffer.writeln();
-
-    // 播放器日志
-    buffer.writeln('【播放器日志】');
-    if (recentPlayerLogs.isEmpty) {
-      buffer.writeln('--');
-    } else {
-      for (final log in recentPlayerLogs) {
-        buffer.writeln(log);
-      }
-    }
 
     Clipboard.setData(ClipboardData(text: buffer.toString()));
     HaipeeDialog.showToast(

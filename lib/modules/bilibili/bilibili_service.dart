@@ -166,6 +166,12 @@ class BilibiliService {
       if (cookieParts.isNotEmpty) 'Cookie': '${cookieParts.join('; ')};',
     };
 
+    final cdnHeaders = {
+      'Referer': 'https://www.bilibili.com',
+      'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    };
+
     try {
       final (imgKey, subKey) = await BiliWbiSigner.getWbiKeys(dio: effectiveClient);
       final rawParams = {
@@ -263,7 +269,7 @@ class BilibiliService {
             }
             selectedVideo ??= typedVideos.first;
 
-            videoUrl = selectedVideo['baseUrl'] ?? selectedVideo['base_url'];
+            videoUrl = selectBestCdnUrl(selectedVideo);
             quality = selectedVideo['id'] is int
                 ? selectedVideo['id'] as int
                 : int.tryParse(selectedVideo['id']?.toString() ?? '80') ?? 80;
@@ -271,9 +277,9 @@ class BilibiliService {
 
           String? audioUrl;
           if (audioList != null && audioList.isNotEmpty) {
-            // 选取最高码率音频
+            // 选取最高码率音频并优选稳定 UPOS CDN
             final bestAudio = audioList.first as Map<String, dynamic>;
-            audioUrl = bestAudio['baseUrl'] ?? bestAudio['base_url'];
+            audioUrl = selectBestCdnUrl(bestAudio);
           }
 
           if (videoUrl != null && videoUrl.isNotEmpty) {
@@ -282,7 +288,7 @@ class BilibiliService {
               audioUrl: audioUrl,
               quality: quality,
               format: 'dash',
-              headers: headers,
+              headers: cdnHeaders,
               availableQualities: availableQualities,
             );
           }
@@ -292,14 +298,14 @@ class BilibiliService {
         final List<dynamic>? durls = data['durl'];
         if (durls != null && durls.isNotEmpty) {
           final first = durls.first as Map<String, dynamic>;
-          final url = first['url']?.toString();
+          final url = selectBestCdnUrl(first) ?? first['url']?.toString();
           if (url != null && url.isNotEmpty) {
             final durlQuality = data['quality'] is int ? data['quality'] as int : 64;
             return BiliPlayUrl(
               videoUrl: url,
               quality: durlQuality,
               format: 'durl',
-              headers: headers,
+              headers: cdnHeaders,
               availableQualities: BiliQualityHelper.buildQualityList(
                 unlockedIds: [durlQuality],
                 acceptQualityIds: acceptQualities,
@@ -314,6 +320,65 @@ class BilibiliService {
     }
 
     return null;
+  }
+
+  /// 从 DASH / durl 流节点中优选稳定官方 CDN (UPOS)，主动规避易触发 HTTP 503 的 P2P MCDN / bcache 边缘节点
+  static String? selectBestCdnUrl(Map<String, dynamic> streamItem) {
+    final candidates = <String>[];
+    final base = (streamItem['baseUrl'] ??
+            streamItem['base_url'] ??
+            streamItem['url'])
+        ?.toString();
+    if (base != null && base.isNotEmpty) {
+      candidates.add(base);
+    }
+    final backups = streamItem['backupUrl'] ?? streamItem['backup_url'];
+    if (backups is List) {
+      for (final b in backups) {
+        final url = b?.toString();
+        if (url != null && url.isNotEmpty && !candidates.contains(url)) {
+          candidates.add(url);
+        }
+      }
+    }
+    if (candidates.isEmpty) return null;
+
+    bool isP2pOrMcdn(String url) {
+      final lower = url.toLowerCase();
+      return lower.contains('mcdn.bilivideo') ||
+          lower.contains('szbdyd.com') ||
+          lower.contains('os=mcdn') ||
+          RegExp(r'://[^/]+:\d+/').hasMatch(lower);
+    }
+
+    bool isBcacheEdge(String url) {
+      final lower = url.toLowerCase();
+      return lower.contains('os=bcache') ||
+          RegExp(r'://cn-[a-z0-9-]+\.bilivideo\.com').hasMatch(lower);
+    }
+
+    // 1. 优先选择 upos 官方云存储镜像节点 (cos/hw/ali/bd)
+    for (final url in candidates) {
+      if (url.toLowerCase().contains('upos-') &&
+          !isP2pOrMcdn(url) &&
+          !isBcacheEdge(url)) {
+        return url;
+      }
+    }
+    // 2. 其次选择非 MCDN 且非 bcache 的稳定节点
+    for (final url in candidates) {
+      if (!isP2pOrMcdn(url) && !isBcacheEdge(url)) {
+        return url;
+      }
+    }
+    // 3. 再次选择非 MCDN 节点
+    for (final url in candidates) {
+      if (!isP2pOrMcdn(url)) {
+        return url;
+      }
+    }
+    // 4. 兜底返回首个可用节点
+    return candidates.first;
   }
 
   /// 获取并解析 B站 原生弹幕流 (支持 RFC 1951 raw deflate 解压与 XML 实体还原)

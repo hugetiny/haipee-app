@@ -103,3 +103,23 @@ dart tool/inspect_app.dart --restart
    dart tool/inspect_app.dart --check-overflow
    ```
    必须确认 **全界面 0 像素溢出 (Zero RenderFlex Overflows)**。
+
+---
+
+## 4. 全链路自动发现 Bug 与修复闭环引擎 (`tool/auto_bug_hunter.dart`)
+
+仅依赖云端 Firebase Test Lab 的随机点击（Robo）不足以覆盖桌面端窗口缩放（如 `480x270` 小窗 PIP）、多步状态机流转及 Release 模式下被静默吞没的 Widget 溢出/强转异常。项目建立了**五层统一自动化巡检与诊断闭环**：
+
+```bash
+# 每次修改完成后一键运行核心高危链路巡检（静态分析 + 架构防崩守卫 + 协议单测 + 多视口状态机机器人 + 实时 VM 自省）
+dart run tool/auto_bug_hunter.dart
+
+# 全量仓库回归巡检
+dart run tool/auto_bug_hunter.dart --full
+
+# 云端真机双模验证（Instrumentation 确定性 Robot 套件 + Robo 随机探索）
+./tool/run_firebase_testlab.sh --mode both
+```
+
+- **自动诊断输出**：任何层级拦截到异常时，自动输出包含精确 `file:line`、缺陷分类、根本原因与修复处方的结构化报告至 `test_reports/auto_bug_hunter_report.md` 与 `test_reports/auto_bug_hunter_report.json`。
+- **新增高危交互必入 Robot**：涉及路由参数、窗口尺寸切换（常规/小窗 PIP/全屏/窄屏）、底部弹窗菜单或播放状态机的新功能，必须同步补充到 `test/architecture/` 静态守卫与 `test/integration/robots/` 巡检机器人中。

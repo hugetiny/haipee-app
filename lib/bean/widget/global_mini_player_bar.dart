@@ -62,21 +62,28 @@ class GlobalMiniPlayerBar extends ConsumerWidget {
         : 0.0;
 
     void returnToPlayer() {
-      if (playerController.activeLocalVideoArgs != null) {
+      final localArgs = playerController.activeLocalVideoArgs;
+      if (localArgs != null) {
         context.push(
           Routes.localPlayer,
-          extra: playerController.activeLocalVideoArgs,
+          extra: localArgs,
         );
       } else if (videoState.bangumiItem != null) {
         context.push(Routes.video);
       } else if (playerController.videoUrl.isNotEmpty) {
+        final fallbackArgs = LocalVideoPlayArgs(
+          filePath: playerController.videoUrl,
+          title: displayTitle,
+          isAudio: isAudio,
+          audioUrl: playerController.activeAudioUrl,
+          httpHeaders: playerController.activeHttpHeaders,
+          biliCid: playerController.activeBiliCid,
+          biliBvid: playerController.activeBiliBvid,
+        );
+        playerController.activeLocalVideoArgs = fallbackArgs;
         context.push(
           Routes.localPlayer,
-          extra: LocalVideoPlayArgs(
-            filePath: playerController.videoUrl,
-            title: displayTitle,
-            isAudio: isAudio,
-          ),
+          extra: fallbackArgs,
         );
       }
     }

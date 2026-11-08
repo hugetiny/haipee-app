@@ -33,8 +33,10 @@ import 'package:haipee/utils/storage.dart';
 import 'package:haipee/request/damaku.dart';
 import 'package:haipee/modules/danmaku/danmaku_search_response.dart';
 import 'package:haipee/modules/danmaku/danmaku_episode_response.dart';
+import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/pages/player/player_item_surface.dart';
 import 'package:haipee/pages/setting/setting_controller.dart';
+import 'package:haipee/pages/settings/danmaku/providers.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 
 /// Provider for super resolution warning dialog "don't ask again" checkbox state
@@ -104,10 +106,6 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
   late bool _hideBottom;
   late bool _hideScroll;
   late bool _massiveMode;
-  late bool _danmakuColor;
-  late bool _danmakuBiliBiliSource;
-  late bool _danmakuGamerSource;
-  late bool _danmakuDanDanSource;
   late int _danmakuFontWeight;
 
   // 硬件解码
@@ -383,20 +381,21 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
           if (currentDanmakus != null && currentDanmakus.isNotEmpty) {
             final isBiliNative = playerController.activeBiliCid != null &&
                 playerController.activeBiliCid! > 0;
+            final danmakuSettings = ref.read(danmakuSettingsProvider);
             currentDanmakus.asMap().forEach((idx, danmaku) async {
-              if (!_danmakuColor) {
-                danmaku.color = Colors.white;
-              }
+              final effectiveColor =
+                  danmakuSettings.danmakuColor ? danmaku.color : Colors.white;
               // 对于 B站 原生视频 (activeBiliCid > 0)，以官方 CID 原生弹幕为准，严禁被第三方 DanDanPlay 弹幕源开关屏蔽
               if (!isBiliNative) {
-                if (!_danmakuBiliBiliSource &&
+                if (!danmakuSettings.danmakuBiliBiliSource &&
                     danmaku.source.contains('BiliBili')) {
                   return;
                 }
-                if (!_danmakuGamerSource && danmaku.source.contains('Gamer')) {
+                if (!danmakuSettings.danmakuGamerSource &&
+                    danmaku.source.contains('Gamer')) {
                   return;
                 }
-                if (!_danmakuDanDanSource &&
+                if (!danmakuSettings.danmakuDanDanSource &&
                     !(danmaku.source.contains('BiliBili') ||
                         danmaku.source.contains('Gamer'))) {
                   return;
@@ -413,7 +412,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                       ? playerController.danmakuController.addDanmaku(
                           DanmakuContentItem(
                             danmaku.message,
-                            color: danmaku.color,
+                            color: effectiveColor,
                             type: danmaku.type == 4
                                 ? DanmakuItemType.bottom
                                 : (danmaku.type == 5
@@ -452,7 +451,10 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
           final roadList = videoPageController.roadList;
           final currentRoad = videoPageController.currentRoad;
           final currentEpisode = videoPageController.currentEpisode;
-          if (roadList.isNotEmpty &&
+          final pluginName = videoPageController.currentPluginOrNull?.name;
+          if (pluginName != null &&
+              pluginName.isNotEmpty &&
+              roadList.isNotEmpty &&
               currentRoad >= 0 &&
               currentRoad < roadList.length &&
               currentEpisode > 0 &&
@@ -460,7 +462,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
             historyController.updateHistory(
                 currentEpisode,
                 currentRoad,
-                videoPageController.currentPlugin.name,
+                pluginName,
                 videoPageController.bangumiItem,
                 playerController.playerPosition,
                 videoPageController.src,
@@ -573,7 +575,7 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
         _audioController.updateSession(
           mediaId: '${bangumi.id}_${currentRoad}_$currentEpisode',
           title: bangumiTitle,
-          album: videoPageController.currentPlugin.name,
+          album: videoPageController.currentPluginOrNull?.name ?? 'Haipee',
           artist: videoPageController.title,
           duration: duration,
           playing: playerController.playerPlaying,
@@ -725,6 +727,69 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     );
   }
 
+  String _formatBitrate(double bps) {
+    if (bps <= 0) return '--';
+    if (bps >= 1000 * 1000) {
+      return '${(bps / (1000 * 1000)).toStringAsFixed(2)} Mbps';
+    }
+    return '${(bps / 1000).toStringAsFixed(0)} kbps';
+  }
+
+  String _buildStructuredStatsText(
+      PlayerState state, PlayerController controller) {
+    final resolution = (state.playerWidth > 0 && state.playerHeight > 0)
+        ? '${state.playerWidth}x${state.playerHeight}'
+        : '未知';
+    final fps = state.videoFps > 0 ? '${state.videoFps.toStringAsFixed(2)} fps' : '--';
+    final vBitrate = _formatBitrate(
+      state.playerVideoBitrate > 0 ? state.playerVideoBitrate : state.demuxBitrate,
+    );
+    final superResLabel = switch (state.superResolutionType) {
+      2 => 'Anime4K 均衡 (Lite)',
+      3 => 'Anime4K 质量 (HQ)',
+      _ => '关闭',
+    };
+    int totalDanmaku = 0;
+    int biliCount = 0;
+    int gamerCount = 0;
+    int dandanCount = 0;
+    for (final list in state.danDanmakus.values) {
+      for (final item in list) {
+        totalDanmaku++;
+        if (item.source.contains('BiliBili')) {
+          biliCount++;
+        } else if (item.source.contains('Gamer')) {
+          gamerCount++;
+        } else {
+          dandanCount++;
+        }
+      }
+    }
+    final isBili = controller.isBiliPlayback;
+    final danmakuSummary = isBili
+        ? '共 $totalDanmaku 条 (B站原生 CID: ${controller.activeBiliCid ?? "--"})'
+        : '共 $totalDanmaku 条 (B站: $biliCount / 巴哈: $gamerCount / 弹弹: $dandanCount)';
+
+    final buf = StringBuffer();
+    buf.writeln('=== 视频统计与调试信息 (Stats for Nerds) ===');
+    buf.writeln('标题: ${controller.currentTitle.isNotEmpty ? controller.currentTitle : videoPageController.title}');
+    if (isBili) {
+      buf.writeln('B站标识: BVID=${controller.activeBiliBvid ?? "--"} / CID=${controller.activeBiliCid ?? "--"} (${BiliQualityHelper.getLabel(state.biliQuality)})');
+    }
+    buf.writeln('播放地址: ${controller.videoUrl}');
+    buf.writeln('分辨率: $resolution');
+    buf.writeln('视频编码 / 帧率: ${state.videoCodec.isNotEmpty ? state.videoCodec : "--"} / $fps');
+    buf.writeln('视频码率: $vBitrate');
+    buf.writeln('硬件解码: ${controller.hAenable ? "已启用 (${controller.hardwareDecoder})" : "软件解码"}');
+    buf.writeln('超分辨率: $superResLabel');
+    buf.writeln('视频参数: ${state.playerVideoParams}');
+    buf.writeln('音频参数: ${state.playerAudioParams}');
+    buf.writeln('音频码率: ${state.playerAudioBitrate.isNotEmpty ? state.playerAudioBitrate : "--"}');
+    buf.writeln('缓冲状态: ${Utils.durationToString(state.currentPosition)} / 缓冲 ${Utils.durationToString(state.buffer)} / 总长 ${Utils.durationToString(state.duration)}');
+    buf.writeln('弹幕统计: $danmakuSummary');
+    return buf.toString();
+  }
+
   Widget buildVideoInfoBody(PlayerState state, PlayerController controller) {
     final t = context.t;
     void copyWithToast(String content) {
@@ -732,128 +797,249 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
       Clipboard.setData(ClipboardData(text: content));
     }
 
+    final resolution = (state.playerWidth > 0 && state.playerHeight > 0)
+        ? '${state.playerWidth}x${state.playerHeight}'
+        : '未知';
+    final fpsText =
+        state.videoFps > 0 ? '${state.videoFps.toStringAsFixed(2)} fps' : '--';
+    final vBitrateText = _formatBitrate(
+      state.playerVideoBitrate > 0
+          ? state.playerVideoBitrate
+          : state.demuxBitrate,
+    );
+    final superResLabel = switch (state.superResolutionType) {
+      2 => 'Anime4K 均衡 (Lite)',
+      3 => 'Anime4K 质量 (HQ)',
+      _ => '关闭',
+    };
+
+    int totalDanmaku = 0;
+    int biliCount = 0;
+    int gamerCount = 0;
+    int dandanCount = 0;
+    for (final list in state.danDanmakus.values) {
+      for (final item in list) {
+        totalDanmaku++;
+        if (item.source.contains('BiliBili')) {
+          biliCount++;
+        } else if (item.source.contains('Gamer')) {
+          gamerCount++;
+        } else {
+          dandanCount++;
+        }
+      }
+    }
+    final isBili = controller.isBiliPlayback;
+    final danmakuSummary = isBili
+        ? '共 $totalDanmaku 条 · B站官方原生弹幕 (CID: ${controller.activeBiliCid ?? "--"})'
+        : '共 $totalDanmaku 条 · BiliBili $biliCount / 巴哈姆特 $gamerCount / 弹弹Play $dandanCount';
+
     return ListView(
+      key: const Key('video_stats_list'),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       children: [
+        if (isBili)
+          ListTile(
+            leading: const Icon(Icons.tv_rounded, size: 20),
+            title: const Text('B站流媒体与清晰度档位'),
+            subtitle: Text(
+              'BVID: ${controller.activeBiliBvid ?? "--"} · CID: ${controller.activeBiliCid ?? "--"} · 当前档位: ${BiliQualityHelper.getLabel(state.biliQuality)}',
+            ),
+            onTap: () => copyWithToast(
+              'BVID: ${controller.activeBiliBvid ?? "--"}, CID: ${controller.activeBiliCid ?? "--"}, 画质: ${BiliQualityHelper.getLabel(state.biliQuality)}',
+            ),
+          ),
         ListTile(
+          leading: const Icon(Icons.aspect_ratio_rounded, size: 20),
+          title: Text(t.playback.debug.labels.resolution),
+          subtitle: Text(
+            '$resolution · 编码: ${state.videoCodec.isNotEmpty ? state.videoCodec : "--"} · 帧率: $fpsText · 码率: $vBitrateText',
+          ),
+          onTap: () => copyWithToast(
+            '${t.playback.debug.labels.resolution}\n$resolution (${state.videoCodec}, $fpsText, $vBitrateText)',
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.memory_rounded, size: 20),
+          title: const Text('解码器与超分辨率渲染'),
+          subtitle: Text(
+            '硬件解码: ${controller.hAenable ? "开启 (${controller.hardwareDecoder})" : "软件解码"} · 超分辨率: $superResLabel',
+          ),
+          onTap: () => copyWithToast(
+            '硬件解码: ${controller.hAenable ? controller.hardwareDecoder : "off"}, 超分辨率: $superResLabel',
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.subtitles_rounded, size: 20),
+          title: const Text('弹幕加载与来源统计'),
+          subtitle: Text(danmakuSummary),
+          onTap: () => copyWithToast('弹幕统计: $danmakuSummary'),
+        ),
+        ListTile(
+          leading: const Icon(Icons.network_check_rounded, size: 20),
+          title: const Text('播放进度与缓冲区健康度'),
+          subtitle: Text(
+            '位置: ${Utils.durationToString(state.currentPosition)} / 缓冲至: ${Utils.durationToString(state.buffer)} / 总长: ${Utils.durationToString(state.duration)}',
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.link_rounded, size: 20),
           title: Text(t.playback.debug.labels.playUrl),
-          subtitle: Text(controller.videoUrl),
+          subtitle: Text(
+            controller.videoUrl.isNotEmpty ? controller.videoUrl : '--',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           onTap: () => copyWithToast(controller.videoUrl),
         ),
         ListTile(
-          title: Text(t.playback.debug.labels.resolution),
-          subtitle: Text('${state.playerWidth}x${state.playerHeight}'),
-          onTap: () => copyWithToast(
-              '${t.playback.debug.labels.resolution}\n${state.playerWidth}x${state.playerHeight}'),
-        ),
-        ListTile(
+          leading: const Icon(Icons.tune_rounded, size: 20),
           title: Text(t.playback.debug.labels.videoParams),
-          subtitle: Text(state.playerVideoParams),
+          subtitle: Text(
+            state.playerVideoParams.isNotEmpty ? state.playerVideoParams : '--',
+          ),
           onTap: () => copyWithToast(
               '${t.playback.debug.labels.videoParams}\n${state.playerVideoParams}'),
         ),
         ListTile(
+          leading: const Icon(Icons.graphic_eq_rounded, size: 20),
           title: Text(t.playback.debug.labels.audioParams),
-          subtitle: Text(state.playerAudioParams),
+          subtitle: Text(
+            '${state.playerAudioParams.isNotEmpty ? state.playerAudioParams : "--"} · 码率: ${state.playerAudioBitrate.isNotEmpty ? state.playerAudioBitrate : "--"}',
+          ),
           onTap: () => copyWithToast(
               '${t.playback.debug.labels.audioParams}\n${state.playerAudioParams}'),
         ),
         ListTile(
-          title: Text(t.playback.debug.labels.playlist),
-          subtitle: Text(state.playerPlaylist),
-          onTap: () => copyWithToast(
-              '${t.playback.debug.labels.playlist}\n${state.playerPlaylist}'),
-        ),
-        ListTile(
+          leading: const Icon(Icons.audiotrack_rounded, size: 20),
           title: Text(t.playback.debug.labels.audioTracks),
-          subtitle: Text(state.playerAudioTracks),
+          subtitle: Text(
+            state.playerAudioTracks.isNotEmpty ? state.playerAudioTracks : '--',
+          ),
           onTap: () => copyWithToast(
               '${t.playback.debug.labels.audioTracks}\n${state.playerAudioTracks}'),
         ),
         ListTile(
+          leading: const Icon(Icons.videocam_rounded, size: 20),
           title: Text(t.playback.debug.labels.videoTracks),
-          subtitle: Text(state.playerVideoTracks),
+          subtitle: Text(
+            state.playerVideoTracks.isNotEmpty ? state.playerVideoTracks : '--',
+          ),
           onTap: () => copyWithToast(
               '${t.playback.debug.labels.videoTracks}\n${state.playerVideoTracks}'),
-        ),
-        ListTile(
-          title: Text(t.playback.debug.labels.audioBitrate),
-          subtitle: Text(state.playerAudioBitrate),
-          onTap: () => copyWithToast(
-              '${t.playback.debug.labels.audioBitrate}\n${state.playerAudioBitrate}'),
         ),
       ],
     );
   }
 
-  Widget buildVideoDebugLogBody(PlayerState state) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 0),
-        child: ListView.builder(
-          itemCount: state.playerLog.length,
-          itemBuilder: (context, index) {
-            return Text(state.playerLog[index]);
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.copy),
-        onPressed: () {
-          Clipboard.setData(
-            ClipboardData(text: state.playerLog.join('\n')),
-          );
-          HaipeeDialog.showToast(
-            message: context.t.playback.toast.clipboardCopied,
-          );
-        },
-      ),
-    );
-  }
-
   void showVideoInfo() async {
+    final screenSize = MediaQuery.sizeOf(context);
+    final sheetMaxWidth = (Utils.isDesktop() || Utils.isTablet()) &&
+            screenSize.width >= 640
+        ? (screenSize.width * 9 / 16).clamp(420.0, screenSize.width)
+        : screenSize.width;
     showModalBottomSheet(
         isScrollControlled: true,
         constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 3 / 4,
-            maxWidth: (Utils.isDesktop() || Utils.isTablet())
-                ? MediaQuery.of(context).size.width * 9 / 16
-                : MediaQuery.of(context).size.width),
+          maxHeight: (screenSize.height * 0.82).clamp(180.0, screenSize.height),
+          maxWidth: sheetMaxWidth,
+        ),
         clipBehavior: Clip.antiAlias,
         context: context,
         builder: (context) {
-          return DefaultTabController(
-            length: 2,
-            child: Consumer(
-              builder: (context, ref, _) {
-                final playerState = ref.watch(playerProvider);
-                final controller = ref.read(playerProvider.notifier);
-                return Scaffold(
-                  body: Column(
-                    children: [
-                      PreferredSize(
-                        preferredSize: const Size.fromHeight(kToolbarHeight),
-                        child: Material(
-                          child: TabBar(
-                            tabs: [
-                              Tab(text: context.t.playback.debug.tabs.status),
-                              Tab(text: context.t.playback.debug.tabs.logs),
-                            ],
+          return Consumer(
+            builder: (context, ref, _) {
+              final playerState = ref.watch(playerProvider);
+              final controller = ref.read(playerProvider.notifier);
+              final theme = Theme.of(context);
+              return Material(
+                key: const Key('video_stats_sheet'),
+                color: theme.colorScheme.surface,
+                child: SafeArea(
+                  top: false,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isCompactHeader = constraints.maxWidth < 360;
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 10, 8, 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.analytics_outlined,
+                                  size: 20,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    '视频统计与媒体信息',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                if (isCompactHeader)
+                                  IconButton(
+                                    key: const Key('video_stats_copy_button'),
+                                    tooltip: '复制诊断参数',
+                                    onPressed: () {
+                                      final text = _buildStructuredStatsText(
+                                        playerState,
+                                        controller,
+                                      );
+                                      Clipboard.setData(
+                                          ClipboardData(text: text));
+                                      HaipeeDialog.showToast(
+                                        message: context
+                                            .t.playback.toast.clipboardCopied,
+                                      );
+                                    },
+                                    icon: const Icon(Icons.copy_rounded,
+                                        size: 18),
+                                  )
+                                else
+                                  TextButton.icon(
+                                    key: const Key('video_stats_copy_button'),
+                                    onPressed: () {
+                                      final text = _buildStructuredStatsText(
+                                        playerState,
+                                        controller,
+                                      );
+                                      Clipboard.setData(
+                                          ClipboardData(text: text));
+                                      HaipeeDialog.showToast(
+                                        message: context
+                                            .t.playback.toast.clipboardCopied,
+                                      );
+                                    },
+                                    icon: const Icon(Icons.copy_rounded,
+                                        size: 16),
+                                    label: const Text('复制诊断参数'),
+                                  ),
+                                IconButton(
+                                  key: const Key('video_stats_close_button'),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  icon: const Icon(Icons.close_rounded),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: TabBarView(
-                          children: [
-                            buildVideoInfoBody(playerState, controller),
-                            buildVideoDebugLogBody(playerState),
-                          ],
-                        ),
-                      ),
-                    ],
+                          const Divider(height: 1),
+                          Expanded(
+                            child: buildVideoInfoBody(playerState, controller),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           );
         });
   }
@@ -1154,13 +1340,6 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     _hideScroll = !setting.get(SettingBoxKey.danmakuScroll, defaultValue: true);
     _massiveMode =
         setting.get(SettingBoxKey.danmakuMassive, defaultValue: false);
-    _danmakuColor = setting.get(SettingBoxKey.danmakuColor, defaultValue: true);
-    _danmakuBiliBiliSource =
-        setting.get(SettingBoxKey.danmakuBiliBiliSource, defaultValue: true);
-    _danmakuGamerSource =
-        setting.get(SettingBoxKey.danmakuGamerSource, defaultValue: true);
-    _danmakuDanDanSource =
-        setting.get(SettingBoxKey.danmakuDanDanSource, defaultValue: true);
     _danmakuFontWeight =
         setting.get(SettingBoxKey.danmakuFontWeight, defaultValue: 4);
     haEnable = setting.get(SettingBoxKey.hAenable, defaultValue: true);
@@ -1308,7 +1487,10 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                             }
                             // Esc键被按下
                             if (event.logicalKey == LogicalKeyboardKey.escape) {
-                              if (videoPageController.isFullscreen &&
+                              if (videoPageController.isPip) {
+                                Utils.exitDesktopPIPWindow();
+                                videoPageController.isPip = false;
+                              } else if (videoPageController.isFullscreen &&
                                   !Utils.isTablet()) {
                                 try {
                                   playerController.danmakuController.clear();
