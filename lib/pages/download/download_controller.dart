@@ -224,7 +224,12 @@ class DownloadController extends Notifier<DownloadState> {
       await _eventSubscription?.cancel();
       _eventSubscription = GopeedService().taskEvents.listen(_handleGopeedEvent);
 
-      await refreshDownloads();
+      try {
+        await refreshDownloads();
+      } catch (refreshErr) {
+        _logger.log(
+            Level.warning, '[DownloadController] Initial refresh error: $refreshErr');
+      }
       _startSyncTimer();
     } catch (e) {
       _logger.log(

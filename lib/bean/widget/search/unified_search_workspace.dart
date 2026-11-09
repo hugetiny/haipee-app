@@ -75,13 +75,15 @@ class UnifiedSearchHeader extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final hasActiveFilter = activeFilterCount > 0 || activeFilterTags.isNotEmpty;
 
-    final isUltraNarrow = MediaQuery.sizeOf(context).width < 420;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenWidth < 600;
+    final isUltraNarrow = screenWidth < 340;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-        isUltraNarrow ? 12 : 20,
+        isCompact ? 10 : 20,
         16,
-        isUltraNarrow ? 12 : 20,
+        isCompact ? 10 : 20,
         12,
       ),
       child: Center(
@@ -106,11 +108,15 @@ class UnifiedSearchHeader extends StatelessWidget {
                         onSubmitted: onSearch,
                         decoration: InputDecoration(
                           hintText: hintText,
-                          prefixIcon: const Icon(Icons.search, size: 20),
-                          prefixIconConstraints: const BoxConstraints(
-                            minWidth: 38,
-                            minHeight: 38,
-                          ),
+                          prefixIcon: isCompact
+                              ? null
+                              : const Icon(Icons.search, size: 20),
+                          prefixIconConstraints: isCompact
+                              ? null
+                              : const BoxConstraints(
+                                  minWidth: 38,
+                                  minHeight: 38,
+                                ),
                           suffixIconConstraints: const BoxConstraints(
                             minHeight: 44,
                           ),
@@ -143,8 +149,11 @@ class UnifiedSearchHeader extends StatelessWidget {
                                       message: '开始搜索',
                                       child: Container(
                                         height: 36,
+                                        constraints: const BoxConstraints(
+                                          minWidth: 44,
+                                        ),
                                         padding: EdgeInsets.symmetric(
-                                          horizontal: isUltraNarrow ? 10 : 12,
+                                          horizontal: isUltraNarrow ? 8 : 10,
                                         ),
                                         alignment: Alignment.center,
                                         child: Row(
@@ -182,14 +191,14 @@ class UnifiedSearchHeader extends StatelessWidget {
                           fillColor: colorScheme.surfaceContainerHighest
                               .withValues(alpha: 0.5),
                           contentPadding: EdgeInsets.symmetric(
-                            horizontal: isUltraNarrow ? 10 : 16,
+                            horizontal: isCompact ? 10 : 16,
                             vertical: 14,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: isUltraNarrow ? 6 : 8),
+                  SizedBox(width: isCompact ? 6 : 8),
                   // 搜索框旁边的统一并排操作按钮组 (筛选 + 表格/网格视图切换，单一体系统一高度，自适应宽窄屏)
                   UnifiedSearchActionGroup(
                     filterToggleKey: filterToggleKey,
@@ -309,7 +318,7 @@ class UnifiedSearchActionGroup extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final width = MediaQuery.sizeOf(context).width;
     final isCompact = width < 480;
-    final isUltraNarrow = width < 380;
+    final isUltraNarrow = width < 340;
 
     final hasViewToggle =
         viewMode != null && isTableView != null && onViewModeChanged != null;

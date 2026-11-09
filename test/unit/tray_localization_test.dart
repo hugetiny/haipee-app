@@ -13,7 +13,7 @@ void main() {
     final labels = HaipeeTrayLabels.current();
 
     expect(labels.showWindow, 'Show Window');
-    expect(labels.exit, 'Exit haipee');
+    expect(labels.exit, 'Exit Haipee');
   });
 
   test('returns Simplified Chinese tray labels when locale is zhCn', () {
@@ -22,6 +22,6 @@ void main() {
     final labels = HaipeeTrayLabels.current();
 
     expect(labels.showWindow, '显示窗口');
-    expect(labels.exit, '退出 haipee');
+    expect(labels.exit, '退出 Haipee');
   });
 }

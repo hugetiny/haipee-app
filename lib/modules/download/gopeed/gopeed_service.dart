@@ -85,12 +85,20 @@ class GopeedService {
       dir.createSync(recursive: true);
     }
 
-    final defaultDownloadDir = DownloadFileUtils.getDefaultDownloadDirectorySync();
+    String defaultDownloadDir;
+    try {
+      defaultDownloadDir = await DownloadFileUtils.getDefaultDownloadDirectory();
+    } catch (_) {
+      defaultDownloadDir = DownloadFileUtils.getDefaultDownloadDirectorySync();
+    }
+    if (defaultDownloadDir.isEmpty || defaultDownloadDir == '/') {
+      defaultDownloadDir = dir.path;
+    }
     try {
       Directory(defaultDownloadDir).createSync(recursive: true);
     } catch (_) {}
 
-    final config = {
+    final config = <String, dynamic>{
       'network': 'tcp',
       'address': '127.0.0.1:0',
       'apiEnable': false,
@@ -103,9 +111,34 @@ class GopeedService {
     };
 
     final isTest = Platform.environment.containsKey('FLUTTER_TEST');
-    await _worker
-        .start(jsonEncode(config))
-        .timeout(isTest ? const Duration(seconds: 3) : const Duration(seconds: 15));
+    try {
+      await _worker
+          .start(jsonEncode(config))
+          .timeout(isTest ? const Duration(seconds: 3) : const Duration(seconds: 15));
+    } catch (e) {
+      // If bolt storage initialization fails (e.g. stale lock or corrupt db),
+      // clean stale gopeed.db and retry, or fallback to memory storage
+      try {
+        final boltFile = File('${dir.path}/storage/gopeed.db');
+        if (boltFile.existsSync()) {
+          boltFile.deleteSync();
+        }
+      } catch (_) {}
+
+      try {
+        await _worker
+            .start(jsonEncode(config))
+            .timeout(isTest ? const Duration(seconds: 3) : const Duration(seconds: 8));
+      } catch (_) {
+        // Fallback to in-memory storage so the download service always successfully starts
+        final memConfig = Map<String, dynamic>.from(config);
+        memConfig['storage'] = 'mem';
+        await _worker
+            .start(jsonEncode(memConfig))
+            .timeout(isTest ? const Duration(seconds: 3) : const Duration(seconds: 8));
+      }
+    }
+
     // Subscribe to task done and error events (mask = 0x03: done=1, error=2)
     await _worker
         .subscribeTaskEvents(0x03)

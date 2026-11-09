@@ -185,7 +185,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Close view by pressing the view leading back button
-    final backButtons = find.byType(IconButton);
+    final backButtons = find.byWidgetPredicate(
+      (w) => w.runtimeType.toString() == 'AppBackButton' || w is IconButton,
+    );
     expect(backButtons, findsWidgets);
 
     final viewBackButton = find.byTooltip(MaterialLocalizations.of(tester.element(find.byType(SearchPage))).backButtonTooltip);
