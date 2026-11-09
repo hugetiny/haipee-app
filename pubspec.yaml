@@ -209,9 +209,9 @@ flutter_launcher_icons:
   image_path: assets/images/logo/logo_android.png
   image_path_android: assets/images/logo/logo_android.png
   image_path_ios: assets/images/logo/logo_ios.png
-  adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: assets/images/logo/logo_android.png
-  adaptive_icon_monochrome: assets/images/logo/logo_android.png
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: assets/images/logo/logo_adaptive_foreground.png
+  adaptive_icon_monochrome: assets/images/logo/logo_adaptive_foreground.png
   macos:
     generate: true
     image_path: assets/images/logo/logo_rounded.png
@@ -224,8 +224,8 @@ flutter_native_splash:
   android: false
   ios: true
   web: false
-  color_ios: "#ffffff"
-  color_dark_ios: "#212121"
+  color_ios: "#000000"
+  color_dark_ios: "#000000"
   image_ios: assets/images/logo/logo_ios.png
   image_dark_ios: assets/images/logo/logo_ios.png
 
