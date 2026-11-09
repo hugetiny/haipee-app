@@ -18,9 +18,7 @@ class LibgopeedWorker {
     if (_isMobile) {
       _initMobile();
     } else {
-      _receivePort.listen(_handleWorkerMessage);
-      _errorPort.listen(_handleWorkerError);
-      _isolateReady = Isolate.spawn(_workerMain, _receivePort.sendPort, onError: _errorPort.sendPort);
+      _spawnWorker();
     }
   }
 
@@ -28,18 +26,59 @@ class LibgopeedWorker {
   static const MethodChannel _channel = MethodChannel('gopeed.com/libgopeed');
   bool get _isMobile => Platform.isAndroid || Platform.isIOS;
 
-  final ReceivePort _receivePort = ReceivePort();
-  final ReceivePort _errorPort = ReceivePort();
+  ReceivePort? _receivePort;
+  ReceivePort? _errorPort;
   final Map<int, Completer<Object?>> _pending = {};
   StreamController<Map<String, dynamic>> _taskEvents = StreamController<Map<String, dynamic>>.broadcast();
-  late final Future<Isolate> _isolateReady;
-  final Completer<SendPort> _sendPort = Completer<SendPort>();
+  Future<Isolate>? _isolateReady;
+  Completer<SendPort>? _sendPort;
   Future<void>? _stopFuture;
   int _requestID = 0;
   bool _stopping = false;
   bool _stopped = false;
   bool _started = false;
+  bool _workerHasError = false;
   Future<int>? _startFuture;
+
+  void _spawnWorker() {
+    if (_isMobile) return;
+    _cleanWorker();
+    final rx = ReceivePort();
+    final err = ReceivePort();
+    final send = Completer<SendPort>();
+    _receivePort = rx;
+    _errorPort = err;
+    _sendPort = send;
+    _workerHasError = false;
+    rx.listen(_handleWorkerMessage);
+    err.listen(_handleWorkerError);
+    _isolateReady = Isolate.spawn(_workerMain, rx.sendPort, onError: err.sendPort);
+  }
+
+  void _cleanWorker() {
+    try {
+      _receivePort?.close();
+    } catch (_) {}
+    try {
+      _errorPort?.close();
+    } catch (_) {}
+    _receivePort = null;
+    _errorPort = null;
+    _isolateReady = null;
+    _sendPort = null;
+  }
+
+  void reset() {
+    _stopped = false;
+    _stopping = false;
+    _started = false;
+    _startFuture = null;
+    _stopFuture = null;
+    _workerHasError = false;
+    if (!_isMobile) {
+      _spawnWorker();
+    }
+  }
 
   Stream<Map<String, dynamic>> get taskEvents {
     if (_taskEvents.isClosed) {
@@ -65,12 +104,17 @@ class LibgopeedWorker {
   }
 
   Future<int> start(String config) {
-    if (_started) return Future.value(0);
-    return _startFuture ??= (_isMobile ? _startMobile(config) : _request<int>('start', [config])).then((res) {
+    if (_started && !_workerHasError) return Future.value(0);
+    if (_startFuture != null) return _startFuture!;
+    _stopped = false;
+    _stopping = false;
+    return _startFuture = (_isMobile ? _startMobile(config) : _request<int>('start', [config])).then((res) {
       _started = true;
+      _workerHasError = false;
       return res;
     }).catchError((e) {
       _startFuture = null;
+      _started = false;
       throw e;
     });
   }
@@ -101,8 +145,7 @@ class LibgopeedWorker {
     _pending.clear();
     await _taskEvents.close();
     if (!_isMobile) {
-      _receivePort.close();
-      _errorPort.close();
+      _cleanWorker();
     }
   }
 
@@ -156,8 +199,15 @@ class LibgopeedWorker {
     if (_stopped || (_stopping && !allowWhileStopping)) {
       throw StateError('libgopeed worker is stopping or stopped');
     }
-    await _isolateReady;
-    final sendPort = await _sendPort.future;
+    if (!_isMobile && (_workerHasError || _isolateReady == null || _sendPort == null)) {
+      _spawnWorker();
+    }
+    if (_isolateReady != null) await _isolateReady;
+    final sendPortCompleter = _sendPort;
+    if (sendPortCompleter == null) {
+      throw StateError('libgopeed worker sendPort is not initialized');
+    }
+    final sendPort = await sendPortCompleter.future;
     final requestID = _requestID++;
     final completer = Completer<Object?>();
     _pending[requestID] = completer;
@@ -167,7 +217,9 @@ class LibgopeedWorker {
 
   void _handleWorkerMessage(dynamic message) {
     if (message is SendPort) {
-      if (!_sendPort.isCompleted) _sendPort.complete(message);
+      if (_sendPort != null && !_sendPort!.isCompleted) {
+        _sendPort!.complete(message);
+      }
       return;
     }
     final response = message as List<dynamic>;
@@ -187,14 +239,21 @@ class LibgopeedWorker {
   }
 
   void _handleWorkerError(dynamic message) {
+    _workerHasError = true;
+    _started = false;
+    _startFuture = null;
     final parts = message is List<dynamic> ? message : <dynamic>[message];
     final error = StateError(parts.map((part) => part.toString()).join('\n'));
-    if (!_sendPort.isCompleted) _sendPort.completeError(error);
+    if (_sendPort != null && !_sendPort!.isCompleted) {
+      _sendPort!.completeError(error);
+    }
     for (final completer in _pending.values) {
       completer.completeError(error);
     }
     _pending.clear();
-    _taskEvents.addError(error);
+    if (!_taskEvents.isClosed) {
+      _taskEvents.addError(error);
+    }
   }
 
   static void _workerMain(SendPort mainSendPort) {
@@ -357,12 +416,16 @@ class LibgopeedWorker {
         '${File(Platform.resolvedExecutable).parent.path}/libgopeed.dylib',
         // In local development / test execution directory
         '${Directory.current.path}/macos/Frameworks/libgopeed.dylib',
+        '${Directory.current.path}/Frameworks/libgopeed.dylib',
         'macos/Frameworks/libgopeed.dylib',
+        'Frameworks/libgopeed.dylib',
         'libgopeed.dylib',
       ]);
       Directory? dir = File(Platform.resolvedExecutable).parent;
-      for (int i = 0; i < 8 && dir != null; i++) {
+      for (int i = 0; i < 20 && dir != null; i++) {
         candidates.add('${dir.path}/macos/Frameworks/libgopeed.dylib');
+        candidates.add('${dir.path}/Frameworks/libgopeed.dylib');
+        candidates.add('${dir.path}/libgopeed.dylib');
         final nextDir = dir.parent;
         if (nextDir.path == dir.path) break;
         dir = nextDir;
@@ -375,8 +438,9 @@ class LibgopeedWorker {
         'libgopeed.dll',
       ]);
       Directory? dir = File(Platform.resolvedExecutable).parent;
-      for (int i = 0; i < 8 && dir != null; i++) {
+      for (int i = 0; i < 20 && dir != null; i++) {
         candidates.add('${dir.path}/windows/libgopeed.dll');
+        candidates.add('${dir.path}/libgopeed.dll');
         final nextDir = dir.parent;
         if (nextDir.path == dir.path) break;
         dir = nextDir;
@@ -390,8 +454,9 @@ class LibgopeedWorker {
         'libgopeed.so',
       ]);
       Directory? dir = File(Platform.resolvedExecutable).parent;
-      for (int i = 0; i < 8 && dir != null; i++) {
+      for (int i = 0; i < 20 && dir != null; i++) {
         candidates.add('${dir.path}/linux/libgopeed.so');
+        candidates.add('${dir.path}/libgopeed.so');
         final nextDir = dir.parent;
         if (nextDir.path == dir.path) break;
         dir = nextDir;

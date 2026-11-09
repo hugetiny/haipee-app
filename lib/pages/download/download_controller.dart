@@ -196,18 +196,32 @@ class DownloadController extends Notifier<DownloadState> {
   Stream<DownloadConnectionState> get connectionStateStream =>
       _connectionStateController.stream;
 
+  Future<void> reinitialize() async {
+    _logger.log(Level.info, '[DownloadController] Reinitializing download engine...');
+    state = state.copyWith(
+      errorMessage: '下载服务连接中...',
+      isConnected: false,
+      connectionState: DownloadConnectionState.connecting,
+    );
+    _broadcastConnectionState(DownloadConnectionState.connecting);
+    await GopeedService().reset();
+    await _initialize();
+  }
+
   Future<void> _initialize() async {
     try {
       await _loadFromStorage();
       await GopeedService().initialize();
 
       state = state.copyWith(
+        errorMessage: null,
         isConnected: true,
         connectionState: DownloadConnectionState.connected,
       );
       _broadcastConnectionState(DownloadConnectionState.connected);
 
       // Subscribe to Gopeed real-time task events
+      await _eventSubscription?.cancel();
       _eventSubscription = GopeedService().taskEvents.listen(_handleGopeedEvent);
 
       await refreshDownloads();

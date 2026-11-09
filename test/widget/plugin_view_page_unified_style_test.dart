@@ -138,7 +138,7 @@ void main() {
 
       expect(find.byType(PluginViewPage), findsOneWidget);
       expect(find.byType(SysAppBar), findsOneWidget);
-      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.byType(TabBar), findsNothing);
       expect(find.byType(UnifiedRuleGrid), findsOneWidget);
       expect(find.byType(UnifiedRuleCard), findsNWidgets(2));
 
@@ -184,7 +184,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PluginViewPage), findsOneWidget);
-      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.byType(TabBar), findsNothing);
       expect(find.byType(UnifiedRuleGrid), findsOneWidget);
       expect(find.byType(UnifiedRuleCard), findsNWidgets(2));
 

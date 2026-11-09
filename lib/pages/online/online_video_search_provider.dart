@@ -81,6 +81,7 @@ class OnlineVideoSearchState {
   final String? sourceNameFilter;
   final int sessionId;
   final Map<String, String> synergyCovers;
+  final Set<String> directMatchBvids;
 
   const OnlineVideoSearchState({
     this.keyword = '',
@@ -94,6 +95,7 @@ class OnlineVideoSearchState {
     this.sourceNameFilter,
     this.sessionId = 0,
     this.synergyCovers = const {},
+    this.directMatchBvids = const {},
   });
 
   bool get hasActiveFilter =>
@@ -262,7 +264,51 @@ class OnlineVideoSearchState {
           .where((item) => sourceLabelForItem(item) == sourceNameFilter)
           .toList();
     }
-    return list;
+    // 4. 默认严格按规则协议类型排序：Haipee原生规则最前(0)，MacCMS(1)，TVBox(2)，Piped(3)，IPTV(4)，其他随后
+    return sortResultsByRulePriority(list, directMatchBvids: directMatchBvids);
+  }
+
+  /// 规则协议类型优先级：Haipee原生规则(0)最前，MacCMS(1)，TVBox(2)，Piped(3)，IPTV(4)，AList(5)，Cardigann(6)，其他(10)
+  static int ruleTypePriority(BiliVideoItem item) {
+    final type = item.resolvedRuleType;
+    switch (type) {
+      case 'haipee':
+      case 'anime':
+      case 'kazumi':
+        return 0;
+      case 'maccms':
+        return 1;
+      case 'tvbox':
+        return 2;
+      case 'piped':
+        return 3;
+      case 'iptv':
+        return 4;
+      case 'alist':
+        return 5;
+      case 'cardigann':
+        return 6;
+      default:
+        return 10;
+    }
+  }
+
+  /// 稳定排序：直接匹配项最前(-1)，随后按规则类型优先级排序，同类型保持发现顺序
+  static List<BiliVideoItem> sortResultsByRulePriority(
+    List<BiliVideoItem> items, {
+    Set<String>? directMatchBvids,
+  }) {
+    final indexed = items.asMap().entries.toList();
+    indexed.sort((a, b) {
+      final isDirectA = directMatchBvids != null && directMatchBvids.contains(a.value.bvid);
+      final isDirectB = directMatchBvids != null && directMatchBvids.contains(b.value.bvid);
+      final pa = isDirectA ? -1 : ruleTypePriority(a.value);
+      final pb = isDirectB ? -1 : ruleTypePriority(b.value);
+      final cmp = pa.compareTo(pb);
+      if (cmp != 0) return cmp;
+      return a.key.compareTo(b.key);
+    });
+    return indexed.map((e) => e.value).toList();
   }
 
   int countForFilter(OnlineSourceFilter filter, [List<BiliVideoItem>? fallbackList]) {
@@ -281,6 +327,7 @@ class OnlineVideoSearchState {
     Object? sourceNameFilter = _filterSentinel,
     int? sessionId,
     Map<String, String>? synergyCovers,
+    Set<String>? directMatchBvids,
   }) {
     return OnlineVideoSearchState(
       keyword: keyword ?? this.keyword,
@@ -298,6 +345,7 @@ class OnlineVideoSearchState {
           : (sourceNameFilter as String?),
       sessionId: sessionId ?? this.sessionId,
       synergyCovers: synergyCovers ?? this.synergyCovers,
+      directMatchBvids: directMatchBvids ?? this.directMatchBvids,
     );
   }
 }
@@ -387,6 +435,7 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       allResults: const [],
       sessionId: state.sessionId + 1,
       synergyCovers: const {},
+      directMatchBvids: const {},
     );
   }
 
@@ -429,6 +478,7 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       selectedFilter: initialFilter,
       sessionId: sessionId,
       synergyCovers: const {},
+      directMatchBvids: const {},
     );
 
     if (totalSources == 0) return;
@@ -673,7 +723,11 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       }
     }
 
-    final backfilled = _backfillMissingCovers(updated, mergedCovers);
+    final sortedUpdated = OnlineVideoSearchState.sortResultsByRulePriority(
+      updated,
+      directMatchBvids: state.directMatchBvids,
+    );
+    final backfilled = _backfillMissingCovers(sortedUpdated, mergedCovers);
     state = state.copyWith(
       allResults: List.unmodifiable(backfilled),
       synergyCovers: Map.unmodifiable(mergedCovers),
@@ -693,9 +747,15 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
         mergedCovers.putIfAbsent(normTitle, () => directItem.pic);
       }
     }
+    final newDirectMatchBvids = {...state.directMatchBvids, directItem.bvid};
+    final sortedUpdated = OnlineVideoSearchState.sortResultsByRulePriority(
+      updated,
+      directMatchBvids: newDirectMatchBvids,
+    );
     state = state.copyWith(
-      allResults: List.unmodifiable(_backfillMissingCovers(updated, mergedCovers)),
+      allResults: List.unmodifiable(_backfillMissingCovers(sortedUpdated, mergedCovers)),
       synergyCovers: Map.unmodifiable(mergedCovers),
+      directMatchBvids: newDirectMatchBvids,
     );
   }
 

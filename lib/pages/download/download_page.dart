@@ -337,22 +337,23 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                               style: TextStyle(color: fgColor, fontSize: 13),
                             ),
                           ),
-                          if (isStarting)
-                            TextButton(
-                              onPressed: () {
-                                ref
-                                    .read(downloadControllerProvider.notifier)
-                                    .refreshDownloads();
-                              },
-                              style: TextButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                              ),
-                              child: Text('立即重连',
-                                  style:
-                                      TextStyle(color: fgColor, fontSize: 12)),
+                          TextButton(
+                            key: const Key('download_retry_connection_btn'),
+                            onPressed: () {
+                              ref
+                                  .read(downloadControllerProvider.notifier)
+                                  .reinitialize();
+                            },
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
                             ),
+                            child: Text(
+                              isStarting ? '连接中...' : '重试连接',
+                              style: TextStyle(color: fgColor, fontSize: 12),
+                            ),
+                          ),
                         ],
                       ),
                     );

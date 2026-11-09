@@ -112,35 +112,68 @@ class UnifiedSearchHeader extends StatelessWidget {
                             minHeight: 38,
                           ),
                           suffixIconConstraints: const BoxConstraints(
-                            minHeight: 38,
+                            minHeight: 44,
                           ),
-                          suffixIcon: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (controller.text.isNotEmpty)
-                                IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
-                                  visualDensity: VisualDensity.compact,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 28,
-                                    minHeight: 28,
+                          suffixIcon: Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (controller.text.isNotEmpty)
+                                  IconButton(
+                                    icon: const Icon(Icons.clear, size: 18),
+                                    tooltip: '清除内容',
+                                    visualDensity: VisualDensity.compact,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 32,
+                                      minHeight: 32,
+                                    ),
+                                    onPressed: onClear,
                                   ),
-                                  onPressed: onClear,
+                                const SizedBox(width: 4),
+                                Material(
+                                  color: colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: InkWell(
+                                    key: const Key('unified_search_submit_btn'),
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () => onSearch(controller.text),
+                                    child: Tooltip(
+                                      message: '开始搜索',
+                                      child: Container(
+                                        height: 36,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isUltraNarrow ? 10 : 12,
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.search_rounded,
+                                              size: 18,
+                                              color: colorScheme.onPrimary,
+                                            ),
+                                            if (!isUltraNarrow) ...[
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '搜索',
+                                                style: TextStyle(
+                                                  color: colorScheme.onPrimary,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              IconButton(
-                                icon: const Icon(Icons.arrow_forward, size: 19),
-                                tooltip: '开始搜索',
-                                visualDensity: VisualDensity.compact,
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(
-                                  minWidth: 30,
-                                  minHeight: 30,
-                                ),
-                                onPressed: () => onSearch(controller.text),
-                              ),
-                              const SizedBox(width: 4),
-                            ],
+                              ],
+                            ),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -156,84 +189,18 @@ class UnifiedSearchHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(width: isUltraNarrow ? 6 : 10),
-                  // 搜索框旁边的统一「筛选」按钮
-                  SizedBox(
-                    height: 48,
-                    child: FilledButton.tonalIcon(
-                      key: filterToggleKey,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: isFilterExpanded || hasActiveFilter
-                            ? colorScheme.primaryContainer
-                            : colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.65),
-                        foregroundColor: isFilterExpanded || hasActiveFilter
-                            ? colorScheme.onPrimaryContainer
-                            : colorScheme.onSurfaceVariant,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isUltraNarrow ? 10 : 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: isFilterExpanded || hasActiveFilter
-                                ? colorScheme.primary.withValues(alpha: 0.45)
-                                : colorScheme.outlineVariant
-                                    .withValues(alpha: 0.4),
-                          ),
-                        ),
-                      ),
-                      onPressed: onToggleFilter,
-                      icon: const Icon(Icons.tune_rounded, size: 18),
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '筛选',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          if (activeFilterCount > 0) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primary,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '$activeFilterCount',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.onPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(width: 2),
-                          Icon(
-                            isFilterExpanded
-                                ? Icons.keyboard_arrow_up_rounded
-                                : Icons.keyboard_arrow_down_rounded,
-                            size: 18,
-                          ),
-                        ],
-                      ),
-                    ),
+                  SizedBox(width: isUltraNarrow ? 6 : 8),
+                  // 搜索框旁边的统一并排操作按钮组 (筛选 + 表格/网格视图切换，单一体系统一高度，自适应宽窄屏)
+                  UnifiedSearchActionGroup(
+                    filterToggleKey: filterToggleKey,
+                    isFilterExpanded: isFilterExpanded,
+                    onToggleFilter: onToggleFilter,
+                    activeFilterCount: activeFilterCount,
+                    hasActiveFilter: hasActiveFilter,
+                    viewMode: viewMode,
+                    isTableView: isTableView,
+                    onViewModeChanged: onViewModeChanged,
                   ),
-                  if (viewMode != null &&
-                      isTableView != null &&
-                      onViewModeChanged != null) ...[
-                    SizedBox(width: isUltraNarrow ? 6 : 8),
-                    UnifiedViewToggleButtons(
-                      viewMode: viewMode!,
-                      isTableView: isTableView!,
-                      onModeChanged: onViewModeChanged!,
-                    ),
-                  ],
                 ],
               ),
 
@@ -313,32 +280,191 @@ class UnifiedSearchHeader extends StatelessWidget {
   }
 }
 
+/// 统一并排操作按钮组 (整合「筛选」与「表格/网格视图切换」为单一尺寸体系，手机窄屏与宽屏自适应零溢出)
+class UnifiedSearchActionGroup extends StatelessWidget {
+  final Key filterToggleKey;
+  final bool isFilterExpanded;
+  final VoidCallback onToggleFilter;
+  final int activeFilterCount;
+  final bool hasActiveFilter;
+  final AdaptiveViewMode? viewMode;
+  final bool? isTableView;
+  final ValueChanged<AdaptiveViewMode>? onViewModeChanged;
+
+  const UnifiedSearchActionGroup({
+    super.key,
+    required this.filterToggleKey,
+    required this.isFilterExpanded,
+    required this.onToggleFilter,
+    required this.activeFilterCount,
+    required this.hasActiveFilter,
+    this.viewMode,
+    this.isTableView,
+    this.onViewModeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final isCompact = width < 480;
+    final isUltraNarrow = width < 380;
+
+    final hasViewToggle =
+        viewMode != null && isTableView != null && onViewModeChanged != null;
+
+    final isFilterActive = isFilterExpanded || hasActiveFilter;
+
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isFilterActive
+              ? colorScheme.primary.withValues(alpha: 0.35)
+              : colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 1. 统一筛选分段
+          Tooltip(
+            message: isFilterExpanded ? '收起筛选' : '展开多维筛选',
+            child: InkWell(
+              key: filterToggleKey,
+              borderRadius: BorderRadius.circular(11),
+              onTap: onToggleFilter,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isUltraNarrow ? 6 : (isCompact ? 8 : 12),
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isFilterActive
+                      ? colorScheme.primaryContainer
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 17,
+                      color: isFilterActive
+                          ? colorScheme.onPrimaryContainer
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                    if (!isUltraNarrow) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        '筛选',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isFilterActive
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    if (activeFilterCount > 0) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$activeFilterCount',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: 2),
+                    Icon(
+                      isFilterExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 16,
+                      color: isFilterActive
+                          ? colorScheme.onPrimaryContainer
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          if (hasViewToggle) ...[
+            // 2. 细分割线
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Container(
+                width: 1,
+                height: 20,
+                color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+              ),
+            ),
+
+            // 3. 视图切换分段 (嵌入式 UnifiedViewToggleButtons 共享无边框单一体系统一高度)
+            UnifiedViewToggleButtons(
+              viewMode: viewMode!,
+              isTableView: isTableView!,
+              onModeChanged: onViewModeChanged!,
+              isEmbedded: true,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// 统一的「网格视图 / 表格视图」双态切换组件（支持一键切换 Grid View 与 Table View）
 class UnifiedViewToggleButtons extends StatelessWidget {
   final AdaptiveViewMode viewMode;
   final bool isTableView;
   final ValueChanged<AdaptiveViewMode> onModeChanged;
+  final bool isEmbedded;
 
   const UnifiedViewToggleButtons({
     super.key,
     required this.viewMode,
     required this.isTableView,
     required this.onModeChanged,
+    this.isEmbedded = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      height: 40,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.4),
-        ),
-      ),
+      height: isEmbedded ? 38 : 40,
+      padding: const EdgeInsets.all(2),
+      decoration: isEmbedded
+          ? null
+          : BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.65),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+              ),
+            ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -380,7 +506,7 @@ class UnifiedViewToggleButtons extends StatelessWidget {
         borderRadius: BorderRadius.circular(9),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: selected ? colorScheme.primaryContainer : Colors.transparent,
             borderRadius: BorderRadius.circular(9),

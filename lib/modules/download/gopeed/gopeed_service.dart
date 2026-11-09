@@ -24,6 +24,16 @@ class GopeedService {
   bool get isInitialized => _initialized;
   Stream<GopeedTaskEvent> get taskEvents => _eventController.stream;
 
+  Future<void> reset() async {
+    _initialized = false;
+    _initFuture = null;
+    try {
+      await _workerSub?.cancel();
+    } catch (_) {}
+    _workerSub = null;
+    _worker.reset();
+  }
+
   Future<void> initialize({String? storageDir}) {
     if (_initialized) return Future.value();
     if (_initFuture != null) return _initFuture!;

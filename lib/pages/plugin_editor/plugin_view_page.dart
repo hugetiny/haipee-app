@@ -124,10 +124,8 @@ class PluginViewPage extends ConsumerStatefulWidget {
   ConsumerState<PluginViewPage> createState() => _PluginViewPageState();
 }
 
-class _PluginViewPageState extends ConsumerState<PluginViewPage>
-    with SingleTickerProviderStateMixin {
+class _PluginViewPageState extends ConsumerState<PluginViewPage> {
   late final PluginsController pluginsController;
-  late final TabController _categoryTabController;
 
   PluginCategoryGroup _selectedGroup = PluginCategoryGroup.all;
   String _statusFilter = 'all'; // all, enabled, disabled, passed, failed, untested, updatable
@@ -147,26 +145,6 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     } else if (widget.initialCategoryKey != null) {
       _selectedGroup = PluginCategoryGroup.fromId(widget.initialCategoryKey);
     }
-    final initialTabIdx = PluginCategoryGroup.primaryTabs.indexOf(_selectedGroup);
-    _categoryTabController = TabController(
-      length: PluginCategoryGroup.primaryTabs.length,
-      vsync: this,
-      initialIndex: initialTabIdx >= 0 ? initialTabIdx : 0,
-    );
-    _categoryTabController.addListener(() {
-      if (!_categoryTabController.indexIsChanging && mounted) {
-        final newGroup =
-            PluginCategoryGroup.primaryTabs[_categoryTabController.index];
-        if (newGroup != _selectedGroup) {
-          setState(() {
-            _selectedGroup = newGroup;
-          });
-          if (newGroup == PluginCategoryGroup.catalog) {
-            _loadMarketIfNeeded();
-          }
-        }
-      }
-    });
     // 静默预载规则市场
     Future.microtask(() async {
       if (!mounted) return;
@@ -182,22 +160,12 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           widget.initialRuleTypeKey!.trim().isNotEmpty) {
         setState(() {
           _selectedGroup = PluginCategoryGroup.fromId(widget.initialRuleTypeKey);
-          final targetIndex =
-              PluginCategoryGroup.primaryTabs.indexOf(_selectedGroup);
-          if (targetIndex >= 0 && _categoryTabController.index != targetIndex) {
-            _categoryTabController.animateTo(targetIndex);
-          }
         });
       }
     } else if (widget.initialCategoryKey != oldWidget.initialCategoryKey) {
       if (widget.initialCategoryKey != null) {
         setState(() {
           _selectedGroup = PluginCategoryGroup.fromId(widget.initialCategoryKey);
-          final targetIndex =
-              PluginCategoryGroup.primaryTabs.indexOf(_selectedGroup);
-          if (targetIndex >= 0 && _categoryTabController.index != targetIndex) {
-            _categoryTabController.animateTo(targetIndex);
-          }
         });
       }
     }
@@ -205,7 +173,6 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
 
   @override
   void dispose() {
-    _categoryTabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -325,9 +292,6 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     HaipeeDialog.showToast(message: '已成功载入 $successCount 个规则，正在启动健康测速...');
     setState(() {
       _selectedGroup = PluginCategoryGroup.all;
-      _categoryTabController.animateTo(
-        PluginCategoryGroup.primaryTabs.indexOf(PluginCategoryGroup.all),
-      );
     });
     await _runAutoBatchTest();
   }
@@ -690,6 +654,53 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
 
     final isWide = MediaQuery.of(context).size.width >= 780;
 
+    List<Plugin> categoryPlugins = allPlugins;
+    if (_selectedGroup != PluginCategoryGroup.all) {
+      categoryPlugins = allPlugins
+          .where((p) => _matchesGroup(p, _selectedGroup))
+          .toList();
+    }
+
+    final query = _searchController.text.trim().toLowerCase();
+    final filtered = categoryPlugins.where((p) {
+      if (!_matchesGroup(p, _selectedGroup)) return false;
+      if (_statusFilter == 'enabled' && !pluginsController.isPluginEnabled(p.name)) return false;
+      if (_statusFilter == 'disabled' && pluginsController.isPluginEnabled(p.name)) return false;
+      if (_statusFilter == 'valid' || _statusFilter == 'passed') {
+        final status = speedTestState.statusMap[p.name] ??
+            pluginsController.validityTracker.getStatus(p.name);
+        if (status != PluginHealthStatus.passed) return false;
+      }
+      if (_statusFilter == 'failed') {
+        final status = speedTestState.statusMap[p.name] ??
+            pluginsController.validityTracker.getStatus(p.name);
+        if (status != PluginHealthStatus.failed) return false;
+      }
+      if (_statusFilter == 'untested') {
+        final status = speedTestState.statusMap[p.name] ??
+            pluginsController.validityTracker.getStatus(p.name);
+        if (status != PluginHealthStatus.idle) return false;
+      }
+      if (_statusFilter == 'updatable' &&
+          pluginsController.pluginUpdateStatus(p) != 'updatable') {
+        return false;
+      }
+      if (query.isNotEmpty) {
+        final hitName = p.name.toLowerCase().contains(query);
+        final hitType = p.type.toLowerCase().contains(query);
+        final hitBaseUrl = p.baseUrl.toLowerCase().contains(query);
+        final hitSearchUrl = p.searchURL.toLowerCase().contains(query);
+        if (!hitName && !hitType && !hitBaseUrl && !hitSearchUrl) return false;
+      }
+      return true;
+    }).toList();
+
+    final sortOption = ref.watch(pluginSortOptionProvider);
+    final sortedFiltered = _sortedPlugins(filtered, sortOption);
+    final activeCount = sortedFiltered
+        .where((p) => pluginsController.isPluginEnabled(p.name))
+        .length;
+
     return PopScope(
       canPop: !isMultiSelectMode,
       onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -986,113 +997,344 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             ],
           ],
         ),
-        body: Column(
-          children: [
-            // Level 1: 顶部主品类分段/标签栏 (Material 3 TabBar 结构，全平台统一，绝不占用左侧 NavigationRail 空间)
-            _buildTopCategoryBar(theme, colorScheme, allPlugins, marketList),
-            const Divider(height: 1),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final isVeryShort = constraints.maxHeight < 450;
+            if (isVeryShort) {
+              return SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildResponsiveFilterHeader(
+                      theme,
+                      colorScheme,
+                      allPlugins,
+                      marketList,
+                      speedTestState,
+                      sortedFiltered.length,
+                      activeCount,
+                      categoryPlugins,
+                    ),
+                    const Divider(height: 1),
+                    SizedBox(
+                      height: 400,
+                      child: _buildContentPane(
+                        theme,
+                        colorScheme,
+                        allPlugins,
+                        marketList,
+                        sortedFiltered,
+                        isMultiSelectMode: isMultiSelectMode,
+                        selectedNames: selectedNames,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return Column(
+              children: [
+                // 下方自适应筛选选项与工具栏 (在宽窄屏下均显示正常，彻底去除顶部滑动条)
+                _buildResponsiveFilterHeader(
+                  theme,
+                  colorScheme,
+                  allPlugins,
+                  marketList,
+                  speedTestState,
+                  sortedFiltered.length,
+                  activeCount,
+                  categoryPlugins,
+                ),
+                const Divider(height: 1),
 
-            // Level 2 & 3: 筛选工具栏与规则数据展示 (支持自适应表格与卡片切换)
-            Expanded(
-              child: _buildContentPane(
-                theme,
-                colorScheme,
-                allPlugins,
-                marketList,
-                isMultiSelectMode: isMultiSelectMode,
-                selectedNames: selectedNames,
-              ),
-            ),
-          ],
+                // Level 2 & 3: 规则数据展示 (支持自适应表格与卡片切换，或切换至 Cardigann 设置与规则商店)
+                Expanded(
+                  child: _buildContentPane(
+                    theme,
+                    colorScheme,
+                    allPlugins,
+                    marketList,
+                    sortedFiltered,
+                    isMultiSelectMode: isMultiSelectMode,
+                    selectedNames: selectedNames,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
   // ===========================================================================
-  // Level 1: 一级主品类导航 (顶部统一 Material 3 平滑标签栏)
+  // Level 1: 宽窄屏自适应筛选控制工具栏 (彻底去除顶部滑动条，自适应折行显示)
   // ===========================================================================
 
-  Widget _buildTopCategoryBar(
+  Widget _buildResponsiveFilterHeader(
     ThemeData theme,
     ColorScheme colorScheme,
     List<Plugin> allPlugins,
     List<PluginHTTPItem> marketList,
+    RuleSpeedTestState speedTestState,
+    int filteredCount,
+    int activeCount,
+    List<Plugin> categoryPlugins,
   ) {
     final indexers = ref.watch(indexerPluginsProvider);
+    final totalCount = categoryPlugins.length;
+    final enabledCount = categoryPlugins
+        .where((p) => pluginsController.isPluginEnabled(p.name))
+        .length;
+    final disabledCount = totalCount - enabledCount;
+
     return Container(
-      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: colorScheme.surface,
-      child: TabBar(
-        controller: _categoryTabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        onTap: (index) {
-          final targetGroup = PluginCategoryGroup.primaryTabs[index];
-          setState(() {
-            _selectedGroup = targetGroup;
-          });
-          if (targetGroup == PluginCategoryGroup.catalog) {
-            _loadMarketIfNeeded();
-          }
-        },
-        tabs: PluginCategoryGroup.primaryTabs.map((group) {
-          final isSelected = _selectedGroup == group;
-
-          int count = 0;
-          int activeCount = 0;
-
-          if (group == PluginCategoryGroup.catalog) {
-            count = marketList.length;
-            activeCount = 0;
-          } else if (group == PluginCategoryGroup.cardigann ||
-              group == PluginCategoryGroup.bt) {
-            final plugins = indexers.plugins;
-            count = plugins.length;
-            activeCount = plugins.where((idx) => idx.isEnabled).length;
-          } else if (group == PluginCategoryGroup.all) {
-            count = allPlugins.length;
-            activeCount = allPlugins
-                .where((p) => pluginsController.isPluginEnabled(p.name))
-                .length;
-          } else {
-            final categoryList = allPlugins
-                .where((p) => _matchesGroup(p, group))
-                .toList();
-            count = categoryList.length;
-            activeCount = categoryList
-                .where((p) => pluginsController.isPluginEnabled(p.name))
-                .length;
-          }
-
-          final countText = group == PluginCategoryGroup.catalog
-              ? '$count'
-              : '$activeCount/$count';
-
-          return Tab(
-            key: Key('plugin_tab_${group.id}'),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(group.icon, size: 16),
-                const SizedBox(width: 6),
-                Text(group.label),
-                const SizedBox(width: 6),
-                SettingsBadge(
-                  label: countText,
-                  color: isSelected
-                      ? colorScheme.primary.withValues(alpha: 0.15)
-                      : colorScheme.surfaceContainerHighest,
-                  textColor: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.outline,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 第一行：搜索输入框与核心操作按钮组（自适应宽窄屏）
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxWidth < 860;
+              final searchField = SizedBox(
+                height: 38,
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: '搜索规则名称、主域名或解析类型 (例如 mutefun, dalvdm, xpath...)',
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 16),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor:
+                        colorScheme.surfaceContainerHighest.withAlpha(120),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  onChanged: (_) => setState(() {}),
                 ),
-              ],
-            ),
-          );
-        }).toList(),
+              );
+
+              final actionButtons = [
+                FilledButton.icon(
+                  key: const Key('plugin_btn_add_manual'),
+                  onPressed: _createNewPlugin,
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: const Text('手动添加规则'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                FilledButton.tonalIcon(
+                  key: const Key('plugin_btn_import'),
+                  onPressed: () => PluginImportDialog.show(context),
+                  icon: const Icon(Icons.file_upload_outlined, size: 16),
+                  label: const Text('导入规则'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                FilledButton.tonalIcon(
+                  key: const Key('plugin_btn_auto_test'),
+                  onPressed: speedTestState.isTesting
+                      ? null
+                      : () => _runAutoBatchTest(targetPlugins: categoryPlugins),
+                  icon: speedTestState.isTesting
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.speed_rounded, size: 16),
+                  label: Text(speedTestState.isTesting
+                      ? '测速中 (${speedTestState.testedCount}/${speedTestState.totalCount})'
+                      : '一键测速'),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _batchToggle(categoryPlugins, true),
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text('全开'),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _batchToggle(categoryPlugins, false),
+                  icon: const Icon(Icons.pause_circle_outline, size: 16),
+                  label: const Text('全关'),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ];
+
+              if (isCompact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    searchField,
+                    const SizedBox(height: 6),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (int i = 0; i < actionButtons.length; i++) ...[
+                            if (i > 0) const SizedBox(width: 8),
+                            actionButtons[i],
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: searchField),
+                  const SizedBox(width: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: actionButtons,
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+
+          // 第二行：规则协议类型自适应筛选 (彻底去除顶部滑动条，宽窄屏均自动折行展示)
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                '分类: ',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              ...PluginCategoryGroup.primaryTabs.map((group) {
+                final isSelected = _selectedGroup == group;
+
+                int count = 0;
+                int activeCount = 0;
+
+                if (group == PluginCategoryGroup.catalog) {
+                  count = marketList.length;
+                  activeCount = 0;
+                } else if (group == PluginCategoryGroup.cardigann ||
+                    group == PluginCategoryGroup.bt) {
+                  final plugins = indexers.plugins;
+                  count = plugins.length;
+                  activeCount = plugins.where((idx) => idx.isEnabled).length;
+                } else if (group == PluginCategoryGroup.all) {
+                  count = allPlugins.length;
+                  activeCount = allPlugins
+                      .where((p) => pluginsController.isPluginEnabled(p.name))
+                      .length;
+                } else {
+                  final categoryList = allPlugins
+                      .where((p) => _matchesGroup(p, group))
+                      .toList();
+                  count = categoryList.length;
+                  activeCount = categoryList
+                      .where((p) => pluginsController.isPluginEnabled(p.name))
+                      .length;
+                }
+
+                final countText = group == PluginCategoryGroup.catalog
+                    ? '$count'
+                    : '$activeCount/$count';
+
+                return FilterChip(
+                  key: Key('plugin_tab_${group.id}'),
+                  avatar: Icon(
+                    group.icon,
+                    size: 14,
+                    color: isSelected
+                        ? colorScheme.primary
+                        : colorScheme.outline,
+                  ),
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(group.label),
+                      const SizedBox(width: 4),
+                      SettingsBadge(
+                        label: countText,
+                        color: isSelected
+                            ? colorScheme.primary.withValues(alpha: 0.15)
+                            : colorScheme.surfaceContainerHighest,
+                        textColor: isSelected
+                            ? colorScheme.primary
+                            : colorScheme.outline,
+                      ),
+                    ],
+                  ),
+                  selected: isSelected,
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  showCheckmark: false,
+                  onSelected: (_) {
+                    setState(() {
+                      _selectedGroup = group;
+                    });
+                    if (group == PluginCategoryGroup.catalog) {
+                      _loadMarketIfNeeded();
+                    }
+                  },
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // 第三行：状态筛选 (全部 / 已启用 / 已禁用) 自适应 Wrap
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                '状态: ',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              _buildFilterChip('全部 ($totalCount)', 'all', _statusFilter,
+                  (val) => setState(() => _statusFilter = val)),
+              _buildFilterChip('已启用 ($enabledCount)', 'enabled', _statusFilter,
+                  (val) => setState(() => _statusFilter = val)),
+              _buildFilterChip('已禁用 ($disabledCount)', 'disabled', _statusFilter,
+                  (val) => setState(() => _statusFilter = val)),
+              Text(
+                '当前显示: $filteredCount 个',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.outline,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1147,7 +1389,8 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
     ThemeData theme,
     ColorScheme colorScheme,
     List<Plugin> allPlugins,
-    List<PluginHTTPItem> marketList, {
+    List<PluginHTTPItem> marketList,
+    List<Plugin> sortedFiltered, {
     required bool isMultiSelectMode,
     required Set<String> selectedNames,
   }) {
@@ -1165,280 +1408,22 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
       return const IndexerSettingsPage(isEmbedded: true);
     }
 
-    List<Plugin> categoryPlugins = allPlugins;
-    if (_selectedGroup != PluginCategoryGroup.all) {
-      categoryPlugins = allPlugins
-          .where((p) => _matchesGroup(p, _selectedGroup))
-          .toList();
-    }
-
-    final speedTestState = ref.watch(ruleSpeedTestProvider);
-    // 结合 L2 属性筛选与关键字过滤
-    final query = _searchController.text.trim().toLowerCase();
-    final filtered = categoryPlugins.where((p) {
-      // 业务大类与七大规则类型过滤
-      if (!_matchesGroup(p, _selectedGroup)) {
-        return false;
-      }
-
-      // 启闭与测速健康状态过滤
-      if (_statusFilter == 'enabled' && !pluginsController.isPluginEnabled(p.name)) {
-        return false;
-      }
-      if (_statusFilter == 'disabled' && pluginsController.isPluginEnabled(p.name)) {
-        return false;
-      }
-      if (_statusFilter == 'valid' || _statusFilter == 'passed') {
-        final status = speedTestState.statusMap[p.name] ??
-            pluginsController.validityTracker.getStatus(p.name);
-        if (status != PluginHealthStatus.passed) {
-          return false;
-        }
-      }
-      if (_statusFilter == 'failed') {
-        final status = speedTestState.statusMap[p.name] ??
-            pluginsController.validityTracker.getStatus(p.name);
-        if (status != PluginHealthStatus.failed) {
-          return false;
-        }
-      }
-      if (_statusFilter == 'untested') {
-        final status = speedTestState.statusMap[p.name] ??
-            pluginsController.validityTracker.getStatus(p.name);
-        if (status != PluginHealthStatus.idle) {
-          return false;
-        }
-      }
-      if (_statusFilter == 'updatable' &&
-          pluginsController.pluginUpdateStatus(p) != 'updatable') {
-        return false;
-      }
-
-      // 搜索关键字
-      if (query.isNotEmpty) {
-        final hitName = p.name.toLowerCase().contains(query);
-        final hitType = p.type.toLowerCase().contains(query);
-        final hitBaseUrl = p.baseUrl.toLowerCase().contains(query);
-        final hitSearchUrl = p.searchURL.toLowerCase().contains(query);
-        if (!hitName && !hitType && !hitBaseUrl && !hitSearchUrl) {
-          return false;
-        }
-      }
-
-      return true;
-    }).toList();
-
-    final sortOption = ref.watch(pluginSortOptionProvider);
-    final sortedFiltered = _sortedPlugins(filtered, sortOption);
-
-    final activeCount = sortedFiltered
-        .where((p) => pluginsController.isPluginEnabled(p.name))
-        .length;
-
-    return Column(
-      children: [
-        // Level 2: 筛选控制工具栏
-        _buildL2FilterHeader(
-          theme,
-          colorScheme,
-          sortedFiltered.length,
-          activeCount,
-          categoryPlugins,
-          speedTestState,
-        ),
-        const Divider(height: 1),
-
-        // Level 3: 规则数据展示（统一网格呈现，自适应多列，显示完全）
-        Expanded(
-          child: sortedFiltered.isEmpty
-              ? _buildEmptyState(theme, colorScheme)
-              : UnifiedRuleGrid(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: sortedFiltered.length,
-                  itemBuilder: (context, index) {
-                    final plugin = sortedFiltered[index];
-                    return _buildPluginCard(
-                      theme,
-                      colorScheme,
-                      plugin,
-                      isMultiSelectMode: isMultiSelectMode,
-                      isSelected: selectedNames.contains(plugin.name),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildL2FilterHeader(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    int filteredCount,
-    int activeCount,
-    List<Plugin> categoryPlugins,
-    RuleSpeedTestState speedTestState,
-  ) {
-    final totalCount = categoryPlugins.length;
-    final enabledCount = categoryPlugins
-        .where((p) => pluginsController.isPluginEnabled(p.name))
-        .length;
-    final disabledCount = totalCount - enabledCount;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      color: colorScheme.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 860;
-              final searchField = SizedBox(
-                height: 38,
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: '搜索规则名称、主域名或解析类型 (例如 mutefun, dalvdm, xpath...)',
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 16),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor:
-                        colorScheme.surfaceContainerHighest.withAlpha(120),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-              );
-
-              final actionButtons = [
-                FilledButton.icon(
-                  key: const Key('plugin_btn_add_manual'),
-                  onPressed: _createNewPlugin,
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text('手动添加规则'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.tonalIcon(
-                  key: const Key('plugin_btn_import'),
-                  onPressed: () => PluginImportDialog.show(context),
-                  icon: const Icon(Icons.file_upload_outlined, size: 16),
-                  label: const Text('导入规则'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.tonalIcon(
-                  key: const Key('plugin_btn_auto_test'),
-                  onPressed: speedTestState.isTesting
-                      ? null
-                      : () => _runAutoBatchTest(targetPlugins: categoryPlugins),
-                  icon: speedTestState.isTesting
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.speed_rounded, size: 16),
-                  label: Text(speedTestState.isTesting
-                      ? '测速中 (${speedTestState.testedCount}/${speedTestState.totalCount})'
-                      : '一键测速'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _batchToggle(categoryPlugins, true),
-                  icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text('全开'),
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _batchToggle(categoryPlugins, false),
-                  icon: const Icon(Icons.pause_circle_outline, size: 16),
-                  label: const Text('全关'),
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ];
-
-              if (isCompact) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    searchField,
-                    const SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(children: actionButtons),
-                    ),
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: searchField),
-                  const SizedBox(width: 10),
-                  ...actionButtons,
-                ],
+    return sortedFiltered.isEmpty
+        ? _buildEmptyState(theme, colorScheme)
+        : UnifiedRuleGrid(
+            padding: const EdgeInsets.all(16),
+            itemCount: sortedFiltered.length,
+            itemBuilder: (context, index) {
+              final plugin = sortedFiltered[index];
+              return _buildPluginCard(
+                theme,
+                colorScheme,
+                plugin,
+                isMultiSelectMode: isMultiSelectMode,
+                isSelected: selectedNames.contains(plugin.name),
               );
             },
-          ),
-          const SizedBox(height: 10),
-
-          // 第二行：规则启闭与测速状态筛选 Chips (去除无关的播放特性，化繁为简并标明数量)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                Text(
-                  '状态: ',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                _buildFilterChip('全部 ($totalCount)', 'all', _statusFilter,
-                    (val) => setState(() => _statusFilter = val)),
-                _buildFilterChip('已启用 ($enabledCount)', 'enabled', _statusFilter,
-                    (val) => setState(() => _statusFilter = val)),
-                _buildFilterChip('已禁用 ($disabledCount)', 'disabled', _statusFilter,
-                    (val) => setState(() => _statusFilter = val)),
-                const SizedBox(width: 14),
-                Text(
-                  '当前显示: $filteredCount 个',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.outline,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 
   Widget _buildFilterChip(
@@ -1454,6 +1439,7 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
         label: Text(label),
         selected: isSelected,
         visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         showCheckmark: false,
         onSelected: (_) => onChanged(value),
       ),
@@ -2126,12 +2112,13 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
             : '当前没有任何视频规则。您可以一键载入官方精选规则并自动测速启用，或前往 Haipee 规则源探索海量规则。');
 
     return Center(
-      child: ConstrainedContent(
-        maxWidth: 500,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      child: SingleChildScrollView(
+        child: ConstrainedContent(
+          maxWidth: 500,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 hasInstalledPlugins
@@ -2213,7 +2200,8 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage>
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   void _showHealthPassDialog(Plugin plugin, int? latency) {
