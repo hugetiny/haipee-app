@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:haipee/pages/setting/providers.dart';
 import 'package:haipee/request/core/git_proxy_interceptor.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 /// GitHub 加速代理底层配置弹窗
 ///
@@ -101,17 +102,14 @@ class _GitProxyDialogState extends ConsumerState<GitProxyDialog> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 580),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return AdaptiveDialogFrame(
+      maxWidth: 580,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               // Header
               Row(
                 children: [
@@ -434,7 +432,6 @@ class _GitProxyDialogState extends ConsumerState<GitProxyDialog> {
             ],
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 }

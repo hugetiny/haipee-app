@@ -146,9 +146,6 @@ final isDownloadConnectedProvider = Provider<bool>((ref) {
   return connectionState == DownloadConnectionState.connected;
 });
 
-@Deprecated('Use isDownloadConnectedProvider instead')
-final isAria2ConnectedProvider = isDownloadConnectedProvider;
-
 /// 活动下载任务数量 Provider
 final activeDownloadsCountProvider = Provider<int>((ref) {
   final downloadState = ref.watch(downloadControllerProvider);

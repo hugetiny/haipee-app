@@ -6,6 +6,7 @@ import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_file_entry.dart';
 import 'package:haipee/modules/torrent_stream/torrent_stream_service.dart';
 import 'package:haipee/pages/download/providers.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 /// 专为 BT/磁力链在线边下边播设计的实时交互 HUD 对话框（支持原生与 TorrServer 极速互保）。
 ///
@@ -237,29 +238,23 @@ class _TorrentStreamDialogState extends ConsumerState<TorrentStreamDialog>
           _handleCancel();
         }
       },
-      child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        elevation: 6,
+      child: AdaptiveDialogFrame(
+        maxWidth: 440,
         backgroundColor: isDark ? const Color(0xFF1E1E28) : Colors.white,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440, minWidth: 320),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(theme, colorScheme),
-                const SizedBox(height: 18),
-                if (_errorMessage != null)
-                  _buildErrorView(theme, colorScheme)
-                else
-                  _buildProgressView(theme, colorScheme),
-                const SizedBox(height: 22),
-                _buildActionButtons(theme, colorScheme),
-              ],
-            ),
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(theme, colorScheme),
+            const SizedBox(height: 18),
+            if (_errorMessage != null)
+              _buildErrorView(theme, colorScheme)
+            else
+              _buildProgressView(theme, colorScheme),
+            const SizedBox(height: 22),
+            _buildActionButtons(theme, colorScheme),
+          ],
         ),
       ),
     );

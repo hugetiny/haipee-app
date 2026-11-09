@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
 import 'package:haipee/bean/widget/app_context_menu.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:haipee/modules/download/download_file_utils.dart';
 import 'package:haipee/modules/download/download_task.dart';
@@ -95,12 +96,10 @@ class DownloadContextMenuHelper {
           title: '重新配置鉴权/参数...',
           icon: Icons.tune_rounded,
           onSelected: () {
-            showDialog(
-              context: context,
-              builder: (context) => AddDownloadDialog(
-                initialUrl: task.url,
-                initialFileName: task.fileName,
-              ),
+            AddDownloadDialog.show(
+              context,
+              initialUrl: task.url,
+              initialFileName: task.fileName,
             );
           },
         ),
@@ -110,23 +109,21 @@ class DownloadContextMenuHelper {
         title: '任务详情属性...',
         icon: Icons.info_outline_rounded,
         onSelected: () {
-          showDialog(
-            context: context,
-            builder: (context) => DownloadTaskDetailDialog(
-              task: task,
-              onRetry: (task.isError || task.isRemoved)
-                  ? () async {
-                      await controller.retryDownload(task);
-                      if (context.mounted) {
-                        HaipeeDialog.showToast(
-                            message: t.downloads.page.toast.retrying);
-                      }
+          DownloadTaskDetailDialog.show(
+            context,
+            task: task,
+            onRetry: (task.isError || task.isRemoved)
+                ? () async {
+                    await controller.retryDownload(task);
+                    if (context.mounted) {
+                      HaipeeDialog.showToast(
+                          message: t.downloads.page.toast.retrying);
                     }
-                  : null,
-              onOpenFile: (task.isComplete || task.isRemoved) && task.isPlayable
-                  ? () => onPlay != null ? onPlay() : playTask(context, task)
-                  : null,
-            ),
+                  }
+                : null,
+            onOpenFile: (task.isComplete || task.isRemoved) && task.isPlayable
+                ? () => onPlay != null ? onPlay() : playTask(context, task)
+                : null,
           );
         },
       ),
@@ -215,30 +212,19 @@ class DownloadContextMenuHelper {
   static void defaultShowDeleteConfirmDialog(
     BuildContext context,
     VoidCallback onConfirm,
-  ) {
-    showDialog(
+  ) async {
+    final confirmed = await HaipeeModalSheet.showConfirmation(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.app.delete),
-        content: Text(t.downloads.page.dialog.deleteConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(t.app.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              onConfirm();
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(t.app.delete),
-          ),
-        ],
-      ),
+      title: t.app.delete,
+      message: t.downloads.page.dialog.deleteConfirm,
+      confirmText: t.app.delete,
+      cancelText: t.app.cancel,
+      isDestructive: true,
+      icon: Icons.delete_outline_rounded,
     );
+    if (confirmed == true) {
+      onConfirm();
+    }
   }
 
   /// 播放已下载媒体文件

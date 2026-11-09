@@ -2,7 +2,7 @@ import 'package:haipee/request/core/git_proxy_interceptor.dart';
 
 class Api {
   /// 当前版本
-  static const String version = '0.0.1';
+  static const String version = '0.0.2';
 
   /// 规则API级别
   static const int apiLevel = 10;

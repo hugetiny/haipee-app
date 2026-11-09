@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
 import 'package:haipee/pages/menu/navigation_provider.dart';
 import 'package:haipee/pages/download/providers.dart';
 import 'package:haipee/pages/download/download_controller.dart';
@@ -72,6 +73,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       return;
     }
 
+    final potentialCid = int.tryParse(task.bangumiId ?? '');
+    final isBili = (task.url.contains('bilibili.com') ||
+            task.url.contains('bilivideo.com')) &&
+        potentialCid != null &&
+        potentialCid > 1000;
+
     context.push(
       Routes.localPlayer,
       extra: LocalVideoPlayArgs(
@@ -79,6 +86,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         title: task.title,
         bangumiId: task.bangumiId,
         episode: task.episodeNumber,
+        biliCid: isBili ? potentialCid : null,
       ),
     );
   }
@@ -105,6 +113,12 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
           message: '已缓冲 ${_formatFileSize(task.completedLength)}，正在加速首尾关键帧');
     }
 
+    final potentialCid = int.tryParse(task.bangumiId ?? '');
+    final isBili = (task.url.contains('bilibili.com') ||
+            task.url.contains('bilivideo.com')) &&
+        potentialCid != null &&
+        potentialCid > 1000;
+
     context.push(
       Routes.localPlayer,
       extra: LocalVideoPlayArgs(
@@ -112,6 +126,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         title: task.title,
         bangumiId: task.bangumiId,
         episode: task.episodeNumber,
+        biliCid: isBili ? potentialCid : null,
       ),
     );
   }
@@ -160,30 +175,19 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
     return '$hours小时$mins分';
   }
 
-  void _showDeleteConfirmDialog(BuildContext context, VoidCallback onConfirm) {
-    showDialog(
+  void _showDeleteConfirmDialog(BuildContext context, VoidCallback onConfirm) async {
+    final confirmed = await HaipeeModalSheet.showConfirmation(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.app.delete),
-        content: Text(t.downloads.page.dialog.deleteConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(t.app.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              onConfirm();
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(t.app.delete),
-          ),
-        ],
-      ),
+      title: t.app.delete,
+      message: t.downloads.page.dialog.deleteConfirm,
+      confirmText: t.app.delete,
+      cancelText: t.app.cancel,
+      isDestructive: true,
+      icon: Icons.delete_outline_rounded,
     );
+    if (confirmed == true) {
+      onConfirm();
+    }
   }
 
   /// 构建 AppBar Actions
@@ -454,10 +458,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
               bottom: 16,
               child: FloatingActionButton.extended(
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => const AddDownloadDialog(),
-                  );
+                  AddDownloadDialog.show(context);
                 },
                 backgroundColor: xunleiBlue,
                 foregroundColor: Colors.white,
@@ -504,10 +505,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                       // 醒目的新建下载按钮 (迅雷蓝高亮)
                       FilledButton.icon(
                         onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => const AddDownloadDialog(),
-                          );
+                          AddDownloadDialog.show(context);
                         },
                         icon: const Icon(Icons.add_rounded,
                             size: 20, color: Colors.white),
@@ -611,10 +609,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                     // 醒目的新建下载按钮 (迅雷蓝高亮)
                     FilledButton.icon(
                       onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => const AddDownloadDialog(),
-                        );
+                        AddDownloadDialog.show(context);
                       },
                       icon: const Icon(Icons.add_rounded,
                           size: 20, color: Colors.white),
@@ -764,6 +759,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
 
   Widget _buildSortDropdownButton(
       BuildContext context, DownloadPageUIState uiState) {
+    final isMobile = MediaQuery.sizeOf(context).width < 640;
     final notifier = ref.read(downloadPageUIProvider.notifier);
     String sortLabel;
     switch (uiState.sortBy) {
@@ -785,6 +781,44 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         break;
     }
 
+    final buttonWidget = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(alpha: 0.4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.sort_rounded, size: 18),
+          const SizedBox(width: 4),
+          Text(
+            sortLabel,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(width: 2),
+          Icon(
+            uiState.sortAscending
+                ? Icons.arrow_upward_rounded
+                : Icons.arrow_downward_rounded,
+            size: 14,
+            color: xunleiBlue,
+          ),
+        ],
+      ),
+    );
+
+    if (isMobile) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _showSortBottomSheet(context, uiState),
+        child: buttonWidget,
+      );
+    }
+
     return PopupMenuButton<String>(
       tooltip: '排序方式',
       onSelected: (value) {
@@ -801,35 +835,118 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         _buildSortMenuItem(context, uiState, 'speed', '按下载速度'),
         _buildSortMenuItem(context, uiState, 'progress', '按下载进度'),
       ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: Theme.of(context)
-              .colorScheme
-              .surfaceContainerHighest
-              .withValues(alpha: 0.4),
+      child: buttonWidget,
+    );
+  }
+
+  void _showSortBottomSheet(BuildContext context, DownloadPageUIState uiState) {
+    final notifier = ref.read(downloadPageUIProvider.notifier);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '排序方式',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        notifier.updateSort(uiState.sortBy,
+                            ascending: !uiState.sortAscending);
+                        Navigator.pop(ctx);
+                      },
+                      icon: Icon(
+                        uiState.sortAscending
+                            ? Icons.arrow_upward_rounded
+                            : Icons.arrow_downward_rounded,
+                        size: 16,
+                      ),
+                      label: Text(uiState.sortAscending ? '升序' : '降序'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              _buildSortTile(ctx, uiState, 'created', '按创建时间', Icons.schedule_rounded),
+              _buildSortTile(ctx, uiState, 'name', '按文件名称', Icons.sort_by_alpha_rounded),
+              _buildSortTile(ctx, uiState, 'size', '按文件大小', Icons.data_usage_rounded),
+              _buildSortTile(ctx, uiState, 'speed', '按下载速度', Icons.speed_rounded),
+              _buildSortTile(ctx, uiState, 'progress', '按下载进度', Icons.donut_large_rounded),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSortTile(
+    BuildContext sheetContext,
+    DownloadPageUIState uiState,
+    String value,
+    String label,
+    IconData icon,
+  ) {
+    final notifier = ref.read(downloadPageUIProvider.notifier);
+    final isSelected = uiState.sortBy == value;
+    final theme = Theme.of(sheetContext);
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected ? xunleiBlue : theme.colorScheme.onSurfaceVariant,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? xunleiBlue : theme.colorScheme.onSurface,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.sort_rounded, size: 18),
-            const SizedBox(width: 4),
-            Text(
-              sortLabel,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(width: 2),
-            Icon(
+      ),
+      trailing: isSelected
+          ? Icon(
               uiState.sortAscending
                   ? Icons.arrow_upward_rounded
                   : Icons.arrow_downward_rounded,
-              size: 14,
               color: xunleiBlue,
-            ),
-          ],
-        ),
-      ),
+            )
+          : null,
+      onTap: () {
+        if (isSelected) {
+          notifier.updateSort(value, ascending: !uiState.sortAscending);
+        } else {
+          notifier.updateSort(value, ascending: false);
+        }
+        Navigator.pop(sheetContext);
+      },
     );
   }
 
@@ -1414,23 +1531,21 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
         onTap: uiState.isSelectionMode
             ? () => _toggleSelection(task.gid)
             : () {
-                showDialog(
-                  context: context,
-                  builder: (context) => DownloadTaskDetailDialog(
-                    task: task,
-                    onRetry: (task.isError || task.isRemoved)
-                        ? () async {
-                            await controller.retryDownload(task);
-                            if (context.mounted) {
-                              HaipeeDialog.showToast(
-                                  message: t.downloads.page.toast.retrying);
-                            }
+                DownloadTaskDetailDialog.show(
+                  context,
+                  task: task,
+                  onRetry: (task.isError || task.isRemoved)
+                      ? () async {
+                          await controller.retryDownload(task);
+                          if (context.mounted) {
+                            HaipeeDialog.showToast(
+                                message: t.downloads.page.toast.retrying);
                           }
-                        : null,
-                    onOpenFile: (task.isComplete || task.isRemoved) && task.isPlayable
-                        ? () => _playTask(context, task)
-                        : null,
-                  ),
+                        }
+                      : null,
+                  onOpenFile: (task.isComplete || task.isRemoved) && task.isPlayable
+                      ? () => _playTask(context, task)
+                      : null,
                 );
               },
         onLongPress: !uiState.isSelectionMode
@@ -1878,12 +1993,10 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
                       if (task.isRedirectOrAuthError) ...[
                         OutlinedButton.icon(
                           onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AddDownloadDialog(
-                                initialUrl: task.url,
-                                initialFileName: task.fileName,
-                              ),
+                            AddDownloadDialog.show(
+                              context,
+                              initialUrl: task.url,
+                              initialFileName: task.fileName,
                             );
                           },
                           icon: const Icon(Icons.tune_rounded, size: 16),

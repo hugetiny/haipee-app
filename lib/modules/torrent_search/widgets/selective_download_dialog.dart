@@ -6,6 +6,7 @@ import 'package:haipee/modules/download/download_file_utils.dart';
 import 'package:haipee/bean/widget/tree/tree.dart';
 import 'package:haipee/services/logging/app_log.dart';
 import 'package:haipee/services/logging/log_module.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 /// 迅雷风格：三联复选框与目录树选择性下载弹窗
 class SelectiveDownloadDialog extends StatefulWidget {
@@ -241,62 +242,55 @@ class _SelectiveDownloadDialogState extends State<SelectiveDownloadDialog> {
     final totalBytes = _totalBytes;
     final progress = totalBytes > 0 ? (selectedBytes / totalBytes).clamp(0.0, 1.0) : 0.0;
 
-    final screenSize = MediaQuery.sizeOf(context);
-    final dialogWidth = (screenSize.width - 24.0).clamp(300.0, 780.0);
-    final dialogHeight = (screenSize.height - 32.0).clamp(360.0, 680.0);
+    return AdaptiveDialogFrame(
+      maxWidth: 780,
+      maxHeight: 680,
+      expand: true,
+      child: Column(
+        children: [
+          // 1. 顶栏：标题与关闭按钮
+          _buildHeader(theme, colorScheme),
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: SizedBox(
-        width: dialogWidth,
-        height: dialogHeight,
-        child: Column(
-          children: [
-            // 1. 顶栏：标题与关闭按钮
-            _buildHeader(theme, colorScheme),
+          // 2. 保存路径选择区域
+          _buildSavePathSection(theme, colorScheme),
 
-            // 2. 保存路径选择区域
-            _buildSavePathSection(theme, colorScheme),
+          // 3. 迅雷式快速筛选工具栏（全选、反选、仅视频、仅音频）
+          _buildQuickToolbar(theme, colorScheme),
 
-            // 3. 迅雷式快速筛选工具栏（全选、反选、仅视频、仅音频）
-            _buildQuickToolbar(theme, colorScheme),
+          const Divider(height: 1),
 
-            const Divider(height: 1),
-
-            // 4. 三联复选框文件树内容区
-            Expanded(
-              child: visibleNodes.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.search_off, size: 48, color: colorScheme.outline),
-                          const SizedBox(height: 8),
-                          Text(
-                            _searchKeyword.isNotEmpty ? '未找到匹配的文件' : '种子中无文件',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+          // 4. 三联复选框文件树内容区
+          Expanded(
+            child: visibleNodes.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search_off, size: 48, color: colorScheme.outline),
+                        const SizedBox(height: 8),
+                        Text(
+                          _searchKeyword.isNotEmpty ? '未找到匹配的文件' : '种子中无文件',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
                           ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: visibleNodes.length,
-                      itemBuilder: (context, index) {
-                        final flatNode = visibleNodes[index];
-                        return _buildNodeRow(flatNode, theme, colorScheme);
-                      },
+                        ),
+                      ],
                     ),
-            ),
+                  )
+                : ListView.builder(
+                    itemCount: visibleNodes.length,
+                    itemBuilder: (context, index) {
+                      final flatNode = visibleNodes[index];
+                      return _buildNodeRow(flatNode, theme, colorScheme);
+                    },
+                  ),
+          ),
 
-            const Divider(height: 1),
+          const Divider(height: 1),
 
-            // 5. 底栏：统计数据、容量占用进度条与确认按钮
-            _buildFooter(theme, colorScheme, selectedCount, totalCount, selectedBytes, totalBytes, progress),
-          ],
-        ),
+          // 5. 底栏：统计数据、容量占用进度条与确认按钮
+          _buildFooter(theme, colorScheme, selectedCount, totalCount, selectedBytes, totalBytes, progress),
+        ],
       ),
     );
   }

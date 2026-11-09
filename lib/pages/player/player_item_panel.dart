@@ -174,24 +174,35 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
       final downloadController = ref.read(downloadControllerProvider.notifier);
 
       // Build download title with episode info
-      final title = _buildTitleText(videoState);
+      String title = _buildTitleText(videoState).trim();
+      if (!title.contains('.')) {
+        title = '$title.mp4';
+      }
 
-      // Get bangumi ID and episode number if available
+      // Get bangumi ID and episode number if available (or B站 CID for native danmaku linking)
       String? bangumiId = playerController.activeLocalVideoArgs != null
           ? playerController.activeLocalVideoArgs!.bangumiId
-          : videoState.bangumiItem?.id.toString();
+          : (playerController.isBiliPlayback && playerController.activeBiliCid != null
+              ? playerController.activeBiliCid.toString()
+              : videoState.bangumiItem?.id.toString());
       int? episodeNumber = playerController.activeLocalVideoArgs != null
           ? playerController.activeLocalVideoArgs!.episode
           : videoState.currentEpisode;
 
-      final headers = playerController.activeHttpHeaders;
+      final Map<String, dynamic> headers =
+          Map<String, dynamic>.from(playerController.activeHttpHeaders ?? {});
+      if (playerController.isBiliPlayback) {
+        headers['Referer'] = 'https://www.bilibili.com/';
+        headers['User-Agent'] =
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+      }
 
       await downloadController.addDownload(
         downloadUrl,
-        title: title.trim(),
+        title: title,
         bangumiId: bangumiId,
         episodeNumber: episodeNumber,
-        options: headers != null && headers.isNotEmpty ? {'header': headers} : null,
+        options: headers.isNotEmpty ? {'header': headers} : null,
       );
 
       HaipeeDialog.showToast(message: '已添加到下载列表');

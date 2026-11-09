@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:haipee/services/notification/notification_service.dart';
 import 'package:haipee/modules/download/download_task.dart';
 import 'package:haipee/modules/download/download_file_utils.dart';
 import 'package:haipee/modules/download/gofile_helper.dart';
@@ -21,9 +22,6 @@ enum DownloadConnectionState {
   error;
 }
 
-// Compatibility aliases
-typedef Aria2ConnectionState = DownloadConnectionState;
-
 enum DownloadEvent {
   downloadStart,
   downloadPause,
@@ -31,8 +29,6 @@ enum DownloadEvent {
   downloadComplete,
   downloadError,
 }
-
-typedef Aria2Event = DownloadEvent;
 
 class DownloadEventData {
   final DownloadEvent event;
@@ -47,8 +43,6 @@ class DownloadEventData {
     this.errorMessage,
   }) : timestamp = timestamp ?? DateTime.now();
 }
-
-typedef Aria2EventData = DownloadEventData;
 
 class DownloadState {
   final List<DownloadTask> activeTasks;
@@ -269,6 +263,7 @@ class DownloadController extends Notifier<DownloadState> {
     } else if (type.contains('done') || type.contains('complete')) {
       mappedEvent = DownloadEvent.downloadComplete;
       _optimisticUpdateTaskStatus(taskId, 'complete');
+      _notifyDownloadComplete(taskId, event);
     } else if (type.contains('error')) {
       mappedEvent = DownloadEvent.downloadError;
       _optimisticUpdateTaskStatus(taskId, 'error');
@@ -283,6 +278,33 @@ class DownloadController extends Notifier<DownloadState> {
     }
 
     _scheduleRefresh();
+  }
+
+  void _notifyDownloadComplete(String taskId, GopeedTaskEvent event) {
+    try {
+      final allTasks = [
+        ...state.activeTasks,
+        ...state.waitingTasks,
+        ...state.pausedTasks,
+        ...state.completedTasks,
+        ...state.failedTasks,
+      ];
+      DownloadTask? task;
+      for (final t in allTasks) {
+        if (t.gid == taskId) {
+          task = t;
+          break;
+        }
+      }
+      final taskTitle = task?.displayTitle ?? (event.name.isNotEmpty ? event.name : '媒体文件');
+      final savePath = task?.filePath ?? event.task?.savePath;
+      unawaited(NotificationService.instance.showDownloadCompleted(
+        taskName: taskTitle,
+        savePath: savePath,
+        id: taskId.hashCode,
+        payload: savePath,
+      ));
+    } catch (_) {}
   }
 
   void _scheduleRefresh({bool immediate = false}) {

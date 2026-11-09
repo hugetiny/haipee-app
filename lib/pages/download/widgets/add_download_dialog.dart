@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/pages/download/providers.dart';
 import 'package:haipee/services/logging/app_log.dart';
 import 'package:haipee/modules/download/download_file_utils.dart';
@@ -25,6 +26,22 @@ class AddDownloadDialog extends ConsumerStatefulWidget {
     this.initialUrl,
     this.initialFileName,
   });
+
+  /// 呼出响应式新建下载弹窗（移动端全宽抽屉，桌面端居中弹窗）
+  static Future<void> show(
+    BuildContext context, {
+    String? initialUrl,
+    String? initialFileName,
+  }) {
+    return showDialog(
+      context: context,
+      routeSettings: const RouteSettings(name: 'AddDownloadDialog'),
+      builder: (context) => AddDownloadDialog(
+        initialUrl: initialUrl,
+        initialFileName: initialFileName,
+      ),
+    );
+  }
 
   @override
   ConsumerState<AddDownloadDialog> createState() => _AddDownloadDialogState();
@@ -147,47 +164,49 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 标题栏
-            _buildHeader(),
-            // 标签页
-            TabBar(
+    return AdaptiveDialogFrame(
+      maxWidth: 600,
+      maxHeight: 700,
+      expand: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          // 标题栏
+          _buildHeader(),
+          // 标签页
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'URL 下载'),
+              Tab(text: '种子下载'),
+            ],
+          ),
+          // 内容区域
+          Expanded(
+            child: TabBarView(
               controller: _tabController,
-              tabs: const [
-                Tab(text: 'URL 下载'),
-                Tab(text: '种子下载'),
+              children: [
+                _buildUrlTab(),
+                _buildTorrentTab(),
               ],
             ),
-            // 内容区域
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildUrlTab(),
-                  _buildTorrentTab(),
-                ],
-              ),
-            ),
-            // 底部按钮
-            _buildFooter(),
-          ],
-        ),
+          ),
+          // 底部按钮
+          _buildFooter(),
+        ],
       ),
     );
   }
 
   Widget _buildHeader() {
+    final isMobile = MediaQuery.sizeOf(context).width < 640;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: isMobile
+            ? BorderRadius.zero
+            : const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Row(
         children: [
@@ -577,11 +596,19 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
   }
 
   Widget _buildFooter() {
+    final isMobile = MediaQuery.sizeOf(context).width < 640;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        12 + (isMobile ? MediaQuery.paddingOf(context).bottom : 0),
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+        borderRadius: isMobile
+            ? BorderRadius.zero
+            : const BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,

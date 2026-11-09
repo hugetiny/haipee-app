@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:haipee/request/api.dart';
 import 'package:haipee/request/core/git_proxy_interceptor.dart';
@@ -183,145 +184,220 @@ class AutoUpdater {
       builder: (context) {
         final translations = context.t;
         final updateTexts = translations.settings.update;
-        return AlertDialog(
-          title: Text(updateTexts.dialog.title
-              .replaceFirst('{version}', updateInfo.version)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(updateInfo.description),
-                if (updateInfo.publishedAt.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    updateTexts.dialog.publishedAt.replaceFirst(
-                        '{date}', Utils.formatDate(updateInfo.publishedAt)),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-                const SizedBox(height: 8),
-                if (!Platform.isLinux && !Platform.isIOS) ...[
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(4),
+        final isMobile = MediaQuery.sizeOf(context).width < 640;
+        final theme = Theme.of(context);
+
+        return AdaptiveDialogFrame(
+          maxWidth: 540,
+          maxHeight: 640,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.system_update_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 22,
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          updateTexts.dialog.installationTypeLabel,
-                          style: Theme.of(context).textTheme.labelSmall,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        updateTexts.dialog.title
+                            .replaceFirst('{version}', updateInfo.version),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 8),
-                        ...updateInfo.availableInstallationTypes.map((type) {
-                          return Container(
-                            margin: const EdgeInsets.symmetric(vertical: 2),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(4),
-                                onTap: () {
-                                  HaipeeDialog.dismiss();
-                                  _downloadUpdateWithType(updateInfo, type);
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline
-                                          .withValues(alpha: 0.3),
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.download,
-                                        size: 16,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          _getInstallationTypeDescription(
-                                              translations, type),
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall,
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.arrow_forward_ios,
-                                        size: 12,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .outline,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            if (isAutoCheck)
-              TextButton(
-                onPressed: () {
-                  setting.put(SettingBoxKey.autoUpdate, false);
-                  HaipeeDialog.dismiss();
-                  HaipeeDialog.showToast(
-                      message: updateTexts.toast.autoUpdateDisabled);
-                },
-                child: Text(
-                  updateTexts.dialog.actions.disableAutoUpdate,
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.outline),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () => HaipeeDialog.dismiss(),
+                    ),
+                  ],
                 ),
               ),
-            TextButton(
-              onPressed: () => HaipeeDialog.dismiss(),
-              child: Text(
-                updateTexts.dialog.actions.remindLater,
-                style: TextStyle(color: Theme.of(context).colorScheme.outline),
+              const Divider(height: 1),
+              // Content
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        updateInfo.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.5,
+                        ),
+                      ),
+                      if (updateInfo.publishedAt.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          updateTexts.dialog.publishedAt.replaceFirst(
+                              '{date}', Utils.formatDate(updateInfo.publishedAt)),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (!Platform.isLinux && !Platform.isIOS) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant
+                                  .withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                updateTexts.dialog.installationTypeLabel,
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ...updateInfo.availableInstallationTypes.map((type) {
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 3),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap: () {
+                                        HaipeeDialog.dismiss();
+                                        _downloadUpdateWithType(updateInfo, type);
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: theme.colorScheme.outline
+                                                .withValues(alpha: 0.25),
+                                          ),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.download_rounded,
+                                              size: 18,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                _getInstallationTypeDescription(
+                                                    translations, type),
+                                                style: theme.textTheme.bodySmall?.copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.arrow_forward_ios_rounded,
+                                              size: 12,
+                                              color: theme.colorScheme.outline,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
-            ),
-            if (updateInfo.releaseNotes.isNotEmpty)
-              TextButton(
-                onPressed: () {
-                  launchUrl(Uri.parse(updateInfo.releaseNotes),
-                      mode: LaunchMode.externalApplication);
-                },
-                child: Text(updateTexts.dialog.actions.viewDetails),
+              // Footer
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  10,
+                  16,
+                  12 + (isMobile ? MediaQuery.paddingOf(context).bottom : 0),
+                ),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: theme.dividerColor.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (isAutoCheck)
+                      TextButton(
+                        onPressed: () {
+                          setting.put(SettingBoxKey.autoUpdate, false);
+                          HaipeeDialog.dismiss();
+                          HaipeeDialog.showToast(
+                              message: updateTexts.toast.autoUpdateDisabled);
+                        },
+                        child: Text(
+                          updateTexts.dialog.actions.disableAutoUpdate,
+                          style: TextStyle(color: theme.colorScheme.outline),
+                        ),
+                      ),
+                    TextButton(
+                      onPressed: () => HaipeeDialog.dismiss(),
+                      child: Text(
+                        updateTexts.dialog.actions.remindLater,
+                        style: TextStyle(color: theme.colorScheme.outline),
+                      ),
+                    ),
+                    if (updateInfo.releaseNotes.isNotEmpty)
+                      TextButton(
+                        onPressed: () {
+                          launchUrl(Uri.parse(updateInfo.releaseNotes),
+                              mode: LaunchMode.externalApplication);
+                        },
+                        child: Text(updateTexts.dialog.actions.viewDetails),
+                      ),
+                    FilledButton.icon(
+                      onPressed: () {
+                        HaipeeDialog.dismiss();
+                        if (updateInfo.availableInstallationTypes.isNotEmpty) {
+                          _downloadUpdateWithType(
+                              updateInfo, updateInfo.availableInstallationTypes.first);
+                        }
+                      },
+                      icon: const Icon(Icons.upgrade_rounded, size: 18),
+                      label: Text(updateTexts.dialog.actions.updateNow),
+                    ),
+                  ],
+                ),
               ),
-            TextButton(
-              onPressed: () {
-                HaipeeDialog.dismiss();
-                // 直接使用第一个可用的安装类型
-                if (updateInfo.availableInstallationTypes.isNotEmpty) {
-                  _downloadUpdateWithType(
-                      updateInfo, updateInfo.availableInstallationTypes.first);
-                }
-              },
-              child: Text(updateTexts.dialog.actions.updateNow),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -421,34 +497,71 @@ class AutoUpdater {
       clickMaskDismiss: false,
       builder: (context) {
         final dialogTexts = context.t.settings.update;
-        return AlertDialog(
-          title: Text(dialogTexts.download.progressTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ValueListenableBuilder<double>(
-                valueListenable: _downloadProgress,
-                builder: (context, value, child) {
-                  return Column(
-                    children: [
-                      LinearProgressIndicator(value: value),
-                      const SizedBox(height: 8),
-                      Text('${(value * 100).toStringAsFixed(1)}%'),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _cancelDownload();
-                HaipeeDialog.dismiss();
-              },
-              child: Text(dialogTexts.download.cancel),
+        final theme = Theme.of(context);
+        final isMobile = MediaQuery.sizeOf(context).width < 640;
+
+        return AdaptiveDialogFrame(
+          maxWidth: 440,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              20,
+              24,
+              20 + (isMobile ? MediaQuery.paddingOf(context).bottom : 0),
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dialogTexts.download.progressTitle,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                ValueListenableBuilder<double>(
+                  valueListenable: _downloadProgress,
+                  builder: (context, value, child) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: value,
+                            minHeight: 8,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            '${(value * 100).toStringAsFixed(1)}%',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      _cancelDownload();
+                      HaipeeDialog.dismiss();
+                    },
+                    child: Text(dialogTexts.download.cancel),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -477,35 +590,66 @@ class AutoUpdater {
 
       HaipeeDialog.show(
         builder: (context) {
-          return AlertDialog(
-            title: Text(updateTexts.download.error.title),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(errorMessage),
-                const SizedBox(height: 8),
-                Text(
-                  updateTexts.download.error.details
-                      .replaceFirst('{error}', e.toString()),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+          final theme = Theme.of(context);
+          final isMobile = MediaQuery.sizeOf(context).width < 640;
+          return AdaptiveDialogFrame(
+            maxWidth: 440,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                24,
+                20,
+                24,
+                16 + (isMobile ? MediaQuery.paddingOf(context).bottom : 0),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.error_outline_rounded,
+                          color: theme.colorScheme.error, size: 24),
+                      const SizedBox(width: 10),
+                      Text(
+                        updateTexts.download.error.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(errorMessage),
+                  const SizedBox(height: 8),
+                  Text(
+                    updateTexts.download.error.details
+                        .replaceFirst('{error}', e.toString()),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => HaipeeDialog.dismiss(),
+                        child: Text(updateTexts.download.error.confirm),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: () {
+                          HaipeeDialog.dismiss();
+                          // 重新尝试下载
+                          _downloadUpdate(updateInfo, expectedHash);
+                        },
+                        child: Text(updateTexts.download.error.retry),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => HaipeeDialog.dismiss(),
-                child: Text(updateTexts.download.error.confirm),
-              ),
-              TextButton(
-                onPressed: () {
-                  HaipeeDialog.dismiss();
-                  // 重新尝试下载
-                  _downloadUpdate(updateInfo, expectedHash);
-                },
-                child: Text(updateTexts.download.error.retry),
-              ),
-            ],
           );
         },
       );
@@ -530,84 +674,113 @@ class AutoUpdater {
       builder: (context) {
         final translations = context.t;
         final updateTexts = translations.settings.update;
-        return AlertDialog(
-          title: Text(updateTexts.download.complete.title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(updateTexts.download.complete.message
-                        .replaceFirst('{version}', updateInfo.version)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                updateTexts.download.complete.quitNotice,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        final theme = Theme.of(context);
+        final isMobile = MediaQuery.sizeOf(context).width < 640;
+
+        return AdaptiveDialogFrame(
+          maxWidth: 480,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              20,
+              24,
+              16 + (isMobile ? MediaQuery.paddingOf(context).bottom : 0),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      updateTexts.download.complete.fileLocation,
-                      style: Theme.of(context).textTheme.labelSmall,
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 24,
                     ),
-                    const SizedBox(height: 4),
-                    SelectableText(
-                      filePath,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontFamily: 'monospace',
-                          ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        updateTexts.download.complete.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                Text(
+                  updateTexts.download.complete.message
+                      .replaceFirst('{version}', updateInfo.version),
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  updateTexts.download.complete.quitNotice,
+                  style: TextStyle(
+                    color: theme.colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        updateTexts.download.complete.fileLocation,
+                        style: theme.textTheme.labelSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      SelectableText(
+                        filePath,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => HaipeeDialog.dismiss(),
+                      child: Text(
+                        updateTexts.download.complete.buttons.later,
+                        style: TextStyle(color: theme.colorScheme.outline),
+                      ),
+                    ),
+                    if (!Platform.isAndroid && !Platform.isIOS) ...[
+                      const SizedBox(width: 6),
+                      TextButton(
+                        onPressed: () => _revealInFileManager(filePath),
+                        child: Text(
+                            updateTexts.download.complete.buttons.openFolder),
+                      ),
+                    ],
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () {
+                        HaipeeDialog.dismiss();
+                        _installUpdate(
+                            filePath, updateInfo.recommendedInstallationType);
+                      },
+                      child: Text(
+                          updateTexts.download.complete.buttons.installNow),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => HaipeeDialog.dismiss(),
-              child: Text(
-                updateTexts.download.complete.buttons.later,
-                style: TextStyle(color: Theme.of(context).colorScheme.outline),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                // 在文件管理器中显示文件
-                _revealInFileManager(filePath);
-              },
-              child: Text(updateTexts.download.complete.buttons.openFolder),
-            ),
-            TextButton(
-              onPressed: () {
-                HaipeeDialog.dismiss();
-                _installUpdate(
-                    filePath, updateInfo.recommendedInstallationType);
-              },
-              child: Text(updateTexts.download.complete.buttons.installNow),
-            ),
-          ],
         );
       },
     );
@@ -626,18 +799,24 @@ class AutoUpdater {
     // 检查文件是否已存在
     if (await file.exists()) {
       try {
-        //使用哈希验证文件完整性
-        final localHash = await Utils.calculateFileHash(file);
-        if (localHash == expectedHash) {
-          // 文件已存在且哈希匹配，直接返回
-          HaipeeLogger().log(Level.info, '文件已存在且哈希验证通过，跳过下载: $filePath');
+        if (expectedHash.isNotEmpty) {
+          final localHash = await Utils.calculateFileHash(file);
+          if (localHash.toLowerCase() == expectedHash.toLowerCase()) {
+            // 文件已存在且哈希匹配，直接返回
+            HaipeeLogger().log(Level.info, '文件已存在且哈希验证通过，跳过下载: $filePath');
+            _downloadProgress.value = 1.0;
+            return filePath;
+          } else {
+            // 文件存在但哈希不匹配，删除后重新下载
+            HaipeeLogger().log(Level.info,
+                '检测到文件哈希不匹配 (本地: $localHash, 期望: $expectedHash)，删除后重新下载');
+            await file.delete();
+          }
+        } else {
+          // 没有提供远端哈希时，认为已存在的文件有效
+          HaipeeLogger().log(Level.info, '文件已存在，跳过下载: $filePath');
           _downloadProgress.value = 1.0;
           return filePath;
-        } else {
-          // 文件存在但哈希不匹配，删除后重新下载
-          HaipeeLogger().log(Level.info,
-              '检测到文件哈希不匹配 (本地: $localHash, 期望: $expectedHash)，删除后重新下载');
-          await file.delete();
         }
       } catch (e) {
         // 验证过程中出错，删除文件重新下载
@@ -661,15 +840,17 @@ class AutoUpdater {
       },
     );
 
-    // 下载完成后验证文件哈希
-    final downloadedHash = await Utils.calculateFileHash(file);
-    if (downloadedHash != expectedHash) {
-      // 哈希不匹配，删除文件并抛出异常
-      await file.delete();
-      throw Exception(
-          '$_integrityErrorCode: expected=$expectedHash actual=$downloadedHash');
+    // 下载完成后验证文件哈希（仅当远端提供哈希时校验）
+    if (expectedHash.isNotEmpty) {
+      final downloadedHash = await Utils.calculateFileHash(file);
+      if (downloadedHash.toLowerCase() != expectedHash.toLowerCase()) {
+        // 哈希不匹配，删除文件并抛出异常
+        await file.delete();
+        throw Exception(
+            '$_integrityErrorCode: expected=$expectedHash actual=$downloadedHash');
+      }
+      HaipeeLogger().log(Level.info, '文件下载完成，哈希验证通过: $filePath');
     }
-    HaipeeLogger().log(Level.info, '文件下载完成，哈希验证通过: $filePath');
 
     return filePath;
   }
@@ -699,6 +880,9 @@ class AutoUpdater {
         if (filePath.endsWith('.dmg')) {
           await Process.start('open', [filePath]);
           exit(0);
+        } else if (filePath.endsWith('.zip')) {
+          _revealInFileManager(filePath);
+          return;
         }
       } else if (Platform.isAndroid) {
         final result = await OpenFilex.open(filePath);
@@ -712,6 +896,9 @@ class AutoUpdater {
           );
           return;
         }
+        // 注意：Android 下绝不能调用 exit(0)！
+        // 必须保持进程存活，否则 OpenFilex 的 FileProvider 会在系统安装器读取 APK 流时崩溃退出，导致解析安装包失败。
+        return;
       }
       await Future.delayed(const Duration(seconds: 1));
       exit(0);
@@ -748,6 +935,35 @@ class AutoUpdater {
   /// 根据安装类型获取下载链接
   Future<String> _getDownloadUrlForType(
       List<dynamic> assets, InstallationType type) async {
+    // 针对 Android 优先匹配 arm64 架构（覆盖 99% 现代 Android 机型）
+    if (type == InstallationType.androidApk) {
+      for (final asset in assets) {
+        if (asset is! Map<String, dynamic>) continue;
+        final name = (asset['name'] as String?)?.toLowerCase() ?? '';
+        final downloadUrl = (asset['browser_download_url'] as String?) ?? '';
+        if (downloadUrl.isNotEmpty &&
+            name.contains('android') &&
+            name.contains('.apk') &&
+            name.contains('arm64')) {
+          return downloadUrl;
+        }
+      }
+    }
+
+    // 针对 macOS 支持 .dmg 与 .zip (Universal 便携包)
+    if (type == InstallationType.macosDmg) {
+      for (final asset in assets) {
+        if (asset is! Map<String, dynamic>) continue;
+        final name = (asset['name'] as String?)?.toLowerCase() ?? '';
+        final downloadUrl = (asset['browser_download_url'] as String?) ?? '';
+        if (downloadUrl.isNotEmpty &&
+            name.contains('macos') &&
+            (name.contains('.dmg') || name.contains('.zip'))) {
+          return downloadUrl;
+        }
+      }
+    }
+
     final patterns =
         _getFilePatterns(type).map((p) => p.toLowerCase()).toList();
 

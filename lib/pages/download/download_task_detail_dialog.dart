@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/modules/download/download_file_utils.dart';
 import 'package:haipee/modules/download/download_task.dart';
 
@@ -128,6 +129,24 @@ class DownloadTaskDetailDialog extends ConsumerStatefulWidget {
     this.onOpenFile,
   });
 
+  /// 呼出响应式任务详情弹窗（移动端全宽抽屉，桌面端居中弹窗）
+  static Future<void> show(
+    BuildContext context, {
+    required DownloadTask task,
+    VoidCallback? onRetry,
+    VoidCallback? onOpenFile,
+  }) {
+    return showDialog(
+      context: context,
+      routeSettings: const RouteSettings(name: 'DownloadTaskDetailDialog'),
+      builder: (ctx) => DownloadTaskDetailDialog(
+        task: task,
+        onRetry: onRetry,
+        onOpenFile: onOpenFile,
+      ),
+    );
+  }
+
   @override
   ConsumerState<DownloadTaskDetailDialog> createState() =>
       _DownloadTaskDetailDialogState();
@@ -242,28 +261,31 @@ class _DownloadTaskDetailDialogState
         ? detailState.fullPath
         : (task.filePath ?? task.fileName ?? '');
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 620, maxHeight: 720),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
+    final isMobile = MediaQuery.sizeOf(context).width < 640;
+
+    return AdaptiveDialogFrame(
+      maxWidth: 620,
+      maxHeight: 720,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
+              borderRadius: isMobile
+                  ? BorderRadius.zero
+                  : const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: theme.colorScheme.onPrimaryContainer,
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -604,7 +626,12 @@ class _DownloadTaskDetailDialogState
 
             // Actions 底部操作栏
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                12 + (isMobile ? MediaQuery.paddingOf(context).bottom : 0),
+              ),
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
@@ -683,7 +710,6 @@ class _DownloadTaskDetailDialogState
             ),
           ],
         ),
-      ),
     );
   }
 
