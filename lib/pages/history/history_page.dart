@@ -4,6 +4,7 @@ import 'package:haipee/providers/riverpod_compat.dart';
 import 'package:haipee/bean/appbar/sys_app_bar.dart';
 import 'package:haipee/bean/card/bangumi_history_card.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
 import 'package:haipee/pages/history/history_controller.dart';
 import 'package:haipee/pages/history/providers.dart';
 import 'package:haipee/utils/constants.dart';
@@ -37,36 +38,22 @@ class _HistoryPageState extends ConsumerState<HistoryPage>
     }
   }
 
-  void showHistoryClearDialog() {
-    HaipeeDialog.show(
-      builder: (context) {
-        final t = context.t;
-        return AlertDialog(
-          title: Text(t.library.history.manage.title),
-          content: Text(t.library.history.manage.confirmClear),
-          actions: [
-            TextButton(
-              onPressed: () {
-                HaipeeDialog.dismiss();
-              },
-              child: Text(
-                t.library.history.manage.cancel,
-                style: TextStyle(color: Theme.of(context).colorScheme.outline),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                HaipeeDialog.dismiss();
-                try {
-                  historyController.clearAll();
-                } catch (_) {}
-              },
-              child: Text(t.library.history.manage.confirm),
-            ),
-          ],
-        );
-      },
+  Future<void> showHistoryClearDialog() async {
+    final t = context.t;
+    final confirmed = await HaipeeModalSheet.showConfirmation(
+      context: context,
+      title: t.library.history.manage.title,
+      message: t.library.history.manage.confirmClear,
+      confirmText: t.library.history.manage.confirm,
+      cancelText: t.library.history.manage.cancel,
+      isDestructive: true,
+      icon: Icons.delete_sweep_rounded,
     );
+    if (confirmed == true) {
+      try {
+        historyController.clearAll();
+      } catch (_) {}
+    }
   }
 
   @override

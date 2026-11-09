@@ -243,20 +243,62 @@ class Utils {
     return v.toString() + random.nextInt(9999).toString();
   }
 
-  // 版本对比
-  static bool needUpdate(localVersion, remoteVersion) {
-    List<String> localVersionList = localVersion.split('.');
-    List<String> remoteVersionList = remoteVersion.split('.');
-    for (int i = 0; i < localVersionList.length; i++) {
-      int localVersion = int.parse(localVersionList[i]);
-      int remoteVersion = int.parse(remoteVersionList[i]);
-      if (remoteVersion > localVersion) {
-        return true;
-      } else if (remoteVersion < localVersion) {
+  // 版本对比 (支持可选 'v'/'V' 前缀、SemVer '+build' / '-prerelease' 元数据以及不等长版本号)
+  static bool needUpdate(dynamic localVersion, dynamic remoteVersion) {
+    try {
+      if (localVersion == null || remoteVersion == null) return false;
+      String cleanLocal = localVersion.toString().trim();
+      String cleanRemote = remoteVersion.toString().trim();
+
+      // 去除可能存在的 v 或 V 前缀
+      if (cleanLocal.startsWith('v') || cleanLocal.startsWith('V')) {
+        cleanLocal = cleanLocal.substring(1);
+      }
+      if (cleanRemote.startsWith('v') || cleanRemote.startsWith('V')) {
+        cleanRemote = cleanRemote.substring(1);
+      }
+
+      // 剥除构建元数据 (+...) 或预发布标签 (-...)
+      cleanLocal = cleanLocal.split('+')[0].split('-')[0].trim();
+      cleanRemote = cleanRemote.split('+')[0].split('-')[0].trim();
+
+      if (cleanLocal.isEmpty || cleanRemote.isEmpty) return false;
+
+      List<int?> localPartsNullable = cleanLocal
+          .split('.')
+          .map((s) => int.tryParse(s.trim()))
+          .toList();
+      List<int?> remotePartsNullable = cleanRemote
+          .split('.')
+          .map((s) => int.tryParse(s.trim()))
+          .toList();
+
+      // 若任意一方完全不含任何有效数字分段（如纯非法字符 'invalid'），判定为无效版本号
+      if (localPartsNullable.every((p) => p == null) ||
+          remotePartsNullable.every((p) => p == null)) {
         return false;
       }
+
+      List<int> localParts = localPartsNullable.map((p) => p ?? 0).toList();
+      List<int> remoteParts = remotePartsNullable.map((p) => p ?? 0).toList();
+
+      int maxLength = localParts.length > remoteParts.length
+          ? localParts.length
+          : remoteParts.length;
+
+      for (int i = 0; i < maxLength; i++) {
+        int local = i < localParts.length ? localParts[i] : 0;
+        int remote = i < remoteParts.length ? remoteParts[i] : 0;
+        if (remote > local) {
+          return true;
+        } else if (remote < local) {
+          return false;
+        }
+      }
+      return false;
+    } catch (_) {
+      return false;
     }
-    return false;
   }
 
   // 日期字符串转换为 weekday (eg: 2024-09-23 -> 1 (星期一))

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:haipee/pages/settings/download/download_settings.dart';
 import 'package:haipee/utils/storage.dart';
@@ -71,7 +72,7 @@ void main() {
     // 模拟修改并保存
     final updatedDir = '${tempDir.path}/downloads/custom';
     final dialogTextField = find.descendant(
-      of: find.byType(AlertDialog),
+      of: find.byType(AdaptiveDialogFrame),
       matching: find.byType(TextField),
     );
     await tester.enterText(dialogTextField, updatedDir);

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:haipee/bean/appbar/drag_to_move_bar.dart' as dtb;
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/bean/widget/app_back_button.dart';
 import 'package:haipee/bean/widget/collect_button.dart';
 import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
@@ -642,7 +643,8 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
     final t = context.t;
     final double currentSpeed = playerController.playerSpeed;
     HaipeeDialog.show(builder: (context) {
-      return AlertDialog(
+      return AdaptiveDialogFrame(
+        maxWidth: 440,
         title: Text(t.playback.controls.speed.title),
         content: Wrap(
           spacing: 8,
@@ -692,7 +694,8 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
     final t = context.t;
     HaipeeDialog.show(builder: (context) {
       String input = "";
-      return AlertDialog(
+      return AdaptiveDialogFrame(
+        maxWidth: 400,
         title: Text(t.playback.controls.skip.title),
         content: TextField(
           inputFormatters: [

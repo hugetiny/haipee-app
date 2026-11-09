@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
@@ -262,7 +263,8 @@ class _IndexerImportDialogState extends ConsumerState<IndexerImportDialog> {
     final existsInUser =
         parsedDef != null && existingPlugins.any((p) => p.id == parsedDef.id);
 
-    return AlertDialog(
+    return AdaptiveDialogFrame(
+      maxWidth: 720,
       title: const Row(
         children: [
           Icon(Icons.file_download_outlined, size: 22),
@@ -270,13 +272,10 @@ class _IndexerImportDialogState extends ConsumerState<IndexerImportDialog> {
           Text('导入 Cardigann 索引器规则'),
         ],
       ),
-      content: SizedBox(
-        width: 680,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
               Text(
                 '支持通过本地文件、剪贴板或远程 URL 直接导入 100% 官方 Cardigann 规范规则。',
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -583,8 +582,6 @@ class _IndexerImportDialogState extends ConsumerState<IndexerImportDialog> {
               ),
             ],
           ),
-        ),
-      ),
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),

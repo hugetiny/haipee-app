@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
 import 'package:haipee/bean/settings/settings_list.dart';
 import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
@@ -97,23 +99,15 @@ class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
   }
 
   Future<void> resetPlayerSettings() async {
-    final bool shouldReset = await HaipeeDialog.show<bool>(
-          builder: (context) => AlertDialog(
-            title: const Text('恢复默认播放设置'),
-            content: const Text('播放设置、硬件解码器、视频渲染器和超分辨率设置将恢复为默认值。'),
-            actions: [
-              TextButton(
-                onPressed: () => HaipeeDialog.dismiss(popWith: false),
-                child: const Text('取消'),
-              ),
-              TextButton(
-                onPressed: () => HaipeeDialog.dismiss(popWith: true),
-                child: const Text('恢复默认'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    final bool shouldReset = await HaipeeModalSheet.showConfirmation(
+      context: context,
+      title: '恢复默认播放设置',
+      message: '播放设置、硬件解码器、视频渲染器和超分辨率设置将恢复为默认值。',
+      cancelText: '取消',
+      confirmText: '恢复默认',
+      isDestructive: true,
+      icon: Icons.restore_rounded,
+    ) ?? false;
     if (!shouldReset) return;
 
     await GStorage.resetPlayerSettings();
@@ -178,7 +172,8 @@ class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
       {required String title, required String initialValue}) async {
     return HaipeeDialog.show<int>(builder: (context) {
       String input = "";
-      return AlertDialog(
+      return AdaptiveDialogFrame(
+        maxWidth: 400,
         title: Text(title),
         content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
@@ -263,7 +258,8 @@ class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
-          return AlertDialog(
+          return AdaptiveDialogFrame(
+            maxWidth: 480,
             title: const Text('Debrid 云端加速设置'),
             content: SingleChildScrollView(
               child: Column(
@@ -271,23 +267,26 @@ class _PlayerSettingsPageState extends ConsumerState<PlayerSettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('选择云加速提供商 (BYOT 自备 Key):'),
-                  const SizedBox(height: 8),
-                  DropdownButton<String>(
-                    isExpanded: true,
-                    value: selectedProvider,
-                    items: const [
-                      DropdownMenuItem(
-                          value: 'none', child: Text('关闭 (仅本地 P2P)')),
-                      DropdownMenuItem(
-                          value: 'realdebrid', child: Text('Real-Debrid')),
-                      DropdownMenuItem(value: 'torbox', child: Text('TorBox')),
-                      DropdownMenuItem(value: 'pikpak', child: Text('PikPak')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedProvider = val);
-                      }
-                    },
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ('none', '关闭 (仅本地 P2P)'),
+                      ('realdebrid', 'Real-Debrid'),
+                      ('torbox', 'TorBox'),
+                      ('pikpak', 'PikPak'),
+                    ].map((item) {
+                      final isSelected = selectedProvider == item.$1;
+                      return ChoiceChip(
+                        label: Text(item.$2),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setDialogState(() => selectedProvider = item.$1);
+                          }
+                        },
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 16),
                   if (selectedProvider != 'none') ...[

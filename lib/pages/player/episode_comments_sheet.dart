@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/bean/card/episode_comments_card.dart';
 import 'package:haipee/pages/video/providers.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
@@ -139,7 +140,8 @@ class _EpisodeCommentsSheetState extends ConsumerState<EpisodeCommentsSheet> {
     final t = context.t;
     HaipeeDialog.show(
       builder: (context) {
-        return AlertDialog(
+        return AdaptiveDialogFrame(
+          maxWidth: 400,
           title: Text(t.playback.comments.dialogTitle),
           content: TextField(
             inputFormatters: <TextInputFormatter>[

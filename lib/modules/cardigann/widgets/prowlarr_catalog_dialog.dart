@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/modules/cardigann/cardigann_torznab.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 import 'package:haipee/modules/torrent_search/sources/torrent_dio_factory.dart';
@@ -244,14 +245,13 @@ class _ProwlarrCatalogDialogState extends ConsumerState<ProwlarrCatalogDialog> {
 
     final filtered = _filteredEntries;
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 800, maxHeight: 720),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
+    return AdaptiveDialogFrame(
+      maxWidth: 800,
+      maxHeight: 720,
+      expand: true,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
@@ -518,8 +518,7 @@ class _ProwlarrCatalogDialogState extends ConsumerState<ProwlarrCatalogDialog> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildChip(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dlna_dart/dlna.dart';
 import 'package:flutter/material.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/services/logging/logger.dart';
 
 class RemotePlay {
@@ -12,7 +13,9 @@ class RemotePlay {
     List<Widget> dlnaDevice = [];
     await HaipeeDialog.show(builder: (BuildContext context) {
       return StatefulBuilder(builder: (context, setState) {
-        return AlertDialog(
+        return AdaptiveDialogFrame(
+          maxWidth: 480,
+          maxHeight: 520,
           title: const Text('远程投屏'),
           content: SingleChildScrollView(
             child: Column(

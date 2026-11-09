@@ -13,6 +13,7 @@ import 'package:logger/logger.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/providers/riverpod_compat.dart';
 import 'package:haipee/utils/constants.dart';
@@ -150,14 +151,15 @@ class _AppWidgetState extends ConsumerState<AppWidget>
             final saveExitBehavior =
                 ref.watch(_exitDialogSavePreferenceProvider);
 
-            return AlertDialog(
+            return AdaptiveDialogFrame(
+              maxWidth: 440,
               title: Text(t.exitDialog.title),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(t.exitDialog.message),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
                     spacing: 8,
@@ -177,15 +179,8 @@ class _AppWidgetState extends ConsumerState<AppWidget>
               ),
               actions: [
                 TextButton(
-                    onPressed: () async {
-                      if (saveExitBehavior) {
-                        await setting.put(SettingBoxKey.exitBehavior, 0);
-                      }
-                      // Stop download engine before exit
-                      await GopeedService().stop();
-                      exit(0);
-                    },
-                    child: Text(t.exitDialog.exit)),
+                    onPressed: HaipeeDialog.dismiss,
+                    child: Text(t.exitDialog.cancel)),
                 TextButton(
                     onPressed: () async {
                       if (saveExitBehavior) {
@@ -195,9 +190,16 @@ class _AppWidgetState extends ConsumerState<AppWidget>
                       windowManager.hide();
                     },
                     child: Text(t.exitDialog.minimize)),
-                TextButton(
-                    onPressed: HaipeeDialog.dismiss,
-                    child: Text(t.exitDialog.cancel)),
+                FilledButton(
+                    onPressed: () async {
+                      if (saveExitBehavior) {
+                        await setting.put(SettingBoxKey.exitBehavior, 0);
+                      }
+                      // Stop download engine before exit
+                      await GopeedService().stop();
+                      exit(0);
+                    },
+                    child: Text(t.exitDialog.exit)),
               ],
             );
           });

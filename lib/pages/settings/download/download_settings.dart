@@ -5,6 +5,7 @@ import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/modules/download/gopeed/gopeed_service.dart';
 import 'package:haipee/providers/download_providers.dart';
 import 'package:haipee/utils/storage.dart';
@@ -140,7 +141,8 @@ class _DownloadSettingsPageState extends ConsumerState<DownloadSettingsPage> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
+        return AdaptiveDialogFrame(
+          maxWidth: 500,
           title: const Text('设置默认下载目录'),
           content: TextField(
             controller: editController,

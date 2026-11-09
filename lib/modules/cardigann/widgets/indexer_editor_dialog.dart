@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
@@ -193,7 +194,8 @@ class _IndexerEditorDialogState extends ConsumerState<IndexerEditorDialog> {
 
   Future<void> _resetToBuiltIn() async {
     HaipeeDialog.show(
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AdaptiveDialogFrame(
+        maxWidth: 440,
         title: const Text('恢复官方预置规则'),
         content: Text(
           '确定要将 "${widget.plugin.name}" 恢复为官方打包的初始预置版本吗？您的所有自定义修改将被重置。',
@@ -250,8 +252,8 @@ class _IndexerEditorDialogState extends ConsumerState<IndexerEditorDialog> {
       _yamlController.text,
     );
 
-    return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(20, 16, 16, 8),
+    return AdaptiveDialogFrame(
+      maxWidth: 720,
       title: Row(
         children: [
           const Icon(Icons.code_rounded, size: 22),
@@ -308,10 +310,7 @@ class _IndexerEditorDialogState extends ConsumerState<IndexerEditorDialog> {
             ),
         ],
       ),
-      content: SizedBox(
-        width: 680,
-        child: SingleChildScrollView(
-          child: Column(
+      content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -495,8 +494,6 @@ class _IndexerEditorDialogState extends ConsumerState<IndexerEditorDialog> {
               ),
             ],
           ),
-        ),
-      ),
       actions: [
         TextButton(
           onPressed: _isSaving ? null : () => Navigator.of(context).pop(),

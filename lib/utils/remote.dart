@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/providers/riverpod_compat.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:logger/logger.dart';
 import 'package:haipee/utils/logger.dart';
@@ -24,7 +25,9 @@ class RemotePlay {
         final searchLabel = dialogContext.t.navigation.actions.search;
         final dlnaDevices = ref.watch(dlnaDeviceListProvider);
 
-        return AlertDialog(
+        return AdaptiveDialogFrame(
+          maxWidth: 480,
+          maxHeight: 520,
           title: Text(remoteTexts.title),
           content: SingleChildScrollView(
             child: Column(

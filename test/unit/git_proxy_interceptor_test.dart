@@ -43,34 +43,36 @@ void main() {
     test('启用代理后，GitHub 相关域名均被正确重写且前置生效代理地址', () async {
       await GitProxyInterceptor.setEnabled(true);
       expect(GitProxyInterceptor.isEnabled(), isTrue);
-      expect(GitProxyInterceptor.getEffectiveProxyUrl(), equals('https://ghfast.top/'));
+      final defaultProxy = GitProxyInterceptor.defaultProxyUrl;
+      expect(GitProxyInterceptor.getEffectiveProxyUrl(), equals(defaultProxy));
 
       // 1. Kazumi 视频规则 raw URL
       const kazumiRuleUrl = 'https://raw.githubusercontent.com/Predidit/KazumiRules/main/index.json';
       expect(
         GitProxyInterceptor.applyProxy(kazumiRuleUrl),
-        equals('https://ghfast.top/https://raw.githubusercontent.com/Predidit/KazumiRules/main/index.json'),
+        equals('$defaultProxy$kazumiRuleUrl'),
       );
 
       // 2. Cardigann 种子规则 Prowlarr GitHub raw URL
       const cardigannUrl = 'https://raw.githubusercontent.com/Prowlarr/Indexers/master/definitions/v11/nyaasi.yml';
       expect(
         GitProxyInterceptor.applyProxy(cardigannUrl),
-        equals('https://ghfast.top/https://raw.githubusercontent.com/Prowlarr/Indexers/master/definitions/v11/nyaasi.yml'),
+        equals('$defaultProxy$cardigannUrl'),
       );
 
-      // 3. GitHub API 接口
+      // 3. GitHub API 接口 (保持直连，防止静态镜像返回 400 Invalid input)
       const apiUrl = 'https://api.github.com/repos/hugetiny/haipee-app/releases/latest';
       expect(
         GitProxyInterceptor.applyProxy(apiUrl),
-        equals('https://ghfast.top/https://api.github.com/repos/hugetiny/haipee-app/releases/latest'),
+        equals(apiUrl),
+        reason: 'api.github.com REST API 不可走静态文件反代',
       );
 
       // 4. GitHub 主站与 github.io
       const repoUrl = 'https://github.com/hugetiny/haipee-app';
       expect(
         GitProxyInterceptor.applyProxy(repoUrl),
-        equals('https://ghfast.top/https://github.com/hugetiny/haipee-app'),
+        equals('$defaultProxy$repoUrl'),
       );
     });
 
@@ -118,7 +120,7 @@ void main() {
 
       // 设置为空时自动恢复默认
       await GitProxyInterceptor.setProxyUrl('');
-      expect(GitProxyInterceptor.getEffectiveProxyUrl(), equals('https://ghfast.top/'));
+      expect(GitProxyInterceptor.getEffectiveProxyUrl(), equals(GitProxyInterceptor.defaultProxyUrl));
     });
 
     test('Dio 请求拦截器在 onRequest 阶段正确重写 path 与 baseUrl', () async {
@@ -137,17 +139,25 @@ void main() {
         equals('https://ghfast.top/https://raw.githubusercontent.com/Predidit/KazumiRules/main/index.json'),
       );
 
-      // Case 2: baseUrl 模式
+      // Case 2: baseUrl 模式 (Raw GitHub 资产)
       final options2 = RequestOptions(
-        baseUrl: 'https://api.github.com',
-        path: '/repos/hugetiny/haipee-app/releases/latest',
+        baseUrl: 'https://raw.githubusercontent.com',
+        path: '/Predidit/KazumiRules/main/index.json',
       );
       interceptor.onRequest(options2, RequestInterceptorHandler());
       expect(
         options2.baseUrl,
-        equals('https://ghfast.top/https://api.github.com'),
+        equals('https://ghfast.top/https://raw.githubusercontent.com'),
       );
-      expect(options2.path, equals('/repos/hugetiny/haipee-app/releases/latest'));
+      expect(options2.path, equals('/Predidit/KazumiRules/main/index.json'));
+
+      // Case 2.1: api.github.com 直连模式不被重写
+      final optionsApi = RequestOptions(
+        baseUrl: 'https://api.github.com',
+        path: '/repos/hugetiny/haipee-app/releases/latest',
+      );
+      interceptor.onRequest(optionsApi, RequestInterceptorHandler());
+      expect(optionsApi.baseUrl, equals('https://api.github.com'));
 
       // Case 3: 非 GitHub 请求
       final options3 = RequestOptions(

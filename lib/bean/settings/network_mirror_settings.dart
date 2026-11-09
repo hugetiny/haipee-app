@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:haipee/pages/setting/widgets/git_proxy_dialog.dart';
 import 'package:haipee/services/network/bangumi_acceleration.dart';
@@ -108,29 +109,28 @@ class _NetworkMirrorSettingsState extends State<NetworkMirrorSettings> {
   }) async {
     final selected = await HaipeeDialog.show<T>(
       context: context,
-      builder: (context) => SimpleDialog(
+      builder: (context) => AdaptiveDialogFrame(
+        maxWidth: 480,
         title: Text(title),
-        children: [
-          RadioGroup<T>(
-            groupValue: current,
-            onChanged: (value) => Navigator.of(context).pop(value),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final mode in modes)
-                  RadioListTile<T>(
-                    value: mode,
-                    title: Text(label(mode)),
-                    subtitle: Text(
-                      description(mode),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+        content: RadioGroup<T>(
+          groupValue: current,
+          onChanged: (value) => Navigator.of(context).pop(value),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final mode in modes)
+                RadioListTile<T>(
+                  value: mode,
+                  title: Text(label(mode)),
+                  subtitle: Text(
+                    description(mode),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
     if (mounted && selected != null && selected != current) {

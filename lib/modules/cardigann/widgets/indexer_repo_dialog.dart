@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 
 /// Dialog to manage and synchronize decentralized Cardigann indexer repositories.
@@ -92,18 +93,16 @@ class _IndexerRepoDialogState extends ConsumerState<IndexerRepoDialog> {
     final state = ref.watch(indexerPluginsProvider);
     final subs = state.subscriptions;
 
-    return AlertDialog(
+    return AdaptiveDialogFrame(
+      maxWidth: 560,
       title: const Row(
         children: [
           Icon(Icons.hub_outlined, size: 22),
           SizedBox(width: 8),
-          Text('去中心化索引器订阅仓库'),
+          Expanded(child: Text('去中心化索引器订阅仓库')),
         ],
       ),
-      content: SizedBox(
-        width: 540,
-        child: SingleChildScrollView(
-          child: Column(
+      content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -245,8 +244,6 @@ class _IndexerRepoDialogState extends ConsumerState<IndexerRepoDialog> {
               ],
             ],
           ),
-        ),
-      ),
       actions: [
         FilledButton.tonal(
           onPressed: () => Navigator.of(context).pop(),

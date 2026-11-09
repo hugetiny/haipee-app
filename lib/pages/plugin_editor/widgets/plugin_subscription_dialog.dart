@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/plugins/plugins_providers.dart';
 
 /// 统一在线视频规则源订阅对话框 (对标 IndexerRepoDialog)
@@ -118,8 +119,9 @@ class _PluginSubscriptionDialogState
     final state = ref.watch(pluginsProvider);
     final subs = state.subscriptions;
 
-    return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+    return AdaptiveDialogFrame(
+      maxWidth: 680,
+      maxHeight: 580,
       title: Row(
         children: [
           Container(
@@ -170,9 +172,7 @@ class _PluginSubscriptionDialogState
             ),
         ],
       ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
       content: SizedBox(
-        width: 640,
         height: 480,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

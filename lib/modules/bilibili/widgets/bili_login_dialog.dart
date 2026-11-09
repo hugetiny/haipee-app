@@ -10,6 +10,7 @@ import 'package:flutter_inappwebview_platform_interface/flutter_inappwebview_pla
 import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
 import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 /// 登录模式枚举
 enum BiliLoginTab {
@@ -354,11 +355,10 @@ class _BiliLoginDialogState extends State<BiliLoginDialog> {
       builder: (context, user, _) {
         final isLoggedIn = _authService.isLoggedIn && user != null;
 
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+        return AdaptiveDialogFrame(
+          maxWidth: 480,
+          maxHeight: 580,
+          expand: true,
           title: Row(
             children: [
               Container(

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
 import 'package:haipee/modules/torrent_search/models/torrent_item.dart';
 import 'package:haipee/modules/torrent_search/torrent_search_service.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
@@ -531,26 +532,17 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
 
     if (item.isArchive) {
       final format = item.archiveFormatName ?? '压缩包';
-      showDialog(
+      final confirmed = await HaipeeModalSheet.showConfirmation(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('无法在线播放'),
-          content: Text('该资源为 $format 压缩包格式（${item.title}），不支持直接在线边下边播。\n\n建议离线下载到本地解压后播放。'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _handleDownload(item);
-              },
-              child: const Text('立即下载'),
-            ),
-          ],
-        ),
+        title: '无法在线播放',
+        message: '该资源为 $format 压缩包格式（${item.title}），不支持直接在线边下边播。\n\n建议离线下载到本地解压后播放。',
+        confirmText: '立即下载',
+        cancelText: '取消',
+        icon: Icons.archive_outlined,
       );
+      if (confirmed == true) {
+        _handleDownload(item);
+      }
       return;
     }
 

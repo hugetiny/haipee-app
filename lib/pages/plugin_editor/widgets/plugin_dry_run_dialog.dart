@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/widget/image/rule_cover_image.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:haipee/modules/search/plugin_search_module.dart';
 import 'package:haipee/plugins/plugins.dart';
@@ -116,8 +117,9 @@ class _PluginDryRunDialogState extends ConsumerState<PluginDryRunDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+    return AdaptiveDialogFrame(
+      maxWidth: 700,
+      maxHeight: 600,
       title: Row(
         children: [
           Container(
@@ -175,15 +177,8 @@ class _PluginDryRunDialogState extends ConsumerState<PluginDryRunDialog> {
           ),
         ],
       ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 640,
-          maxHeight: MediaQuery.sizeOf(context).height * 0.75,
-        ),
-        child: SizedBox(
-          width: 640,
-          height: 440,
+      content: SizedBox(
+        height: 440,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -409,7 +404,6 @@ class _PluginDryRunDialogState extends ConsumerState<PluginDryRunDialog> {
           ],
         ),
       ),
-    ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),

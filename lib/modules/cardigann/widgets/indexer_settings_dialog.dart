@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
 import 'package:haipee/modules/cardigann/models/cardigann_definition.dart';
@@ -86,7 +87,8 @@ class _IndexerSettingsDialogState extends ConsumerState<IndexerSettingsDialog> {
     final theme = Theme.of(context);
     final def = widget.plugin.definition;
 
-    return AlertDialog(
+    return AdaptiveDialogFrame(
+      maxWidth: 520,
       title: Row(
         children: [
           const Icon(Icons.settings_outlined, size: 22),
@@ -99,10 +101,7 @@ class _IndexerSettingsDialogState extends ConsumerState<IndexerSettingsDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: 480,
-        child: SingleChildScrollView(
-          child: Column(
+      content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -217,8 +216,6 @@ class _IndexerSettingsDialogState extends ConsumerState<IndexerSettingsDialog> {
               ],
             ],
           ),
-        ),
-      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),

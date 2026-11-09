@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
 import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
 import 'package:haipee/bean/settings/settings_list.dart';
 import 'package:haipee/pages/setting/providers.dart';
@@ -29,22 +30,14 @@ class _StorageSettingsPageState extends ConsumerState<StorageSettingsPage> {
 
   Future<void> _confirmClear() async {
     if (_clearing) return;
-    final confirmed = await HaipeeDialog.show<bool>(
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.cleaning_services_rounded),
-        title: const Text('清除图片缓存？'),
-        content: const Text('图片会在下次加载时重新下载。视频、记录和设置不会删除。'),
-        actions: [
-          TextButton(
-            onPressed: () => HaipeeDialog.dismiss(popWith: false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => HaipeeDialog.dismiss(popWith: true),
-            child: const Text('清除缓存'),
-          ),
-        ],
-      ),
+    final confirmed = await HaipeeModalSheet.showConfirmation(
+      context: context,
+      title: '清除图片缓存？',
+      message: '图片会在下次加载时重新下载。视频、记录和设置不会删除。',
+      cancelText: '取消',
+      confirmText: '清除缓存',
+      isDestructive: true,
+      icon: Icons.cleaning_services_rounded,
     );
     if (confirmed != true || !mounted) return;
     setState(() => _clearing = true);

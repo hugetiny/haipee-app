@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:haipee/pages/plugin_editor/widgets/plugin_dry_run_dialog.dart';
 import 'package:haipee/pages/plugin_editor/widgets/plugin_subscription_dialog.dart';
@@ -228,8 +229,9 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
     final hasSingleConflict = singlePlugin != null &&
         allPlugins.any((p) => p.name == singlePlugin.name);
 
-    return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+    return AdaptiveDialogFrame(
+      maxWidth: 700,
+      maxHeight: 620,
       title: Row(
         children: [
           Container(
@@ -276,12 +278,7 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
           ),
         ],
       ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-      content: SizedBox(
-        width: 650,
-        height: 500,
-        child: SingleChildScrollView(
-          child: Column(
+      content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 快速操作工具行
@@ -583,8 +580,6 @@ class _PluginImportDialogState extends ConsumerState<PluginImportDialog> {
                 ),
             ],
           ),
-        ),
-      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),

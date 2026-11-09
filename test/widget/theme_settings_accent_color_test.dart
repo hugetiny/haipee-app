@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:haipee/bean/card/palette_card.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:haipee/pages/setting/appearance/theme_settings_page.dart';
 import 'package:haipee/pages/setting/providers.dart';
@@ -86,7 +87,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 弹窗应正常关闭
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(AdaptiveDialogFrame), findsNothing);
 
     // 校验动态配色状态已被激活
     expect(container.read(themeProvider).useDynamicColor, isTrue);
@@ -104,7 +105,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 弹窗应正常关闭
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(AdaptiveDialogFrame), findsNothing);
 
     // 动态配色状态应自动关闭，seedColor 应当更新为蓝色
     final themeState = container.read(themeProvider);
@@ -119,7 +120,7 @@ void main() {
     await tester.tap(find.text('主题色'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(AdaptiveDialogFrame), findsOneWidget);
 
     // 点击“默认”恢复
     final defaultFinder = find.text('默认');
@@ -128,7 +129,7 @@ void main() {
     await tester.tap(defaultFinder);
     await tester.pumpAndSettle();
 
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(AdaptiveDialogFrame), findsNothing);
     final resetThemeState = container.read(themeProvider);
     expect(resetThemeState.useDynamicColor, isFalse);
     expect(resetThemeState.seedColor, equals(Colors.green));

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:haipee/bean/appbar/drag_to_move_bar.dart' as dtb;
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/bean/widget/app_back_button.dart';
 import 'package:haipee/bean/widget/collect_button.dart';
 import 'package:haipee/bean/widget/desktop_window_controls_safe_area.dart';
@@ -227,7 +228,8 @@ class _SmallestPlayerItemPanelState
     final t = context.t;
     HaipeeDialog.show(builder: (context) {
       String input = '';
-      return AlertDialog(
+      return AdaptiveDialogFrame(
+        maxWidth: 400,
         title: Text(t.playback.controls.skip.title),
         content: TextField(
           inputFormatters: [

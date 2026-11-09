@@ -11,6 +11,8 @@ import 'package:haipee/services/storage/storage.dart';
 import 'package:haipee/utils/storage.dart';
 import 'package:haipee/utils/utils.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 
 const _dialogTitle = '恢复默认弹幕设置';
 const _dialogContent = '弹幕样式和屏蔽词将恢复为默认值。';
@@ -107,7 +109,8 @@ class _DanmakuSettingsPageState extends ConsumerState<DanmakuSettingsPage> {
     await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
+        return AdaptiveDialogFrame(
+          maxWidth: 480,
           title: Text(playerTexts.danmakuDanDanCredentials),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -174,21 +177,13 @@ class _DanmakuSettingsPageState extends ConsumerState<DanmakuSettingsPage> {
   }
 
   Future<void> resetDanmakuSettings() async {
-    final bool shouldReset = await HaipeeDialog.show<bool>(
-          builder: (context) => AlertDialog(
-            title: const Text(_dialogTitle),
-            content: const Text(_dialogContent),
-            actions: [
-              TextButton(
-                onPressed: () => HaipeeDialog.dismiss(popWith: false),
-                child: const Text(_cancelLabel),
-              ),
-              TextButton(
-                onPressed: () => HaipeeDialog.dismiss(popWith: true),
-                child: const Text(_confirmLabel),
-              ),
-            ],
-          ),
+    final bool shouldReset = await HaipeeModalSheet.showConfirmation(
+          context: context,
+          title: _dialogTitle,
+          message: _dialogContent,
+          cancelText: _cancelLabel,
+          confirmText: _confirmLabel,
+          isDestructive: true,
         ) ??
         false;
     if (!shouldReset) return;

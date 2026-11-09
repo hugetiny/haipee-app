@@ -9,6 +9,7 @@ import 'package:haipee/bean/appbar/sys_app_bar.dart';
 import 'package:haipee/bean/widget/app_back_button.dart';
 import 'package:haipee/bean/widget/app_context_menu.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
 import 'package:haipee/bean/widget/responsive/constrained_content.dart';
 import 'package:haipee/bean/widget/rule/unified_rule_card.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
@@ -432,23 +433,14 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
   }
 
   Future<void> _confirmDelete(Plugin plugin) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await HaipeeModalSheet.showConfirmation(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('删除规则'),
-        content: Text('确认删除 Haipee 视频规则【${plugin.name}】吗？删除后不可撤销。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('确认删除'),
-          ),
-        ],
-      ),
+      title: '删除规则',
+      message: '确认删除 Haipee 视频规则【${plugin.name}】吗？删除后不可撤销。',
+      cancelText: '取消',
+      confirmText: '确认删除',
+      isDestructive: true,
+      icon: Icons.delete_outline_rounded,
     );
 
     if (confirmed == true) {
@@ -507,6 +499,67 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
               }),
               const SizedBox(height: 8),
             ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMoreActionsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.add_rounded),
+                  title: const Text('手动添加规则'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _createNewPlugin();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.rss_feed_rounded),
+                  title: const Text('在线规则订阅'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    PluginSubscriptionDialog.show(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.speed_rounded),
+                  title: const Text('一键测速 (自动启用/禁用)'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _runAutoBatchTest();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.update),
+                  title: const Text('一键更新全部规则'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _handleUpdateAll();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.sort_rounded),
+                  title: const Text('排序方式'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showSortDialog();
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -768,39 +821,26 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
                 icon: const Icon(Icons.delete),
                 onPressed: selectedNames.isEmpty
                     ? null
-                    : () {
-                        showDialog(
+                    : () async {
+                        final confirmed = await HaipeeModalSheet.showConfirmation(
                           context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(pluginTexts.dialogs.deleteTitle),
-                            content: Text(
-                              pluginTexts.dialogs.deleteMessage.replaceFirst(
-                                '{count}',
-                                selectedNames.length.toString(),
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text(pluginTexts.actions.cancel),
-                              ),
-                              FilledButton(
-                                onPressed: () {
-                                  pluginsController.removePlugins(selectedNames);
-                                  ref
-                                      .read(pluginSelectionProvider.notifier)
-                                      .disableMultiSelect();
-                                  Navigator.pop(context);
-                                  HaipeeDialog.showToast(message: '已批量删除所选规则');
-                                },
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                                child: Text(pluginTexts.actions.delete),
-                              ),
-                            ],
+                          title: pluginTexts.dialogs.deleteTitle,
+                          message: pluginTexts.dialogs.deleteMessage.replaceFirst(
+                            '{count}',
+                            selectedNames.length.toString(),
                           ),
+                          cancelText: pluginTexts.actions.cancel,
+                          confirmText: pluginTexts.actions.delete,
+                          isDestructive: true,
+                          icon: Icons.delete_outline_rounded,
                         );
+                        if (confirmed == true) {
+                          pluginsController.removePlugins(selectedNames);
+                          ref
+                              .read(pluginSelectionProvider.notifier)
+                              .disableMultiSelect();
+                          HaipeeDialog.showToast(message: '已批量删除所选规则');
+                        }
                       },
               ),
             ] else ...[
@@ -921,9 +961,16 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
                     icon: const Icon(Icons.speed_rounded),
                     onPressed: speedTestState.isTesting ? null : () => _runAutoBatchTest(),
                   ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
-                    tooltip: '更多操作',
+                  if (MediaQuery.sizeOf(context).width < 640)
+                    IconButton(
+                      icon: const Icon(Icons.more_vert),
+                      tooltip: '更多操作',
+                      onPressed: () => _showMoreActionsSheet(context),
+                    )
+                  else
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
+                      tooltip: '更多操作',
                     onSelected: (val) {
                       switch (val) {
                         case 'add_manual':

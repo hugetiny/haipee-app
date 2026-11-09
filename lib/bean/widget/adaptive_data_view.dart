@@ -46,6 +46,120 @@ class AdaptiveViewSwitcher extends StatelessWidget {
       AdaptiveViewMode.card => Icons.view_agenda_outlined,
     };
 
+    final pillWidget = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withAlpha(120),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: viewMode == AdaptiveViewMode.auto
+              ? colorScheme.primary.withAlpha(120)
+              : colorScheme.outlineVariant.withAlpha(80),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            currentIcon,
+            size: 14,
+            color: colorScheme.primary,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            currentLabel,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.arrow_drop_down,
+            size: 16,
+            color: colorScheme.outline,
+          ),
+        ],
+      ),
+    );
+
+    if (MediaQuery.sizeOf(context).width < 640) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (ctx) {
+              return SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Text(
+                              '选择视图显示模式',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.auto_awesome),
+                        title: const Text('自动响应式 (宽屏表格 / 窄屏卡片)'),
+                        selected: viewMode == AdaptiveViewMode.auto,
+                        trailing: viewMode == AdaptiveViewMode.auto
+                            ? Icon(Icons.check, color: colorScheme.primary)
+                            : null,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          onModeChanged(AdaptiveViewMode.auto);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.table_chart),
+                        title: const Text('强制表格视图'),
+                        selected: viewMode == AdaptiveViewMode.table,
+                        trailing: viewMode == AdaptiveViewMode.table
+                            ? Icon(Icons.check, color: colorScheme.primary)
+                            : null,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          onModeChanged(AdaptiveViewMode.table);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.view_agenda_outlined),
+                        title: const Text('强制卡片视图'),
+                        selected: viewMode == AdaptiveViewMode.card,
+                        trailing: viewMode == AdaptiveViewMode.card
+                            ? Icon(Icons.check, color: colorScheme.primary)
+                            : null,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          onModeChanged(AdaptiveViewMode.card);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        child: pillWidget,
+      );
+    }
+
     return PopupMenuButton<AdaptiveViewMode>(
       tooltip: tooltip ??
           '视图显示模式 (当前: ${viewMode == AdaptiveViewMode.auto ? "自动响应式" : (viewMode == AdaptiveViewMode.table ? "强制表格" : "强制卡片")})',
@@ -131,43 +245,7 @@ class AdaptiveViewSwitcher extends StatelessWidget {
           ),
         ),
       ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withAlpha(120),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: viewMode == AdaptiveViewMode.auto
-                ? colorScheme.primary.withAlpha(120)
-                : colorScheme.outlineVariant.withAlpha(80),
-            width: 0.8,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              currentIcon,
-              size: 14,
-              color: colorScheme.primary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              currentLabel,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.arrow_drop_down,
-              size: 16,
-              color: colorScheme.outline,
-            ),
-          ],
-        ),
-      ),
+      child: pillWidget,
     );
   }
 }

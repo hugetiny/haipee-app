@@ -5,6 +5,8 @@ import 'package:haipee/bean/widget/app_context_menu.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:haipee/bean/appbar/sys_app_bar.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/modules/cardigann/engine/cardigann_query_executor.dart';
 import 'package:haipee/modules/cardigann/indexer_plugin_manager.dart';
 import 'package:haipee/modules/cardigann/models/indexer_plugin.dart';
@@ -723,16 +725,14 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage> {
   }
 
   Future<void> _confirmResetSingle(IndexerPlugin plugin) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await HaipeeModalSheet.showConfirmation(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('恢复官方预置规则'),
-        content: Text('确认将【${plugin.name}】的 YAML 代码恢复为官方出厂预置版本吗？您的本地修改将被重置。'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('确认恢复')),
-        ],
-      ),
+      title: '恢复官方预置规则',
+      message: '确认将【${plugin.name}】的 YAML 代码恢复为官方出厂预置版本吗？您的本地修改将被重置。',
+      cancelText: '取消',
+      confirmText: '确认恢复',
+      isDestructive: true,
+      icon: Icons.restore_rounded,
     );
 
     if (confirmed == true) {
@@ -744,20 +744,14 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage> {
   }
 
   Future<void> _confirmDeleteCustom(IndexerPlugin plugin) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await HaipeeModalSheet.showConfirmation(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('删除自定义规则'),
-        content: Text('确认删除规则【${plugin.name}】吗？此操作不可撤销。'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('确认删除'),
-          ),
-        ],
-      ),
+      title: '删除自定义规则',
+      message: '确认删除规则【${plugin.name}】吗？此操作不可撤销。',
+      cancelText: '取消',
+      confirmText: '确认删除',
+      isDestructive: true,
+      icon: Icons.delete_outline_rounded,
     );
 
     if (confirmed == true) {
@@ -769,16 +763,14 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage> {
   }
 
   Future<void> _confirmResetAll(List<IndexerPlugin> allPlugins) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await HaipeeModalSheet.showConfirmation(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('重置全部预置规则'),
-        content: const Text('确认将所有 11 个预置规则重置为官方默认版本吗？已有的本地修改将被还原。'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('确认重置')),
-        ],
-      ),
+      title: '重置全部预置规则',
+      message: '确认将所有 11 个预置规则重置为官方默认版本吗？已有的本地修改将被还原。',
+      cancelText: '取消',
+      confirmText: '确认重置',
+      isDestructive: true,
+      icon: Icons.restart_alt_rounded,
     );
 
     if (confirmed == true) {
@@ -872,8 +864,8 @@ class _DryRunTestDialogState extends State<_DryRunTestDialog> {
     final effectiveBaseUrl =
         widget.plugin.customBaseUrl ?? widget.plugin.definition.defaultLink;
 
-    return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+    return AdaptiveDialogFrame(
+      maxWidth: 640,
       title: Row(
         children: [
           Container(
@@ -907,9 +899,7 @@ class _DryRunTestDialogState extends State<_DryRunTestDialog> {
           ),
         ],
       ),
-      content: SizedBox(
-        width: 580,
-        child: Column(
+      content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1157,7 +1147,6 @@ class _DryRunTestDialogState extends State<_DryRunTestDialog> {
                 ),
           ],
         ),
-      ),
       actions: [
         TextButton(
           onPressed: () {

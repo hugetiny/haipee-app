@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/utils/constants.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart' show Level;
@@ -225,27 +226,36 @@ class HaipeeDialog {
             final dialogTitle = title ?? '错误';
             final fullCopy =
                 '【$dialogTitle】\n$displayMessage${error != null ? "\n$error" : ""}';
-            return AlertDialog(
-              title: SelectableText(dialogTitle),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SelectableText(displayMessage),
-                    if (error != null) ...[
-                      const SizedBox(height: 12),
-                      SelectableText(
-                        error.toString(),
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 13,
-                          color: Theme.of(dialogContext).colorScheme.error,
-                        ),
+            return AdaptiveDialogFrame(
+              maxWidth: 480,
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    color: Theme.of(dialogContext).colorScheme.error,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: SelectableText(dialogTitle)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SelectableText(displayMessage),
+                  if (error != null) ...[
+                    const SizedBox(height: 12),
+                    SelectableText(
+                      error.toString(),
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        color: Theme.of(dialogContext).colorScheme.error,
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
               actions: [
                 TextButton(
@@ -254,7 +264,7 @@ class HaipeeDialog {
                   },
                   child: const Text('复制报错信息'),
                 ),
-                TextButton(
+                FilledButton(
                   onPressed: () {
                     Navigator.of(dialogContext, rootNavigator: true).pop();
                     onConfirm?.call();

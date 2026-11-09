@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/modal_sheet/haipee_modal_sheet.dart';
 import 'package:haipee/pages/setting/setting_controller.dart';
 import 'package:haipee/request/api.dart';
 import 'package:haipee/utils/storage.dart';
@@ -88,36 +89,22 @@ class _AboutPageState extends ConsumerState<AboutPage> {
     _getCacheSize();
   }
 
-  void _showCacheDialog() {
-    HaipeeDialog.show(
-      builder: (context) {
-        final cacheDialog = context.t.dialogs.cache;
-        return AlertDialog(
-          title: Text(cacheDialog.title),
-          content: Text(cacheDialog.message),
-          actions: [
-            TextButton(
-              onPressed: () {
-                HaipeeDialog.dismiss();
-              },
-              child: Text(
-                context.t.app.cancel,
-                style: TextStyle(color: Theme.of(context).colorScheme.outline),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                try {
-                  _clearCache();
-                } catch (_) {}
-                HaipeeDialog.dismiss();
-              },
-              child: Text(context.t.app.confirm),
-            ),
-          ],
-        );
-      },
+  Future<void> _showCacheDialog() async {
+    final cacheDialog = context.t.dialogs.cache;
+    final confirmed = await HaipeeModalSheet.showConfirmation(
+      context: context,
+      title: cacheDialog.title,
+      message: cacheDialog.message,
+      confirmText: context.t.app.confirm,
+      cancelText: context.t.app.cancel,
+      isDestructive: true,
+      icon: Icons.delete_outline_rounded,
     );
+    if (confirmed == true) {
+      try {
+        await _clearCache();
+      } catch (_) {}
+    }
   }
 
   @override

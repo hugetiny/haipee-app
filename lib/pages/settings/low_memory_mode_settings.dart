@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:haipee/services/network/metered_network_service.dart';
 import 'package:haipee/services/player/low_memory_mode.dart';
@@ -51,12 +52,10 @@ class _LowMemoryModeDialogState extends State<_LowMemoryModeDialog> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    return AlertDialog(
+    return AdaptiveDialogFrame(
+      maxWidth: 480,
       title: const Text('低内存模式'),
-      scrollable: true,
-      content: SizedBox(
-        width: 440,
-        child: _ModeBuilder(builder: (context, mode, isMetered) {
+      content: _ModeBuilder(builder: (context, mode, isMetered) {
           final enabled = mode.isEnabled(isMetered: isMetered);
           final foreground =
               enabled ? colors.onSecondaryContainer : colors.onSurfaceVariant;
@@ -122,7 +121,6 @@ class _LowMemoryModeDialogState extends State<_LowMemoryModeDialog> {
             ],
           );
         }),
-      ),
       actions: [
         TextButton(
           onPressed: () => HaipeeDialog.dismiss(),

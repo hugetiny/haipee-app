@@ -14,13 +14,13 @@ import 'package:logger/logger.dart';
 class GitProxyInterceptor extends Interceptor {
   /// 推荐的高可用预置镜像列表
   static const List<String> defaultPresets = [
-    'https://ghfast.top/',
     'https://ghproxy.net/',
+    'https://ghfast.top/',
     'https://mirror.ghproxy.com/',
     'https://gh-proxy.com/',
   ];
 
-  static const String defaultProxyUrl = 'https://ghfast.top/';
+  static const String defaultProxyUrl = 'https://ghproxy.net/';
 
   /// 判定当前是否开启了 GitHub 代理
   static bool isEnabled() {
@@ -65,11 +65,13 @@ class GitProxyInterceptor extends Interceptor {
   static bool isGitHubUrl(String url) {
     if (url.isEmpty) return false;
     final lower = url.toLowerCase();
+    // 注意：api.github.com 为官方 REST API，第三方文件镜像（ghfast/ghproxy）不支持代理该 API，
+    // 若重写会导致 "Invalid input." 导致更新检查失败。
+    if (lower.contains('api.github.com')) return false;
     return lower.contains('github.com') ||
         lower.contains('raw.githubusercontent.com') ||
         lower.contains('gist.githubusercontent.com') ||
         lower.contains('objects.githubusercontent.com') ||
-        lower.contains('api.github.com') ||
         lower.contains('github.io');
   }
 

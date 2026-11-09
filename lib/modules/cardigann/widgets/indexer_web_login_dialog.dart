@@ -5,6 +5,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_inappwebview_platform_interface/flutter_inappwebview_platform_interface.dart'
     as inapp;
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
@@ -182,13 +183,12 @@ class _IndexerWebLoginDialogState extends State<IndexerWebLoginDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: 720,
-        height: 640,
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    return AdaptiveDialogFrame(
+      maxWidth: 720,
+      maxHeight: 640,
+      expand: true,
+      padding: const EdgeInsets.all(16),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 顶部标题栏
@@ -363,7 +363,6 @@ class _IndexerWebLoginDialogState extends State<IndexerWebLoginDialog> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

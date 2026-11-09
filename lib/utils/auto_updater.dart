@@ -860,9 +860,24 @@ class AutoUpdater {
       String filePath, InstallationType installationType) async {
     final updateTexts = _translations.settings.update;
     try {
-      // 显示准备退出的提示
-      HaipeeDialog.showToast(message: updateTexts.toast.prepareToInstall);
+      if (Platform.isAndroid) {
+        final result = await OpenFilex.open(filePath);
+        if (result.type != ResultType.done) {
+          final errorDetail = result.message.isNotEmpty
+              ? result.message
+              : updateTexts.toast.unknownReason;
+          HaipeeDialog.showToast(
+            message: updateTexts.toast.openInstallerFailed
+                .replaceFirst('{error}', errorDetail),
+          );
+        }
+        // 注意：Android 下绝不能调用 exit(0)！
+        // 必须保持进程存活，否则 OpenFilex 的 FileProvider 会在系统安装器读取 APK 流时崩溃退出，导致解析安装包失败。
+        return;
+      }
 
+      // 显示准备退出的提示 (针对桌面平台)
+      HaipeeDialog.showToast(message: updateTexts.toast.prepareToInstall);
       await Future.delayed(const Duration(seconds: 2));
 
       if (Platform.isWindows) {
@@ -884,21 +899,6 @@ class AutoUpdater {
           _revealInFileManager(filePath);
           return;
         }
-      } else if (Platform.isAndroid) {
-        final result = await OpenFilex.open(filePath);
-        if (result.type != ResultType.done) {
-          final errorDetail = result.message.isNotEmpty
-              ? result.message
-              : updateTexts.toast.unknownReason;
-          HaipeeDialog.showToast(
-            message: updateTexts.toast.openInstallerFailed
-                .replaceFirst('{error}', errorDetail),
-          );
-          return;
-        }
-        // 注意：Android 下绝不能调用 exit(0)！
-        // 必须保持进程存活，否则 OpenFilex 的 FileProvider 会在系统安装器读取 APK 流时崩溃退出，导致解析安装包失败。
-        return;
       }
       await Future.delayed(const Duration(seconds: 1));
       exit(0);
@@ -938,13 +938,21 @@ class AutoUpdater {
     // 针对 Android 优先匹配 arm64 架构（覆盖 99% 现代 Android 机型）
     if (type == InstallationType.androidApk) {
       for (final asset in assets) {
-        if (asset is! Map<String, dynamic>) continue;
-        final name = (asset['name'] as String?)?.toLowerCase() ?? '';
-        final downloadUrl = (asset['browser_download_url'] as String?) ?? '';
+        if (asset is! Map) continue;
+        final name = (asset['name']?.toString() ?? '').toLowerCase();
+        final downloadUrl = asset['browser_download_url']?.toString() ?? '';
         if (downloadUrl.isNotEmpty &&
-            name.contains('android') &&
             name.contains('.apk') &&
-            name.contains('arm64')) {
+            (name.contains('arm64') || name.contains('arm64-v8a'))) {
+          return downloadUrl;
+        }
+      }
+      // 降级兜底：若未匹配到明确的 arm64，匹配任意 .apk 安装包
+      for (final asset in assets) {
+        if (asset is! Map) continue;
+        final name = (asset['name']?.toString() ?? '').toLowerCase();
+        final downloadUrl = asset['browser_download_url']?.toString() ?? '';
+        if (downloadUrl.isNotEmpty && name.contains('.apk')) {
           return downloadUrl;
         }
       }
@@ -953,9 +961,9 @@ class AutoUpdater {
     // 针对 macOS 支持 .dmg 与 .zip (Universal 便携包)
     if (type == InstallationType.macosDmg) {
       for (final asset in assets) {
-        if (asset is! Map<String, dynamic>) continue;
-        final name = (asset['name'] as String?)?.toLowerCase() ?? '';
-        final downloadUrl = (asset['browser_download_url'] as String?) ?? '';
+        if (asset is! Map) continue;
+        final name = (asset['name']?.toString() ?? '').toLowerCase();
+        final downloadUrl = asset['browser_download_url']?.toString() ?? '';
         if (downloadUrl.isNotEmpty &&
             name.contains('macos') &&
             (name.contains('.dmg') || name.contains('.zip'))) {
@@ -967,17 +975,16 @@ class AutoUpdater {
     final patterns =
         _getFilePatterns(type).map((p) => p.toLowerCase()).toList();
 
-    try {
-      final asset = assets.cast<Map<String, dynamic>>().firstWhere((asset) {
-        final name = (asset['name'] as String?)?.toLowerCase() ?? '';
-        final downloadUrl = (asset['browser_download_url'] as String?) ?? '';
-        return downloadUrl.isNotEmpty &&
-            patterns.every((pattern) => name.contains(pattern));
-      });
-      return (asset['browser_download_url'] as String?) ?? '';
-    } catch (e) {
-      return '';
+    for (final asset in assets) {
+      if (asset is! Map) continue;
+      final name = (asset['name']?.toString() ?? '').toLowerCase();
+      final downloadUrl = asset['browser_download_url']?.toString() ?? '';
+      if (downloadUrl.isNotEmpty &&
+          patterns.every((pattern) => name.contains(pattern))) {
+        return downloadUrl;
+      }
     }
+    return '';
   }
 
   /// 获取合适的下载链接
@@ -1027,9 +1034,10 @@ class AutoUpdater {
   /// 从 assets 中获取文件的哈希值
   String _getFileHashFromAssets(List<dynamic> assets, String downloadUrl) {
     for (final asset in assets) {
-      final assetDownloadUrl = asset['browser_download_url'] as String? ?? '';
+      if (asset is! Map) continue;
+      final assetDownloadUrl = asset['browser_download_url']?.toString() ?? '';
       if (assetDownloadUrl == downloadUrl) {
-        final digest = asset['digest'] as String? ?? '';
+        final digest = asset['digest']?.toString() ?? '';
         if (digest.isNotEmpty && digest.startsWith('sha256:')) {
           return digest.substring(7); // 移除 "sha256:" 前缀
         }

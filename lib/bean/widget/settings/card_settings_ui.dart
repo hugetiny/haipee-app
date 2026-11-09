@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/bean/widget/responsive/constrained_content.dart';
 
 /// 纯原生 Material 3 设置列表容器
@@ -443,11 +444,109 @@ class SettingsDropdownTile<T> extends StatelessWidget {
     this.enabled = true,
   });
 
+  void _showMobilePicker(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return AdaptiveDialogFrame(
+          showDragHandle: true,
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                  child: DefaultTextStyle(
+                    style: theme.textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    child: title,
+                  ),
+                ),
+                const Divider(height: 1),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: options.entries.map((e) {
+                        final isSelected = e.key == value;
+                        return ListTile(
+                          title: Text(
+                            e.value,
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? theme.colorScheme.primary : null,
+                            ),
+                          ),
+                          trailing: isSelected
+                              ? Icon(Icons.check_rounded, color: theme.colorScheme.primary)
+                              : null,
+                          onTap: () {
+                            Navigator.of(sheetContext).pop();
+                            onChanged(e.key);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                SizedBox(height: MediaQuery.paddingOf(context).bottom + 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Widget? effectiveLeading = leading is IconData
         ? Icon(leading as IconData)
         : (leading is Widget ? leading as Widget : null);
+    final theme = Theme.of(context);
+    final isMobile = MediaQuery.sizeOf(context).width < 640;
+
+    if (isMobile) {
+      final selectedLabel = options[value] ?? fallbackLabel ?? '';
+      return ListTile(
+        leading: effectiveLeading,
+        title: title,
+        subtitle: description,
+        enabled: enabled,
+        onTap: enabled ? () => _showMobilePicker(context) : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selectedLabel.isNotEmpty)
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.sizeOf(context).width * 0.45,
+                ),
+                child: Text(
+                  selectedLabel,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.outline,
+              size: 20,
+            ),
+          ],
+        ),
+      );
+    }
 
     return ListTile(
       leading: effectiveLeading,

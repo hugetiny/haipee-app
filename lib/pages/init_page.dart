@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:haipee/router_constants.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/adaptive_dialog_frame.dart';
 import 'package:haipee/pages/my/my_controller.dart';
 import 'package:haipee/pages/my/providers.dart';
 import 'package:haipee/pages/setting/setting_controller.dart';
@@ -109,9 +110,9 @@ class _InitPageState extends ConsumerState<InitPage> {
           final t = dialogContext.t;
           return PopScope(
             canPop: false,
-            child: AlertDialog(
+            child: AdaptiveDialogFrame(
+              maxWidth: 500,
               title: Text(t.dialogs.disclaimer.title),
-              scrollable: true,
               content: Text(statementsText),
               actions: <Widget>[
                 TextButton(
@@ -125,7 +126,7 @@ class _InitPageState extends ConsumerState<InitPage> {
                     ),
                   ),
                 ),
-                TextButton(
+                FilledButton(
                   onPressed: () async {
                     try {
                       await pluginsController.copyPluginsToExternalDirectory();
@@ -156,18 +157,19 @@ class _InitPageState extends ConsumerState<InitPage> {
         final t = dialogContext.t;
         return PopScope(
           canPop: false,
-          child: AlertDialog(
+          child: AdaptiveDialogFrame(
+            maxWidth: 440,
             title: Text(t.dialogs.updateMirror.title),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Text(t.dialogs.updateMirror.question),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Text(t.dialogs.updateMirror.description),
                 ),
               ],
@@ -175,19 +177,19 @@ class _InitPageState extends ConsumerState<InitPage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  setting.put(SettingBoxKey.autoUpdate, true);
-                  HaipeeDialog.dismiss();
-                  _goHome();
-                },
-                child: Text(t.dialogs.updateMirror.options.github),
-              ),
-              TextButton(
-                onPressed: () {
                   setting.put(SettingBoxKey.autoUpdate, false);
                   HaipeeDialog.dismiss();
                   _goHome();
                 },
                 child: Text(t.dialogs.updateMirror.options.fdroid),
+              ),
+              FilledButton(
+                onPressed: () {
+                  setting.put(SettingBoxKey.autoUpdate, true);
+                  HaipeeDialog.dismiss();
+                  _goHome();
+                },
+                child: Text(t.dialogs.updateMirror.options.github),
               ),
             ],
           ),

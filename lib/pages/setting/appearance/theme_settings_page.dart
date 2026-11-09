@@ -8,6 +8,7 @@ import 'package:haipee/router_constants.dart';
 import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
 import 'package:haipee/bean/card/palette_card.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:haipee/bean/settings/color_type.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:haipee/pages/setting/providers.dart';
@@ -243,7 +244,8 @@ class _ThemeSettingsPageState extends ConsumerState<ThemeSettingsPage> {
                   onPressed: (_) async {
                     HaipeeDialog.show(builder: (context) {
                       final colorThemes = colorThemeTypes;
-                      return AlertDialog(
+                      return AdaptiveDialogFrame(
+                        maxWidth: 480,
                         title: Text(
                             t.settings.appearancePage.colorScheme.dialogTitle),
                         content: Wrap(

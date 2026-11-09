@@ -22,6 +22,7 @@ import 'package:haipee/pages/video/providers.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:canvas_danmaku/canvas_danmaku.dart';
 import 'package:haipee/bean/dialog/dialog_helper.dart';
+import 'package:haipee/bean/widget/responsive/responsive.dart';
 import 'package:screen_brightness_platform_interface/screen_brightness_platform_interface.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:haipee/pages/history/history_controller.dart';
@@ -240,7 +241,8 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
         return Consumer(builder: (context, ref, child) {
           final dontAskAgain = ref.watch(_superResolutionDontAskAgainProvider);
 
-          return AlertDialog(
+          return AdaptiveDialogFrame(
+            maxWidth: 440,
             title: Text(t.playback.superResolution.warning.title),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -622,11 +624,16 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
       return;
     }
     await HaipeeDialog.show(builder: (dialogContext) {
-      return Dialog(
-        child: ListView(
+      return AdaptiveDialogFrame(
+        maxWidth: 500,
+        maxHeight: 520,
+        scrollable: false,
+        title: const Text('选择弹幕动画'),
+        content: ListView(
           shrinkWrap: true,
           children: danmakuSearchResponse.animes.map((danmakuInfo) {
             return ListTile(
+              leading: const Icon(Icons.movie_outlined),
               title: Text(danmakuInfo.animeTitle),
               onTap: () async {
                 HaipeeDialog.dismiss();
@@ -654,11 +661,16 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                   return;
                 }
                 HaipeeDialog.show(builder: (episodesContext) {
-                  return Dialog(
-                    child: ListView(
+                  return AdaptiveDialogFrame(
+                    maxWidth: 480,
+                    maxHeight: 500,
+                    scrollable: false,
+                    title: Text(danmakuInfo.animeTitle),
+                    content: ListView(
                       shrinkWrap: true,
                       children: danmakuEpisodeResponse.episodes.map((episode) {
                         return ListTile(
+                          leading: const Icon(Icons.play_circle_outline),
                           title: Text(episode.episodeTitle),
                           onTap: () {
                             HaipeeDialog.dismiss();
@@ -693,7 +705,8 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
       builder: (context) {
         final TextEditingController searchTextController =
             TextEditingController(text: videoPageController.title);
-        return AlertDialog(
+        return AdaptiveDialogFrame(
+          maxWidth: 440,
           title: Text(t.playback.danmakuSearch.title),
           content: TextField(
             controller: searchTextController,
@@ -1079,99 +1092,89 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
             syncPlayEndPoints.add(selectedServer);
           }
 
-          return AlertDialog(
+          return AdaptiveDialogFrame(
+            maxWidth: 460,
             title: Text(t.playback.syncplay.selectServer.title),
             content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  InputDecorator(
-                    decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedServer,
-                        isExpanded: true,
-                        items: syncPlayEndPoints.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value,
-                              overflow: TextOverflow.ellipsis,
+              child: RadioGroup<String>(
+                groupValue: selectedServer,
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    if (newValue == defaultCustomSyncPlayEndPoint) {
+                      final serverTextController =
+                          TextEditingController();
+                      HaipeeDialog.show(
+                        builder: (context) {
+                          return AdaptiveDialogFrame(
+                            maxWidth: 420,
+                            title: Text(t.playback.syncplay.selectServer
+                                .customTitle),
+                            content: TextField(
+                              controller: serverTextController,
+                              decoration: InputDecoration(
+                                hintText: t.playback.syncplay
+                                    .selectServer.customHint,
+                              ),
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            if (newValue == defaultCustomSyncPlayEndPoint) {
-                              final serverTextController =
-                                  TextEditingController();
-                              HaipeeDialog.show(
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text(t.playback.syncplay.selectServer
-                                        .customTitle),
-                                    content: TextField(
-                                      controller: serverTextController,
-                                      decoration: InputDecoration(
-                                        hintText: t.playback.syncplay
-                                            .selectServer.customHint,
-                                      ),
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        child: Text(t.app.cancel),
-                                        onPressed: () {
-                                          HaipeeDialog.dismiss();
-                                        },
-                                      ),
-                                      TextButton(
-                                        child: Text(t.app.confirm),
-                                        onPressed: () {
-                                          if (serverTextController
-                                                  .text.isNotEmpty &&
-                                              !syncPlayEndPoints.contains(
-                                                  serverTextController.text)) {
-                                            HaipeeDialog.dismiss();
-                                            ref
-                                                .read(
-                                                    _syncPlayCustomServerProvider
-                                                        .notifier)
-                                                .state = serverTextController.text;
-                                            ref
-                                                .read(
-                                                    _syncPlaySelectedServerProvider
-                                                        .notifier)
-                                                .state = serverTextController.text;
-                                          } else {
-                                            HaipeeDialog.showToast(
-                                              message: t
-                                                  .playback
-                                                  .syncplay
-                                                  .selectServer
-                                                  .duplicateOrEmpty,
-                                            );
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  );
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text(t.app.cancel),
+                                onPressed: () {
+                                  HaipeeDialog.dismiss();
                                 },
-                              );
-                            } else {
-                              ref
-                                  .read(
-                                      _syncPlaySelectedServerProvider.notifier)
-                                  .state = newValue;
-                            }
-                          }
+                              ),
+                              TextButton(
+                                child: Text(t.app.confirm),
+                                onPressed: () {
+                                  if (serverTextController
+                                          .text.isNotEmpty &&
+                                      !syncPlayEndPoints.contains(
+                                          serverTextController.text)) {
+                                    HaipeeDialog.dismiss();
+                                    ref
+                                        .read(
+                                            _syncPlayCustomServerProvider
+                                                .notifier)
+                                        .state = serverTextController.text;
+                                    ref
+                                        .read(
+                                            _syncPlaySelectedServerProvider
+                                                .notifier)
+                                        .state = serverTextController.text;
+                                  } else {
+                                    HaipeeDialog.showToast(
+                                      message: t
+                                          .playback
+                                          .syncplay
+                                          .selectServer
+                                          .duplicateOrEmpty,
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          );
                         },
-                      ),
-                    ),
-                  ),
-                ],
+                      );
+                    } else {
+                      ref
+                          .read(
+                              _syncPlaySelectedServerProvider.notifier)
+                          .state = newValue;
+                    }
+                  }
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: syncPlayEndPoints.map((endpoint) {
+                    return RadioListTile<String>(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(endpoint),
+                      value: endpoint,
+                    );
+                  }).toList(),
+                ),
               ),
             ),
             actions: <Widget>[
@@ -1203,7 +1206,8 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
     final TextEditingController roomController = TextEditingController();
     final TextEditingController usernameController = TextEditingController();
     HaipeeDialog.show(builder: (BuildContext context) {
-      return AlertDialog(
+      return AdaptiveDialogFrame(
+        maxWidth: 440,
         title: Text(context.t.playback.syncplay.join.title),
         content: Form(
           key: formKey,

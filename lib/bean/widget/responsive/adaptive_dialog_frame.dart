@@ -10,7 +10,10 @@ import 'package:flutter/material.dart';
 /// - 桌面端 / 宽屏视口 (>= 640px)：
 ///   居中优雅浮层弹窗，具备合理的 maxWidth / maxHeight 约束与外边距。
 class AdaptiveDialogFrame extends StatelessWidget {
-  final Widget child;
+  final Widget? child;
+  final Widget? title;
+  final Widget? content;
+  final List<Widget>? actions;
   final double maxWidth;
   final double maxHeight;
   final double mobileMaxHeightFactor;
@@ -18,11 +21,18 @@ class AdaptiveDialogFrame extends StatelessWidget {
   final Clip clipBehavior;
   final Color? backgroundColor;
   final EdgeInsets? padding;
+  final EdgeInsetsGeometry? titlePadding;
+  final EdgeInsetsGeometry? contentPadding;
+  final EdgeInsetsGeometry? actionsPadding;
   final bool expand;
+  final bool scrollable;
 
   const AdaptiveDialogFrame({
     super.key,
-    required this.child,
+    this.child,
+    this.title,
+    this.content,
+    this.actions,
     this.maxWidth = 600,
     this.maxHeight = 720,
     this.mobileMaxHeightFactor = 0.90,
@@ -30,8 +40,13 @@ class AdaptiveDialogFrame extends StatelessWidget {
     this.clipBehavior = Clip.antiAlias,
     this.backgroundColor,
     this.padding,
+    this.titlePadding,
+    this.contentPadding,
+    this.actionsPadding,
     this.expand = false,
-  });
+    this.scrollable = true,
+  }) : assert(child != null || content != null || title != null,
+            '必须提供 child 或 content/title 之一');
 
   /// 快捷呼出响应式弹窗
   static Future<T?> show<T>({
@@ -48,6 +63,103 @@ class AdaptiveDialogFrame extends StatelessWidget {
     );
   }
 
+  Widget _buildBody(BuildContext context, bool isMobile) {
+    if (child != null) {
+      return padding != null ? Padding(padding: padding!, child: child) : child!;
+    }
+
+    final theme = Theme.of(context);
+    final List<Widget> columnChildren = [];
+
+    // Header / Title
+    if (title != null) {
+      columnChildren.add(
+        Padding(
+          padding: titlePadding ??
+              EdgeInsets.fromLTRB(
+                  20, isMobile ? 12 : 18, 20, isMobile ? 10 : 14),
+          child: DefaultTextStyle(
+            style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ) ??
+                const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            child: title!,
+          ),
+        ),
+      );
+      columnChildren.add(
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: theme.dividerColor.withValues(alpha: 0.35),
+        ),
+      );
+    }
+
+    // Content
+    if (content != null) {
+      final effectiveContent = Padding(
+        padding: contentPadding ??
+            EdgeInsets.fromLTRB(20, 14, 20, actions != null && actions!.isNotEmpty ? 12 : 20),
+        child: content!,
+      );
+
+      if (expand) {
+        columnChildren.add(
+          Expanded(
+            child: scrollable
+                ? SingleChildScrollView(child: effectiveContent)
+                : effectiveContent,
+          ),
+        );
+      } else {
+        columnChildren.add(
+          Flexible(
+            child: scrollable
+                ? SingleChildScrollView(child: effectiveContent)
+                : effectiveContent,
+          ),
+        );
+      }
+    }
+
+    // Actions / Footer
+    if (actions != null && actions!.isNotEmpty) {
+      columnChildren.add(
+        Container(
+          padding: actionsPadding ??
+              EdgeInsets.fromLTRB(
+                16,
+                10,
+                16,
+                12 + (isMobile ? MediaQuery.paddingOf(context).bottom : 0),
+              ),
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: theme.dividerColor.withValues(alpha: 0.35),
+              ),
+            ),
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: actions!,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: columnChildren,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
@@ -56,6 +168,8 @@ class AdaptiveDialogFrame extends StatelessWidget {
     final isMobile = screenWidth < 640;
     final theme = Theme.of(context);
     final bgColor = backgroundColor ?? theme.colorScheme.surface;
+
+    final bodyWidget = _buildBody(context, isMobile);
 
     if (isMobile) {
       final targetHeight = screenHeight * mobileMaxHeightFactor;
@@ -86,7 +200,7 @@ class AdaptiveDialogFrame extends StatelessWidget {
           clipBehavior: clipBehavior,
           child: SafeArea(
             top: false,
-            bottom: true,
+            bottom: actions == null || actions!.isEmpty,
             child: Padding(
               padding: EdgeInsets.only(
                 bottom: mediaQuery.viewInsets.bottom,
@@ -109,17 +223,9 @@ class AdaptiveDialogFrame extends StatelessWidget {
                       ),
                     ),
                   if (expand)
-                    Expanded(
-                      child: padding != null
-                          ? Padding(padding: padding!, child: child)
-                          : child,
-                    )
+                    Expanded(child: bodyWidget)
                   else
-                    Flexible(
-                      child: padding != null
-                          ? Padding(padding: padding!, child: child)
-                          : child,
-                    ),
+                    Flexible(child: bodyWidget),
                 ],
               ),
             ),
@@ -138,9 +244,7 @@ class AdaptiveDialogFrame extends StatelessWidget {
         width: maxWidth,
         height: expand ? maxHeight : null,
         constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
-        child: padding != null
-            ? Padding(padding: padding!, child: child)
-            : child,
+        child: bodyWidget,
       ),
     );
   }
