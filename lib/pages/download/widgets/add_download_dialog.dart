@@ -200,10 +200,13 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
 
   Widget _buildHeader() {
     final isMobile = MediaQuery.sizeOf(context).width < 640;
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
+        color: isMobile
+            ? Colors.transparent
+            : theme.colorScheme.primaryContainer,
         borderRadius: isMobile
             ? BorderRadius.zero
             : const BorderRadius.vertical(top: Radius.circular(16)),
@@ -212,14 +215,19 @@ class _AddDownloadDialogState extends ConsumerState<AddDownloadDialog>
         children: [
           Icon(
             Icons.add_circle_outline,
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
+            color: isMobile
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onPrimaryContainer,
           ),
           const SizedBox(width: 12),
           Text(
             '新建下载任务',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+            style: theme.textTheme.titleLarge?.copyWith(
+                  color: isMobile
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onPrimaryContainer,
                   fontWeight: FontWeight.bold,
+                  fontSize: isMobile ? 18 : null,
                 ),
           ),
           const Spacer(),

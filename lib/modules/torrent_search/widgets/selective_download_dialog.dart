@@ -296,11 +296,16 @@ class _SelectiveDownloadDialogState extends State<SelectiveDownloadDialog> {
   }
 
   Widget _buildHeader(ThemeData theme, ColorScheme colorScheme) {
+    final isMobile = MediaQuery.sizeOf(context).width < 640;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        color: isMobile
+            ? Colors.transparent
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: isMobile
+            ? BorderRadius.zero
+            : const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Row(
         spacing: 12,
@@ -638,12 +643,15 @@ class _SelectiveDownloadDialogState extends State<SelectiveDownloadDialog> {
   ) {
     final selectedStr = TorrentFileEntry.formatBytes(selectedBytes);
     final totalStr = TorrentFileEntry.formatBytes(totalBytes);
+    final isMobile = MediaQuery.sizeOf(context).width < 640;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+        borderRadius: isMobile
+            ? BorderRadius.zero
+            : const BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {

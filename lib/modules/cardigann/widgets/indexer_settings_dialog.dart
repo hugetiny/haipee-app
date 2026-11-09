@@ -136,11 +136,50 @@ class _IndexerSettingsDialogState extends ConsumerState<IndexerSettingsDialog> {
                 }
 
                 if (setting.type == 'select') {
+                  final isMobile = MediaQuery.sizeOf(context).width < 640;
+                  final selectedValue = _selectValues[setting.name] ??
+                      setting.options.keys.firstOrNull;
+
+                  if (isMobile) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            setting.label,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: setting.options.entries.map((opt) {
+                              final isSelected = selectedValue == opt.key;
+                              return ChoiceChip(
+                                label: Text(opt.value),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() {
+                                      _selectValues[setting.name] = opt.key;
+                                    });
+                                  }
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 14),
                     child: DropdownButtonFormField<String>(
-                      initialValue: _selectValues[setting.name] ??
-                          setting.options.keys.firstOrNull,
+                      initialValue: selectedValue,
                       decoration: InputDecoration(
                         labelText: setting.label,
                         border: const OutlineInputBorder(),

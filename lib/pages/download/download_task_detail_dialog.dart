@@ -273,7 +273,9 @@ class _DownloadTaskDetailDialogState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
+              color: isMobile
+                  ? Colors.transparent
+                  : theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
               borderRadius: isMobile
                   ? BorderRadius.zero
                   : const BorderRadius.vertical(
@@ -284,26 +286,31 @@ class _DownloadTaskDetailDialogState
               children: [
                 Icon(
                   Icons.info_outline_rounded,
-                  color: theme.colorScheme.onPrimaryContainer,
+                  color: isMobile
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onPrimaryContainer,
                 ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '下载任务详情',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '下载任务详情',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: isMobile
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 18 : null,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    tooltip: '关闭',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  tooltip: '关闭',
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
+          ),
 
             // Content
             Flexible(
