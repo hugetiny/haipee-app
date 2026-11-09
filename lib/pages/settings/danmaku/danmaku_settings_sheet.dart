@@ -65,18 +65,24 @@ class _DanmakuSettingsSheetState extends ConsumerState<DanmakuSettingsSheet> {
     final isBiliNative = playerController.activeBiliCid != null &&
         playerController.activeBiliCid! > 0;
 
+    final sectionTitleStr = '${playerTexts.danmakuSource} (已加载 $totalCount 条)';
+    final biliNativeTitleStr = '${sourcesTexts.bilibili} 官方原生弹幕';
+    final biliNativeDescStr =
+        'CID: ${playerController.activeBiliCid} · 共 $totalCount 条 (原生直连)';
+    final biliTitleStr = '${sourcesTexts.bilibili} ($biliCount 条)';
+    final gamerTitleStr = '${sourcesTexts.gamer} ($gamerCount 条)';
+    final dandanTitleStr = '${sourcesTexts.dandan} ($dandanCount 条)';
+
     return SettingsList(
       sections: [
         SettingsSection(
-          title: Text('${playerTexts.danmakuSource} (已加载 $totalCount 条)'),
+          title: Text(sectionTitleStr),
           tiles: isBiliNative
               ? [
                   SettingsTile(
                     leading: Icons.verified_rounded,
-                    title: const Text('哔哩哔哩官方原生弹幕'),
-                    description: Text(
-                      'CID: ${playerController.activeBiliCid} · 共 $totalCount 条 (原生直连，画面不混入第三方源标签)',
-                    ),
+                    title: Text(biliNativeTitleStr),
+                    description: Text(biliNativeDescStr),
                   ),
                 ]
               : [
@@ -88,7 +94,7 @@ class _DanmakuSettingsSheetState extends ConsumerState<DanmakuSettingsSheet> {
                           .setDanmakuBiliBiliSource(
                               value ?? !danmakuSettings.danmakuBiliBiliSource);
                     },
-                    title: Text('${sourcesTexts.bilibili} ($biliCount 条)'),
+                    title: Text(biliTitleStr),
                     initialValue: danmakuSettings.danmakuBiliBiliSource,
                   ),
                   SettingsTile.switchTile(
@@ -99,7 +105,7 @@ class _DanmakuSettingsSheetState extends ConsumerState<DanmakuSettingsSheet> {
                           .setDanmakuGamerSource(
                               value ?? !danmakuSettings.danmakuGamerSource);
                     },
-                    title: Text('${sourcesTexts.gamer} ($gamerCount 条)'),
+                    title: Text(gamerTitleStr),
                     initialValue: danmakuSettings.danmakuGamerSource,
                   ),
                   SettingsTile.switchTile(
@@ -110,7 +116,7 @@ class _DanmakuSettingsSheetState extends ConsumerState<DanmakuSettingsSheet> {
                           .setDanmakuDanDanSource(
                               value ?? !danmakuSettings.danmakuDanDanSource);
                     },
-                    title: Text('${sourcesTexts.dandan} ($dandanCount 条)'),
+                    title: Text(dandanTitleStr),
                     initialValue: danmakuSettings.danmakuDanDanSource,
                   ),
                 ],

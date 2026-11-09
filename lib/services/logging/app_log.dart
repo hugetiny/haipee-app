@@ -19,28 +19,83 @@ export 'package:haipee/services/logging/log_enricher.dart' show DiagnosticInfo, 
 export 'package:haipee/utils/logger.dart' show HaipeeLogger, getLogsPath, clearLogs;
 
 /// Module-tagged Talker log record.
+///
+/// The record always carries a [TalkerKey] derived from its [LogLevel]
+/// (`error`, `warning`, `info`, ...). `TalkerScreen` groups its filter chips
+/// and `TalkerFilter` matches records purely by `key`, so a `null` key would
+/// make the log invisible under every category chip in [LogsPage].
 class ModuleLog extends TalkerLog {
   ModuleLog(
     super.message, {
     required this.module,
-    super.logLevel,
+    LogLevel? logLevel,
     Object? error,
     super.stackTrace,
     super.time,
   }) : super(
+          logLevel: logLevel ?? LogLevel.debug,
+          key: TalkerKey.fromLogLevel(logLevel ?? LogLevel.debug),
           error: error is Error ? error : null,
           exception: error is Error ? null : error,
         );
 
   final LogModule module;
 
+  /// Card title shown in [LogsPage], e.g. `error · PLAYER`.
+  ///
+  /// Talker assigns `title = settings.getTitleByKey(key)` before dispatching;
+  /// the inherited setter stores that value but this getter keeps the module
+  /// tag visible next to the level.
   @override
-  String get title => module.tag;
+  String get title => '${key ?? 'log'} · ${module.tag}';
 
   @override
   String generateTextMessage({
     TimeFormat timeFormat = TimeFormat.timeAndSeconds,
-  }) => '[$title] $message';
+  }) => '[${key ?? 'log'}] [${module.tag}] $message';
+}
+
+/// In-memory Talker history that keeps the error counter derived from the
+/// exact same list rendered by [LogsPage].
+///
+/// The debug HUD badge, the `error` chip in [LogsPage] and the diagnostics
+/// tooling therefore always read one single source of truth: entries are
+/// counted on write, decremented on ring-buffer eviction and reset on
+/// `cleanHistory()` (including the "Clean history" action inside TalkerScreen).
+class AppLogHistory implements TalkerHistory {
+  AppLogHistory({required TalkerSettings Function() settings, this.onChanged})
+      : _settings = settings;
+
+  final TalkerSettings Function() _settings;
+  final VoidCallback? onChanged;
+  final List<TalkerData> _items = <TalkerData>[];
+  int _errorCount = 0;
+
+  int get errorCount => _errorCount;
+
+  @override
+  List<TalkerData> get history => _items;
+
+  @override
+  void clean() {
+    if (!_settings().useHistory) return;
+    _items.clear();
+    _errorCount = 0;
+    onChanged?.call();
+  }
+
+  @override
+  void write(TalkerData data) {
+    final settings = _settings();
+    if (!settings.useHistory || !settings.enabled) return;
+    if (settings.maxHistoryItems <= _items.length && _items.isNotEmpty) {
+      final evicted = _items.removeAt(0);
+      if (AppLog.isErrorRecord(evicted)) _errorCount--;
+    }
+    _items.add(data);
+    if (AppLog.isErrorRecord(data)) _errorCount++;
+    onChanged?.call();
+  }
 }
 
 /// Observer directing Talker logs to the rolling file sink and error notifier.
@@ -51,7 +106,6 @@ class AppLogObserver extends TalkerObserver {
 
   @override
   void onError(TalkerError err) {
-    AppLog.recordError();
     final msg = err.message ?? err.error.toString();
     final moduleStr = LogModule.detect(msg).tag;
     _write(
@@ -71,7 +125,6 @@ class AppLogObserver extends TalkerObserver {
 
   @override
   void onException(TalkerException err) {
-    AppLog.recordError();
     final msg = err.message ?? err.exception.toString();
     final moduleStr = LogModule.detect(msg).tag;
     _write(
@@ -115,7 +168,6 @@ class AppLogObserver extends TalkerObserver {
     );
 
     if (level == LogLevel.error || level == LogLevel.critical) {
-      AppLog.recordError();
       AppLog.notifyError(
         msg,
         error: log.error ?? log.exception,
@@ -288,15 +340,10 @@ class AppLog {
         final isTestLab = await _intentChannel.invokeMethod<bool>('isFirebaseTestLab');
         if (isTestLab == true) {
           _detectedNativeTestLab = true;
+          // Console mirroring is driven by AppLogObserver via [isFirebaseTestLab];
+          // do NOT call talker.configure() here: it silently replaces the custom
+          // [AppLogHistory] (the error-count source of truth) with a default one.
           setDebugMode(true);
-          try {
-            talker.configure(
-              settings: TalkerSettings(
-                maxHistoryItems: 1000,
-                useConsoleLogs: true,
-              ),
-            );
-          } catch (_) {}
         }
       }
     } catch (_) {}
@@ -316,9 +363,11 @@ class AppLog {
     } catch (_) {}
   }
 
-  /// Records and formats a RenderFlex overflow error so it is surfaced deterministically in Test Lab logs
+  /// Records and formats a RenderFlex overflow error so it is surfaced deterministically in Test Lab logs.
+  ///
+  /// Logged exactly once through [e]; the error counter is derived from the
+  /// resulting history entry, never incremented manually.
   static void recordRenderFlexOverflow(FlutterErrorDetails details) {
-    recordError();
     final message = details.exceptionAsString();
     e(
       LogModule.ui,
@@ -328,11 +377,21 @@ class AppLog {
     );
   }
 
-  static final Talker talker = TalkerFlutter.init(
+  /// In-memory history shared by [LogsPage] and the debug HUD error badge.
+  static final AppLogHistory history = AppLogHistory(
+    settings: () => talker.settings,
+    onChanged: _publishErrorCount,
+  );
+
+  static final Talker talker = Talker(
     observer: compositeObserver,
+    history: history,
     settings: TalkerSettings(
       maxHistoryItems: 1000,
-      useConsoleLogs: !kReleaseMode || isFirebaseTestLab,
+      // AppLogObserver already mirrors every structured entry to the console
+      // (debug builds / Test Lab). Talker's own console printer would print
+      // each record a second time.
+      useConsoleLogs: false,
     ),
   );
 
@@ -359,24 +418,70 @@ class AppLog {
     }
   }
 
+  // ─── Error counter (derived, single source of truth) ───────────────────────
+
+  /// Keys counted as errors. Every error path in the app is routed through
+  /// [e] / [f] / [handle] (key `error` / `critical`); `exception` is kept for
+  /// third-party code calling `talker.handle` directly.
+  static const Set<String> errorKeys = {
+    TalkerKey.error,
+    TalkerKey.critical,
+    TalkerKey.exception,
+  };
+
+  /// Whether [data] counts towards the HUD error badge.
+  static bool isErrorRecord(TalkerData data) {
+    final key = data.key;
+    if (key != null) return errorKeys.contains(key);
+    final level = data.logLevel;
+    return level == LogLevel.error || level == LogLevel.critical;
+  }
+
+  /// UI-facing notifier mirroring [errorCount]. Updated after the current
+  /// frame when a log is written during build/layout/paint so listeners never
+  /// trigger "setState() called during build".
   static final ValueNotifier<int> errorCountNotifier = ValueNotifier<int>(0);
-  static int get errorCount => errorCountNotifier.value;
-  static void recordError() {
+
+  /// Exact number of error records currently held in [talker.history] —
+  /// identical to the sum of the `error` / `critical` / `exception` chips in
+  /// [LogsPage].
+  static int get errorCount => history.errorCount;
+
+  static bool _publishScheduled = false;
+  static void _publishErrorCount() {
     try {
-      final binding = WidgetsBinding.instance;
+      final binding = SchedulerBinding.instance;
       if (binding.schedulerPhase != SchedulerPhase.idle) {
+        if (_publishScheduled) return;
+        _publishScheduled = true;
         binding.addPostFrameCallback((_) {
-          errorCountNotifier.value++;
+          _publishScheduled = false;
+          errorCountNotifier.value = history.errorCount;
         });
-      } else {
-        errorCountNotifier.value++;
+        binding.ensureVisualUpdate();
+        return;
       }
     } catch (_) {
-      errorCountNotifier.value++;
+      // Binding not initialized (pure Dart unit tests) – publish directly.
     }
+    errorCountNotifier.value = history.errorCount;
   }
+
+  /// Per-key counts of the in-memory history (same grouping as LogsPage chips).
+  static Map<String, int> historyKeyCounts() {
+    final counts = <String, int>{};
+    for (final item in talker.history) {
+      final key = item.key ?? 'undefined';
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  /// Clears the in-memory log history; the error badge resets as a consequence.
+  /// Persistent log files on disk are kept (use [clearLogs] to wipe them too).
   static void resetErrorCount() {
-    errorCountNotifier.value = 0;
+    talker.cleanHistory();
+    _publishErrorCount();
   }
 
   /// Merged listenable for reactive HUD and developer widgets.
@@ -778,7 +883,6 @@ class AppLog {
   static Future<bool> clearLogs() async {
     try {
       await fileSink.clear();
-      talker.cleanHistory();
       resetErrorCount();
       return true;
     } catch (_) {

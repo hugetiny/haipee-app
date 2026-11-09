@@ -1,3 +1,4 @@
+import 'package:haipee/services/logging/log_module.dart';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -105,7 +106,7 @@ class _RenderPaintError extends RenderBox {
   void paint(PaintingContext context, Offset offset) {
     if (!_hasRecorded) {
       _hasRecorded = true;
-      AppLog.recordError();
+      AppLog.e(LogModule.ui, 'test error');
     }
   }
 }

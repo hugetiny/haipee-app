@@ -1,3 +1,4 @@
+import 'package:haipee/services/logging/log_module.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -47,8 +48,8 @@ void main() {
       AppLog.setDebugMode(true);
       AppLog.setLogScreenVisible(false);
       AppLog.resetErrorCount();
-      AppLog.recordError();
-      AppLog.recordError();
+      AppLog.e(LogModule.ui, 'test error');
+      AppLog.e(LogModule.ui, 'test error');
 
       await tester.pumpWidget(
         const MaterialApp(
@@ -99,14 +100,14 @@ void main() {
       expect(find.text('DevLog'), findsOneWidget);
 
       // Trigger error dynamically while widget is mounted
-      AppLog.recordError();
+      AppLog.e(LogModule.ui, 'test error');
       await tester.pump();
 
       expect(find.text('1'), findsOneWidget);
       expect(find.byIcon(Icons.error_outline_rounded), findsOneWidget);
 
       // Another error
-      AppLog.recordError();
+      AppLog.e(LogModule.ui, 'test error');
       await tester.pump();
 
       expect(find.text('2'), findsOneWidget);

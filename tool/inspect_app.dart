@@ -31,6 +31,8 @@ void main(List<String> args) async {
     } else if (args[i] == '--find' && i + 1 < args.length) {
       command = 'find';
       findQuery = args[++i];
+    } else if (args[i] == '--log-stats') {
+      command = 'log-stats';
     } else if (args[i] == '--failures') {
       await _dumpParseFailures();
       return;
@@ -106,6 +108,21 @@ void main(List<String> args) async {
   stdout.writeln('📱 主 Isolate: ${isolate.name} ($isolateId)');
 
   switch (command) {
+    case 'log-stats':
+      // HUD error badge vs. LogsPage chip counts, read from the live in-memory history.
+      try {
+        final res = await client.callServiceExtension('ext.haipee.logStats', isolateId: isolateId);
+        final data = res.json ?? {};
+        stdout.writeln('📊 HUD errorCount: ${data['errorCount']}  |  history: ${data['historyLength']} 条');
+        final byKey = (data['byKey'] as Map?) ?? {};
+        for (final entry in byKey.entries) {
+          stdout.writeln('   • ${entry.key}: ${entry.value}');
+        }
+      } catch (e) {
+        stderr.writeln('❌ 读取 ext.haipee.logStats 失败 (需热重启以注册新扩展): $e');
+      }
+      break;
+
     case 'reload':
       bool signalSent = false;
       if (Platform.isMacOS || Platform.isLinux) {
@@ -457,6 +474,8 @@ File? _findHaipeeLogFile() {
   final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '';
   final candidateDirs = [
     '$home/Library/Application Support/com.example.haipee/logs',
+    // macOS App Sandbox container (release / sandboxed builds)
+    '$home/Library/Containers/com.example.haipee/Data/Library/Application Support/com.example.haipee/logs',
     '$home/Library/Application Support/haipee/logs',
     '$home/.local/share/haipee/logs',
     '${Platform.environment['APPDATA']}/haipee/logs',
@@ -674,7 +693,14 @@ Future<void> _clearAllLogs() async {
     for (final f in dir.listSync().whereType<File>()) {
       if ((f.path.contains('haipee') || f.path.contains('kazumi')) && f.path.endsWith('.log')) {
         try {
-          f.deleteSync();
+          // Truncate the active file instead of unlinking it: the running app
+          // keeps an open IOSink on haipee.log, and deleting it would make all
+          // subsequent writes go to an orphaned inode.
+          if (f.uri.pathSegments.last == 'haipee.log') {
+            f.writeAsStringSync('');
+          } else {
+            f.deleteSync();
+          }
           count++;
         } catch (_) {
           try {

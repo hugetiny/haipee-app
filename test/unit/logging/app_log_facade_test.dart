@@ -86,7 +86,7 @@ void main() {
 
       AppLog.listenable.addListener(listener);
 
-      AppLog.recordError();
+      AppLog.e(LogModule.ui, 'test error');
       expect(notifications, equals(1));
 
       AppLog.setDebugMode(!AppLog.isDebugMode);

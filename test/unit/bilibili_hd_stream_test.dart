@@ -67,11 +67,13 @@ void main() {
       expect(playUrl.videoUrl, contains('video_1080p60.m4s'));
       expect(playUrl.audioUrl, contains('audio_192k.m4s'));
       expect(playUrl.format, equals('dash'));
-      expect(playUrl.availableQualities.length, equals(4));
+      expect(playUrl.availableQualities.length, equals(6));
       expect(playUrl.availableQualities[0].id, equals(116));
-      expect(playUrl.availableQualities[1].id, equals(80));
-      expect(playUrl.availableQualities[2].id, equals(64));
-      expect(playUrl.availableQualities[3].id, equals(16));
+      expect(playUrl.availableQualities[1].id, equals(112));
+      expect(playUrl.availableQualities[2].id, equals(80));
+      expect(playUrl.availableQualities[3].id, equals(64));
+      expect(playUrl.availableQualities[4].id, equals(32));
+      expect(playUrl.availableQualities[5].id, equals(16));
 
       // Specific targetQuality: picks 80 (1080P 高清)
       final playUrl1080 = await BilibiliService.getPlayUrl(

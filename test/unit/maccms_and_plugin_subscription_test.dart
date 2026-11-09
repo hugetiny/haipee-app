@@ -127,10 +127,10 @@ void main() {
         final res = await plugin.queryBangumi('芙莉莲');
         expect(res.data.length, equals(2));
 
-        // 验证条目1: http海报自动升级https，提取vod_remarks
+        // 验证条目1: 保留原始http海报（避免无SSL站点握手失败），提取vod_remarks
         final item1 = res.data[0];
         expect(item1.name, equals('葬送的芙莉莲'));
-        expect(item1.pic, equals('https://img.lziapi.com/frieren.jpg'));
+        expect(item1.pic, equals('http://img.lziapi.com/frieren.jpg'));
         expect(item1.remarks, equals('更新至第28集'));
         expect(item1.src, contains('ids=98765'));
 

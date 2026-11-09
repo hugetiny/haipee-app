@@ -1,3 +1,4 @@
+import 'package:haipee/services/logging/log_module.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -201,7 +202,7 @@ void main() {
       expect(find.byIcon(Icons.terminal_rounded), findsOneWidget);
 
       // 验证触发错误时徽标数字变更
-      AppLog.recordError();
+      AppLog.e(LogModule.ui, 'test error');
       await tester.pump();
 
       expect(find.text('1'), findsOneWidget);

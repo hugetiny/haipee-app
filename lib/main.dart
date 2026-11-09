@@ -45,13 +45,16 @@ void setupGlobalErrorHandlers() {
       );
       return;
     } else {
+      // Logged exactly once: AppLog.e records into Talker history (key `error`),
+      // the rolling file sink and Sentry. Do NOT additionally call
+      // talker.handle() here – that produced a second, differently-keyed entry
+      // and double-counted the HUD error badge.
       AppLog.e(
         LogModule.system,
         '[HAIPEE_ERROR] Flutter unhandled error: $exceptionStr',
         error: details.exception,
         stackTrace: details.stack,
       );
-      HaipeeLogger().talker.handle(details.exception, details.stack);
     }
 
     originalFlutterOnError?.call(details);
@@ -76,7 +79,6 @@ void setupGlobalErrorHandlers() {
       error: error,
       stackTrace: stack,
     );
-    HaipeeLogger().talker.handle(error, stack);
     return originalPlatformOnError?.call(error, stack) ?? true;
   };
 
@@ -90,6 +92,14 @@ void setupGlobalErrorHandlers() {
       developer.registerExtension('ext.haipee.resetErrorCount', (method, parameters) async {
         AppLog.resetErrorCount();
         return developer.ServiceExtensionResponse.result(jsonEncode({'success': true}));
+      });
+      // Live in-memory log stats: HUD error badge vs. LogsPage chip counts.
+      developer.registerExtension('ext.haipee.logStats', (method, parameters) async {
+        return developer.ServiceExtensionResponse.result(jsonEncode({
+          'errorCount': AppLog.errorCount,
+          'historyLength': AppLog.talker.history.length,
+          'byKey': AppLog.historyKeyCounts(),
+        }));
       });
     } catch (_) {}
   }

@@ -188,15 +188,15 @@ class _SingleSelectorBottomSheetState<T>
     final theme = Theme.of(context);
     final maxHeight = MediaQuery.of(context).size.height * 0.7;
 
-    return Container(
+    return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: BoxDecoration(
+      child: Material(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             // 拖动条
             Container(
               margin: const EdgeInsets.only(top: 12, bottom: 8),
@@ -286,10 +286,11 @@ class _SingleSelectorBottomSheetState<T>
                 },
               ),
             ),
-          )
+          ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -371,16 +372,16 @@ class _MultiSelectorBottomSheetState<T>
     final theme = Theme.of(context);
     final maxHeight = MediaQuery.of(context).size.height * 0.7;
 
-    return Container(
+    return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: BoxDecoration(
+      child: Material(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 拖动条
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 拖动条
           Container(
             margin: const EdgeInsets.only(top: 12, bottom: 8),
             width: 40,
@@ -485,10 +486,11 @@ class _MultiSelectorBottomSheetState<T>
                 },
               ),
             ),
-          )
+          ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -510,11 +512,10 @@ class _ActionSheetBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return Material(
+      color: theme.colorScheme.surface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      clipBehavior: Clip.antiAlias,
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,

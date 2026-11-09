@@ -72,6 +72,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Expand the unified filter panel if currently collapsed
+      final toggleFinder = find.byKey(const Key('online_search_filter_toggle_btn'));
+      if (toggleFinder.evaluate().isNotEmpty) {
+        await tester.tap(toggleFinder);
+        await tester.pumpAndSettle();
+      }
+
       // Find all ChoiceChips in the header filter
       final choiceChips = tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).toList();
       expect(choiceChips.isNotEmpty, isTrue);
@@ -85,10 +92,10 @@ void main() {
       // Verify no check icon (Icons.check) is present anywhere in the chip tree
       expect(find.byIcon(Icons.check), findsNothing);
 
-      // Tap on the "视频" chip
+      // Tap on the "点播视频" chip
       final videoTextFinder = find.descendant(
         of: find.byType(ChoiceChip),
-        matching: find.textContaining('视频'),
+        matching: find.text('点播视频'),
       );
       expect(videoTextFinder, findsOneWidget);
       await tester.tap(videoTextFinder, warnIfMissed: false);

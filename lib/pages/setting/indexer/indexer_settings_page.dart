@@ -1085,16 +1085,18 @@ class _DryRunTestDialogState extends State<_DryRunTestDialog> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Container(
+                    SizedBox(
                       height: 220,
-                      decoration: BoxDecoration(
+                      child: Material(
                         color:
                             colorScheme.surfaceContainerHighest.withAlpha(60),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: colorScheme.outlineVariant.withAlpha(60)),
-                      ),
-                      child: ListView.separated(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                              color: colorScheme.outlineVariant.withAlpha(60)),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: ListView.separated(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 6),
                         itemCount: _testResults!.take(10).length,
@@ -1150,6 +1152,7 @@ class _DryRunTestDialogState extends State<_DryRunTestDialog> {
                         },
                       ),
                     ),
+                  ),
                   ],
                 ),
           ],
