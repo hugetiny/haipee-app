@@ -1,7 +1,7 @@
 {
   "@@locale": "ja-JP",
   "app": {
-    "title": "haipee",
+    "title": "Haipee",
     "loading": "読み込み中…",
     "retry": "再試行",
     "confirm": "確認",
@@ -47,7 +47,7 @@
       "languageDesc": "アプリインターフェースの表示言語を選択",
       "followSystem": "システム",
       "exitBehavior": "閉じる際",
-      "exitApp": "haipeeを終了",
+      "exitApp": "Haipeeを終了",
       "minimizeToTray": "トレイに最小化",
       "askEveryTime": "毎回確認"
     },
@@ -152,7 +152,7 @@
         "repoMissing": "リポジトリにこのルールは含まれていません。",
         "alreadyLatest": "ルールは既に最新です。",
         "updateSuccess": "更新に成功しました。",
-        "updateIncompatible": "haipee のバージョンが古いため、このルールは互換性がありません。",
+        "updateIncompatible": "Haipee のバージョンが古いため、このルールは互換性がありません。",
         "updateFailed": "ルールの更新に失敗しました。",
         "copySuccess": "クリップボードにコピーしました。"
       },
@@ -432,7 +432,7 @@
         },
         "complete": {
           "title": "ダウンロード完了",
-          "message": "haipee {version} がダウンロードされました。",
+          "message": "Haipee {version} がダウンロードされました。",
           "quitNotice": "アプリのインストール中に終了します。",
           "fileLocation": "ファイルは次に保存されました",
           "buttons": {
@@ -487,15 +487,15 @@
   },
   "exitDialog": {
     "title": "終了の確認",
-    "message": "haipeeを終了しますか？",
+    "message": "Haipeeを終了しますか？",
     "dontAskAgain": "次回から聞かない",
-    "exit": "haipeeを終了",
+    "exit": "Haipeeを終了",
     "minimize": "トレイに最小化",
     "cancel": "キャンセル"
   },
   "tray": {
     "showWindow": "ウィンドウを表示",
-    "exit": "haipeeを終了"
+    "exit": "Haipeeを終了"
   },
   "navigation": {
     "tabs": {
@@ -547,7 +547,7 @@
     "common": {
       "emptyState": "コンテンツが見つかりません",
       "retry": "タップして再試行",
-      "backHint": "haipeeを終了するにはバックボタンを再度押してください",
+      "backHint": "Haipeeを終了するにはバックボタンを再度押してください",
       "toast": {
         "editMode": "編集モードが有効になりました。"
       }
@@ -556,7 +556,7 @@
       "title": "人気",
       "allTag": "すべて",
       "toast": {
-        "backPress": "haipeeを終了するにはバックボタンを再度押してください"
+        "backPress": "Haipeeを終了するにはバックボタンを再度押してください"
       }
     },
     "timeline": {

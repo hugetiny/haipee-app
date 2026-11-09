@@ -1,7 +1,7 @@
 {
   "@@locale": "zh-CN",
   "app": {
-    "title": "haipee",
+    "title": "Haipee",
     "loading": "加载中…",
     "retry": "重试",
     "confirm": "确认",
@@ -182,7 +182,7 @@
       "languageDesc": "选择应用界面显示语言",
       "followSystem": "系统",
       "exitBehavior": "关闭时",
-      "exitApp": "退出 haipee",
+      "exitApp": "退出 Haipee",
       "minimizeToTray": "最小化至托盘",
       "askEveryTime": "每次都询问"
     },
@@ -287,7 +287,7 @@
         "repoMissing": "规则仓库中没有当前规则",
         "alreadyLatest": "规则已是最新",
         "updateSuccess": "更新成功",
-        "updateIncompatible": "haipee 版本过低，此规则不兼容当前版本",
+        "updateIncompatible": "Haipee 版本过低，此规则不兼容当前版本",
         "updateFailed": "更新规则失败",
         "copySuccess": "已复制到剪贴板"
       },
@@ -573,7 +573,7 @@
         },
         "complete": {
           "title": "下载完成",
-          "message": "已下载 haipee {version}。",
+          "message": "已下载 Haipee {version}。",
           "quitNotice": "安装过程中应用将退出。",
           "fileLocation": "文件位置",
           "buttons": {
@@ -628,15 +628,15 @@
   },
   "exitDialog": {
     "title": "退出确认",
-    "message": "您想要退出 haipee 吗？",
+    "message": "您想要退出 Haipee 吗？",
     "dontAskAgain": "下次不再询问",
-    "exit": "退出 haipee",
+    "exit": "退出 Haipee",
     "minimize": "最小化至托盘",
     "cancel": "取消"
   },
   "tray": {
     "showWindow": "显示窗口",
-    "exit": "退出 haipee"
+    "exit": "退出 Haipee"
   },
   "navigation": {
     "tabs": {

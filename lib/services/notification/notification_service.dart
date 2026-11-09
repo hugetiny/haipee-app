@@ -55,7 +55,7 @@ class NotificationService {
         defaultActionName: 'Open',
       );
       const windowsSettings = WindowsInitializationSettings(
-        appName: 'haipee',
+        appName: 'Haipee',
         appUserModelId: 'io.github.hugetiny.haipee',
         guid: 'c7c5957b-7b56-4b47-b807-6a4a15a818c7',
       );

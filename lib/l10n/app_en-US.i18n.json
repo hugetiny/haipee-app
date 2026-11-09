@@ -1,7 +1,7 @@
 {
   "@@locale": "en-US",
   "app": {
-    "title": "haipee",
+    "title": "Haipee",
     "loading": "Loading…",
     "retry": "Retry",
     "confirm": "Confirm",
@@ -182,7 +182,7 @@
       "languageDesc": "Choose the display language for the app interface",
       "followSystem": "System",
       "exitBehavior": "On Close",
-      "exitApp": "Exit haipee",
+      "exitApp": "Exit Haipee",
       "minimizeToTray": "Minimize to Tray",
       "askEveryTime": "Ask Every Time"
     },
@@ -287,7 +287,7 @@
         "repoMissing": "The repository does not contain this rule.",
         "alreadyLatest": "Rule is already the latest.",
         "updateSuccess": "Update successful.",
-        "updateIncompatible": "haipee is too old; this rule is incompatible.",
+        "updateIncompatible": "Haipee is too old; this rule is incompatible.",
         "updateFailed": "Failed to update rule.",
         "copySuccess": "Copied to clipboard."
       },
@@ -573,7 +573,7 @@
         },
         "complete": {
           "title": "Download complete",
-          "message": "haipee {version} downloaded.",
+          "message": "Haipee {version} downloaded.",
           "quitNotice": "The app will exit during installation.",
           "fileLocation": "File saved to",
           "buttons": {
@@ -628,15 +628,15 @@
   },
   "exitDialog": {
     "title": "Exit Confirmation",
-    "message": "Do you want to exit haipee?",
+    "message": "Do you want to exit Haipee?",
     "dontAskAgain": "Don't ask again",
-    "exit": "Exit haipee",
+    "exit": "Exit Haipee",
     "minimize": "Minimize to Tray",
     "cancel": "Cancel"
   },
   "tray": {
     "showWindow": "Show Window",
-    "exit": "Exit haipee"
+    "exit": "Exit Haipee"
   },
   "navigation": {
     "tabs": {
@@ -688,7 +688,7 @@
     "common": {
       "emptyState": "No content found",
       "retry": "Tap to retry",
-      "backHint": "Press again to exit haipee",
+      "backHint": "Press again to exit Haipee",
       "toast": {
         "editMode": "Edit mode is active."
       }
@@ -697,7 +697,7 @@
       "title": "Home",
       "allTag": "Home",
       "toast": {
-        "backPress": "Press again to exit haipee"
+        "backPress": "Press again to exit Haipee"
       }
     },
     "timeline": {
