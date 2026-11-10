@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
@@ -65,16 +66,16 @@ void main() {
     );
     PlayerAndWindowLifecycleRobot.installPlatformMocks();
 
-    GStorage.setting = await Hive.openBox('setting');
-    GStorage.collectibles = await Hive.openBox<CollectedBangumi>('collectibles');
-    GStorage.parseFailures = await Hive.openBox<ParseFailureRecord>('parseFailures');
-    GStorage.indexerPlugins = await Hive.openBox('indexerPlugins');
-    GStorage.indexerRepos = await Hive.openBox('indexerRepos');
-    GStorage.downloadTasks = await Hive.openBox('downloadTasks');
-    GStorage.searchHistory = await Hive.openBox<SearchHistory>('searchHistory');
-    GStorage.histories = await Hive.openBox('histories');
-    GStorage.favorites = await Hive.openBox('favorites');
-    GStorage.shieldList = await Hive.openBox('shieldList');
+    GStorage.setting = await Hive.openBox('setting', bytes: Uint8List(0));
+    GStorage.collectibles = await Hive.openBox<CollectedBangumi>('collectibles', bytes: Uint8List(0));
+    GStorage.parseFailures = await Hive.openBox<ParseFailureRecord>('parseFailures', bytes: Uint8List(0));
+    GStorage.indexerPlugins = await Hive.openBox('indexerPlugins', bytes: Uint8List(0));
+    GStorage.indexerRepos = await Hive.openBox('indexerRepos', bytes: Uint8List(0));
+    GStorage.downloadTasks = await Hive.openBox('downloadTasks', bytes: Uint8List(0));
+    GStorage.searchHistory = await Hive.openBox<SearchHistory>('searchHistory', bytes: Uint8List(0));
+    GStorage.histories = await Hive.openBox('histories', bytes: Uint8List(0));
+    GStorage.favorites = await Hive.openBox('favorites', bytes: Uint8List(0));
+    GStorage.shieldList = await Hive.openBox('shieldList', bytes: Uint8List(0));
 
     TorrentTrackerService.instance.setTrackersForTesting([]);
     await GStorage.setting.put(
