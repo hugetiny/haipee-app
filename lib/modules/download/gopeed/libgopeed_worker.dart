@@ -29,6 +29,7 @@ class LibgopeedWorker {
   final Map<int, Completer<Object?>> _pending = {};
   StreamController<Map<String, dynamic>> _taskEvents = StreamController<Map<String, dynamic>>.broadcast();
   Future<Isolate>? _isolateReady;
+  Isolate? _isolate;
   Completer<SendPort>? _sendPort;
   Future<void>? _stopFuture;
   int _requestID = 0;
@@ -50,10 +51,17 @@ class LibgopeedWorker {
     _workerHasError = false;
     rx.listen(_handleWorkerMessage);
     err.listen(_handleWorkerError);
-    _isolateReady = Isolate.spawn(_workerMain, rx.sendPort, onError: err.sendPort);
+    _isolateReady = Isolate.spawn(_workerMain, rx.sendPort, onError: err.sendPort).then((iso) {
+      _isolate = iso;
+      return iso;
+    });
   }
 
   void _cleanWorker() {
+    try {
+      _isolate?.kill(priority: Isolate.immediate);
+    } catch (_) {}
+    _isolate = null;
     try {
       _receivePort?.close();
     } catch (_) {}
@@ -297,6 +305,7 @@ class LibgopeedWorker {
       dylib = _openDynamicLibrary();
       bindings = LibgopeedBind(dylib);
     } catch (e) {
+      requests.close();
       mainSendPort.send(['initError', e.toString()]);
       return;
     }

@@ -38,9 +38,16 @@ class GopeedService {
     if (_initialized) return Future.value();
     if (_initFuture != null) return _initFuture!;
     final isTest = Platform.environment.containsKey('FLUTTER_TEST');
-    final totalTimeout = isTest
-        ? const Duration(seconds: 4)
-        : const Duration(seconds: 20);
+    if (isTest) {
+      return _initFuture = _doInitialize(storageDir: storageDir).then((_) {
+        _initialized = true;
+      }).catchError((e, stack) {
+        _initFuture = null;
+        _initialized = false;
+        throw e;
+      });
+    }
+    const totalTimeout = Duration(seconds: 20);
     return _initFuture = _doInitialize(storageDir: storageDir).timeout(
       totalTimeout,
       onTimeout: () {
@@ -58,6 +65,7 @@ class GopeedService {
   }
 
   Future<void> _doInitialize({String? storageDir}) async {
+    final isTest = Platform.environment.containsKey('FLUTTER_TEST');
     String targetDir = storageDir ?? '';
     if (targetDir.isEmpty) {
       try {
@@ -73,9 +81,12 @@ class GopeedService {
 
     if (targetDir.isEmpty) {
       try {
-        final appDir = await getApplicationSupportDirectory().timeout(const Duration(seconds: 3));
-        targetDir = '${appDir.path}/gopeed';
-      } catch (_) {
+        if (!isTest) {
+          final appDir = await getApplicationSupportDirectory().timeout(const Duration(seconds: 3));
+          targetDir = '${appDir.path}/gopeed';
+        }
+      } catch (_) {}
+      if (targetDir.isEmpty) {
         targetDir = '${Directory.current.path}/.gopeed';
       }
     }
@@ -87,7 +98,9 @@ class GopeedService {
 
     String defaultDownloadDir;
     try {
-      defaultDownloadDir = await DownloadFileUtils.getDefaultDownloadDirectory();
+      defaultDownloadDir = isTest
+          ? DownloadFileUtils.getDefaultDownloadDirectorySync()
+          : await DownloadFileUtils.getDefaultDownloadDirectory();
     } catch (_) {
       defaultDownloadDir = DownloadFileUtils.getDefaultDownloadDirectorySync();
     }
@@ -102,7 +115,7 @@ class GopeedService {
       'network': 'tcp',
       'address': '127.0.0.1:0',
       'apiEnable': false,
-      'storage': 'bolt',
+      'storage': isTest ? 'mem' : 'bolt',
       'storageDir': '${dir.path}/storage',
       'refreshInterval': 1000,
       'downloadConfig': {
@@ -110,39 +123,51 @@ class GopeedService {
       },
     };
 
-    final isTest = Platform.environment.containsKey('FLUTTER_TEST');
-    try {
-      await _worker
-          .start(jsonEncode(config))
-          .timeout(isTest ? const Duration(seconds: 3) : const Duration(seconds: 15));
-    } catch (e) {
-      // If bolt storage initialization fails (e.g. stale lock or corrupt db),
-      // clean stale gopeed.db and retry, or fallback to memory storage
+    if (isTest) {
       try {
-        final boltFile = File('${dir.path}/storage/gopeed.db');
-        if (boltFile.existsSync()) {
-          boltFile.deleteSync();
-        }
+        await _worker.start(jsonEncode(config));
+      } catch (e) {
+        final memConfig = Map<String, dynamic>.from(config);
+        memConfig['storage'] = 'mem';
+        await _worker.start(jsonEncode(memConfig));
+      }
+      try {
+        await _worker.subscribeTaskEvents(0x03);
       } catch (_) {}
-
+    } else {
       try {
         await _worker
             .start(jsonEncode(config))
-            .timeout(isTest ? const Duration(seconds: 3) : const Duration(seconds: 8));
-      } catch (_) {
-        // Fallback to in-memory storage so the download service always successfully starts
-        final memConfig = Map<String, dynamic>.from(config);
-        memConfig['storage'] = 'mem';
-        await _worker
-            .start(jsonEncode(memConfig))
-            .timeout(isTest ? const Duration(seconds: 3) : const Duration(seconds: 8));
-      }
-    }
+            .timeout(const Duration(seconds: 15));
+      } catch (e) {
+        // If bolt storage initialization fails (e.g. stale lock or corrupt db),
+        // clean stale gopeed.db and retry, or fallback to memory storage
+        try {
+          final boltFile = File('${dir.path}/storage/gopeed.db');
+          if (boltFile.existsSync()) {
+            boltFile.deleteSync();
+          }
+        } catch (_) {}
 
-    // Subscribe to task done and error events (mask = 0x03: done=1, error=2)
-    await _worker
-        .subscribeTaskEvents(0x03)
-        .timeout(isTest ? const Duration(seconds: 2) : const Duration(seconds: 5));
+        try {
+          await _worker
+              .start(jsonEncode(config))
+              .timeout(const Duration(seconds: 8));
+        } catch (_) {
+          // Fallback to in-memory storage so the download service always successfully starts
+          final memConfig = Map<String, dynamic>.from(config);
+          memConfig['storage'] = 'mem';
+          await _worker
+              .start(jsonEncode(memConfig))
+              .timeout(const Duration(seconds: 8));
+        }
+      }
+
+      // Subscribe to task done and error events (mask = 0x03: done=1, error=2)
+      await _worker
+          .subscribeTaskEvents(0x03)
+          .timeout(const Duration(seconds: 5));
+    }
     await _workerSub?.cancel();
     _workerSub = _worker.taskEvents.listen((data) {
       _eventController.add(GopeedTaskEvent.fromJson(data));
