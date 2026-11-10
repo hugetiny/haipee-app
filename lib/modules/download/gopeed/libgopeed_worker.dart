@@ -17,8 +17,6 @@ class LibgopeedWorker {
   LibgopeedWorker._() {
     if (_isMobile) {
       _initMobile();
-    } else {
-      _spawnWorker();
     }
   }
 
@@ -66,6 +64,13 @@ class LibgopeedWorker {
     _errorPort = null;
     _isolateReady = null;
     _sendPort = null;
+    final stoppingError = StateError('libgopeed worker cleaned');
+    for (final completer in _pending.values) {
+      if (!completer.isCompleted) {
+        completer.completeError(stoppingError);
+      }
+    }
+    _pending.clear();
   }
 
   void reset() {
@@ -76,7 +81,7 @@ class LibgopeedWorker {
     _stopFuture = null;
     _workerHasError = false;
     if (!_isMobile) {
-      _spawnWorker();
+      _cleanWorker();
     }
   }
 
@@ -132,21 +137,23 @@ class LibgopeedWorker {
       if (_isMobile) {
         await _channel.invokeMethod<void>('stop');
       } else {
-        await _request<Object?>('stop', const [], allowWhileStopping: true);
+        if (_started && !_workerHasError && _isolateReady != null) {
+          await _request<Object?>('stop', const [], allowWhileStopping: true);
+        }
       }
     } catch (_) {}
+    _cleanWorker();
     _stopped = true;
     _started = false;
     _startFuture = null;
     final stoppingError = StateError('libgopeed worker stopped before the request completed');
     for (final completer in _pending.values) {
-      completer.completeError(stoppingError);
+      if (!completer.isCompleted) {
+        completer.completeError(stoppingError);
+      }
     }
     _pending.clear();
     await _taskEvents.close();
-    if (!_isMobile) {
-      _cleanWorker();
-    }
   }
 
   Future<Object?> invoke(String method, String path, String query, String body) {
@@ -199,7 +206,10 @@ class LibgopeedWorker {
     if (_stopped || (_stopping && !allowWhileStopping)) {
       throw StateError('libgopeed worker is stopping or stopped');
     }
-    if (!_isMobile && (_workerHasError || _isolateReady == null || _sendPort == null)) {
+    if (_workerHasError) {
+      throw StateError('libgopeed worker is in an error state');
+    }
+    if (!_isMobile && (_isolateReady == null || _sendPort == null)) {
       _spawnWorker();
     }
     if (_isolateReady != null) await _isolateReady;
@@ -208,6 +218,9 @@ class LibgopeedWorker {
       throw StateError('libgopeed worker sendPort is not initialized');
     }
     final sendPort = await sendPortCompleter.future;
+    if (_workerHasError) {
+      throw StateError('libgopeed worker is in an error state');
+    }
     final requestID = _requestID++;
     final completer = Completer<Object?>();
     _pending[requestID] = completer;
@@ -224,6 +237,22 @@ class LibgopeedWorker {
     }
     final response = message as List<dynamic>;
     switch (response[0] as String) {
+      case 'initError':
+        _workerHasError = true;
+        _started = false;
+        _startFuture = null;
+        final error = StateError(response[1].toString());
+        if (_sendPort != null && !_sendPort!.isCompleted) {
+          _sendPort!.completeError(error);
+        }
+        for (final completer in _pending.values) {
+          if (!completer.isCompleted) {
+            completer.completeError(error);
+          }
+        }
+        _pending.clear();
+        _cleanWorker();
+        break;
       case 'response':
         final requestID = response[1] as int;
         final completer = _pending.remove(requestID);
@@ -233,8 +262,10 @@ class LibgopeedWorker {
         } else {
           completer.completeError(StateError(response[3]?.toString() ?? 'Unknown error'));
         }
+        break;
       case 'taskEvent':
         _taskEvents.add((response[1] as Map<Object?, Object?>).cast<String, dynamic>());
+        break;
     }
   }
 
@@ -248,7 +279,9 @@ class LibgopeedWorker {
       _sendPort!.completeError(error);
     }
     for (final completer in _pending.values) {
-      completer.completeError(error);
+      if (!completer.isCompleted) {
+        completer.completeError(error);
+      }
     }
     _pending.clear();
     if (!_taskEvents.isClosed) {
@@ -258,8 +291,15 @@ class LibgopeedWorker {
 
   static void _workerMain(SendPort mainSendPort) {
     final requests = ReceivePort();
-    final dylib = _openDynamicLibrary();
-    final bindings = LibgopeedBind(dylib);
+    final DynamicLibrary dylib;
+    final LibgopeedBind bindings;
+    try {
+      dylib = _openDynamicLibrary();
+      bindings = LibgopeedBind(dylib);
+    } catch (e) {
+      mainSendPort.send(['initError', e.toString()]);
+      return;
+    }
     late final NativeCallable<_InvokeResultNative> invokeResultCallback;
     late final NativeCallable<_TaskEventNative> taskEventCallback;
 

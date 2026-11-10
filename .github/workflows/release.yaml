@@ -313,6 +313,20 @@ jobs:
             sed -i "s/rABUaBLqdz7aCSi3fe88ZDj2gwga9Vax/${{ secrets.DANDANAPI_KEY }}/g" lib/utils/api_credentials.dart
           fi
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: false
+
+      - name: Build libgopeed native library for Linux
+        run: |
+          if [ ! -f "linux/libgopeed.so" ]; then
+            git clone --depth 1 https://github.com/GopeedLab/gopeed.git third_party/gopeed
+            chmod +x tool/build_gopeed.sh
+            ./tool/build_gopeed.sh linux
+          fi
+
       - name: Build Flutter Linux
         run: flutter build linux --release
 

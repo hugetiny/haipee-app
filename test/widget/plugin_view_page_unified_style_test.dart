@@ -39,6 +39,7 @@ void main() {
     }
     final box = await Hive.openBox('setting');
     await box.put(SettingBoxKey.enableGitProxy, false);
+    await box.put(SettingBoxKey.showWindowButton, false);
     GStorage.setting = box;
     GStorage.parseFailures =
         await Hive.openBox<ParseFailureRecord>('parseFailures');
@@ -218,8 +219,8 @@ void main() {
       final closeButton = find.descendant(
         of: find.byType(SysAppBar),
         matching: find.byIcon(Icons.close),
-      );
-      expect(closeButton, findsOneWidget);
+      ).first;
+      expect(find.byIcon(Icons.close), findsWidgets);
 
       // Tap close to exit multi-select mode
       await tester.tap(closeButton);

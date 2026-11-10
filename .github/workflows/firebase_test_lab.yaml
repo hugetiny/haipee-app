@@ -83,6 +83,7 @@ jobs:
           if [[ "$TEST_MODE" == "instrumentation" || "$TEST_MODE" == "both" ]]; then
             echo "Building Android Instrumentation Test APKs (integration_test/app_crawler_test.dart)..."
             pushd android
+            chmod +x ./gradlew
             ./gradlew app:assembleAndroidTest
             ./gradlew app:assembleDebug -Ptarget="$(pwd)/../integration_test/app_crawler_test.dart" -Pdart-defines="RklSRUJBU0VfVEVTVF9MQUI9dHJ1ZQ=="
             popd

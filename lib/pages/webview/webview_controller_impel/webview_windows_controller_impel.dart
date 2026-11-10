@@ -97,7 +97,9 @@ class WebviewWindowsItemControllerImpel
         s.cancel();
       } catch (_) {}
     }
-    webviewController!.dispose();
+    try {
+      webviewController?.dispose();
+    } catch (_) {}
   }
 
   // The webview_windows package does not have a method to unload the current page.

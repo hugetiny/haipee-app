@@ -55,7 +55,9 @@ class WebviewLinuxItemControllerImpel extends WebviewItemController<Webview> {
 
   @override
   void dispose() {
-    webviewController!.close();
+    try {
+      webviewController?.close();
+    } catch (_) {}
     bridgeInited = false;
   }
 

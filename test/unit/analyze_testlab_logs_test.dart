@@ -199,6 +199,11 @@ Oct 27 04:39:10 iPhone Runner(Flutter)[740] <Error>: A RenderFlex overflowed by 
       final realAndroidDir = Directory('test_reports/firebase_android');
       final realIosDir = Directory('test_reports/firebase_ios');
 
+      if (!realAndroidDir.existsSync() && !realIosDir.existsSync()) {
+        // test_reports is an ignored local artifacts directory, skip on clean CI checkouts
+        return;
+      }
+
       final analyzer = TestLabAnalyzer(androidDir: realAndroidDir, iosDir: realIosDir);
       await analyzer.runAnalysis();
 

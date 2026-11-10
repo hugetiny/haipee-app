@@ -130,9 +130,6 @@ android/captures/
 android/local.properties
 android/app/google-services.json
 android/build/reports/problems/
-android/gradlew
-android/gradlew.bat
-android/gradle/wrapper/gradle-wrapper.jar
 android/key.properties
 
 # Symbolication & obfuscation
