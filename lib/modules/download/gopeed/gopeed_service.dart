@@ -318,11 +318,11 @@ class GopeedService {
 
   /// Stop Gopeed engine
   Future<void> stop() async {
-    if (!_initialized && _initFuture == null) return;
     try {
       await _workerSub?.cancel();
       _workerSub = null;
       await _worker.stop();
+    } catch (_) {
     } finally {
       _initialized = false;
       _initFuture = null;

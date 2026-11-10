@@ -81,14 +81,6 @@ void main() {
       SettingBoxKey.downloadDirectory,
       '${tempDir.path}/downloads',
     );
-    if (Platform.isMacOS) {
-      final dylibFile = File('${Directory.current.path}/macos/Frameworks/libgopeed.dylib');
-      if (dylibFile.existsSync()) {
-        try {
-          await GopeedService().initialize(storageDir: '${tempDir.path}/gopeed');
-        } catch (_) {}
-      }
-    }
 
     LocaleSettings.setLocale(AppLocale.zhCn);
   });
