@@ -79,4 +79,4 @@ jobs:
           fi
 
       - name: Run Flutter Tests (100% pass gate)
-        run: flutter test --timeout 60s --concurrency 4
+        run: flutter test

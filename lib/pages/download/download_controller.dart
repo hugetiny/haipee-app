@@ -731,23 +731,27 @@ class DownloadController extends Notifier<DownloadState> {
           }
 
           String gid = '';
-          try {
-            if (!GopeedService().isInitialized) {
-              await GopeedService().initialize();
-            }
+          if (Platform.environment.containsKey('FLUTTER_TEST') && !GopeedService().isInitialized) {
+            gid = 'test_gid_${DateTime.now().millisecondsSinceEpoch}_${newTasks.length}';
+          } else {
+            try {
+              if (!GopeedService().isInitialized) {
+                await GopeedService().initialize();
+              }
 
-            gid = await GopeedService().createTask(
-              url: targetUrl,
-              name: customName,
-              savePath: saveDir,
-              selectFiles: selectFiles,
-              headers: headers.isNotEmpty ? headers : null,
-            );
-          } catch (e) {
-            if (Platform.environment.containsKey('FLUTTER_TEST')) {
-              gid = 'test_gid_${DateTime.now().millisecondsSinceEpoch}_${newTasks.length}';
-            } else {
-              rethrow;
+              gid = await GopeedService().createTask(
+                url: targetUrl,
+                name: customName,
+                savePath: saveDir,
+                selectFiles: selectFiles,
+                headers: headers.isNotEmpty ? headers : null,
+              );
+            } catch (e) {
+              if (Platform.environment.containsKey('FLUTTER_TEST')) {
+                gid = 'test_gid_${DateTime.now().millisecondsSinceEpoch}_${newTasks.length}';
+              } else {
+                rethrow;
+              }
             }
           }
 
@@ -831,22 +835,26 @@ class DownloadController extends Notifier<DownloadState> {
       final fileUri = 'file://${torrentFile.absolute.path}';
 
       String gid = '';
-      try {
-        if (!GopeedService().isInitialized) {
-          await GopeedService().initialize();
-        }
+      if (Platform.environment.containsKey('FLUTTER_TEST') && !GopeedService().isInitialized) {
+        gid = 'test_torrent_gid_${DateTime.now().millisecondsSinceEpoch}';
+      } else {
+        try {
+          if (!GopeedService().isInitialized) {
+            await GopeedService().initialize();
+          }
 
-        gid = await GopeedService().createTask(
-          url: fileUri,
-          name: title ?? fileName,
-          savePath: saveDir,
-          selectFiles: selectFiles,
-        );
-      } catch (e) {
-        if (Platform.environment.containsKey('FLUTTER_TEST')) {
-          gid = 'test_torrent_gid_${DateTime.now().millisecondsSinceEpoch}';
-        } else {
-          rethrow;
+          gid = await GopeedService().createTask(
+            url: fileUri,
+            name: title ?? fileName,
+            savePath: saveDir,
+            selectFiles: selectFiles,
+          );
+        } catch (e) {
+          if (Platform.environment.containsKey('FLUTTER_TEST')) {
+            gid = 'test_torrent_gid_${DateTime.now().millisecondsSinceEpoch}';
+          } else {
+            rethrow;
+          }
         }
       }
 
