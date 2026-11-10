@@ -790,6 +790,31 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                 ),
             ],
           ),
+        // 维度 4：排序方式（弹幕热度优先 / 规则协议优先）
+        UnifiedFilterCategoryRow(
+          categoryTitle: '排序方式',
+          categorySubtitle: '弹幕 / 规则',
+          chips: [
+            UnifiedFilterChoiceChip(
+              chipKey: const Key('online_search_sort_danmaku'),
+              icon: Icons.whatshot_rounded,
+              label: '弹幕热度优先',
+              count: 0,
+              showCount: false,
+              isSelected: searchState.sortMode == 'danmaku',
+              onSelected: () => searchNotifier.setSortMode('danmaku'),
+            ),
+            UnifiedFilterChoiceChip(
+              chipKey: const Key('online_search_sort_ruletype'),
+              icon: Icons.layers_rounded,
+              label: '规则协议优先',
+              count: 0,
+              showCount: false,
+              isSelected: searchState.sortMode == 'ruleType',
+              onSelected: () => searchNotifier.setSortMode('ruleType'),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -1030,18 +1055,41 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      item.bvid.startsWith('douyin_')
-                          ? '短视频 · ${item.author}'
-                          : (item.bvid.startsWith('web_')
-                              ? item.tag
-                              : 'B站高清 · ${item.author}'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: colorScheme.outline,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            item.bvid.startsWith('douyin_')
+                                ? '短视频 · ${item.author}'
+                                : (item.bvid.startsWith('web_')
+                                    ? item.tag
+                                    : 'B站高清 · ${item.author}'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colorScheme.outline,
+                            ),
+                          ),
+                        ),
+                        if (item.danmaku > 0) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.comment_outlined,
+                            size: 11,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${_formatDanmakuCount(item.danmaku)} 弹幕',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -1318,6 +1366,39 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
                       ),
                     ),
 
+                  // 弹幕热度药丸 (左下角)
+                  if (item.danmaku > 0)
+                    Positioned(
+                      left: 6,
+                      bottom: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.comment_outlined,
+                              size: 10,
+                              color: Colors.white70,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              _formatDanmakuCount(item.danmaku),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
                   // 规则协议标识 (右上角)
                   Positioned(
                     right: 6,
@@ -1514,5 +1595,17 @@ class _OnlineVideoSearchPageState extends ConsumerState<OnlineVideoSearchPage> {
       ],
       child: cardWidget,
     );
+  }
+
+  static String _formatDanmakuCount(int count) {
+    if (count <= 0) return '';
+    if (count >= 10000) {
+      final wan = count / 10000;
+      final str = wan.toStringAsFixed(1);
+      return str.endsWith('.0')
+          ? '${str.substring(0, str.length - 2)}万'
+          : '$str万';
+    }
+    return count.toString();
   }
 }

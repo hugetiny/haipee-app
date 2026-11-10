@@ -598,6 +598,13 @@ class SettingsKeys {
     group: SettingGroup.player,
   );
 
+  /// 在线视频搜索结果排序方式：'danmaku' = 按弹幕热度（默认），'ruleType' = 按规则类型优先级
+  static const onlineSearchSortMode = SettingKey<String>(
+    'onlineSearchSortMode',
+    'danmaku',
+    group: SettingGroup.interface,
+  );
+
   static final List<SettingKey<Object?>> all = [
     hAenable,
     hardwareDecoder,
@@ -702,6 +709,7 @@ class SettingsKeys {
     playerControllerLayerDisappearTime,
     defaultVolume,
     playerMuted,
+    onlineSearchSortMode,
   ];
 
   static List<SettingKey<Object?>> byGroup(SettingGroup group) {

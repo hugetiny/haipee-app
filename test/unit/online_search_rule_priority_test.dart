@@ -149,5 +149,97 @@ void main() {
       expect(sorted[1].bvid, haipeeItem.bvid);
       expect(sorted[2].bvid, tvboxItem.bvid);
     });
+
+    test('sortResults with default danmaku mode prioritizes higher danmaku count', () {
+      const lowDanmakuHaipee = BiliVideoItem(
+        bvid: 'web_haipee_low',
+        title: 'Haipee 视频 (弹幕 10)',
+        author: 'haipee_src',
+        pic: '',
+        ruleType: 'haipee',
+        danmaku: 10,
+      );
+      const highDanmakuTVBox = BiliVideoItem(
+        bvid: 'web_tvbox_high',
+        title: 'TVBox 视频 (弹幕 5000)',
+        author: 'tvbox_src',
+        pic: '',
+        ruleType: 'tvbox',
+        danmaku: 5000,
+      );
+      const mediumDanmakuMacCMS = BiliVideoItem(
+        bvid: 'web_maccms_med',
+        title: 'MacCMS 视频 (弹幕 300)',
+        author: 'maccms_src',
+        pic: '',
+        ruleType: 'maccms',
+        danmaku: 300,
+      );
+      const zeroDanmakuHaipee = BiliVideoItem(
+        bvid: 'web_haipee_zero',
+        title: 'Haipee 视频 (弹幕 0)',
+        author: 'haipee_src',
+        pic: '',
+        ruleType: 'haipee',
+        danmaku: 0,
+      );
+      const zeroDanmakuTVBox = BiliVideoItem(
+        bvid: 'web_tvbox_zero',
+        title: 'TVBox 视频 (弹幕 0)',
+        author: 'tvbox_src',
+        pic: '',
+        ruleType: 'tvbox',
+        danmaku: 0,
+      );
+
+      final sorted = OnlineVideoSearchState.sortResults(
+        [lowDanmakuHaipee, zeroDanmakuTVBox, highDanmakuTVBox, zeroDanmakuHaipee, mediumDanmakuMacCMS],
+        sortMode: 'danmaku',
+      );
+
+      // Highest danmaku (5000) -> 300 -> 10 -> ties broken by rule priority (Haipee > TVBox)
+      expect(sorted[0].bvid, 'web_tvbox_high');
+      expect(sorted[1].bvid, 'web_maccms_med');
+      expect(sorted[2].bvid, 'web_haipee_low');
+      expect(sorted[3].bvid, 'web_haipee_zero');
+      expect(sorted[4].bvid, 'web_tvbox_zero');
+    });
+
+    test('sortResults with ruleType mode prioritizes rule type and then danmaku within same rule', () {
+      const lowDanmakuHaipee = BiliVideoItem(
+        bvid: 'web_haipee_low',
+        title: 'Haipee 视频 (弹幕 10)',
+        author: 'haipee_src',
+        pic: '',
+        ruleType: 'haipee',
+        danmaku: 10,
+      );
+      const highDanmakuHaipee = BiliVideoItem(
+        bvid: 'web_haipee_high',
+        title: 'Haipee 视频 (弹幕 2000)',
+        author: 'haipee_src',
+        pic: '',
+        ruleType: 'haipee',
+        danmaku: 2000,
+      );
+      const highDanmakuTVBox = BiliVideoItem(
+        bvid: 'web_tvbox_high',
+        title: 'TVBox 视频 (弹幕 9999)',
+        author: 'tvbox_src',
+        pic: '',
+        ruleType: 'tvbox',
+        danmaku: 9999,
+      );
+
+      final sorted = OnlineVideoSearchState.sortResults(
+        [highDanmakuTVBox, lowDanmakuHaipee, highDanmakuHaipee],
+        sortMode: 'ruleType',
+      );
+
+      // In ruleType mode: all Haipee first, with high danmaku ahead of low danmaku, then TVBox
+      expect(sorted[0].bvid, 'web_haipee_high');
+      expect(sorted[1].bvid, 'web_haipee_low');
+      expect(sorted[2].bvid, 'web_tvbox_high');
+    });
   });
 }

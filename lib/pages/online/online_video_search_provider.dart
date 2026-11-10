@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/modules/bilibili/bilibili_service.dart';
+import 'package:haipee/modules/danmaku/danmaku_count_service.dart';
 import 'package:haipee/modules/douyin/douyin_service.dart';
 import 'package:haipee/plugins/plugins.dart';
 import 'package:haipee/plugins/plugins_providers.dart';
 import 'package:haipee/plugins/rule_cover_extractor.dart';
 import 'package:haipee/request/bangumi.dart';
+import 'package:haipee/services/storage/storage.dart';
 import 'package:haipee/utils/logger.dart';
 import 'package:logger/logger.dart';
 
@@ -82,6 +84,7 @@ class OnlineVideoSearchState {
   final int sessionId;
   final Map<String, String> synergyCovers;
   final Set<String> directMatchBvids;
+  final String sortMode;
 
   const OnlineVideoSearchState({
     this.keyword = '',
@@ -96,6 +99,7 @@ class OnlineVideoSearchState {
     this.sessionId = 0,
     this.synergyCovers = const {},
     this.directMatchBvids = const {},
+    this.sortMode = 'danmaku',
   });
 
   bool get hasActiveFilter =>
@@ -264,8 +268,8 @@ class OnlineVideoSearchState {
           .where((item) => sourceLabelForItem(item) == sourceNameFilter)
           .toList();
     }
-    // 4. 默认严格按规则协议类型排序：Haipee原生规则最前(0)，MacCMS(1)，TVBox(2)，Piped(3)，IPTV(4)，其他随后
-    return sortResultsByRulePriority(list, directMatchBvids: directMatchBvids);
+    // 4. 排序：默认按弹幕热度高到低排序，或按设置中的规则协议类型优先排序
+    return sortResults(list, sortMode: sortMode, directMatchBvids: directMatchBvids);
   }
 
   /// 规则协议类型优先级：Haipee原生规则(0)最前，MacCMS(1)，TVBox(2)，Piped(3)，IPTV(4)，AList(5)，Cardigann(6)，其他(10)
@@ -293,22 +297,53 @@ class OnlineVideoSearchState {
     }
   }
 
-  /// 稳定排序：直接匹配项最前(-1)，随后按规则类型优先级排序，同类型保持发现顺序
-  static List<BiliVideoItem> sortResultsByRulePriority(
+  /// 综合排序：
+  /// - 直接匹配项 (如直接搜索BV号/抖音直链) 严格置顶 (-1)
+  /// - 当 [sortMode] 为 'danmaku'（默认）：优先按弹幕数量由高到低排序；弹幕数相同时按规则协议优先级排序
+  /// - 当 [sortMode] 为 'ruleType'：优先按规则协议类型 (Haipee > MacCMS > TVBox...) 排序；同规则类型内按弹幕数由高到低排序
+  /// - 同等优先级下保持原始发现顺序
+  static List<BiliVideoItem> sortResults(
     List<BiliVideoItem> items, {
+    String sortMode = 'danmaku',
     Set<String>? directMatchBvids,
   }) {
     final indexed = items.asMap().entries.toList();
     indexed.sort((a, b) {
       final isDirectA = directMatchBvids != null && directMatchBvids.contains(a.value.bvid);
       final isDirectB = directMatchBvids != null && directMatchBvids.contains(b.value.bvid);
-      final pa = isDirectA ? -1 : ruleTypePriority(a.value);
-      final pb = isDirectB ? -1 : ruleTypePriority(b.value);
-      final cmp = pa.compareTo(pb);
-      if (cmp != 0) return cmp;
+      if (isDirectA && !isDirectB) return -1;
+      if (!isDirectA && isDirectB) return 1;
+
+      if (sortMode == 'ruleType') {
+        final pa = ruleTypePriority(a.value);
+        final pb = ruleTypePriority(b.value);
+        final cmpRule = pa.compareTo(pb);
+        if (cmpRule != 0) return cmpRule;
+
+        final cmpDanmaku = b.value.danmaku.compareTo(a.value.danmaku);
+        if (cmpDanmaku != 0) return cmpDanmaku;
+      } else {
+        // 默认按弹幕数量由高到低排
+        final cmpDanmaku = b.value.danmaku.compareTo(a.value.danmaku);
+        if (cmpDanmaku != 0) return cmpDanmaku;
+
+        final pa = ruleTypePriority(a.value);
+        final pb = ruleTypePriority(b.value);
+        final cmpRule = pa.compareTo(pb);
+        if (cmpRule != 0) return cmpRule;
+      }
+
       return a.key.compareTo(b.key);
     });
     return indexed.map((e) => e.value).toList();
+  }
+
+  /// 兼容旧接口：严格按规则协议类型排序
+  static List<BiliVideoItem> sortResultsByRulePriority(
+    List<BiliVideoItem> items, {
+    Set<String>? directMatchBvids,
+  }) {
+    return sortResults(items, sortMode: 'ruleType', directMatchBvids: directMatchBvids);
   }
 
   int countForFilter(OnlineSourceFilter filter, [List<BiliVideoItem>? fallbackList]) {
@@ -328,6 +363,7 @@ class OnlineVideoSearchState {
     int? sessionId,
     Map<String, String>? synergyCovers,
     Set<String>? directMatchBvids,
+    String? sortMode,
   }) {
     return OnlineVideoSearchState(
       keyword: keyword ?? this.keyword,
@@ -346,6 +382,7 @@ class OnlineVideoSearchState {
       sessionId: sessionId ?? this.sessionId,
       synergyCovers: synergyCovers ?? this.synergyCovers,
       directMatchBvids: directMatchBvids ?? this.directMatchBvids,
+      sortMode: sortMode ?? this.sortMode,
     );
   }
 }
@@ -353,7 +390,23 @@ class OnlineVideoSearchState {
 class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
   @override
   OnlineVideoSearchState build() {
-    return const OnlineVideoSearchState();
+    final sortMode = GStorage.getSetting(SettingsKeys.onlineSearchSortMode);
+    return OnlineVideoSearchState(sortMode: sortMode);
+  }
+
+  /// 切换排序模式：'danmaku'（弹幕热度高到低）或 'ruleType'（规则协议类型优先级）
+  void setSortMode(String mode) {
+    if (state.sortMode == mode) return;
+    GStorage.putSetting(SettingsKeys.onlineSearchSortMode, mode);
+    final sorted = OnlineVideoSearchState.sortResults(
+      state.allResults,
+      sortMode: mode,
+      directMatchBvids: state.directMatchBvids,
+    );
+    state = state.copyWith(
+      sortMode: mode,
+      allResults: List.unmodifiable(sorted),
+    );
   }
 
   /// 切换第一维度：视频形态（全部 / 点播 / 直播）
@@ -468,6 +521,8 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
         ? OnlineSourceFilter.video
         : state.selectedFilter;
 
+    final currentSortMode = GStorage.getSetting(SettingsKeys.onlineSearchSortMode);
+
     // 立即进入搜索状态并清空旧结果
     state = state.copyWith(
       keyword: clean,
@@ -479,6 +534,7 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       sessionId: sessionId,
       synergyCovers: const {},
       directMatchBvids: const {},
+      sortMode: currentSortMode,
     );
 
     if (totalSources == 0) return;
@@ -723,8 +779,9 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       }
     }
 
-    final sortedUpdated = OnlineVideoSearchState.sortResultsByRulePriority(
+    final sortedUpdated = OnlineVideoSearchState.sortResults(
       updated,
+      sortMode: state.sortMode,
       directMatchBvids: state.directMatchBvids,
     );
     final backfilled = _backfillMissingCovers(sortedUpdated, mergedCovers);
@@ -732,6 +789,9 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       allResults: List.unmodifiable(backfilled),
       synergyCovers: Map.unmodifiable(mergedCovers),
     );
+
+    // 异步检索每条搜索结果的弹幕数（弹弹play联动），智能去重并就绪后平滑排至前列
+    _fetchDanmakuCountsForItems(items, sessionId);
   }
 
   void _insertDirectMatch(BiliVideoItem directItem, int sessionId) {
@@ -748,14 +808,63 @@ class OnlineVideoSearchNotifier extends Notifier<OnlineVideoSearchState> {
       }
     }
     final newDirectMatchBvids = {...state.directMatchBvids, directItem.bvid};
-    final sortedUpdated = OnlineVideoSearchState.sortResultsByRulePriority(
+    final sortedUpdated = OnlineVideoSearchState.sortResults(
       updated,
+      sortMode: state.sortMode,
       directMatchBvids: newDirectMatchBvids,
     );
     state = state.copyWith(
       allResults: List.unmodifiable(_backfillMissingCovers(sortedUpdated, mergedCovers)),
       synergyCovers: Map.unmodifiable(mergedCovers),
       directMatchBvids: newDirectMatchBvids,
+    );
+    if (directItem.danmaku <= 0 && !OnlineVideoSearchState.isLiveItem(directItem)) {
+      _fetchDanmakuCountsForItems([directItem], sessionId);
+    }
+  }
+
+  /// 异步获取每个视频结果的弹幕数量（弹弹play联动 + 内存缓存与限流调度）
+  void _fetchDanmakuCountsForItems(List<BiliVideoItem> items, int sessionId) {
+    if (!DanmakuCountService.isEnabled) return;
+
+    for (final item in items) {
+      if (item.danmaku > 0 || OnlineVideoSearchState.isLiveItem(item)) {
+        continue;
+      }
+      unawaited(
+        DanmakuCountService.instance.countForTitle(item.title).then((count) {
+          if (count != null && count > 0 && state.sessionId == sessionId) {
+            _updateDanmakuCountForTitle(item.title, count, sessionId);
+          }
+        }),
+      );
+    }
+  }
+
+  /// 弹幕数就绪后，批量更新同标题视频结果的弹幕数并重排序
+  void _updateDanmakuCountForTitle(String title, int count, int sessionId) {
+    if (state.sessionId != sessionId) return;
+
+    final targetKey = DanmakuCountService.cacheKeyFor(title);
+    var hasChange = false;
+    final updated = state.allResults.map((item) {
+      if (DanmakuCountService.cacheKeyFor(item.title) == targetKey &&
+          item.danmaku != count) {
+        hasChange = true;
+        return item.copyWith(danmaku: count);
+      }
+      return item;
+    }).toList();
+
+    if (!hasChange) return;
+
+    final sorted = OnlineVideoSearchState.sortResults(
+      updated,
+      sortMode: state.sortMode,
+      directMatchBvids: state.directMatchBvids,
+    );
+    state = state.copyWith(
+      allResults: List.unmodifiable(sorted),
     );
   }
 

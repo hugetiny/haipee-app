@@ -6,6 +6,7 @@ import 'package:haipee/bean/settings/settings_detail_scaffold.dart';
 import 'package:haipee/bean/widget/settings/card_settings_ui.dart';
 import 'package:haipee/l10n/generated/translations.g.dart';
 import 'package:haipee/modules/collect/collect_layout.dart';
+import 'package:haipee/pages/online/online_video_search_provider.dart';
 import 'package:haipee/pages/setting/providers.dart';
 import 'package:haipee/router_constants.dart';
 import 'package:haipee/services/storage/storage.dart';
@@ -22,10 +23,16 @@ class _InterfaceSettingsPageState extends ConsumerState<InterfaceSettingsPage> {
   late bool showRating;
   late String defaultPage;
   late CollectLayout _defaultCollectLayout;
+  late String _onlineSearchSortMode;
   bool _savingCollectLayout = false;
   static const _exitBehaviorTitles = ['退出 Haipee', '最小化至托盘', '每次都询问'];
   int _exitBehavior = GStorage.getSetting(SettingsKeys.exitBehavior)
       .clamp(0, _exitBehaviorTitles.length - 1);
+
+  static const Map<String, String> _searchSortModeMap = {
+    'danmaku': '弹幕热度优先 (默认)',
+    'ruleType': '规则协议优先 (Haipee / MacCMS / TVBox...)',
+  };
 
   static const Map<String, String> defaultPageMap = {
     '/tab/online': '在线搜索',
@@ -40,6 +47,8 @@ class _InterfaceSettingsPageState extends ConsumerState<InterfaceSettingsPage> {
   void initState() {
     super.initState();
     showRating = GStorage.getSetting(SettingsKeys.showRating);
+    _onlineSearchSortMode =
+        GStorage.getSetting(SettingsKeys.onlineSearchSortMode);
     var storedPage =
         GStorage.getSetting<String>(SettingsKeys.defaultStartupPage).trim();
     if (storedPage.endsWith('/') && storedPage.length > 1) {
@@ -110,6 +119,21 @@ class _InterfaceSettingsPageState extends ConsumerState<InterfaceSettingsPage> {
           SettingsSection(
             title: const Text('展示信息'),
             tiles: [
+              SettingsDropdownTile<String>(
+                leading: const Icon(Icons.sort_rounded),
+                title: const Text('视频搜索排序'),
+                description: const Text('默认按弹幕热度高到低排序，或按规则协议类型优先排序'),
+                value: _onlineSearchSortMode,
+                options: _searchSortModeMap,
+                fallbackLabel: '弹幕热度优先 (默认)',
+                onChanged: (mode) {
+                  setState(() => _onlineSearchSortMode = mode);
+                  GStorage.putSetting(SettingsKeys.onlineSearchSortMode, mode);
+                  ref
+                      .read(onlineVideoSearchProvider.notifier)
+                      .setSortMode(mode);
+                },
+              ),
               SettingsDropdownTile<CollectLayout>(
                 leading: const Icon(Icons.view_agenda_rounded),
                 title: const Text('追番默认布局'),

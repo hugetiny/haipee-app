@@ -265,6 +265,32 @@ class DanmakuRequest {
     }
   }
 
+  /// 仅获取指定分集的弹幕总数（读取 `count` 字段，不逐条反序列化弹幕对象），
+  /// 用于搜索结果列表的弹幕热度展示与排序。失败或凭据缺失时返回 null。
+  static Future<int?> getCommentCountByEpisodeID(int episodeID) async {
+    if (episodeID <= 0 || !GStorage.hasValidDanDanCredentials()) {
+      return null;
+    }
+    final endPoint =
+        Api.dandanAPIDomain + Api.dandanAPIComment + episodeID.toString();
+    try {
+      final res = await Request().get(
+        endPoint,
+        data: const {'withRelated': 'true'},
+        extra: {'customError': '', 'silent': true},
+        shouldRethrow: false,
+      );
+      final data = res.data;
+      if (data is! Map) return null;
+      final count = data['count'];
+      if (count is int) return count;
+      final comments = data['comments'];
+      return comments is List ? comments.length : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<List<Danmaku>> getDanDanmakuByEpisodeID(int episodeID,
       {bool silent = true}) async {
     List<Danmaku> danmakus = [];

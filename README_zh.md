@@ -6,7 +6,7 @@
 
 **跨平台全能视听播放与极速下载聚合终端**
 
-[![Version](https://img.shields.io/badge/version-0.0.2-blue.svg)](https://github.com/hugetiny/haipee-app/releases/latest)
+[![Version](https://img.shields.io/badge/version-0.0.3-blue.svg)](https://github.com/hugetiny/haipee-app/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20iOS-orange.svg)](https://github.com/hugetiny/haipee-app/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/hugetiny/haipee-app?style=flat&color=yellow)](https://github.com/hugetiny/haipee-app/stargazers)
@@ -100,14 +100,14 @@
 
 | 文件名 | 适用平台 | 说明 |
 | :--- | :--- | :--- |
-| `haipee-android-arm64-v0.0.2.apk` | Android | 推荐主流 64 位手机与平板安装 |
-| `haipee-android-armv7-v0.0.2.apk` | Android | 适用于 32 位老旧设备 |
-| `haipee-android-x86_64-v0.0.2.apk` | Android | 适用于 Android 模拟器与 x86 平板 |
-| `haipee-windows-v0.0.2.zip` | Windows | 绿色便携版，解压后双击 `haipee.exe` 运行 |
-| `haipee-macos-universal-v0.0.2.zip` | macOS | 通用架构归档，完美兼容 M1/M2/M3/M4 及 Intel Mac |
-| `haipee-linux-v0.0.2-amd64.deb` | Linux (Debian/Ubuntu) | 标准 Debian 安装包，自带桌面图标与托盘关联 |
-| `haipee-linux-v0.0.2-amd64.tar.gz` | Linux (通用) | 便携免安装归档包 |
-| `haipee-ios-unsigned-v0.0.2.ipa` | iOS | 免签名安装包，供 TrollStore 或个人证书自签名 |
+| `haipee-android-arm64-v0.0.3.apk` | Android | 推荐主流 64 位手机与平板安装 |
+| `haipee-android-armv7-v0.0.3.apk` | Android | 适用于 32 位老旧设备 |
+| `haipee-android-x86_64-v0.0.3.apk` | Android | 适用于 Android 模拟器与 x86 平板 |
+| `haipee-windows-v0.0.3.zip` | Windows | 绿色便携版，解压后双击 `haipee.exe` 运行 |
+| `haipee-macos-universal-v0.0.3.zip` | macOS | 通用架构归档，完美兼容 M1/M2/M3/M4 及 Intel Mac |
+| `haipee-linux-v0.0.3-amd64.deb` | Linux (Debian/Ubuntu) | 标准 Debian 安装包，自带桌面图标与托盘关联 |
+| `haipee-linux-v0.0.3-amd64.tar.gz` | Linux (通用) | 便携免安装归档包 |
+| `haipee-ios-unsigned-v0.0.3.ipa` | iOS | 免签名安装包，供 TrollStore 或个人证书自签名 |
 
 ---
 
