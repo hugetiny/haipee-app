@@ -25,7 +25,7 @@ jobs:
   test:
     name: Flutter Analyze & Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,7 +60,15 @@ jobs:
           go-version: '1.22'
           cache: false
 
+      - name: Cache libgopeed native library
+        id: cache-libgopeed
+        uses: actions/cache@v4
+        with:
+          path: linux/libgopeed.so
+          key: libgopeed-linux-${{ hashFiles('tool/build_gopeed.sh') }}
+
       - name: Build libgopeed native library for Linux
+        if: steps.cache-libgopeed.outputs.cache-hit != 'true'
         run: |
           if [ ! -f "linux/libgopeed.so" ]; then
             if [ ! -d "third_party/gopeed" ]; then
