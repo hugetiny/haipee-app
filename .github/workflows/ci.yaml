@@ -25,6 +25,7 @@ jobs:
   test:
     name: Flutter Analyze & Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -62,10 +63,12 @@ jobs:
       - name: Build libgopeed native library for Linux
         run: |
           if [ ! -f "linux/libgopeed.so" ]; then
-            git clone --depth 1 https://github.com/GopeedLab/gopeed.git third_party/gopeed
+            if [ ! -d "third_party/gopeed" ]; then
+              git clone --depth 1 https://github.com/GopeedLab/gopeed.git third_party/gopeed
+            fi
             chmod +x tool/build_gopeed.sh
             ./tool/build_gopeed.sh linux
           fi
 
       - name: Run Flutter Tests (100% pass gate)
-        run: flutter test
+        run: flutter test --timeout 60s --concurrency 4

@@ -42,7 +42,7 @@ jobs:
   build-and-test:
     name: Cloud Build & Firebase Test Lab Robo Run
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
 
     steps:
       - name: Free Runner Disk Space
