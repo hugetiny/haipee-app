@@ -29,6 +29,9 @@ class AudioController {
   Uri? _artworkUri;
 
   Future<void> ensureInitialized() {
+    if (_handler != null) {
+      return Future.value();
+    }
     _initFuture ??= _initialize();
     return _initFuture!;
   }
@@ -46,18 +49,22 @@ class AudioController {
         canGoPrevious: true,
       );
     }
-    await AudioService.init(
-      builder: () {
-        rawHandler = _HaipeeAudioHandler();
-        return rawHandler;
-      },
-      config: const AudioServiceConfig(
-        androidNotificationChannelId: 'io.github.hugetiny.haipee.channel.audio',
-        androidNotificationChannelName: 'Haipee Playback',
-        androidNotificationOngoing: true,
-      ),
-    );
-    _handler = rawHandler;
+    try {
+      await AudioService.init(
+        builder: () {
+          rawHandler = _HaipeeAudioHandler();
+          return rawHandler;
+        },
+        config: const AudioServiceConfig(
+          androidNotificationChannelId: 'io.github.hugetiny.haipee.channel.audio',
+          androidNotificationChannelName: 'Haipee Playback',
+          androidNotificationOngoing: true,
+        ),
+      );
+      _handler = rawHandler;
+    } catch (e, stack) {
+      HaipeeLogger().w('AudioController: failed to initialize AudioService', error: e, stackTrace: stack);
+    }
     await _initializeAudioSession();
   }
 

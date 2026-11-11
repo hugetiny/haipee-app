@@ -14,9 +14,11 @@ import 'package:haipee/bean/widget/embedded_native_control_area.dart';
 import 'package:haipee/modules/bilibili/bilibili_auth_service.dart';
 import 'package:haipee/modules/bilibili/bilibili_models.dart';
 import 'package:haipee/modules/bilibili/widgets/bili_login_dialog.dart';
+import 'package:haipee/pages/download/providers.dart';
 import 'package:haipee/pages/player/player_controller.dart';
 import 'package:haipee/pages/player/player_providers.dart';
 import 'package:haipee/pages/player/player_state.dart';
+import 'package:haipee/pages/player/tracks_settings_sheet.dart';
 import 'package:haipee/pages/settings/danmaku/danmaku_settings_sheet.dart';
 import 'package:haipee/pages/video/providers.dart';
 import 'package:haipee/pages/video/video_controller.dart';
@@ -45,6 +47,8 @@ class SmallestPlayerItemPanel extends ConsumerStatefulWidget {
     required this.showVideoInfo,
     required this.showSyncPlayRoomCreateDialog,
     required this.showSyncPlayEndPointSwitchDialog,
+    this.changeEpisode,
+    this.openMenu,
     this.disableAnimations = false,
   });
 
@@ -64,6 +68,8 @@ class SmallestPlayerItemPanel extends ConsumerStatefulWidget {
   final void Function() showVideoInfo;
   final void Function() showSyncPlayRoomCreateDialog;
   final void Function() showSyncPlayEndPointSwitchDialog;
+  final Future<void> Function(int, {int currentRoad, int offset})? changeEpisode;
+  final void Function()? openMenu;
   final bool disableAnimations;
 
   @override
@@ -121,6 +127,80 @@ class _SmallestPlayerItemPanelState
 
   Future<void> _refreshBiliStreamWithNewAuth({int? targetQuality}) async {
     await playerController.switchBiliQuality(targetQuality: targetQuality);
+  }
+
+  String _buildTitleText(VideoPageState videoState) {
+    final localArgs = playerController.activeLocalVideoArgs;
+    if (localArgs != null && localArgs.title.isNotEmpty) {
+      return ' ${localArgs.title}';
+    }
+    final title = videoState.title.isNotEmpty
+        ? videoState.title
+        : playerController.currentTitle;
+    final buffer = StringBuffer(' $title');
+    if (videoState.roadList.isNotEmpty &&
+        videoState.currentRoad < videoState.roadList.length) {
+      final road = videoState.roadList[videoState.currentRoad];
+      final episodeIndex = videoState.currentEpisode - 1;
+      if (episodeIndex >= 0 && episodeIndex < road.identifier.length) {
+        buffer.write(' [${road.identifier[episodeIndex]}]');
+      }
+    }
+    return buffer.toString();
+  }
+
+  Future<void> _handleDownload(VideoPageState videoState) async {
+    final downloadUrl = playerController.videoUrl.isNotEmpty
+        ? playerController.videoUrl
+        : videoState.src;
+    if (downloadUrl.isEmpty) {
+      HaipeeDialog.showToast(message: '视频地址不可用');
+      return;
+    }
+
+    if (playerController.activeLocalVideoArgs != null ||
+        downloadUrl.startsWith('file://')) {
+      HaipeeDialog.showToast(message: '当前播放为本地文件，无需下载');
+      return;
+    }
+
+    try {
+      final downloadController = ref.read(downloadControllerProvider.notifier);
+
+      String title = _buildTitleText(videoState).trim();
+      if (!title.contains('.')) {
+        title = '$title.mp4';
+      }
+
+      String? bangumiId = playerController.activeLocalVideoArgs != null
+          ? playerController.activeLocalVideoArgs!.bangumiId
+          : (playerController.isBiliPlayback && playerController.activeBiliCid != null
+              ? playerController.activeBiliCid.toString()
+              : videoState.bangumiItem?.id.toString());
+      int? episodeNumber = playerController.activeLocalVideoArgs != null
+          ? playerController.activeLocalVideoArgs!.episode
+          : videoState.currentEpisode;
+
+      final Map<String, dynamic> headers =
+          Map<String, dynamic>.from(playerController.activeHttpHeaders ?? {});
+      if (playerController.isBiliPlayback) {
+        headers['Referer'] = 'https://www.bilibili.com/';
+        headers['User-Agent'] =
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+      }
+
+      await downloadController.addDownload(
+        downloadUrl,
+        title: title,
+        bangumiId: bangumiId,
+        episodeNumber: episodeNumber,
+        options: headers.isNotEmpty ? {'header': headers} : null,
+      );
+
+      HaipeeDialog.showToast(message: '已添加到下载列表');
+    } catch (e) {
+      HaipeeDialog.showToast(message: '添加下载任务失败: $e');
+    }
   }
 
   Widget _buildBiliLoginPrompt() {
@@ -468,6 +548,7 @@ class _SmallestPlayerItemPanelState
     PlayerState playerState,
     VideoPageState videoState,
   ) {
+    final t = context.t;
     return Row(
       children: [
         IconButton(
@@ -479,6 +560,44 @@ class _SmallestPlayerItemPanelState
           ),
           onPressed: playerController.playOrPause,
         ),
+        if (widget.changeEpisode != null &&
+            playerController.activeLocalVideoArgs == null &&
+            videoState.roadList.isNotEmpty)
+          IconButton(
+            color: Colors.white,
+            icon: const Icon(Icons.skip_next_rounded),
+            onPressed: () {
+              if (videoState.loading) {
+                return;
+              }
+              if (videoState.roadList.isEmpty ||
+                  videoState.currentRoad >= videoState.roadList.length) {
+                HaipeeDialog.showToast(
+                  message: t.playback.toast.playlistEmpty,
+                );
+                return;
+              }
+              final road = videoState.roadList[videoState.currentRoad];
+              if (videoState.currentEpisode >= road.data.length) {
+                HaipeeDialog.showToast(
+                  message: t.playback.toast.episodeLatest,
+                );
+                return;
+              }
+              final nextIdentifier =
+                  videoState.currentEpisode < road.identifier.length
+                      ? road.identifier[videoState.currentEpisode]
+                      : '${videoState.currentEpisode + 1}';
+              HaipeeDialog.showToast(
+                message: t.playback.toast.loadingEpisode
+                    .replaceFirst('{identifier}', nextIdentifier),
+              );
+              widget.changeEpisode!(
+                videoState.currentEpisode + 1,
+                currentRoad: videoState.currentRoad,
+              );
+            },
+          ),
         Expanded(
           child: ProgressBar(
             thumbRadius: 8,
@@ -610,6 +729,16 @@ class _SmallestPlayerItemPanelState
                 widget.cancelHideTimer();
                 widget.startHideTimer();
                 playerController.setCanHidePlayerPanel(true);
+              },
+            ),
+          if (!videoState.isPip && MediaQuery.sizeOf(context).width >= 420)
+            IconButton(
+              key: const Key('smallest_download_btn'),
+              color: Colors.white,
+              icon: const Icon(Icons.download_rounded),
+              tooltip: '下载',
+              onPressed: () async {
+                await _handleDownload(videoState);
               },
             ),
           MenuAnchor(
@@ -884,6 +1013,32 @@ class _SmallestPlayerItemPanelState
               MenuItemButton(
                 onPressed: playerController.lanunchExternalPlayer,
                 child: _buildMenuItem(title: t.playback.controls.menu.external),
+              ),
+              MenuItemButton(
+                key: const Key('smallest_menu_tracks'),
+                onPressed: () {
+                  TracksSettingsSheet.show(context);
+                },
+                child: _buildMenuItem(title: '音频与字幕'),
+              ),
+              if (widget.openMenu != null &&
+                  playerController.activeLocalVideoArgs == null &&
+                  videoState.roadList.isNotEmpty)
+                MenuItemButton(
+                  key: const Key('smallest_menu_episodes'),
+                  onPressed: () {
+                    videoPageController.showTabBody =
+                        !videoState.showTabBody;
+                    widget.openMenu!();
+                  },
+                  child: _buildMenuItem(title: '选集与剧集列表'),
+                ),
+              MenuItemButton(
+                key: const Key('smallest_menu_download'),
+                onPressed: () async {
+                  await _handleDownload(videoState);
+                },
+                child: _buildMenuItem(title: '下载视频'),
               ),
             ],
           ),

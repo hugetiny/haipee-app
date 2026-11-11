@@ -1134,7 +1134,11 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!Utils.isDesktop() && !Utils.isTablet())
+            if (!Utils.isDesktop() &&
+                !Utils.isTablet() &&
+                MediaQuery.orientationOf(context) != Orientation.landscape &&
+                MediaQuery.sizeOf(context).width <=
+                    MediaQuery.sizeOf(context).height)
               Container(
                 padding: const EdgeInsets.only(left: 10.0, bottom: 10),
                 child: Text(
@@ -1210,370 +1214,182 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  IconButton(
-                    color: Colors.white,
-                    icon: Icon(playerState.playing
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded),
-                    onPressed: () {
-                      playerController.playOrPause();
-                    },
-                  ),
-                  if (playerController.activeLocalVideoArgs == null &&
-                      videoState.roadList.isNotEmpty &&
-                      (videoState.isFullscreen ||
-                          Utils.isTablet() ||
-                          Utils.isDesktop()))
-                    IconButton(
-                      color: Colors.white,
-                      icon: const Icon(Icons.skip_next_rounded),
-                      onPressed: () {
-                        if (videoState.loading) {
-                          return;
-                        }
-                        if (videoState.roadList.isEmpty ||
-                            videoState.currentRoad >=
-                                videoState.roadList.length) {
-                          HaipeeDialog.showToast(
-                            message: t.playback.toast.playlistEmpty,
-                          );
-                          return;
-                        }
-                        final road =
-                            videoState.roadList[videoState.currentRoad];
-                        if (videoState.currentEpisode >= road.data.length) {
-                          HaipeeDialog.showToast(
-                            message: t.playback.toast.episodeLatest,
-                          );
-                          return;
-                        }
-                        final nextIdentifier =
-                            videoState.currentEpisode < road.identifier.length
-                                ? road.identifier[videoState.currentEpisode]
-                                : '${videoState.currentEpisode + 1}';
-                        HaipeeDialog.showToast(
-                          message: t.playback.toast.loadingEpisode
-                              .replaceFirst('{identifier}', nextIdentifier),
-                        );
-                        widget.changeEpisode(
-                          videoState.currentEpisode + 1,
-                          currentRoad: videoState.currentRoad,
-                        );
-                      },
-                    ),
-                  if (Utils.isDesktop())
-                    Container(
-                      padding: const EdgeInsets.only(left: 10.0),
-                      child: Text(
-                        "${Utils.durationToString(playerState.currentPosition)} / ${Utils.durationToString(playerState.duration)}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.0,
-                          fontFeatures: [
-                            FontFeature.tabularFigures(),
-                          ],
-                        ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final totalWidth = constraints.maxWidth;
+                  final isLandscape =
+                      MediaQuery.orientationOf(context) == Orientation.landscape ||
+                          MediaQuery.sizeOf(context).width >
+                              MediaQuery.sizeOf(context).height;
+                  final hasEpisodes =
+                      playerController.activeLocalVideoArgs == null &&
+                          videoState.roadList.isNotEmpty &&
+                          (videoState.isFullscreen ||
+                              Utils.isTablet() ||
+                              Utils.isDesktop() ||
+                              isLandscape);
+                  final isWide = totalWidth >= 720;
+
+                  return Row(
+                    children: [
+                      IconButton(
+                        color: Colors.white,
+                        icon: Icon(playerState.playing
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded),
+                        onPressed: () {
+                          playerController.playOrPause();
+                        },
                       ),
-                    ),
-                  if (Utils.isDesktop())
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isSpaceEnough = constraints.maxWidth > 600;
-                          return Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (constraints.maxWidth >= 48)
-                                  IconButton(
-                                    color: Colors.white,
-                                    icon: playerState.danmakuOn
-                                        ? SvgPicture.string(
-                                            svgString,
-                                            height: 24,
-                                          )
-                                        : SvgPicture.asset(
-                                            'assets/images/danmaku_off.svg',
-                                            height: 24,
-                                          ),
-                                    onPressed: widget.handleDanmaku,
-                                    tooltip: playerState.danmakuOn
-                                        ? t.playback.controls.tooltips.danmakuOn
-                                        : t.playback.controls.tooltips.danmakuOff,
-                                  ),
-                                if (constraints.maxWidth >= 96)
-                                  IconButton(
-                                    onPressed: () {
-                                      widget.keyboardFocus.requestFocus();
-                                      showModalBottomSheet(
-                                        isScrollControlled: true,
-                                        constraints: BoxConstraints(
-                                          maxHeight:
-                                              MediaQuery.of(context).size.height *
-                                                  3 /
-                                                  4,
-                                          maxWidth: (Utils.isDesktop() ||
-                                                  Utils.isTablet())
-                                              ? MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  9 /
-                                                  16
-                                              : MediaQuery.of(context).size.width,
-                                        ),
-                                        clipBehavior: Clip.antiAlias,
-                                        context: context,
-                                        builder: (context) {
-                                          return DanmakuSettingsSheet(
-                                            danmakuController: playerController
-                                                .danmakuController,
-                                          );
-                                        },
-                                      );
-                                    },
-                                    color: Colors.white,
-                                    icon: SvgPicture.asset(
-                                      'assets/images/danmaku_setting.svg',
-                                      height: 24,
-                                    ),
-                                  ),
-                                if (isSpaceEnough)
-                                  Flexible(
-                                    child: buildDanmakuTextField(playerState),
-                                  ),
+                      if (hasEpisodes)
+                        IconButton(
+                          color: Colors.white,
+                          icon: const Icon(Icons.skip_next_rounded),
+                          onPressed: () {
+                            if (videoState.loading) {
+                              return;
+                            }
+                            if (videoState.roadList.isEmpty ||
+                                videoState.currentRoad >=
+                                    videoState.roadList.length) {
+                              HaipeeDialog.showToast(
+                                message: t.playback.toast.playlistEmpty,
+                              );
+                              return;
+                            }
+                            final road =
+                                videoState.roadList[videoState.currentRoad];
+                            if (videoState.currentEpisode >= road.data.length) {
+                              HaipeeDialog.showToast(
+                                message: t.playback.toast.episodeLatest,
+                              );
+                              return;
+                            }
+                            final nextIdentifier =
+                                videoState.currentEpisode < road.identifier.length
+                                    ? road.identifier[videoState.currentEpisode]
+                                    : '${videoState.currentEpisode + 1}';
+                            HaipeeDialog.showToast(
+                              message: t.playback.toast.loadingEpisode
+                                  .replaceFirst('{identifier}', nextIdentifier),
+                            );
+                            widget.changeEpisode(
+                              videoState.currentEpisode + 1,
+                              currentRoad: videoState.currentRoad,
+                            );
+                          },
+                        ),
+                      if (Utils.isDesktop() || isLandscape)
+                        Container(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: Text(
+                            "${Utils.durationToString(playerState.currentPosition)} / ${Utils.durationToString(playerState.duration)}",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: totalWidth >= 600 ? 15.0 : 13.0,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
                               ],
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                  if (!Utils.isDesktop()) ...[
-                    IconButton(
-                      color: Colors.white,
-                      icon: playerState.danmakuOn
-                          ? SvgPicture.string(
-                              svgString,
-                              height: 24,
-                            )
-                          : SvgPicture.asset(
-                              'assets/images/danmaku_off.svg',
-                              height: 24,
-                            ),
-                      onPressed: widget.handleDanmaku,
-                      tooltip: playerState.danmakuOn
-                          ? t.playback.controls.tooltips.danmakuOn
-                          : t.playback.controls.tooltips.danmakuOff,
-                    ),
-                    if (playerState.danmakuOn) ...[
-                      IconButton(
-                        onPressed: () {
-                          showModalBottomSheet(
-                            isScrollControlled: true,
-                            constraints: BoxConstraints(
-                              maxHeight:
-                                  MediaQuery.of(context).size.height * 3 / 4,
-                              maxWidth: (Utils.isDesktop() || Utils.isTablet())
-                                  ? MediaQuery.of(context).size.width * 9 / 16
-                                  : MediaQuery.of(context).size.width,
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            context: context,
-                            builder: (context) {
-                              return DanmakuSettingsSheet(
-                                danmakuController:
-                                    playerController.danmakuController,
-                              );
-                            },
-                          );
-                        },
-                        color: Colors.white,
-                        icon: SvgPicture.asset(
-                          'assets/images/danmaku_setting.svg',
-                          height: 24,
+                          ),
                         ),
-                      ),
                       Expanded(
-                        child: buildDanmakuTextField(playerState),
-                      ),
-                    ],
-                    if (!playerState.danmakuOn) const Spacer(),
-                  ],
-                  _buildBiliQualityBadge(),
-                  MenuAnchor(
-                    consumeOutsideTap: true,
-                    onOpen: () {
-                      widget.cancelHideTimer();
-                      playerController.canHidePlayerPanel = false;
-                    },
-                    onClose: () {
-                      widget.cancelHideTimer();
-                      widget.startHideTimer();
-                      playerController.canHidePlayerPanel = true;
-                    },
-                    builder: (BuildContext context, MenuController controller,
-                        Widget? child) {
-                      return TextButton(
-                        onPressed: () {
-                          if (controller.isOpen) {
-                            controller.close();
-                          } else {
-                            controller.open();
-                          }
-                        },
-                        child: Text(
-                          playerState.superResolutionType == 1
-                              ? t.playback.controls.superResolution.label
-                              : superResolutionOptions[playerState.superResolutionType - 1],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      );
-                    },
-                    menuChildren: List<MenuItemButton>.generate(
-                      3,
-                      (int index) => MenuItemButton(
-                        onPressed: () =>
-                            widget.handleSuperResolutionChange(index + 1),
-                        child: SizedBox(
-                          height: 48,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              superResolutionOptions[index],
-                              style: TextStyle(
-                                color:
-                                    playerState.superResolutionType == index + 1
-                                        ? Theme.of(context).colorScheme.primary
-                                        : null,
+                        child: LayoutBuilder(
+                          builder: (context, midConstraints) {
+                            final midWidth = midConstraints.maxWidth;
+                            final showInput = midWidth >= 200 && playerState.danmakuOn;
+                            return Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (midWidth >= 48)
+                                    IconButton(
+                                      color: Colors.white,
+                                      icon: playerState.danmakuOn
+                                          ? SvgPicture.string(
+                                              svgString,
+                                              height: 24,
+                                            )
+                                          : SvgPicture.asset(
+                                              'assets/images/danmaku_off.svg',
+                                              height: 24,
+                                            ),
+                                      onPressed: widget.handleDanmaku,
+                                      tooltip: playerState.danmakuOn
+                                          ? t.playback.controls.tooltips.danmakuOn
+                                          : t.playback.controls.tooltips.danmakuOff,
+                                    ),
+                                  if (midWidth >= 96 && playerState.danmakuOn)
+                                    IconButton(
+                                      onPressed: () {
+                                        widget.keyboardFocus.requestFocus();
+                                        showModalBottomSheet(
+                                          isScrollControlled: true,
+                                          constraints: BoxConstraints(
+                                            maxHeight:
+                                                MediaQuery.of(context).size.height *
+                                                    3 /
+                                                    4,
+                                            maxWidth: (Utils.isDesktop() ||
+                                                    Utils.isTablet())
+                                                ? MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    9 /
+                                                    16
+                                                : MediaQuery.of(context).size.width,
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          context: context,
+                                          builder: (context) {
+                                            return DanmakuSettingsSheet(
+                                              danmakuController: playerController
+                                                  .danmakuController,
+                                            );
+                                          },
+                                        );
+                                      },
+                                      color: Colors.white,
+                                      icon: SvgPicture.asset(
+                                        'assets/images/danmaku_setting.svg',
+                                        height: 24,
+                                      ),
+                                    ),
+                                  if (showInput)
+                                    Flexible(
+                                      child: buildDanmakuTextField(playerState),
+                                    ),
+                                ],
                               ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  MenuAnchor(
-                    consumeOutsideTap: true,
-                    onOpen: () {
-                      widget.cancelHideTimer();
-                      playerController.canHidePlayerPanel = false;
-                    },
-                    onClose: () {
-                      widget.cancelHideTimer();
-                      widget.startHideTimer();
-                      playerController.canHidePlayerPanel = true;
-                    },
-                    builder: (BuildContext context, MenuController controller,
-                        Widget? child) {
-                      return TextButton(
-                        onPressed: () {
-                          if (controller.isOpen) {
-                            controller.close();
-                          } else {
-                            controller.open();
-                          }
-                        },
-                        child: Text(
-                          playerState.playerSpeed == 1.0
-                              ? t.playback.controls.speedMenu.label
-                              : '${playerState.playerSpeed}x',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      );
-                    },
-                    menuChildren: [
-                      for (final double i in defaultPlaySpeedList)
-                        MenuItemButton(
-                          onPressed: () async {
-                            await widget.setPlaybackSpeed(i);
+                            );
                           },
-                          child: SizedBox(
-                            height: 48,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                '${i}x',
-                                style: TextStyle(
-                                  color: i == playerState.playerSpeed
-                                      ? Theme.of(context).colorScheme.primary
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          ),
                         ),
-                    ],
-                  ),
-                  MenuAnchor(
-                    consumeOutsideTap: true,
-                    onOpen: () {
-                      widget.cancelHideTimer();
-                      playerController.canHidePlayerPanel = false;
-                    },
-                    onClose: () {
-                      widget.cancelHideTimer();
-                      widget.startHideTimer();
-                      playerController.canHidePlayerPanel = true;
-                    },
-                    builder: (BuildContext context, MenuController controller,
-                        Widget? child) {
-                      return IconButton(
+                      ),
+                      _buildBiliQualityBadge(),
+                      if (isWide) ...[
+                        _buildSuperResolutionButton(
+                            playerState, superResolutionOptions),
+                        _buildSpeedButton(playerState),
+                        _buildAspectRatioButton(
+                            playerState, aspectRatioLabels),
+                      ] else ...[
+                        _buildSpeedButton(playerState),
+                        _buildMoreSettingsButton(playerState,
+                            superResolutionOptions, aspectRatioLabels),
+                      ],
+                      IconButton(
+                        key: const Key('full_panel_tracks_button'),
                         onPressed: () {
-                          if (controller.isOpen) {
-                            controller.close();
-                          } else {
-                            controller.open();
-                          }
+                          TracksSettingsSheet.show(context);
                         },
                         icon: const Icon(
-                          Icons.aspect_ratio_rounded,
+                          Icons.subtitles_rounded,
                           color: Colors.white,
                         ),
-                        tooltip: t.playback.controls.aspectRatio.label,
-                      );
-                    },
-                    menuChildren: [
-                      for (final entry in aspectRatioTypeMap.entries)
-                        MenuItemButton(
-                          onPressed: () =>
-                              playerController.aspectRatioType = entry.key,
-                          child: SizedBox(
-                            height: 48,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                aspectRatioLabels[entry.key] ?? entry.value,
-                                style: TextStyle(
-                                  color: entry.key ==
-                                          playerState.aspectRatioType
-                                      ? Theme.of(context).colorScheme.primary
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  IconButton(
-                    key: const Key('full_panel_tracks_button'),
-                    onPressed: () {
-                      TracksSettingsSheet.show(context);
-                    },
-                    icon: const Icon(
-                      Icons.subtitles_rounded,
-                      color: Colors.white,
-                    ),
-                    tooltip: '音频与字幕',
-                  ),
-                  (playerController.activeLocalVideoArgs != null ||
-                          videoState.roadList.isEmpty ||
-                          (!videoState.isFullscreen &&
-                              !Utils.isTablet() &&
-                              !Utils.isDesktop()))
-                      ? const SizedBox.shrink()
-                      : IconButton(
+                        tooltip: '音频与字幕',
+                      ),
+                      if (hasEpisodes)
+                        IconButton(
                           color: Colors.white,
                           icon: const Icon(Icons.menu_open_rounded),
                           onPressed: () {
@@ -1582,19 +1398,21 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
                             widget.openMenu();
                           },
                         ),
-                  (Utils.isTablet() &&
-                          videoState.isFullscreen &&
-                          MediaQuery.of(context).size.height <
-                              MediaQuery.of(context).size.width)
-                      ? const SizedBox.shrink()
-                      : IconButton(
-                          color: Colors.white,
-                          icon: Icon(videoState.isFullscreen
-                              ? Icons.fullscreen_exit_rounded
-                              : Icons.fullscreen_rounded),
-                          onPressed: widget.handleFullscreen,
-                        ),
-                ],
+                      (Utils.isTablet() &&
+                              videoState.isFullscreen &&
+                              MediaQuery.of(context).size.height <
+                                  MediaQuery.of(context).size.width)
+                          ? const SizedBox.shrink()
+                          : IconButton(
+                              color: Colors.white,
+                              icon: Icon(videoState.isFullscreen
+                                  ? Icons.fullscreen_exit_rounded
+                                  : Icons.fullscreen_rounded),
+                              onPressed: widget.handleFullscreen,
+                            ),
+                    ],
+                  );
+                },
               ),
             ),
             if (Utils.isTablet() || Utils.isDesktop())
@@ -1602,6 +1420,299 @@ class _PlayerItemPanelState extends ConsumerState<PlayerItemPanel> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSuperResolutionButton(
+    PlayerState playerState,
+    List<String> superResolutionOptions,
+  ) {
+    final t = context.t;
+    return MenuAnchor(
+      consumeOutsideTap: true,
+      onOpen: () {
+        widget.cancelHideTimer();
+        playerController.canHidePlayerPanel = false;
+      },
+      onClose: () {
+        widget.cancelHideTimer();
+        widget.startHideTimer();
+        playerController.canHidePlayerPanel = true;
+      },
+      builder: (BuildContext context, MenuController controller, Widget? child) {
+        return TextButton(
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+          child: Text(
+            playerState.superResolutionType == 1
+                ? t.playback.controls.superResolution.label
+                : superResolutionOptions[playerState.superResolutionType - 1],
+            style: const TextStyle(color: Colors.white),
+          ),
+        );
+      },
+      menuChildren: List<MenuItemButton>.generate(
+        3,
+        (int index) => MenuItemButton(
+          onPressed: () => widget.handleSuperResolutionChange(index + 1),
+          child: SizedBox(
+            height: 48,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                superResolutionOptions[index],
+                style: TextStyle(
+                  color: playerState.superResolutionType == index + 1
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpeedButton(
+    PlayerState playerState,
+  ) {
+    final t = context.t;
+    return MenuAnchor(
+      consumeOutsideTap: true,
+      onOpen: () {
+        widget.cancelHideTimer();
+        playerController.canHidePlayerPanel = false;
+      },
+      onClose: () {
+        widget.cancelHideTimer();
+        widget.startHideTimer();
+        playerController.canHidePlayerPanel = true;
+      },
+      builder: (BuildContext context, MenuController controller, Widget? child) {
+        return TextButton(
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+          child: Text(
+            playerState.playerSpeed == 1.0
+                ? t.playback.controls.speedMenu.label
+                : '${playerState.playerSpeed}x',
+            style: const TextStyle(color: Colors.white),
+          ),
+        );
+      },
+      menuChildren: [
+        for (final double i in defaultPlaySpeedList)
+          MenuItemButton(
+            onPressed: () async {
+              await widget.setPlaybackSpeed(i);
+            },
+            child: SizedBox(
+              height: 48,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '${i}x',
+                  style: TextStyle(
+                    color: i == playerState.playerSpeed
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAspectRatioButton(
+    PlayerState playerState,
+    Map<int, String> aspectRatioLabels,
+  ) {
+    final t = context.t;
+    return MenuAnchor(
+      consumeOutsideTap: true,
+      onOpen: () {
+        widget.cancelHideTimer();
+        playerController.canHidePlayerPanel = false;
+      },
+      onClose: () {
+        widget.cancelHideTimer();
+        widget.startHideTimer();
+        playerController.canHidePlayerPanel = true;
+      },
+      builder: (BuildContext context, MenuController controller, Widget? child) {
+        return IconButton(
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+          icon: const Icon(
+            Icons.aspect_ratio_rounded,
+            color: Colors.white,
+          ),
+          tooltip: t.playback.controls.aspectRatio.label,
+        );
+      },
+      menuChildren: [
+        for (final entry in aspectRatioTypeMap.entries)
+          MenuItemButton(
+            onPressed: () => playerController.aspectRatioType = entry.key,
+            child: SizedBox(
+              height: 48,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  aspectRatioLabels[entry.key] ?? entry.value,
+                  style: TextStyle(
+                    color: entry.key == playerState.aspectRatioType
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMoreSettingsButton(
+    PlayerState playerState,
+    List<String> superResolutionOptions,
+    Map<int, String> aspectRatioLabels,
+  ) {
+    final t = context.t;
+    return MenuAnchor(
+      consumeOutsideTap: true,
+      onOpen: () {
+        widget.cancelHideTimer();
+        playerController.canHidePlayerPanel = false;
+      },
+      onClose: () {
+        widget.cancelHideTimer();
+        widget.startHideTimer();
+        playerController.canHidePlayerPanel = true;
+      },
+      builder: (BuildContext context, MenuController controller, Widget? child) {
+        return IconButton(
+          key: const Key('full_panel_compact_more_btn'),
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+          icon: const Icon(
+            Icons.tune_rounded,
+            color: Colors.white,
+          ),
+          tooltip: '更多播放控制',
+        );
+      },
+      menuChildren: [
+        SubmenuButton(
+          menuChildren: [
+            for (final entry in aspectRatioTypeMap.entries)
+              MenuItemButton(
+                onPressed: () => playerController.aspectRatioType = entry.key,
+                child: SizedBox(
+                  height: 48,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      aspectRatioLabels[entry.key] ?? entry.value,
+                      style: TextStyle(
+                        color: entry.key == playerState.aspectRatioType
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+          child: SizedBox(
+            height: 48,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(t.playback.controls.aspectRatio.label),
+            ),
+          ),
+        ),
+        SubmenuButton(
+          menuChildren: List<MenuItemButton>.generate(
+            3,
+            (int index) => MenuItemButton(
+              onPressed: () => widget.handleSuperResolutionChange(index + 1),
+              child: SizedBox(
+                height: 48,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    superResolutionOptions[index],
+                    style: TextStyle(
+                      color: playerState.superResolutionType == index + 1
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          child: SizedBox(
+            height: 48,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(t.playback.controls.superResolution.label),
+            ),
+          ),
+        ),
+        MenuItemButton(
+          onPressed: () {
+            widget.keyboardFocus.requestFocus();
+            showModalBottomSheet(
+              isScrollControlled: true,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 3 / 4,
+                maxWidth: (Utils.isDesktop() || Utils.isTablet())
+                    ? MediaQuery.of(context).size.width * 9 / 16
+                    : MediaQuery.of(context).size.width,
+              ),
+              clipBehavior: Clip.antiAlias,
+              context: context,
+              builder: (context) {
+                return DanmakuSettingsSheet(
+                  danmakuController: playerController.danmakuController,
+                );
+              },
+            );
+          },
+          child: SizedBox(
+            height: 48,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(t.settings.player.danmakuSettings),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

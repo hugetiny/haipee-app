@@ -1274,25 +1274,47 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
   }
 
   /// Used to decide which panel is used.
-  /// It's too complicated to write these in conditional sentence.
   /// * true: use [PlayerItemPanel]
   /// * false: use [SmallestPlayerItemPanel]
   bool needFullPanel(BuildContext context) {
-    // windows too small, workaround for ohos floating window
-    if (MediaQuery.sizeOf(context).width < LayoutBreakpoint.compact['width']!) {
-      return false;
-    }
-    // in desktop pip mode
+    // 1. In desktop minimal PiP mode, always use SmallestPlayerItemPanel
     if (videoPageController.isPip) {
       return false;
     }
-    // does not meet Google's phone landscape height and tablet landscape width requirements.
-    if (MediaQuery.sizeOf(context).height >
-            LayoutBreakpoint.compact['height']! &&
-        MediaQuery.sizeOf(context).width < LayoutBreakpoint.medium['width']!) {
-      return false;
+
+    // 2. On desktop platforms, always use full panel (PlayerItemPanel)
+    // Resized desktop windows and desktop widescreen state must always preserve player details.
+    if (Utils.isDesktop()) {
+      return true;
     }
-    return true;
+
+    final size = MediaQuery.sizeOf(context);
+    final orientation = MediaQuery.orientationOf(context);
+    final isLandscape =
+        orientation == Orientation.landscape || size.width > size.height;
+
+    // 3. In landscape mode (横屏), always use full panel
+    if (isLandscape) {
+      return true;
+    }
+
+    // 4. In fullscreen mode, always use full panel
+    if (videoPageController.isFullscreen) {
+      return true;
+    }
+
+    // 5. On tablets with adequate width, use full panel
+    if (Utils.isTablet() && size.width >= LayoutBreakpoint.compact['width']!) {
+      return true;
+    }
+
+    // 6. Large displays with width >= 840 (e.g. tablet portrait)
+    if (size.width >= LayoutBreakpoint.medium['width']!) {
+      return true;
+    }
+
+    // For mobile portrait compact viewport (vertical thumbnail player), use SmallestPlayerItemPanel
+    return false;
   }
 
   @override
@@ -1648,6 +1670,8 @@ class _PlayerItemState extends ConsumerState<PlayerItem>
                         onBackPressed: widget.onBackPressed,
                         setPlaybackSpeed: setPlaybackSpeed,
                         showDanmakuSwitch: showDanmakuSwitch,
+                        changeEpisode: widget.changeEpisode,
+                        openMenu: widget.openMenu,
                         handleFullscreen: handleFullscreen,
                         handleProgressBarDragStart: handleProgressBarDragStart,
                         handleProgressBarDragEnd: handleProgressBarDragEnd,
