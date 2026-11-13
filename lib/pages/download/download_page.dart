@@ -1178,7 +1178,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage>
       builder: (context, constraints) {
         final isCompact = constraints.maxHeight < 280;
         return SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const ScrollPhysics.alwaysScrollable(),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : 0,

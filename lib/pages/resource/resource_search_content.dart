@@ -2690,7 +2690,7 @@ class _ResourceSearchContentState extends ConsumerState<ResourceSearchContent> {
             if (inGrid)
               Expanded(
                 child: SingleChildScrollView(
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics: const ScrollPhysics.neverScrollable(),
                   child: middleSection,
                 ),
               )

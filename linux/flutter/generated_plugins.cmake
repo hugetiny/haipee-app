@@ -9,12 +9,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   hotkey_manager_linux
   irondash_engine_context
   media_kit_libs_linux
-  media_kit_video
   screen_retriever_linux
   sentry_flutter
   super_native_extensions
   tray_manager
   url_launcher_linux
+  media_kit_video
   window_manager
 )
 

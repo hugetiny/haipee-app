@@ -13,6 +13,9 @@ class StateController<T> extends Notifier<T> {
   T build() => _init(ref);
 
   @override
+  T get state => super.state;
+
+  @override
   set state(T value) => super.state = value;
 
   T update(T Function(T state) cb) => state = cb(state);

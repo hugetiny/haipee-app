@@ -109,7 +109,7 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
                 scrollBehavior: const ScrollBehavior().copyWith(
                   scrollbars: false,
                 ),
-                scrollPhysics: const NeverScrollableScrollPhysics(),
+                scrollPhysics: const ScrollPhysics.neverScrollable(),
                 selectionHeightStyle: ui.BoxHeightStyle.max,
               ),
             ),
@@ -128,7 +128,7 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
       return SelectableText(
         widget.bangumiItem.summary,
         textAlign: TextAlign.start,
-        scrollPhysics: const NeverScrollableScrollPhysics(),
+        scrollPhysics: const ScrollPhysics.neverScrollable(),
         selectionHeightStyle: ui.BoxHeightStyle.max,
       );
     });
@@ -324,7 +324,7 @@ class _InfoTabViewState extends ConsumerState<InfoTabView>
       const SizedBox(height: 8),
       ListView.separated(
         shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: const ScrollPhysics.neverScrollable(),
         itemBuilder: (BuildContext context, int index) {
           final EpisodeMetadata episode = visibleEpisodes[index];
           return _buildEpisodeTile(episode);

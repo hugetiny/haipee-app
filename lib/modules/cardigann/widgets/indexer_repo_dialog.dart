@@ -182,7 +182,7 @@ class _IndexerRepoDialogState extends ConsumerState<IndexerRepoDialog> {
               ] else ...[
                 ListView.separated(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics: const ScrollPhysics.neverScrollable(),
                   itemCount: subs.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {

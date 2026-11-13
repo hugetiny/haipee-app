@@ -49,7 +49,7 @@ class SafeColumn extends StatelessWidget {
         return SingleChildScrollView(
           controller: controller,
           padding: padding,
-          physics: physics ?? const ClampingScrollPhysics(),
+          physics: physics ?? const ScrollPhysics.clamping(),
           clipBehavior: Clip.antiAlias,
           child: constraints.hasBoundedHeight
               ? ConstrainedBox(

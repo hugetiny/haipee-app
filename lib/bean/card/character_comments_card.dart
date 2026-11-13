@@ -43,7 +43,7 @@ class CharacterCommentsCard extends StatelessWidget {
                 // Don't know why but some device has bottom padding,
                 // needs to set to 0 manually.
                 padding: const EdgeInsets.only(bottom: 0),
-                physics: const NeverScrollableScrollPhysics(),
+                physics: const ScrollPhysics.neverScrollable(),
                 shrinkWrap: true,
                 itemCount: commentItem.replies.length,
                 itemBuilder: (context, index) {

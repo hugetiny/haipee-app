@@ -27,7 +27,7 @@ class GeneralErrorWidget extends StatelessWidget {
 
     return Center(
       child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
+        physics: const ScrollPhysics.clamping(),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(

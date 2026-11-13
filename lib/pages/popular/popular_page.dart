@@ -182,7 +182,7 @@ class _PopularPageState extends ConsumerState<PopularPage>
   Widget contentGrid(bangumiList) {
     return AdaptiveGrid(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: const ScrollPhysics.neverScrollable(),
       padding: const EdgeInsets.all(8),
       smallMobileColumns: 2,
       mobileColumns: 3,

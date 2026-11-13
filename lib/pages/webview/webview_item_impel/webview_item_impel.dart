@@ -45,7 +45,7 @@ class _WebviewItemImpelState extends ConsumerState<WebviewItemImpel> {
       await widget.webviewController.init();
     }
     if (!mounted) return;
-    ref.read(webviewInitializedProvider.notifier).state++;
+    ref.read(webviewInitializedProvider.notifier).update((s) => s + 1);
   }
 
   Widget get compositeView {
