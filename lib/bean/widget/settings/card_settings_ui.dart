@@ -325,12 +325,16 @@ class SettingsBadge extends StatelessWidget {
             Icon(icon, size: 12, color: effectiveFg),
             const SizedBox(width: 3),
           ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: effectiveFg,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: effectiveFg,
+              ),
             ),
           ),
         ],

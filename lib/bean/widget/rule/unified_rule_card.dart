@@ -160,23 +160,21 @@ class UnifiedRuleCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    title,
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14.5,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  title,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.5,
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                if (titleBadge != null) ...[
-                                  const SizedBox(width: 6),
-                                  titleBadge!,
-                                ],
+                                if (titleBadge != null) titleBadge!,
                               ],
                             ),
                             if (url != null && url!.isNotEmpty) ...[
@@ -371,6 +369,94 @@ class UnifiedRuleGrid extends StatelessWidget {
               ),
             );
           },
+        );
+      },
+    );
+  }
+}
+
+/// 统一规则管理顶部搜索与响应式操作工具栏
+///
+/// 宽屏下搜索框与操作按钮组左右排布；窄屏下自动折行并使用 [Wrap] 流式排布，
+/// 彻底避免出现一长排需要横向滚动的按钮条。
+class UnifiedRuleToolbar extends StatelessWidget {
+  final TextEditingController searchController;
+  final String searchHint;
+  final VoidCallback onSearchChanged;
+  final List<Widget> actions;
+  final double wideThreshold;
+
+  const UnifiedRuleToolbar({
+    super.key,
+    required this.searchController,
+    required this.searchHint,
+    required this.onSearchChanged,
+    required this.actions,
+    this.wideThreshold = 860,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < wideThreshold;
+        final searchField = SizedBox(
+          height: 38,
+          child: TextField(
+            controller: searchController,
+            decoration: InputDecoration(
+              hintText: searchHint,
+              prefixIcon: const Icon(Icons.search, size: 18),
+              suffixIcon: searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 16),
+                      onPressed: () {
+                        searchController.clear();
+                        onSearchChanged();
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withAlpha(120),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            onChanged: (_) => onSearchChanged(),
+          ),
+        );
+
+        if (isCompact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              searchField,
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: actions,
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: searchField),
+            const SizedBox(width: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: actions,
+            ),
+          ],
         );
       },
     );

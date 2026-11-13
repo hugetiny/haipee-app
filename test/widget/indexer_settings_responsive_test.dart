@@ -135,5 +135,30 @@ search:
     expect(find.text('测试抓取 (Dry-Run)'), findsOneWidget);
     expect(find.text('站点官网'), findsOneWidget);
     expect(find.text('YAML 来源'), findsOneWidget);
+
+    // 3. 极窄屏 (360x800) 下使用 UnifiedRuleToolbar Wrap 自动折行，绝不横向滚动或溢出
+    tester.view.physicalSize = const Size(360, 800);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(UnifiedRuleToolbar), findsOneWidget);
+
+    final horizontalScrollables = find.descendant(
+      of: find.byType(UnifiedRuleToolbar),
+      matching: find.byWidgetPredicate(
+        (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
+      ),
+    );
+    expect(horizontalScrollables, findsNothing);
+
+    for (final key in const [
+      Key('cardigann_btn_add_manual'),
+      Key('cardigann_btn_import'),
+      Key('cardigann_btn_auto_test'),
+    ]) {
+      final rect = tester.getRect(find.byKey(key));
+      expect(rect.left, greaterThanOrEqualTo(0));
+      expect(rect.right, lessThanOrEqualTo(360));
+    }
   });
 }

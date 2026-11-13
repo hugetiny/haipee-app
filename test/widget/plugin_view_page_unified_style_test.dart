@@ -316,5 +316,56 @@ void main() {
       expect(find.text('手动添加规则'), findsWidgets);
       expect(find.text('快捷选择规则协议类型'), findsOneWidget);
     });
+
+    testWidgets(
+        'Narrow screen (360x800) uses UnifiedRuleToolbar Wrap with zero horizontal scrolling and zero AppBar duplicate buttons',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(buildTestApp(plugins: dummyPlugins));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(UnifiedRuleToolbar), findsOneWidget);
+
+      // 确认没有横向滚动条包裹操作按钮组
+      final horizontalScrollables = find.descendant(
+        of: find.byType(UnifiedRuleToolbar),
+        matching: find.byWidgetPredicate(
+          (w) => w is SingleChildScrollView && w.scrollDirection == Axis.horizontal,
+        ),
+      );
+      expect(horizontalScrollables, findsNothing);
+
+      // 所有核心操作按钮在 360px 窄屏下完整可见且不超出视口右边界
+      for (final key in const [
+        Key('plugin_btn_add_manual'),
+        Key('plugin_btn_import'),
+        Key('plugin_btn_auto_test'),
+      ]) {
+        final rect = tester.getRect(find.byKey(key));
+        expect(rect.left, greaterThanOrEqualTo(0));
+        expect(rect.right, lessThanOrEqualTo(360));
+      }
+
+      // AppBar 不再重复堆叠手动添加/导入/测速图标，保持简洁
+      final appBar = find.byType(SysAppBar);
+      expect(
+        find.descendant(of: appBar, matching: find.byIcon(Icons.add_rounded)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+            of: appBar, matching: find.byIcon(Icons.file_upload_outlined)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: appBar, matching: find.byIcon(Icons.speed_rounded)),
+        findsNothing,
+      );
+    });
   });
 }

@@ -895,26 +895,8 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
                   const SizedBox(width: 4),
                 ],
               ] else ...[
-                // 常规规则管理操作 (全部以及 6 种规则类型)
+                // 常规规则管理页面级全局操作（添加/导入/测速/启闭已统一收拢至下方响应式工具栏）
                 if (isWide) ...[
-                  FilledButton.icon(
-                    onPressed: _createNewPlugin,
-                    icon: const Icon(Icons.add_rounded, size: 16),
-                    label: const Text('手动添加规则'),
-                    style: FilledButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  FilledButton.tonalIcon(
-                    onPressed: () => PluginImportDialog.show(context),
-                    icon: const Icon(Icons.file_upload_outlined, size: 16),
-                    label: const Text('导入规则'),
-                    style: FilledButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
                   OutlinedButton.icon(
                     onPressed: () => PluginSubscriptionDialog.show(context),
                     icon: const Icon(Icons.rss_feed_rounded, size: 16),
@@ -924,11 +906,6 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  IconButton(
-                    tooltip: '一键测速 (自动启用/禁用)',
-                    icon: const Icon(Icons.speed_rounded),
-                    onPressed: speedTestState.isTesting ? null : () => _runAutoBatchTest(),
-                  ),
                   IconButton(
                     tooltip: '一键更新全部规则',
                     icon: const Icon(Icons.update),
@@ -942,24 +919,9 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
                   const SizedBox(width: 8),
                 ] else ...[
                   IconButton(
-                    tooltip: '手动添加规则',
-                    icon: const Icon(Icons.add_rounded),
-                    onPressed: _createNewPlugin,
-                  ),
-                  IconButton(
-                    tooltip: '导入规则 (支持批量 / 文件 / 剪贴板)',
-                    icon: const Icon(Icons.file_upload_outlined),
-                    onPressed: () => PluginImportDialog.show(context),
-                  ),
-                  IconButton(
-                    tooltip: '在线规则订阅',
-                    icon: const Icon(Icons.rss_feed_rounded),
-                    onPressed: () => PluginSubscriptionDialog.show(context),
-                  ),
-                  IconButton(
-                    tooltip: '一键测速 (自动启用/禁用)',
-                    icon: const Icon(Icons.speed_rounded),
-                    onPressed: speedTestState.isTesting ? null : () => _runAutoBatchTest(),
+                    tooltip: '排序方式',
+                    icon: const Icon(Icons.sort_rounded),
+                    onPressed: _showSortDialog,
                   ),
                   if (MediaQuery.sizeOf(context).width < 640)
                     IconButton(
@@ -971,73 +933,49 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert),
                       tooltip: '更多操作',
-                    onSelected: (val) {
-                      switch (val) {
-                        case 'add_manual':
-                          _createNewPlugin();
-                          break;
-                        case 'subscriptions':
-                          PluginSubscriptionDialog.show(context);
-                          break;
-                        case 'test_all':
-                          _runAutoBatchTest();
-                          break;
-                        case 'update_all':
-                          _handleUpdateAll();
-                          break;
-                        case 'sort':
-                          _showSortDialog();
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'add_manual',
-                        child: ListTile(
-                          leading: Icon(Icons.add_rounded),
-                          title: Text('手动添加规则'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
+                      onSelected: (val) {
+                        switch (val) {
+                          case 'subscriptions':
+                            PluginSubscriptionDialog.show(context);
+                            break;
+                          case 'update_all':
+                            _handleUpdateAll();
+                            break;
+                          case 'sort':
+                            _showSortDialog();
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'subscriptions',
+                          child: ListTile(
+                            leading: Icon(Icons.rss_feed_rounded),
+                            title: Text('在线规则订阅'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'subscriptions',
-                        child: ListTile(
-                          leading: Icon(Icons.rss_feed_rounded),
-                          title: Text('在线规则订阅'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
+                        const PopupMenuItem(
+                          value: 'update_all',
+                          child: ListTile(
+                            leading: Icon(Icons.update),
+                            title: Text('一键更新全部规则'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'test_all',
-                        child: ListTile(
-                          leading: Icon(Icons.speed_rounded),
-                          title: Text('一键测速 (自动启用/禁用)'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
+                        const PopupMenuItem(
+                          value: 'sort',
+                          child: ListTile(
+                            leading: Icon(Icons.sort_rounded),
+                            title: Text('排序方式'),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'update_all',
-                        child: ListTile(
-                          leading: Icon(Icons.update),
-                          title: Text('一键更新全部规则'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'sort',
-                        child: ListTile(
-                          leading: Icon(Icons.sort_rounded),
-                          title: Text('排序方式'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   const SizedBox(width: 4),
                 ],
               ],
@@ -1140,128 +1078,71 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 第一行：搜索输入框与核心操作按钮组（自适应宽窄屏）
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 860;
-              final searchField = SizedBox(
-                height: 38,
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: '搜索规则名称、主域名或解析类型 (例如 mutefun, dalvdm, xpath...)',
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 16),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor:
-                        colorScheme.surfaceContainerHighest.withAlpha(120),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  onChanged: (_) => setState(() {}),
+          // 第一行：搜索输入框与核心操作按钮组（宽窄屏统一响应式折行，告别横向滚动条）
+          UnifiedRuleToolbar(
+            searchController: _searchController,
+            searchHint: '搜索规则名称、主域名或解析类型 (例如 mutefun, dalvdm, xpath...)',
+            onSearchChanged: () => setState(() {}),
+            actions: [
+              FilledButton.icon(
+                key: const Key('plugin_btn_add_manual'),
+                onPressed: _createNewPlugin,
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('手动添加规则'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-              );
-
-              final actionButtons = [
-                FilledButton.icon(
-                  key: const Key('plugin_btn_add_manual'),
-                  onPressed: _createNewPlugin,
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text('手动添加规则'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
+              ),
+              FilledButton.tonalIcon(
+                key: const Key('plugin_btn_import'),
+                onPressed: () => PluginImportDialog.show(context),
+                icon: const Icon(Icons.file_upload_outlined, size: 16),
+                label: const Text('导入规则'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                FilledButton.tonalIcon(
-                  key: const Key('plugin_btn_import'),
-                  onPressed: () => PluginImportDialog.show(context),
-                  icon: const Icon(Icons.file_upload_outlined, size: 16),
-                  label: const Text('导入规则'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
+              ),
+              FilledButton.tonalIcon(
+                key: const Key('plugin_btn_auto_test'),
+                onPressed: speedTestState.isTesting
+                    ? null
+                    : () => _runAutoBatchTest(targetPlugins: categoryPlugins),
+                icon: speedTestState.isTesting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.speed_rounded, size: 16),
+                label: Text(speedTestState.isTesting
+                    ? '测速中 (${speedTestState.testedCount}/${speedTestState.totalCount})'
+                    : '一键测速'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                FilledButton.tonalIcon(
-                  key: const Key('plugin_btn_auto_test'),
-                  onPressed: speedTestState.isTesting
-                      ? null
-                      : () => _runAutoBatchTest(targetPlugins: categoryPlugins),
-                  icon: speedTestState.isTesting
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.speed_rounded, size: 16),
-                  label: Text(speedTestState.isTesting
-                      ? '测速中 (${speedTestState.testedCount}/${speedTestState.totalCount})'
-                      : '一键测速'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _batchToggle(categoryPlugins, true),
+                icon: const Icon(Icons.check_circle_outline, size: 16),
+                label: const Text('全开'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                OutlinedButton.icon(
-                  onPressed: () => _batchToggle(categoryPlugins, true),
-                  icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text('全开'),
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _batchToggle(categoryPlugins, false),
+                icon: const Icon(Icons.pause_circle_outline, size: 16),
+                label: const Text('全关'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                OutlinedButton.icon(
-                  onPressed: () => _batchToggle(categoryPlugins, false),
-                  icon: const Icon(Icons.pause_circle_outline, size: 16),
-                  label: const Text('全关'),
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ];
-
-              if (isCompact) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    searchField,
-                    const SizedBox(height: 6),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (int i = 0; i < actionButtons.length; i++) ...[
-                            if (i > 0) const SizedBox(width: 8),
-                            actionButtons[i],
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: searchField),
-                  const SizedBox(width: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: actionButtons,
-                  ),
-                ],
-              );
-            },
+              ),
+            ],
           ),
           const SizedBox(height: 8),
 
@@ -1480,16 +1361,13 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
     ValueChanged<String> onChanged,
   ) {
     final isSelected = currentValue == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        visualDensity: VisualDensity.compact,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        showCheckmark: false,
-        onSelected: (_) => onChanged(value),
-      ),
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      showCheckmark: false,
+      onSelected: (_) => onChanged(value),
     );
   }
 
@@ -1896,48 +1774,48 @@ class _PluginViewPageState extends ConsumerState<PluginViewPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    Text(
-                      '状态: ',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    '状态: ',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurfaceVariant,
                     ),
-                    _buildFilterChip('全部', 'all', _marketInstallFilter,
-                        (val) => setState(() => _marketInstallFilter = val)),
-                    _buildFilterChip('🟢 未安装', 'install', _marketInstallFilter,
-                        (val) => setState(() => _marketInstallFilter = val)),
-                    _buildFilterChip('✅ 已安装', 'installed', _marketInstallFilter,
-                        (val) => setState(() => _marketInstallFilter = val)),
-                    _buildFilterChip('⚡ 可更新', 'update', _marketInstallFilter,
-                        (val) => setState(() => _marketInstallFilter = val)),
-                    const SizedBox(width: 14),
-                    Text(
-                      '特性: ',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                  ),
+                  _buildFilterChip('全部', 'all', _marketInstallFilter,
+                      (val) => setState(() => _marketInstallFilter = val)),
+                  _buildFilterChip('🟢 未安装', 'install', _marketInstallFilter,
+                      (val) => setState(() => _marketInstallFilter = val)),
+                  _buildFilterChip('✅ 已安装', 'installed', _marketInstallFilter,
+                      (val) => setState(() => _marketInstallFilter = val)),
+                  _buildFilterChip('⚡ 可更新', 'update', _marketInstallFilter,
+                      (val) => setState(() => _marketInstallFilter = val)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '特性: ',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurfaceVariant,
                     ),
-                    _buildFilterChip('全部', 'all', _marketFeatureFilter,
-                        (val) => setState(() => _marketFeatureFilter = val)),
-                    _buildFilterChip('原生播放', 'native', _marketFeatureFilter,
-                        (val) => setState(() => _marketFeatureFilter = val)),
-                    _buildFilterChip('WebView', 'webview', _marketFeatureFilter,
-                        (val) => setState(() => _marketFeatureFilter = val)),
-                    const SizedBox(width: 14),
-                    Text(
-                      '匹配: ${filteredMarket.length} 个 (共收录 ${marketList.length} 个)',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.outline,
-                      ),
+                  ),
+                  _buildFilterChip('全部', 'all', _marketFeatureFilter,
+                      (val) => setState(() => _marketFeatureFilter = val)),
+                  _buildFilterChip('原生播放', 'native', _marketFeatureFilter,
+                      (val) => setState(() => _marketFeatureFilter = val)),
+                  _buildFilterChip('WebView', 'webview', _marketFeatureFilter,
+                      (val) => setState(() => _marketFeatureFilter = val)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '匹配: ${filteredMarket.length} 个 (共收录 ${marketList.length} 个)',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.outline,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),

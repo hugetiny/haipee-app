@@ -121,26 +121,20 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage> {
         ),
         actions: [
           if (isWide)
-            FilledButton.tonalIcon(
-              onPressed: () => IndexerImportDialog.show(context),
-              icon: const Icon(Icons.file_upload_outlined, size: 16),
-              label: const Text('导入 Cardigann 规则'),
-              style: FilledButton.styleFrom(
+            OutlinedButton.icon(
+              onPressed: () => _confirmResetAll(allPlugins),
+              icon: const Icon(Icons.restore_outlined, size: 16),
+              label: const Text('重置预置规则'),
+              style: OutlinedButton.styleFrom(
                 visualDensity: VisualDensity.compact,
               ),
             )
           else
             IconButton(
-              tooltip: '导入 YAML 规则',
-              icon: const Icon(Icons.file_upload_outlined),
-              onPressed: () => IndexerImportDialog.show(context),
+              tooltip: '重置所有预置规则至官方初始状态',
+              icon: const Icon(Icons.restore_outlined),
+              onPressed: () => _confirmResetAll(allPlugins),
             ),
-          const SizedBox(width: 4),
-          IconButton(
-            tooltip: '重置所有预置规则至官方初始状态',
-            icon: const Icon(Icons.restore_outlined),
-            onPressed: () => _confirmResetAll(allPlugins),
-          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -252,224 +246,163 @@ class _IndexerSettingsPageState extends ConsumerState<IndexerSettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 第一行：搜索框与快速操作（手动添加、导入、一键测速、全开、全关）
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 860;
-              final searchField = SizedBox(
-                height: 38,
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: '搜索 Cardigann 规则名称、ID 或主域名 (例如 nyaa, 1337x, dmhy...)',
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 16),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerHighest.withAlpha(120),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  onChanged: (_) => setState(() {}),
+          // 第一行：搜索框与快速操作（宽窄屏统一响应式折行，告别横向滚动条）
+          UnifiedRuleToolbar(
+            searchController: _searchController,
+            searchHint: '搜索 Cardigann 规则名称、ID 或主域名 (例如 nyaa, 1337x, dmhy...)',
+            onSearchChanged: () => setState(() {}),
+            actions: [
+              FilledButton.icon(
+                key: const Key('cardigann_btn_add_manual'),
+                onPressed: () => IndexerEditorDialog.showNew(context),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('手动添加规则'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-              );
-
-              final actionButtons = [
-                FilledButton.icon(
-                  key: const Key('cardigann_btn_add_manual'),
-                  onPressed: () => IndexerEditorDialog.showNew(context),
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text('手动添加规则'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
+              ),
+              FilledButton.tonalIcon(
+                key: const Key('cardigann_btn_import'),
+                onPressed: () => IndexerImportDialog.show(context),
+                icon: const Icon(Icons.file_upload_outlined, size: 16),
+                label: const Text('导入规则'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                const SizedBox(width: 8),
-                FilledButton.tonalIcon(
-                  key: const Key('cardigann_btn_import'),
-                  onPressed: () => IndexerImportDialog.show(context),
-                  icon: const Icon(Icons.file_upload_outlined, size: 16),
-                  label: const Text('导入规则'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
+              ),
+              FilledButton.tonalIcon(
+                key: const Key('cardigann_btn_auto_test'),
+                onPressed: speedTestState.isTesting
+                    ? null
+                    : () => _runAutoBatchTest(categoryPlugins),
+                icon: speedTestState.isTesting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.speed_rounded, size: 16),
+                label: Text(speedTestState.isTesting
+                    ? '测速中 (${speedTestState.testedCount}/${speedTestState.totalCount})'
+                    : '一键测速'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                const SizedBox(width: 8),
-                FilledButton.tonalIcon(
-                  key: const Key('cardigann_btn_auto_test'),
-                  onPressed: speedTestState.isTesting
-                      ? null
-                      : () => _runAutoBatchTest(categoryPlugins),
-                  icon: speedTestState.isTesting
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.speed_rounded, size: 16),
-                  label: Text(speedTestState.isTesting
-                      ? '测速中 (${speedTestState.testedCount}/${speedTestState.totalCount})'
-                      : '一键测速'),
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _batchToggle(categoryPlugins, true),
+                icon: const Icon(Icons.check_circle_outline, size: 16),
+                label: const Text('全开'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _batchToggle(categoryPlugins, true),
-                  icon: const Icon(Icons.check_circle_outline, size: 16),
-                  label: const Text('全开'),
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _batchToggle(categoryPlugins, false),
+                icon: const Icon(Icons.pause_circle_outline, size: 16),
+                label: const Text('全关'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _batchToggle(categoryPlugins, false),
-                  icon: const Icon(Icons.pause_circle_outline, size: 16),
-                  label: const Text('全关'),
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-              ];
-
-              if (isCompact) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    searchField,
-                    const SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(children: actionButtons),
-                    ),
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: searchField),
-                  const SizedBox(width: 10),
-                  ...actionButtons,
-                ],
-              );
-            },
+              ),
+            ],
           ),
           const SizedBox(height: 10),
 
-          // 第二行：L2 站点性质、测速状态与语言选择 Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                Text(
-                  '性质: ',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+          // 第二行：L2 站点性质、测速状态与语言选择 Chips（自适应 Wrap 折行）
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                '性质: ',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurfaceVariant,
                 ),
-                _buildNatureChip('全部', 'all'),
-                _buildNatureChip('🟢 公开免登', 'public'),
-                _buildNatureChip('🟡 半私有', 'semi-private'),
-                _buildNatureChip('🔴 私有 PT', 'private'),
-                const SizedBox(width: 16),
-                Text(
-                  '状态: ',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+              ),
+              _buildNatureChip('全部', 'all'),
+              _buildNatureChip('🟢 公开免登', 'public'),
+              _buildNatureChip('🟡 半私有', 'semi-private'),
+              _buildNatureChip('🔴 私有 PT', 'private'),
+              const SizedBox(width: 8),
+              Text(
+                '状态: ',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurfaceVariant,
                 ),
-                _buildStatusChip('全部 ($totalCount)', 'all'),
-                _buildStatusChip('已启用 ($enabledCount)', 'enabled'),
-                _buildStatusChip('已禁用 ($disabledCount)', 'disabled'),
-                const SizedBox(width: 16),
-                Text(
-                  '语言: ',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+              ),
+              _buildStatusChip('全部 ($totalCount)', 'all'),
+              _buildStatusChip('已启用 ($enabledCount)', 'enabled'),
+              _buildStatusChip('已禁用 ($disabledCount)', 'disabled'),
+              const SizedBox(width: 8),
+              Text(
+                '语言: ',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurfaceVariant,
                 ),
-                _buildLangChip('全部', 'all'),
-                _buildLangChip('🇨🇳 中文', 'zh'),
-                _buildLangChip('🌏 英文', 'en'),
-                _buildLangChip('🌐 其它', 'other'),
-                const SizedBox(width: 16),
-                Text(
-                  '当前显示: $filteredCount 个 (已激活 $activeCount 个)',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.outline,
-                  ),
+              ),
+              _buildLangChip('全部', 'all'),
+              _buildLangChip('🇨🇳 中文', 'zh'),
+              _buildLangChip('🌏 英文', 'en'),
+              _buildLangChip('🌐 其它', 'other'),
+              const SizedBox(width: 8),
+              Text(
+                '当前显示: $filteredCount 个 (已激活 $activeCount 个)',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.outline,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusChip(String label, String value) {
-    final isSelected = _statusFilter == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        visualDensity: VisualDensity.compact,
-        showCheckmark: false,
-        onSelected: (_) {
-          setState(() => _statusFilter = value);
-        },
-      ),
+  Widget _buildIndexerFilterChip(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      showCheckmark: false,
+      onSelected: (_) => onTap(),
     );
   }
 
-  Widget _buildNatureChip(String label, String value) {
-    final isSelected = _accessFilter == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        visualDensity: VisualDensity.compact,
-        showCheckmark: false,
-        onSelected: (_) {
-          setState(() => _accessFilter = value);
-        },
-      ),
-    );
-  }
+  Widget _buildStatusChip(String label, String value) =>
+      _buildIndexerFilterChip(
+        label,
+        _statusFilter == value,
+        () => setState(() => _statusFilter = value),
+      );
 
-  Widget _buildLangChip(String label, String value) {
-    final isSelected = _langFilter == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        visualDensity: VisualDensity.compact,
-        showCheckmark: false,
-        onSelected: (_) {
-          setState(() => _langFilter = value);
-        },
-      ),
-    );
-  }
+  Widget _buildNatureChip(String label, String value) =>
+      _buildIndexerFilterChip(
+        label,
+        _accessFilter == value,
+        () => setState(() => _accessFilter = value),
+      );
+
+  Widget _buildLangChip(String label, String value) =>
+      _buildIndexerFilterChip(
+        label,
+        _langFilter == value,
+        () => setState(() => _langFilter = value),
+      );
 
   // ===========================================================================
   // Level 3: 单个站点规则卡片与生命周期控制
